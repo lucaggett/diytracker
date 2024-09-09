@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Event</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+</head>
+<body class="bg-white text-black">
+    <section class="w-4/5 mx-auto p-8 border-2 border-black mt-8">
+        <h2 class="text-3xl font-bold mb-4">Submit a New Event</h2>
+
+        <!-- Display validation errors -->
+        {% for field, errors in form.errors.items() %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {{ field.label.text }}: {{ errors[0] }}
+            </div>
+        {% endfor %}
+
+        <form action="{{ url_for('submit_event') }}" method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-4">
+                {{ form.name.label(class="block font-bold") }}
+                {{ form.name(class="border border-black p-2 w-full") }}
+            </div>
+
+            <div class="mb-4">
+                {{ form.date.label(class="block font-bold") }}
+                {{ form.date(class="border border-black p-2 w-full") }}
+            </div>
+
+            <div class="mb-4">
+                {{ form.venue.label(class="block font-bold") }}
+                {{ form.venue(class="border border-black p-2 w-full") }}
+            </div>
+
+            <div class="mb-4">
+                {{ form.doors.label(class="block font-bold") }}
+                {{ form.doors(class="border border-black p-2 w-full") }}
+            </div>
+
+            <div class="mb-4">
+                {{ form.genre.label(class="block font-bold") }}
+                {{ form.genre(class="border border-black p-2 w-full") }}
+            </div>
+
+            <div class="mb-4">
+                {{ form.acts.label(class="block font-bold") }}
+                {{ form.acts(class="border border-black p-2 w-full") }}
+            </div>
+
+            <div class="mb-4">
+                {{ form.flyer.label(class="block font-bold") }}
+                {{ form.flyer(class="border border-black p-2 w-full") }}
+            </div>
+
+            <button type="submit" class="bg-black text-white p-2 mt-4">{{ form.submit() }}</button>
+        </form>
+    </section>
+</body>
+</html>
