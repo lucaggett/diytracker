@@ -1,12 +1,11 @@
+import calendar
 import os
-from flask import Flask, render_template, redirect, url_for, request, flash
-from flask_sqlalchemy import SQLAlchemy
+
+from flask import Flask, render_template, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 
 from forms import EventForm
 from models import db, Event
-import calendar
-from datetime import datetime
 
 app = Flask(__name__)
 
@@ -57,15 +56,27 @@ def submit_event():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+
+from collections import defaultdict
+from datetime import datetime
+
 @app.route('/')
 @app.route('/<int:year>/<int:month>')
 def calendar_view(year=None, month=None):
-    # Current date
     now = datetime.now()
     year = year if year else now.year
     month = month if month else now.month
 
+    first_day_of_month = datetime(year, month, 1)
+    last_day_of_month = datetime(year, month, calendar.monthrange(year, month)[1])
+
     # Query events for the selected month
     events = Event.query.order_by(Event.date.asc()).all()
+    print(events)
+    # Group events by their exact date (as datetime objects)
+    grouped_events = defaultdict(list)
+    for event in events:
+        event_date = event.date.strftime('%Y-%m-%d')
+        grouped_events[datetime.strptime(event_date, '%Y-%m-%d')].append(event)
 
-    return render_template('calendar.html', events=events, current_year=year, current_month_number=month)
+    return render_template('calendar.html', grouped_events=grouped_events, current_year=year, current_month_number=month)
