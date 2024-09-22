@@ -67,11 +67,11 @@
 
         <div class="mb-4">
             {{ form.genre.label(class="block font-bold") }}
-            {% for value, label in form.genre.choices %}
+            {% for value in form.genre.choices %}
                 <div class="flex items-center mb-2">
                     <input type="checkbox" id="genre_{{ loop.index }}" name="genre" value="{{ value }}"
                            class="border border-black p-2 mr-2">
-                    <label for="genre_{{ loop.index }}" class="font-medium">{{ label }}</label>
+                    <label for="genre_{{ loop.index }}" class="font-medium">{{ value }}</label>
                 </div>
             {% endfor %}
         </div>

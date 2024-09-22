@@ -6,19 +6,11 @@ from wtforms.validators import DataRequired, Optional
 
 def get_genre_choices():
     return [
-        ('rock', 'Rock'),
-        ('pop', 'Pop'),
-        ('hip-hop', 'Hip-Hop'),
-        ('jazz', 'Jazz'),
-        ('blues', 'Blues'),
-        ('country', 'Country'),
-        ('metal', 'Metal'),
-        ('electronic', 'Electronic'),
-        ('classical', 'Classical'),
-        ('folk', 'Folk'),
-        ('reggae', 'Reggae'),
-        ('latin', 'Latin'),
-        ('other', 'Other')
+        'Hardcore', 'Punk', 'Metal', 'Post-punk', 'EBM', 'Industrial',
+        'Synthpop', 'Darkwave', 'Goth', 'New Wave', 'Alternative',
+        'Indie', 'Rock', 'Pop', 'Hip Hop', 'Reggae', 'Dub', 'Dancehall',
+        'Drum & Bass', 'Dubstep', 'Techno', 'House', 'Trance', 'Electro',
+        'Ambient', 'Experimental', 'Noise'
     ]
 
 
