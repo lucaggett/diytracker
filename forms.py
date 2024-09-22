@@ -10,7 +10,8 @@ def get_genre_choices():
         'Synthpop', 'Darkwave', 'Goth', 'New Wave', 'Alternative',
         'Indie', 'Rock', 'Pop', 'Hip Hop', 'Reggae', 'Dub', 'Dancehall',
         'Drum & Bass', 'Dubstep', 'Techno', 'House', 'Trance', 'Electro',
-        'Ambient', 'Experimental', 'Noise'
+        'Ambient', 'Experimental', 'Noise', 'Wave', 'NDW', 'Folk', 'Neofolk',
+        'Jazz', 'Blues', 'Ska', 'Garage', 'Hyperpop'
     ]
 
 

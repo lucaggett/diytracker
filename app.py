@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from flask import Flask, render_template, redirect, url_for, flash
+from flask import Flask, render_template, redirect, url_for, flash, request
 from werkzeug.utils import secure_filename
 
 from forms import EventForm
@@ -12,9 +12,13 @@ from models import db, Event
 
 PASSWORD = os.getenv('SUBMISSION_PASSWORD', 'diytrackerischziemlicool')
 
-# check that the logs directory exists
+# Check that required directories exist
 if not os.path.exists('logs'):
     os.makedirs('logs')
+
+if not os.path.exists('static/uploads'):
+    os.makedirs('static/uploads')
+
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///events.db'  # SQLite for simplicity
@@ -31,6 +35,9 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 print("http://127.0.0.1:5000/submit")
 
 # Check allowed file extensions
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
 @app.route('/submit', methods=['GET', 'POST'])
 def submit_event():
     form = EventForm()
@@ -53,7 +60,7 @@ def submit_event():
 
         if password != PASSWORD:
             flash('Invalid password')
-            return redirect(url_for('submit'))
+            return redirect(url_for('submit_event'))
 
         # Handle flyer upload
         flyer = None
@@ -65,10 +72,22 @@ def submit_event():
                 file.save(flyer)
 
         # Create and save new event
-        new_event = Event(name=name, date=date, venue_name=venue_name, venue_address=venue_address,
-                          venue_city=venue_city, venue_canton=venue_canton, venue_plz=venue_plz,
-                          venue_coords=venue_coords, doors=doors, genre=', '.join(genres), acts=acts, flyer=flyer,
-                          ticket_link=ticket_link, ticket_price=ticket_price)
+        new_event = Event(
+            name=name,
+            date=date,
+            venue_name=venue_name,
+            venue_address=venue_address,
+            venue_city=venue_city,
+            venue_canton=venue_canton,
+            venue_plz=venue_plz,
+            venue_coords=venue_coords,
+            doors=doors,
+            genre=', '.join(genres),
+            acts=acts,
+            flyer=flyer,
+            ticket_link=ticket_link,
+            ticket_price=ticket_price
+        )
         db.session.add(new_event)
         db.session.commit()
 
@@ -77,10 +96,52 @@ def submit_event():
 
     return render_template('submit_event.html', form=form)
 
+@app.route('/admin', methods=['GET'])
+def admin():
+    events = Event.query.order_by(Event.date.asc()).all()
+    return render_template('admin.html', events=events)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+@app.route('/edit_event/<int:event_id>', methods=['GET', 'POST'])
+def edit_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    form = EventForm(obj=event)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            password = form.password.data
+            if password != PASSWORD:
+                flash('Invalid password')
+                return redirect(url_for('edit_event', event_id=event_id))
 
+            # Update event details
+            form.populate_obj(event)
+
+            # Handle flyer upload
+            if form.flyer.data:
+                file = form.flyer.data
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    flyer = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(flyer)
+                    event.flyer = flyer
+
+            db.session.commit()
+            flash('Event updated successfully!')
+            return redirect(url_for('admin'))
+
+    return render_template('edit_event.html', form=form, event=event)
+
+@app.route('/delete_event/<int:event_id>', methods=['POST'])
+def delete_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    password = request.form.get('password')
+    if password != PASSWORD:
+        flash('Invalid password')
+        return redirect(url_for('admin'))
+
+    db.session.delete(event)
+    db.session.commit()
+    flash('Event deleted successfully!')
+    return redirect(url_for('admin'))
 
 @app.route('/')
 def calendar_view():

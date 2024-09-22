@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta tags and title -->
+    <meta charset="UTF-8">
+    <title>Edit Event</title>
+    <!-- Include Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold mb-6">Edit Event</h1>
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div class="mb-4">
+                {{ form.name.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.name(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.name.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <!-- Repeat the above block for each form field -->
+            <!-- Include all necessary fields from EventForm -->
+            <!-- For example: -->
+            <div class="mb-4">
+                {{ form.date.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.date(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.date.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <!-- Add other fields similarly -->
+
+            <!-- Password Field -->
+            <div class="mb-4">
+                {{ form.password.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.password(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.password.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update Event</button>
+            <a href="{{ url_for('admin') }}" class="ml-4 text-gray-700 hover:underline">Cancel</a>
+        </form>
+    </div>
+</body>
+</html>

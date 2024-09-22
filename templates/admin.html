@@ -1,44 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Meta tags and title -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Page</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+    <title>Admin - Manage Events</title>
+    <!-- Include Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-    <header class="bg-gray-800 text-white p-4 text-center">
-        <h1 class="text-2xl font-bold">Admin Dashboard</h1>
-    </header>
-    <main class="container mx-auto mt-8">
-        <h2 class="text-xl font-bold mb-4">Pending Submissions</h2>
-
-        <form method="POST">
-            <table class="table-auto w-full bg-white rounded shadow-md">
-                <thead class="bg-gray-200">
-                    <tr>
-                        <th class="p-4">Event Name</th>
-                        <th class="p-4">Description</th>
-                        <th class="p-4">Date</th>
-                        <th class="p-4">Approve</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for event in events %}
-                    <tr>
-                        <td class="border px-4 py-2">{{ event.event_name }}</td>
-                        <td class="border px-4 py-2">{{ event.description }}</td>
-                        <td class="border px-4 py-2">{{ event.date.strftime('%Y-%m-%d') }}</td>
-                        <td class="border px-4 py-2">
-                            <button name="approve_event" value="{{ event.id }}" class="bg-green-500 text-white p-2 rounded">
-                                Approve
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </form>
-    </main>
+    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold mb-6">Admin - Manage Events</h1>
+        <table class="min-w-full bg-white shadow-md rounded">
+            <thead>
+                <tr>
+                    <th class="py-2 px-4 border-b">ID</th>
+                    <th class="py-2 px-4 border-b">Name</th>
+                    <th class="py-2 px-4 border-b">Date</th>
+                    <th class="py-2 px-4 border-b">Venue</th>
+                    <th class="py-2 px-4 border-b">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr class="text-center">
+                    <td class="py-2 px-4 border-b">{{ event.id }}</td>
+                    <td class="py-2 px-4 border-b">{{ event.name }}</td>
+                    <td class="py-2 px-4 border-b">{{ event.date.strftime('%Y-%m-%d') }}</td>
+                    <td class="py-2 px-4 border-b">{{ event.venue_name }}</td>
+                    <td class="py-2 px-4 border-b">
+                        <a href="{{ url_for('edit_event', event_id=event.id) }}" class="text-blue-500 hover:underline">Edit</a>
+                        |
+                        <form action="{{ url_for('delete_event', event_id=event.id) }}" method="POST" class="inline">
+                            <input type="password" name="password" placeholder="Password" class="border rounded px-2 py-1 text-sm">
+                            <button type="submit" class="text-red-500 hover:underline ml-2">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>
