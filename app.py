@@ -1,5 +1,8 @@
 import calendar
 import os
+from collections import defaultdict
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 from flask import Flask, render_template, redirect, url_for, flash
 from werkzeug.utils import secure_filename
@@ -20,6 +23,7 @@ with app.app_context():
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+print("http://127.0.0.1:5000/submit")
 
 # Check allowed file extensions
 @app.route('/submit', methods=['GET', 'POST'])
@@ -29,10 +33,17 @@ def submit_event():
         # Get form data
         name = form.name.data
         date = form.date.data
-        venue = form.venue.data
+        venue_name = form.venue_name.data
+        venue_address = form.venue_address.data
+        venue_city = form.venue_city.data
+        venue_canton = form.venue_canton.data
+        venue_plz = form.venue_plz.data
+        venue_coords = form.venue_coords.data
         doors = form.doors.data
-        genre = form.genre.data
+        genres = form.genre.data
         acts = form.acts.data
+        ticket_link = form.ticket_link.data
+        ticket_price = form.ticket_price.data
 
         # Handle flyer upload
         flyer = None
@@ -44,7 +55,10 @@ def submit_event():
                 file.save(flyer)
 
         # Create and save new event
-        new_event = Event(name=name, date=date, venue=venue, doors=doors, genre=genre, acts=acts, flyer=flyer)
+        new_event = Event(name=name, date=date, venue_name=venue_name, venue_address=venue_address,
+                          venue_city=venue_city, venue_canton=venue_canton, venue_plz=venue_plz,
+                          venue_coords=venue_coords, doors=doors, genre=', '.join(genres), acts=acts, flyer=flyer,
+                          ticket_link=ticket_link, ticket_price=ticket_price)
         db.session.add(new_event)
         db.session.commit()
 
@@ -53,30 +67,44 @@ def submit_event():
 
     return render_template('submit_event.html', form=form)
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 
-from collections import defaultdict
-from datetime import datetime
-
 @app.route('/')
-@app.route('/<int:year>/<int:month>')
-def calendar_view(year=None, month=None):
+def calendar_view():
     now = datetime.now()
-    year = year if year else now.year
-    month = month if month else now.month
 
-    first_day_of_month = datetime(year, month, 1)
-    last_day_of_month = datetime(year, month, calendar.monthrange(year, month)[1])
+    # Calculate the current month and the next two months
+    months = []
+    for i in range(3):
+        month_date = now + relativedelta(months=i)
+        months.append((month_date.year, month_date.month))
 
-    # Query events for the selected month
-    events = Event.query.order_by(Event.date.asc()).all()
-    print(events)
-    # Group events by their exact date (as datetime objects)
+    # Define the start and end dates for querying events
+    start_date = datetime(months[0][0], months[0][1], 1)
+    end_month = months[-1]
+    last_day = calendar.monthrange(end_month[0], end_month[1])[1]
+    end_date = datetime(end_month[0], end_month[1], last_day, 23, 59, 59)
+
+    # Query events within the date range
+    events = Event.query.filter(Event.date >= start_date, Event.date <= end_date).order_by(Event.date.asc()).all()
+
+    # Group events by their date
     grouped_events = defaultdict(list)
     for event in events:
-        event_date = event.date.strftime('%Y-%m-%d')
-        grouped_events[datetime.strptime(event_date, '%Y-%m-%d')].append(event)
+        event_date = event.date.date()
+        grouped_events[event_date].append(event)
 
-    return render_template('calendar.html', grouped_events=grouped_events, current_year=year, current_month_number=month)
+    # Prepare month data for the template
+    months_data = []
+    for year, month in months:
+        last_day_of_month = calendar.monthrange(year, month)[1]
+        months_data.append({
+            'year': year,
+            'month': month,
+            'last_day_of_month': last_day_of_month
+        })
+
+    return render_template('calendar.html', grouped_events=grouped_events, months_data=months_data, datetime=datetime)
