@@ -1,146 +1,438 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- [Existing head content] -->
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Event Calendar</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Meta tags and title -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Calendar - Responsive</title>
+    <!-- Include Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
 
-<div class="container mx-auto px-4 py-6">
-  {% for month in months_data %}
-    <h1 class="text-3xl font-bold text-center mb-8">{{ month.year }} / {{ month.month }}</h1>
+<!-- Calendar Content -->
 
-    <!-- Calendar Header (Days of the Week) -->
-    <div class="grid grid-cols-7 gap-2 text-center font-semibold">
-      <div>Mon</div>
-      <div>Tue</div>
-      <div>Wed</div>
-      <div>Thu</div>
-      <div>Fri</div>
-      <div>Sat</div>
-      <div>Sun</div>
-    </div>
+<!-- Desktop Calendar -->
+<div class="container mx-auto px-4 py-6 hidden md:block">
+    {% for month in months_data %}
+        <h1 class="text-3xl font-bold text-center mb-8">{{ month.year }} / {{ month.month }}</h1>
 
-    <!-- Calendar Grid -->
-    <div class="grid grid-cols-7 gap-2 mt-4">
-      {% set first_day_of_month = datetime(month.year, month.month, 1) %}
-      {% set first_weekday = first_day_of_month.weekday() %}
-
-      <!-- Empty Cells for days before the first of the month -->
-      {% for _ in range(first_weekday) %}
-        <div class="p-4 bg-gray-200 h-32"></div>
-      {% endfor %}
-
-      <!-- Days with events -->
-      {% for day in range(1, month.last_day_of_month + 1) %}
-        {% set current_date = datetime(month.year, month.month, day).date() %}
-        <div class="p-4 bg-white shadow rounded-md h-32 overflow-y-auto">
-          <span class="font-bold">{{ day }}</span>
-          <div class="mt-2 text-xs">
-            {% if current_date in grouped_events %}
-              <!-- Display events for this day -->
-              {% for event in grouped_events[current_date] %}
-                <p class="event-item cursor-pointer text-blue-500 underline"
-                   data-event-id="{{ event.id }}"
-                   data-event-name="{{ event.name|e }}"
-                   data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
-                   data-event-doors="{{ event.doors.strftime('%H:%M') }}"
-                   data-venue-name="{{ event.venue_name|e }}"
-                   data-venue-address="{{ event.venue_address|e }}"
-                   data-venue-city="{{ event.venue_city|e }}"
-                   data-venue-canton="{{ event.venue_canton|e }}"
-                   data-venue-plz="{{ event.venue_plz|e }}"
-                   data-ticket-price="{{ event.ticket_price|e }}"
-                   data-ticket-link="{{ event.ticket_link|e }}"
-                   data-venue-coords="{{ event.venue_coords|e }}"
-                   data-genre="{{ event.genre|e }}"
-                   data-acts="{{ event.acts|e }}"
-                   data-flyer="{{ event.flyer|e }}"
-                   onclick="showEventDetails(this)">
-                  {{ event.name }}, {{ event.venue_canton }}
-                </p>
-              {% endfor %}
-            {% else %}
-              <p>No events</p>
-            {% endif %}
-          </div>
+        <!-- Calendar Header (Days of the Week) -->
+        <div class="grid grid-cols-7 gap-2 text-center font-semibold">
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+            <div>Sun</div>
         </div>
-      {% endfor %}
 
-      <!-- Empty Cells for days after the last of the month -->
-      {% set last_day_of_week = datetime(month.year, month.month, month.last_day_of_month).weekday() %}
-      {% for _ in range(6 - last_day_of_week) %}
-        <div class="p-4 bg-gray-200 h-32"></div>
-      {% endfor %}
+        <!-- Calendar Grid -->
+        <div class="grid grid-cols-7 gap-2 mt-4">
+            {% set first_day_of_month = datetime(month.year, month.month, 1) %}
+            {% set first_weekday = first_day_of_month.weekday() %}
+
+            <!-- Empty Cells for days before the first of the month -->
+            {% for _ in range(first_weekday) %}
+                <div class="p-4 bg-gray-200 h-32"></div>
+            {% endfor %}
+
+            <!-- Days with events -->
+            {% for day in range(1, month.last_day_of_month + 1) %}
+                {% set current_date = datetime(month.year, month.month, day).date() %}
+                <div class="day-cell p-4 bg-white shadow rounded-md h-32 overflow-y-auto">
+                    <span class="font-bold">{{ day }}</span>
+                    <div class="mt-2 text-xs event-container">
+                        {% if current_date in grouped_events %}
+                            <!-- Display events for this day -->
+                            {% for event in grouped_events[current_date] %}
+                                <p class="event-item cursor-pointer text-blue-500 underline"
+                                   data-event-id="{{ event.id }}"
+                                   data-event-name="{{ event.name|e }}"
+                                   data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
+                                   data-event-doors="{{ event.doors.strftime('%H:%M') }}"
+                                   data-venue-name="{{ event.venue_name|e }}"
+                                   data-venue-address="{{ event.venue_address|e }}"
+                                   data-venue-city="{{ event.venue_city|e }}"
+                                   data-venue-canton="{{ event.venue_canton|e }}"
+                                   data-venue-plz="{{ event.venue_plz|e }}"
+                                   data-ticket-price="{{ event.ticket_price|e }}"
+                                   data-ticket-link="{{ event.ticket_link|e }}"
+                                   data-venue-coords="{{ event.venue_coords|e }}"
+                                   data-genre="{{ event.genre|e }}"
+                                   data-acts="{{ event.acts|e }}"
+                                   data-flyer="{{ event.flyer|e }}"
+                                   data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                                   onclick="showEventDetails(this)">
+                                    {{ event.name }}, {{ event.venue_canton }}
+                                </p>
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-events-text hidden">No events</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Empty Cells for days after the last of the month -->
+            {% set last_day_of_week = datetime(month.year, month.month, month.last_day_of_month).weekday() %}
+            {% for _ in range(6 - last_day_of_week) %}
+                <div class="p-4 bg-gray-200 h-32"></div>
+            {% endfor %}
+        </div>
+        <br>
+        <br>
+    {% endfor %}
+</div>
+
+<!-- Mobile Calendar -->
+<div class="container mx-auto px-4 py-6 block md:hidden">
+    <h1 class="text-3xl font-bold text-center mb-8">Upcoming Events</h1>
+
+    {% set today = datetime.utcnow().date() %}
+
+    <!-- List of Dates with Events -->
+    <div class="space-y-4">
+        {% for month in months_data %}
+            {% for day in range(1, month.last_day_of_month + 1) %}
+                {% set current_date = datetime(month.year, month.month, day).date() %}
+                {% if current_date >= today %}
+                    <!-- Date Card -->
+                    <div class="date-card bg-white shadow rounded-md p-4">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-lg">{{ current_date.strftime('%A, %B %d, %Y') }}</span>
+                            <!-- Optionally display the date in your preferred format -->
+                        </div>
+                        <div class="mt-2 text-sm event-container">
+                            {% if current_date in grouped_events %}
+                                <!-- Display events for this day -->
+                                {% for event in grouped_events[current_date] %}
+                                    <div class="event-item mt-2 p-2 border rounded cursor-pointer"
+                                         data-event-id="{{ event.id }}"
+                                         data-event-name="{{ event.name|e }}"
+                                         data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
+                                         data-event-doors="{{ event.doors.strftime('%H:%M') }}"
+                                         data-venue-name="{{ event.venue_name|e }}"
+                                         data-venue-address="{{ event.venue_address|e }}"
+                                         data-venue-city="{{ event.venue_city|e }}"
+                                         data-venue-canton="{{ event.venue_canton|e }}"
+                                         data-venue-plz="{{ event.venue_plz|e }}"
+                                         data-ticket-price="{{ event.ticket_price|e }}"
+                                         data-ticket-link="{{ event.ticket_link|e }}"
+                                         data-venue-coords="{{ event.venue_coords|e }}"
+                                         data-genre="{{ event.genre|e }}"
+                                         data-acts="{{ event.acts|e }}"
+                                         data-flyer="{{ event.flyer|e }}"
+                                         data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                                         onclick="showEventDetails(this)">
+                                        <p class="font-semibold">{{ event.name }}</p>
+                                        <p class="text-gray-600">{{ event.venue_name }}, {{ event.venue_city }}</p>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="no-events-text mt-2 text-gray-500">No events scheduled for this day.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
     </div>
-    <br>
-    <br>
-  {% endfor %}
+</div>
+
+<!-- Floating Action Button -->
+<button id="filter-button"
+        class="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full p-4 shadow-lg focus:outline-none">
+    <!-- Filter Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 4a1 1 0 012 0v2h14V4a1 1 0 112 0v16a1 1 0 11-2 0v-2H5v2a1 1 0 11-2 0V4z"/>
+    </svg>
+</button>
+
+<!-- Popup Modal for Filters -->
+<div id="filter-modal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg p-4 w-11/12 md:w-1/2 h-3/4 overflow-y-auto">
+        <h2 class="text-xl font-bold mb-4">Filter Events</h2>
+        <!-- Filter Categories -->
+        <div id="filter-categories">
+            <!-- Categories and options will be populated via JavaScript -->
+        </div>
+        <!-- Apply and Close Buttons -->
+        <div class="flex justify-end mt-4">
+            <button id="apply-filters" class="bg-green-500 text-white px-4 py-2 rounded mr-2">Apply Filters</button>
+            <button onclick="closeFilterModal()" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
+        </div>
+    </div>
 </div>
 
 <!-- Modal -->
 <div id="event-modal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
-  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-1/2">
-    <h2 id="modal-event-name" class="text-2xl font-bold mb-4">Event Name</h2>
-    <p id="modal-event-date" class="mb-2">Date: </p>
-    <p id="modal-event-venue" class="mb-2">Venue: </p>
-    <p id="modal-event-address" class="mb-2">Address: </p>
-    <p id="modal-event-city" class="mb-2">City: </p>
-    <p id="modal-event-genre" class="mb-2">Genre: </p>
-    <p id="modal-event-acts" class="mb-2">Acts: </p>
-    <p id="modal-event-ticket-price" class="mb-2">Ticket Price: </p>
-    <p id="modal-event-ticket-link" class="mb-2">Ticket Link: </p>
-    <!-- Add other event details as needed -->
-    <button onclick="closeModal()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Close</button>
-  </div>
+    <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-1/2">
+        <h2 id="modal-event-name" class="text-2xl font-bold mb-4">Event Name</h2>
+        <p id="modal-event-date" class="mb-2">Date: </p>
+        <p id="modal-event-venue" class="mb-2">Venue: </p>
+        <p id="modal-event-address" class="mb-2">Address: </p>
+        <p id="modal-event-city" class="mb-2">City: </p>
+        <p id="modal-event-genre" class="mb-2">Genre: </p>
+        <p id="modal-event-acts" class="mb-2">Acts: </p>
+        <p id="modal-event-ticket-price" class="mb-2">Ticket Price: </p>
+        <p id="modal-event-ticket-link" class="mb-2">Ticket Link: </p>
+        <!-- Add other event details as needed -->
+        <button onclick="closeModal()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Close</button>
+    </div>
 </div>
 
 <!-- JavaScript -->
 <script>
-  function showEventDetails(element) {
-    // Retrieve data from data attributes
-    var eventName = element.getAttribute('data-event-name');
-    var eventDate = element.getAttribute('data-event-date');
-    var eventDoors = element.getAttribute('data-event-doors');
-    var venueName = element.getAttribute('data-venue-name');
-    var venueAddress = element.getAttribute('data-venue-address');
-    var venueCity = element.getAttribute('data-venue-city');
-    var venueCanton = element.getAttribute('data-venue-canton');
-    var venuePLZ = element.getAttribute('data-venue-plz');
-    var ticketPrice = element.getAttribute('data-ticket-price');
-    var ticketLink = element.getAttribute('data-ticket-link');
-    var venueCoords = element.getAttribute('data-venue-coords');
-    var genre = element.getAttribute('data-genre');
-    var acts = element.getAttribute('data-acts');
-    var flyer = element.getAttribute('data-flyer');
+    document.addEventListener("DOMContentLoaded", function () {
+        // Collect unique tags from events
+        var eventItems = document.querySelectorAll('.event-item');
+        var tagsByCategory = {
+            'canton': new Set(),
+            'genre': new Set(),
+            'various': new Set()
+        };
 
-    // Set the modal content
-    document.getElementById('modal-event-name').textContent = eventName;
-    document.getElementById('modal-event-date').textContent = 'Date: ' + eventDate + ' at ' + eventDoors;
-    document.getElementById('modal-event-venue').textContent = 'Venue: ' + venueName;
-    document.getElementById('modal-event-address').textContent = 'Address: ' + venueAddress;
-    document.getElementById('modal-event-city').textContent = 'City: ' + venuePLZ + ' ' + venueCity + ', ' + venueCanton ;
-    document.getElementById('modal-event-genre').textContent = 'Genre: ' + genre;
-    document.getElementById('modal-event-acts').textContent = 'Acts: ' + acts;
-    document.getElementById('modal-event-ticket-price').textContent = 'Ticket Price: ' + ticketPrice;
+        eventItems.forEach(function (item) {
+            var tags = item.getAttribute('data-tags');
+            if (tags) {
+                tags.split(',').forEach(function (tag) {
+                    var parts = tag.split(':');
+                    var category = parts[0];
+                    var tagValue = parts[1];
+                    if (tagsByCategory[category]) {
+                        tagsByCategory[category].add(tagValue.trim());
+                    }
+                });
+            }
+        });
 
-    // Handle ticket link
-    if(ticketLink){
-        document.getElementById('modal-event-ticket-link').innerHTML = 'Ticket Link: <a href="' + ticketLink + '" target="_blank" class="text-blue-500 underline">' + ticketLink + '</a>';
-    } else {
-        document.getElementById('modal-event-ticket-link').textContent = 'Ticket Link: N/A';
-    }
+        // Selected tags storage
+        var selectedTags = {
+            'canton': new Set(),
+            'genre': new Set(),
+            'various': new Set()
+        };
 
-    // Show the modal
-    document.getElementById('event-modal').classList.remove('hidden');
-  }
+        // Event listener for the filter button to open the modal
+        document.getElementById('filter-button').addEventListener('click', function () {
+            document.getElementById('filter-modal').classList.remove('hidden');
+        });
 
-  function closeModal() {
-    document.getElementById('event-modal').classList.add('hidden');
-  }
+        // Function to close the filter modal
+        window.closeFilterModal = function () {
+            document.getElementById('filter-modal').classList.add('hidden');
+        }
+
+        // Populate filter categories and options
+        var filterCategoriesContainer = document.getElementById('filter-categories');
+        for (const category in tagsByCategory) {
+            // Create category header
+            var categoryHeader = document.createElement('div');
+            categoryHeader.className = 'category-header flex items-center justify-between cursor-pointer py-2 border-b';
+            categoryHeader.setAttribute('data-category', category);
+
+            var categoryTitle = document.createElement('span');
+            categoryTitle.className = 'font-bold';
+            categoryTitle.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+
+            var arrowIcon = document.createElement('span');
+            arrowIcon.className = 'arrow-icon transform transition-transform duration-200';
+            arrowIcon.innerHTML = '&#9656;'; // Right arrow
+
+            categoryHeader.appendChild(categoryTitle);
+            categoryHeader.appendChild(arrowIcon);
+
+            // Create options container
+            var optionsContainer = document.createElement('div');
+            optionsContainer.className = 'options-container pl-4 mt-2 hidden';
+            optionsContainer.setAttribute('data-category-options', category);
+
+            // Populate options
+            var tagsArray = Array.from(tagsByCategory[category]).sort();
+            tagsArray.forEach(function (tag) {
+                var label = document.createElement('label');
+                label.className = 'flex items-center mb-2';
+                var checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'mr-2';
+                checkbox.value = tag;
+                checkbox.checked = selectedTags[category].has(tag);
+                checkbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        selectedTags[category].add(this.value);
+                    } else {
+                        selectedTags[category].delete(this.value);
+                    }
+                });
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(tag));
+                optionsContainer.appendChild(label);
+            });
+
+            // Append header and options to the container
+            filterCategoriesContainer.appendChild(categoryHeader);
+            filterCategoriesContainer.appendChild(optionsContainer);
+
+            // Add event listener to toggle options display
+            categoryHeader.addEventListener('click', function () {
+                var category = this.getAttribute('data-category');
+                var options = document.querySelector('[data-category-options="' + category + '"]');
+                var arrow = this.querySelector('.arrow-icon');
+                if (options.classList.contains('hidden')) {
+                    options.classList.remove('hidden');
+                    arrow.style.transform = 'rotate(90deg)'; // Pointing down
+                } else {
+                    options.classList.add('hidden');
+                    arrow.style.transform = 'rotate(0deg)'; // Pointing right
+                }
+            });
+        }
+
+        // Apply filters when the user clicks the "Apply Filters" button
+        document.getElementById('apply-filters').addEventListener('click', function () {
+            filterEventsByTags();
+            closeFilterModal();
+        });
+
+        function filterEventsByTags() {
+            eventItems.forEach(function (item) {
+                var itemTags = item.getAttribute('data-tags');
+                console.log(itemTags);
+                var itemTagList = itemTags ? itemTags.split(',').map(t => t.trim()) : [];
+
+                var itemTagsByCategory = {
+                    'canton': [],
+                    'genre': [],
+                    'various': []
+                };
+
+                itemTagList.forEach(function (tag) {
+                    var parts = tag.split(':');
+                    var category = parts[0];
+                    var tagValue = parts[1];
+                    if (itemTagsByCategory[category]) {
+                        itemTagsByCategory[category].push(tagValue);
+                    }
+                });
+
+                let visible = true;
+                for (var category in selectedTags) {
+                    if (selectedTags[category].size > 0) {
+                        console.log("Category: " + category);
+                        console.log("Selected tags: " + selectedTags[category]);
+                        console.log("Item tags: " + itemTagsByCategory[category]);
+                        console.log("Intersection: " + itemTagsByCategory[category].filter(tag => selectedTags[category].has(tag)));
+                        const hasTag = itemTagsByCategory[category].some(tag => selectedTags[category].has(tag));
+                        if (!hasTag) {
+                            visible = false;
+                            break;
+                        }
+                    }
+                }
+                console.log(itemTagsByCategory);
+
+                if (visible) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            // Update day cells to show "No events" if no events are visible (for desktop view)
+            var dayCells = document.querySelectorAll('.day-cell');
+            dayCells.forEach(function (cell) {
+                var visibleEvents = cell.querySelectorAll('.event-item:not(.hidden)');
+                var noEventsText = cell.querySelector('.no-events-text');
+                if (visibleEvents.length === 0) {
+                    // Show "No events" message
+                    if (noEventsText) {
+                        noEventsText.classList.remove('hidden');
+                    } else {
+                        var p = document.createElement('p');
+                        p.textContent = 'No events';
+                        p.className = 'no-events-text';
+                        cell.querySelector('.event-container').appendChild(p);
+                    }
+                } else {
+                    // Hide "No events" message
+                    if (noEventsText) {
+                        noEventsText.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Update date cards to show "No events scheduled for this day" if no events are visible (for mobile view)
+            var dateCards = document.querySelectorAll('.date-card');
+            dateCards.forEach(function (card) {
+                var visibleEvents = card.querySelectorAll('.event-item:not(.hidden)');
+                var noEventsText = card.querySelector('.no-events-text');
+                if (visibleEvents.length === 0) {
+                    // Show "No events scheduled for this day" message
+                    if (noEventsText) {
+                        noEventsText.classList.remove('hidden');
+                    } else {
+                        var p = document.createElement('p');
+                        p.textContent = 'No events scheduled for this day.';
+                        p.className = 'no-events-text mt-2 text-gray-500';
+                        card.querySelector('.event-container').appendChild(p);
+                    }
+                } else {
+                    // Hide "No events scheduled for this day" message
+                    if (noEventsText) {
+                        noEventsText.classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        // Existing function to show event details in the modal
+        window.showEventDetails = function (element) {
+            // Retrieve data from data attributes
+            var eventName = element.getAttribute('data-event-name');
+            var eventDate = element.getAttribute('data-event-date');
+            var eventDoors = element.getAttribute('data-event-doors');
+            var venueName = element.getAttribute('data-venue-name');
+            var venueAddress = element.getAttribute('data-venue-address');
+            var venueCity = element.getAttribute('data-venue-city');
+            var venueCanton = element.getAttribute('data-venue-canton');
+            var venuePLZ = element.getAttribute('data-venue-plz');
+            var ticketPrice = element.getAttribute('data-ticket-price');
+            var ticketLink = element.getAttribute('data-ticket-link');
+            var venueCoords = element.getAttribute('data-venue-coords');
+            var genre = element.getAttribute('data-genre');
+            var acts = element.getAttribute('data-acts');
+            var flyer = element.getAttribute('data-flyer');
+
+            // Set the modal content
+            document.getElementById('modal-event-name').textContent = eventName;
+            document.getElementById('modal-event-date').textContent = 'Date: ' + eventDate + ' at ' + eventDoors;
+            document.getElementById('modal-event-venue').textContent = 'Venue: ' + venueName;
+            document.getElementById('modal-event-address').textContent = 'Address: ' + venueAddress;
+            document.getElementById('modal-event-city').textContent = 'City: ' + venuePLZ + ' ' + venueCity + ', ' + venueCanton;
+            document.getElementById('modal-event-genre').textContent = 'Genre: ' + genre;
+            document.getElementById('modal-event-acts').textContent = 'Acts: ' + acts;
+            document.getElementById('modal-event-ticket-price').textContent = 'Ticket Price: ' + ticketPrice;
+
+            // Handle ticket link
+            if (ticketLink) {
+                document.getElementById('modal-event-ticket-link').innerHTML = 'Ticket Link: <a href="' + ticketLink + '" target="_blank" class="text-blue-500 underline">' + ticketLink + '</a>';
+            } else {
+                document.getElementById('modal-event-ticket-link').textContent = 'Ticket Link: N/A';
+            }
+
+            // Show the modal
+            document.getElementById('event-modal').classList.remove('hidden');
+        }
+
+        // Existing function to close the modal
+        window.closeModal = function () {
+            document.getElementById('event-modal').classList.add('hidden');
+        }
+    });
 </script>
 
 </body>
