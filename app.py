@@ -10,6 +10,8 @@ from werkzeug.utils import secure_filename
 from forms import EventForm
 from models import db, Event
 
+PASSWORD = os.getenv('SUBMISSION_PASSWORD', 'diytrackerischziemlicool')
+
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///events.db'  # SQLite for simplicity
@@ -44,6 +46,11 @@ def submit_event():
         acts = form.acts.data
         ticket_link = form.ticket_link.data
         ticket_price = form.ticket_price.data
+        password = form.password.data
+
+        if password != PASSWORD:
+            flash('Invalid password')
+            return redirect(url_for('submit'))
 
         # Handle flyer upload
         flyer = None

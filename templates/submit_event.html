@@ -96,6 +96,11 @@
             {{ form.flyer(class="border border-black p-2 w-full") }}
         </div>
 
+        <div class="mb-4">
+            {{ form.password.label(class="block font-bold") }}
+            {{ form.password(class="border border-black p-2 w-full") }}
+        </div>
+
         <button type="submit" class="bg-black text-white p-2 mt-4">{{ form.submit() }}</button>
     </form>
 </section>

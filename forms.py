@@ -73,6 +73,7 @@ class EventForm(FlaskForm):
     genre = SelectMultipleField('Genre', choices=get_genre_choices(), validators=[DataRequired()])
     acts = TextAreaField('Acts (Optional if Event Name is provided)', validators=[Optional()])
     flyer = FileField('Flyer (Optional, JPG/PNG)', validators=[Optional()])
+    password = StringField('Password', validators=[DataRequired()])
     submit = SubmitField('Submit Event')
 
     def validate(self, *args, **kwargs):
