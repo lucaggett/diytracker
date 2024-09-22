@@ -12,6 +12,9 @@ from models import db, Event
 
 PASSWORD = os.getenv('SUBMISSION_PASSWORD', 'diytrackerischziemlicool')
 
+# check that the logs directory exists
+if not os.path.exists('logs'):
+    os.makedirs('logs')
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///events.db'  # SQLite for simplicity
