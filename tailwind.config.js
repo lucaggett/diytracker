@@ -4,7 +4,11 @@ module.exports = {
     './static/js/**/*.js'
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        richEatin: ['RichEatinAllCaps', 'sans-serif'],
+      },
+    }
   },
   plugins: [],
 }

@@ -8,17 +8,17 @@
     <!-- Include Tailwind CSS -->
     <link rel="stylesheet" href={{ url_for('static', filename='css/output.css') }}>
 </head>
-<body class="bg-gray-100">
+<body class="bg-black">
 
 <!-- Calendar Content -->
 
 <!-- Desktop Calendar -->
 <div class="container mx-auto px-4 py-6 hidden md:block">
     {% for month in months_data %}
-        <h1 class="text-3xl font-bold text-center mb-8">{{ month.year }} / {{ month.month }}</h1>
+        <h1 class="text-3xl font-bold text-red-800 font-richEatin text-center mb-8">{{ month.year }} / {{ month.month }}</h1>
 
         <!-- Calendar Header (Days of the Week) -->
-        <div class="grid grid-cols-7 gap-2 text-center font-semibold">
+        <div class="grid grid-cols-7 gap-2 text-gray-400 text-center font-semibold font-richEatin">
             <div>Mon</div>
             <div>Tue</div>
             <div>Wed</div>
@@ -35,19 +35,19 @@
 
             <!-- Empty Cells for days before the first of the month -->
             {% for _ in range(first_weekday) %}
-                <div class="p-4 bg-gray-200 h-32"></div>
+                <div class="p-4 bg-red-800 h-32 opacity-60 rounded-md"></div>
             {% endfor %}
 
             <!-- Days with events -->
             {% for day in range(1, month.last_day_of_month + 1) %}
                 {% set current_date = datetime(month.year, month.month, day).date() %}
-                <div class="day-cell p-4 bg-white shadow rounded-md h-32 overflow-y-auto">
-                    <span class="font-bold">{{ day }}</span>
+                <div class="day-cell p-4 bg-gray-400 shadow rounded-md h-32 overflow-y-auto">
+                    <span class="font-bold text-red-800 font-richEatin">{{ day }}</span>
                     <div class="mt-2 text-xs event-container">
                         {% if current_date in grouped_events %}
                             <!-- Display events for this day -->
                             {% for event in grouped_events[current_date] %}
-                                <p class="event-item cursor-pointer text-blue-500 underline"
+                                <p class="event-item cursor-pointer"
                                    data-event-id="{{ event.id }}"
                                    data-event-name="{{ event.name|e }}"
                                    data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
@@ -65,7 +65,7 @@
                                    data-flyer="{{ event.flyer|e }}"
                                    data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                                    onclick="showEventDetails(this)">
-                                    {{ event.name }}, {{ event.venue_canton }}
+                                    <b>{{ event.name }}</b>, {{ event.venue_canton }}
                                 </p>
                             {% endfor %}
                         {% else %}
@@ -78,7 +78,7 @@
             <!-- Empty Cells for days after the last of the month -->
             {% set last_day_of_week = datetime(month.year, month.month, month.last_day_of_month).weekday() %}
             {% for _ in range(6 - last_day_of_week) %}
-                <div class="p-4 bg-gray-200 h-32"></div>
+                <div class="p-4 bg-red-800 h-32 opacity-60 rounded-md"></div>
             {% endfor %}
         </div>
         <br>
@@ -99,16 +99,16 @@
                 {% set current_date = datetime(month.year, month.month, day).date() %}
                 {% if current_date >= today %}
                     <!-- Date Card -->
-                    <div class="date-card bg-white shadow rounded-md p-4">
+                    <div class="date-card bg-gray-400 shadow rounded-md p-4">
                         <div class="flex justify-between items-center">
-                            <span class="font-bold text-lg">{{ current_date.strftime('%A, %B %d, %Y') }}</span>
+                            <span class="font-bold text-lg font-richEatin">{{ current_date.strftime('%A, %B %d, %Y') }}</span>
                             <!-- Optionally display the date in your preferred format -->
                         </div>
                         <div class="mt-2 text-sm event-container">
                             {% if current_date in grouped_events %}
                                 <!-- Display events for this day -->
                                 {% for event in grouped_events[current_date] %}
-                                    <div class="event-item mt-2 p-2 border rounded cursor-pointer"
+                                    <div class="event-item mt-2 p-2 rounded cursor-pointer"
                                          data-event-id="{{ event.id }}"
                                          data-event-name="{{ event.name|e }}"
                                          data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
@@ -143,10 +143,10 @@
 
 <!-- Floating Action Button -->
 <button id="filter-button"
-        class="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full p-4 shadow-lg focus:outline-none">
+        class="fixed bottom-4 right-4 bg-red-800 text-white rounded-full p-4 shadow-lg focus:outline-none">
     <!-- Filter Icon -->
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24"
-         stroke="currentColor">
+         stroke="rgba(153, 167, 175)">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M3 4a1 1 0 012 0v2h14V4a1 1 0 112 0v16a1 1 0 11-2 0v-2H5v2a1 1 0 11-2 0V4z"/>
     </svg>
@@ -154,15 +154,15 @@
 
 <!-- Popup Modal for Filters -->
 <div id="filter-modal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
-    <div class="bg-white rounded-lg shadow-lg p-4 w-11/12 md:w-1/2 h-3/4 overflow-y-auto">
-        <h2 class="text-xl font-bold mb-4">Filter Events</h2>
+    <div class="bg-gray-400 rounded-lg shadow-lg p-4 w-11/12 md:w-1/2 h-3/4 overflow-y-auto">
+        <h2 class="text-xl font-bold mb-4 font-richEatin text-red-800">Filter Events</h2>
         <!-- Filter Categories -->
         <div id="filter-categories">
             <!-- Categories and options will be populated via JavaScript -->
         </div>
         <!-- Apply and Close Buttons -->
         <div class="flex justify-end mt-4">
-            <button id="apply-filters" class="bg-green-500 text-white px-4 py-2 rounded mr-2">Apply Filters</button>
+            <button id="apply-filters" class="bg-red-800 text-white px-4 py-2 rounded mr-2">Apply Filters</button>
             <button onclick="closeFilterModal()" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
         </div>
     </div>
@@ -170,8 +170,8 @@
 
 <!-- Modal -->
 <div id="event-modal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-1/2">
-        <h2 id="modal-event-name" class="text-2xl font-bold mb-4">Event Name</h2>
+    <div class="bg-gray-400 rounded-lg shadow-lg p-6 w-11/12 md:w-1/2">
+        <h2 id="modal-event-name" class="text-2xl font-bold mb-4 font-richEatin text-red-800">Event Name</h2>
         <p id="modal-event-date" class="mb-2">Date: </p>
         <p id="modal-event-venue" class="mb-2">Venue: </p>
         <p id="modal-event-address" class="mb-2">Address: </p>
@@ -181,7 +181,7 @@
         <p id="modal-event-ticket-price" class="mb-2">Ticket Price: </p>
         <p id="modal-event-ticket-link" class="mb-2">Ticket Link: </p>
         <!-- Add other event details as needed -->
-        <button onclick="closeModal()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Close</button>
+        <button onclick="closeModal()" class="mt-4 px-4 py-2 bg-red-800 text-white rounded">Close</button>
     </div>
 </div>
 
@@ -232,11 +232,11 @@
         for (const category in tagsByCategory) {
             // Create category header
             var categoryHeader = document.createElement('div');
-            categoryHeader.className = 'category-header flex items-center justify-between cursor-pointer py-2 border-b';
+            categoryHeader.className = 'category-header flex items-center justify-between cursor-pointer py-2 border-b border-gray-500';
             categoryHeader.setAttribute('data-category', category);
 
             var categoryTitle = document.createElement('span');
-            categoryTitle.className = 'font-bold';
+            categoryTitle.className = 'font-bold text-gray-700';
             categoryTitle.textContent = category.charAt(0).toUpperCase() + category.slice(1);
 
             var arrowIcon = document.createElement('span');
@@ -419,7 +419,7 @@
 
             // Handle ticket link
             if (ticketLink) {
-                document.getElementById('modal-event-ticket-link').innerHTML = 'Ticket Link: <a href="' + ticketLink + '" target="_blank" class="text-blue-500 underline">' + ticketLink + '</a>';
+                document.getElementById('modal-event-ticket-link').innerHTML = 'Ticket Link: <a href="' + ticketLink + '" target="_blank" class="text-red-800">' + ticketLink + '</a>';
             } else {
                 document.getElementById('modal-event-ticket-link').textContent = 'Ticket Link: N/A';
             }

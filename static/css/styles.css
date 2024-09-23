@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+    font-family: 'RichEatinAllCaps';
+    src: url('../fonts/rich_eatin.otf') format('opentype');
+}
