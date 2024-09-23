@@ -135,7 +135,11 @@
                                     data-flyer="{{ event.flyer|e }}"
                                     data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                                     onclick="toggleEventDetails(this)">
+                                    {% if event.name %}
                                     <p class="font-semibold">{{ event.name }}</p>
+                                    {% else %}
+                                    <p class="font-semibold">{{ event.acts }}</p>
+                                    {% endif %}
                                     <p class="text-gray-600">{{ event.venue_name }}, {{ event.venue_city }}</p>
                                     <!-- Hidden event details div -->
                                     <div class="event-details hidden mt-2 p-2 bg-gray-400 rounded">
