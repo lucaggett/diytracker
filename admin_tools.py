@@ -34,6 +34,7 @@ def regenerate_password_and_notify():
     EMAIL_SERVER, USERNAME, PASSWORD = open("EMAIL_DATA").read().split(":")
 
     for email in emails:
+        print(f'Sending email to {email}')
         message = EmailMessage()
         quips = ["Beep Boop", "Hiiii :3"]
         message.set_content(f'The DIY Tracker password has been reset to: {new_password}\n\n{random.choice(quips)},\ndiytracker.ch application server')
@@ -42,6 +43,7 @@ def regenerate_password_and_notify():
         message['To'] = email
 
         context = ssl.create_default_context()
+        print(f"Attempting to log in with credentials {USERNAME} and {PASSWORD} on {EMAIL_SERVER}")
         with smtplib.SMTP_SSL(EMAIL_SERVER, 465, context=context) as server:
             server.login(USERNAME, PASSWORD)
             server.send_message(message)
