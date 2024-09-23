@@ -129,7 +129,7 @@
                                     </div>
                                 {% endfor %}
                             {% else %}
-                                <p class="no-events-text mt-2 text-gray-500">No events scheduled for this day.</p>
+
                             {% endif %}
                         </div>
                     </div>
@@ -366,8 +366,6 @@
             // Update date cards to show "No events scheduled for this day" if no events are visible (for mobile view)
             var dateCards = document.querySelectorAll('.date-card');
             dateCards.forEach(function (card) {
-                var visibleEvents = card.querySelectorAll('.event-item:not(.hidden)');
-                var noEventsText = card.querySelector('.no-events-text');
                 if (visibleEvents.length === 0) {
                     // Show "No events scheduled for this day" message
                     if (noEventsText) {
@@ -430,6 +428,16 @@
         window.closeModal = function () {
             document.getElementById('event-modal').classList.add('hidden');
         }
+
+        // Remove any event cards that have no events
+        eventCards = document.querySelectorAll('.date-card');
+        console.log(eventCards);
+        eventCards.forEach(function (card) {
+            console.log(card.querySelectorAll('.event-item').length);
+            if (card.querySelectorAll('.event-item').length === 0) {
+                card.hidden = true;
+            }
+        });
     });
 </script>
 
