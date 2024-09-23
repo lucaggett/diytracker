@@ -19,6 +19,7 @@ with app.app_context():
         'Band Alpha', 'Artist Beta', 'Ensemble Gamma',
         'DJ Delta', 'Group Epsilon', 'Performer Zeta'
     ]
+    flyer = "static/uploads/flyer.jpeg"
 
     # Start date is today
     start_date = datetime.now().date()
@@ -52,7 +53,7 @@ with app.app_context():
             venue_coords='47.3769° N, 8.5417° E',  # Example coordinates
             genre=genre,
             acts=acts,
-            flyer=None  # You can add a path to a flyer image if needed
+            flyer="uploads/flyer.jpeg"  # You can add a path to a flyer image if needed
         )
 
         db.session.add(event)

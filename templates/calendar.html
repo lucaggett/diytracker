@@ -8,7 +8,7 @@
     <!-- Include Tailwind CSS -->
     <link rel="stylesheet" href={{ url_for('static', filename='css/output.css') }}>
 </head>
-<body class="bg-black">
+<body class="bg-gray-300">
 
 <!-- Calendar Content -->
 
@@ -65,12 +65,16 @@
                                    data-genre="{{ event.genre|e }}"
                                    data-acts="{{ event.acts|e }}"
                                    data-flyer="{{ event.flyer|e }}"
-                                   data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                                   data-tags="canton:
+
+                                           {{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:
+
+                                               {{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                                    onclick="showEventDetails(this)">
                                     {% if event.name %}
-                                    <b>{{ event.name }}</b>, {{ event.venue_canton }}
+                                        <b>{{ event.name }}</b>, {{ event.venue_canton }}
                                     {% else %}
-                                    <b>{{ event.acts }}</b>, {{ event.venue_canton }}
+                                        <b>{{ event.acts }}</b>, {{ event.venue_canton }}
                                     {% endif %}
                                 </p>
                             {% endfor %}
@@ -93,7 +97,6 @@
         <br>
     {% endfor %}
 </div>
-
 <!-- Mobile Calendar -->
 <div class="container mx-auto px-4 py-6 block md:hidden">
     {% set today = datetime.utcnow().date() %}
@@ -105,50 +108,70 @@
                 {% set current_date = datetime(month.year, month.month, day).date() %}
                 {% if current_date >= today %}
                     <!-- Date Card -->
-                    <div class="date-card bg-gray-400 shadow rounded-md p-4">
+                    <div class="date-card bg-gray-400 shadow shadow-gray-800 rounded-md p-4">
                         <div class="flex justify-between items-center">
-                            <span class="font-bold text-lg font-richEatin">{{ current_date.strftime('%A, %B %d, %Y') }}</span>
+                            <span class="font-bold text-lg font-richEatin text-red-800">{{ current_date.strftime('%A, %B %d, %Y') }}</span>
                             <!-- Optionally display the date in your preferred format -->
                         </div>
                         <div class="mt-2 text-sm event-container">
                             {% if current_date in grouped_events %}
                                 <!-- Display events for this day -->
                                 {% for event in grouped_events[current_date] %}
-                                    <div class="event-item mt-2 p-2 rounded cursor-pointer"
-                                         data-event-id="{{ event.id }}"
-                                         data-event-name="{{ event.name|e }}"
-                                         data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
-                                         data-event-doors="{{ event.doors.strftime('%H:%M') }}"
-                                         data-venue-name="{{ event.venue_name|e }}"
-                                         data-venue-address="{{ event.venue_address|e }}"
-                                         data-venue-city="{{ event.venue_city|e }}"
-                                         data-venue-canton="{{ event.venue_canton|e }}"
-                                         data-venue-plz="{{ event.venue_plz|e }}"
-                                         data-ticket-price="{{ event.ticket_price|e }}"
-                                         data-ticket-link="{{ event.ticket_link|e }}"
-                                         data-venue-coords="{{ event.venue_coords|e }}"
-                                         data-genre="{{ event.genre|e }}"
-                                         data-acts="{{ event.acts|e }}"
-                                         data-flyer="{{ event.flyer|e }}"
-                                         data-tags="canton:
+                                    <div class="event-item mt-2 p-2 rounded cursor-pointer shadow-gray-800"
+                                    data-event-id="{{ event.id }}"
+                                    data-event-name="{{ event.name|e }}"
+                                    data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
+                                    data-event-doors="{{ event.doors.strftime('%H:%M') }}"
+                                    data-venue-name="{{ event.venue_name|e }}"
+                                    data-venue-address="{{ event.venue_address|e }}"
+                                    data-venue-city="{{ event.venue_city|e }}"
+                                    data-venue-canton="{{ event.venue_canton|e }}"
+                                    data-venue-plz="{{ event.venue_plz|e }}"
+                                    data-ticket-price="{{ event.ticket_price|e }}"
+                                    data-ticket-link="{{ event.ticket_link|e }}"
+                                    data-venue-coords="{{ event.venue_coords|e }}"
+                                    data-genre="{{ event.genre|e }}"
+                                    data-acts="{{ event.acts|e }}"
+                                    data-flyer="{{ event.flyer|e }}"
+                                    data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                                    onclick="toggleEventDetails(this)">
+                                    <p class="font-semibold">{{ event.name }}</p>
+                                    <p class="text-gray-600">{{ event.venue_name }}, {{ event.venue_city }}</p>
+                                    <!-- Hidden event details div -->
+                                    <div class="event-details hidden mt-2 p-2 bg-gray-400 rounded">
+                                        {% if event.flyer %}
+                                            <img src="{{ url_for('static', filename=event.flyer) }}"
+                                                 alt="{{ event.name }}" class="w-full h-auto rounded">
+                                            <br>
+                                        {% endif %}
+                                        <p><b>Date: </b>{{ event.date.strftime('%Y-%m-%d') }}
+                                            at {{ event.doors.strftime('%H:%M') }}</p>
+                                        <p><b>Venue: </b>{{ event.venue_name }}</p>
+                                        <p><b>Address: </b>{{ event.venue_address }}</p>
+                                        <p>
+                                            <b>City: </b>{{ event.venue_plz }} {{ event.venue_city }}, {{ event.venue_canton }}
+                                        </p>
+                                        <p><b>Genre: </b>{{ event.genre }}</p>
+                                        <p><b>Acts: </b>{{ event.acts }}</p>
+                                        <p><b>Ticket Price: </b>{{ event.ticket_price }}</p>
+                                        {% if event.ticket_link %}
+                                            <p><b>Ticket Link: </b><a href="{{ event.ticket_link }}" target="_blank"
+                                                                      class="text-red-800">{{ event.ticket_link }}</a>
+                                            </p>
+                                        {% else %}
+                                            <p><b>Ticket Link: N/A</b></p>
+                                        {% endif %}
 
-                                                 {{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:
-
-                                                     {{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
-                                         onclick="showEventDetails(this)">
-                                        <p class="font-semibold">{{ event.name }}</p>
-                                        <p class="text-gray-600">{{ event.venue_name }}, {{ event.venue_city }}</p>
+                                    </div>
                                     </div>
                                 {% endfor %}
-                            {% else %}
-
                             {% endif %}
-                        </div>
+                    </div>
                     </div>
                 {% endif %}
             {% endfor %}
         {% endfor %}
-    </div>
+</div>
 </div>
 
 <!-- Floating Action Button -->
@@ -182,7 +205,7 @@
 <div id="event-modal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
     <div class="bg-gray-400 rounded-lg shadow-lg p-6 w-11/12 md:w-1/2">
         <h2 id="modal-event-name" class="text-2xl font-bold mb-4 font-richEatin text-red-800">Event Name</h2>
-        <p id="modal-event-date" class="mb-2">Date: </p>
+        <p id="modal-event-date" class="mb-2 font-bold">Date: </p>
         <p id="modal-event-venue" class="mb-2">Venue: </p>
         <p id="modal-event-address" class="mb-2">Address: </p>
         <p id="modal-event-city" class="mb-2">City: </p>
@@ -431,6 +454,20 @@
                 card.hidden = true;
             }
         });
+        // Function to toggle event details
+        window.toggleEventDetails = function (element) {
+            var details = element.querySelector('.event-details');
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                {#element.classList.add('border');#}
+                element.classList.add('shadow');
+            } else {
+                details.classList.add('hidden');
+                {#element.classList.remove('border');#}
+                element.classList.remove('shadow');
+            }
+        }
+
     });
 </script>
 
