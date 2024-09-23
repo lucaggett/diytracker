@@ -32,6 +32,7 @@ def regenerate_password_and_notify():
 
     # Notify all users
     EMAIL_SERVER, USERNAME, PASSWORD = open("EMAIL_DATA").read().split(":")
+    PASSWORD = PASSWORD.strip()
 
     for email in emails:
         print(f'Sending email to {email}')
