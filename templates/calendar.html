@@ -71,7 +71,11 @@
 
                                                {{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                                    onclick="showEventDetails(this)">
+                                    {% if event.name %}
                                     <b>{{ event.name }}</b>, {{ event.venue_canton }}
+                                    {% else %}
+                                    <b>{{ event.acts }}</b>, {{ event.venue_canton }}
+                                    {% endif %}
                                 </p>
                             {% endfor %}
                         {% else %}
