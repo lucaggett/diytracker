@@ -10,7 +10,6 @@ from werkzeug.utils import secure_filename
 from forms import EventForm
 from models import db, Event
 
-PASSWORD = os.getenv('SUBMISSION_PASSWORD', 'diytrackerischziemlicool')
 
 # Check that required directories exist
 if not os.path.exists('logs'):
@@ -32,7 +31,6 @@ with app.app_context():
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
-print("http://127.0.0.1:5000/submit")
 
 # Check allowed file extensions
 def allowed_file(filename):
@@ -58,7 +56,7 @@ def submit_event():
         ticket_price = form.ticket_price.data
         password = form.password.data
 
-        if password != PASSWORD:
+        if password != open("SUBMISSION_PASSWORD_CURRENT").read().strip():
             flash('Invalid password')
             return redirect(url_for('submit_event'))
 
@@ -108,7 +106,7 @@ def edit_event(event_id):
     if request.method == 'POST':
         if form.validate_on_submit():
             password = form.password.data
-            if password != PASSWORD:
+            if password != open('ADMIN_PASSWORD').read().strip():
                 flash('Invalid password')
                 return redirect(url_for('edit_event', event_id=event_id))
 
@@ -134,7 +132,7 @@ def edit_event(event_id):
 def delete_event(event_id):
     event = Event.query.get_or_404(event_id)
     password = request.form.get('password')
-    if password != PASSWORD:
+    if password != open('ADMIN_PASSWORD').read().strip():
         flash('Invalid password')
         return redirect(url_for('admin'))
 
