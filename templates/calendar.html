@@ -65,11 +65,7 @@
                                    data-genre="{{ event.genre|e }}"
                                    data-acts="{{ event.acts|e }}"
                                    data-flyer="{{ event.flyer|e }}"
-                                   data-tags="canton:
-
-                                           {{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:
-
-                                               {{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                                   data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %};genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %};various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                                    onclick="showEventDetails(this)">
                                     {% if event.name %}
                                         <b>{{ event.name }}</b>, {{ event.venue_canton }}
@@ -133,7 +129,7 @@
                                     data-genre="{{ event.genre|e }}"
                                     data-acts="{{ event.acts|e }}"
                                     data-flyer="{{ event.flyer|e }}"
-                                    data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                                    data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %};genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %};{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                                     onclick="toggleEventDetails(this)">
                                     {% if event.name %}
                                     <p class="font-semibold">{{ event.name }}</p>
@@ -236,10 +232,16 @@
         eventItems.forEach(function (item) {
             var tags = item.getAttribute('data-tags');
             if (tags) {
-                tags.split(',').forEach(function (tag) {
+                tags.split(';').forEach(function (tag) {
                     var parts = tag.split(':');
                     var category = parts[0];
                     var tagValue = parts[1];
+                    if (tagValue.contains(',') && tagsByCategory[category]) {
+                        tagValues = tagValue.split(',');
+                        tagValues.forEach(function (tagValue) {
+                            tagsByCategory[category].add(tagValue.trim());
+                        });
+                    } else
                     if (tagsByCategory[category]) {
                         tagsByCategory[category].add(tagValue.trim());
                     }
