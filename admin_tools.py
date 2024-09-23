@@ -40,7 +40,7 @@ def regenerate_password_and_notify():
         quips = ["Beep Boop", "Hiiii :3"]
         message.set_content(f'The DIY Tracker password has been reset to: {new_password}\n\n{random.choice(quips)},\ndiytracker.ch application server')
         message['Subject'] = 'Password has been reset'
-        message['From'] = "DIY Tracker Updates"
+        message['From'] = "diytracker@aggett.ch"
         message['To'] = email
 
         context = ssl.create_default_context()
