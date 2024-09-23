@@ -144,7 +144,7 @@
                                     <!-- Hidden event details div -->
                                     <div class="event-details hidden mt-2 p-2 bg-gray-400 rounded">
                                         {% if event.flyer %}
-                                            <img src="{{ "/static/" + event.flyer }}"
+                                            <img src="{{ event.flyer }}"
                                                  alt="{{ event.name }}" class="w-full h-auto rounded">
                                             <br>
                                         {% endif %}
