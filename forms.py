@@ -11,7 +11,8 @@ def get_genre_choices():
         'Indie', 'Rock', 'Pop', 'Hip Hop', 'Reggae', 'Dub', 'Dancehall',
         'Drum & Bass', 'Dubstep', 'Techno', 'House', 'Trance', 'Electro',
         'Ambient', 'Experimental', 'Noise', 'Wave', 'NDW', 'Folk', 'Neofolk',
-        'Jazz', 'Blues', 'Ska', 'Garage', 'Hyperpop'
+        'Jazz', 'Blues', 'Ska', 'Garage', 'Hyperpop', 'Emo', 'Metalcore', 'Synth',
+        'Ska'
     ]
 
 

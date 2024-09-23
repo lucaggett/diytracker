@@ -15,7 +15,7 @@
 <!-- Desktop Calendar -->
 <div class="container mx-auto px-4 py-6 hidden md:block">
     {% for month in months_data %}
-        <h1 class="text-3xl font-bold text-red-800 font-richEatin text-center mb-8">{{ month.year }} / {{ month.month }}</h1>
+        {#        <h1 class="text-3xl font-bold text-red-800 font-richEatin text-center mb-8">{{ month.year }} / {{ month.month }}</h1>#}
 
         <!-- Calendar Header (Days of the Week) -->
         <div class="grid grid-cols-7 gap-2 text-gray-400 text-center font-semibold font-richEatin">
@@ -35,7 +35,9 @@
 
             <!-- Empty Cells for days before the first of the month -->
             {% for _ in range(first_weekday) %}
-                <div class="p-4 bg-red-800 h-32 opacity-60 rounded-md"></div>
+                <div class="p-4 bg-red-800 h-32 opacity-60 rounded-md text-white font-bold flex items-center justify-center">
+                    {{ month.year }} / {{ month.month }}
+                </div>
             {% endfor %}
 
             <!-- Days with events -->
@@ -63,7 +65,11 @@
                                    data-genre="{{ event.genre|e }}"
                                    data-acts="{{ event.acts|e }}"
                                    data-flyer="{{ event.flyer|e }}"
-                                   data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                                   data-tags="canton:
+
+                                           {{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:
+
+                                               {{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                                    onclick="showEventDetails(this)">
                                     <b>{{ event.name }}</b>, {{ event.venue_canton }}
                                 </p>
@@ -78,7 +84,9 @@
             <!-- Empty Cells for days after the last of the month -->
             {% set last_day_of_week = datetime(month.year, month.month, month.last_day_of_month).weekday() %}
             {% for _ in range(6 - last_day_of_week) %}
-                <div class="p-4 bg-red-800 h-32 opacity-60 rounded-md"></div>
+                <div class="p-4 bg-red-800 h-32 opacity-60 rounded-md text-white font-bold flex items-center justify-center">
+                    {{ month.year }} / {{ month.month }}
+                </div>
             {% endfor %}
         </div>
         <br>
@@ -122,7 +130,11 @@
                                          data-genre="{{ event.genre|e }}"
                                          data-acts="{{ event.acts|e }}"
                                          data-flyer="{{ event.flyer|e }}"
-                                         data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                                         data-tags="canton:
+
+                                                 {{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:
+
+                                                     {{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                                          onclick="showEventDetails(this)">
                                         <p class="font-semibold">{{ event.name }}</p>
                                         <p class="text-gray-600">{{ event.venue_name }}, {{ event.venue_city }}</p>
@@ -297,6 +309,7 @@
         });
 
         function filterEventsByTags() {
+            eventItems = document.querySelectorAll('.event-item');
             eventItems.forEach(function (item) {
                 var itemTags = item.getAttribute('data-tags');
                 console.log(itemTags);
@@ -318,14 +331,11 @@
                 });
 
                 let visible = true;
-                for (var category in selectedTags) {
+                for (const category in selectedTags) {
                     if (selectedTags[category].size > 0) {
-                        console.log("Category: " + category);
-                        console.log("Selected tags: " + selectedTags[category]);
-                        console.log("Item tags: " + itemTagsByCategory[category]);
-                        console.log("Intersection: " + itemTagsByCategory[category].filter(tag => selectedTags[category].has(tag)));
                         const hasTag = itemTagsByCategory[category].some(tag => selectedTags[category].has(tag));
                         if (!hasTag) {
+                            console.log('Hiding event because it does not have a selected tag in category ' + category);
                             visible = false;
                             break;
                         }
@@ -335,22 +345,28 @@
 
                 if (visible) {
                     item.classList.remove('hidden');
+                    // if the event is a mobile card, show the date card if any events are visible
+                    item.parentElement.parentElement.hidden = false;
                 } else {
                     item.classList.add('hidden');
+                    // if the event is a mobile card, hide the date card if all events are hidden
+                    if (item.parentElement.querySelectorAll('.event-item:not(.hidden)').length === 0) {
+                        item.parentElement.parentElement.hidden = true;
+                    }
                 }
             });
 
             // Update day cells to show "No events" if no events are visible (for desktop view)
-            var dayCells = document.querySelectorAll('.day-cell');
+            const dayCells = document.querySelectorAll('.day-cell');
             dayCells.forEach(function (cell) {
-                var visibleEvents = cell.querySelectorAll('.event-item:not(.hidden)');
-                var noEventsText = cell.querySelector('.no-events-text');
+                const visibleEvents = cell.querySelectorAll('.event-item:not(.hidden)');
+                const noEventsText = cell.querySelector('.no-events-text');
                 if (visibleEvents.length === 0) {
                     // Show "No events" message
                     if (noEventsText) {
                         noEventsText.classList.remove('hidden');
                     } else {
-                        var p = document.createElement('p');
+                        const p = document.createElement('p');
                         p.textContent = 'No events';
                         p.className = 'no-events-text';
                         cell.querySelector('.event-container').appendChild(p);
@@ -362,46 +378,25 @@
                     }
                 }
             });
-
-            // Update date cards to show "No events scheduled for this day" if no events are visible (for mobile view)
-            var dateCards = document.querySelectorAll('.date-card');
-            dateCards.forEach(function (card) {
-                if (visibleEvents.length === 0) {
-                    // Show "No events scheduled for this day" message
-                    if (noEventsText) {
-                        noEventsText.classList.remove('hidden');
-                    } else {
-                        var p = document.createElement('p');
-                        p.textContent = 'No events scheduled for this day.';
-                        p.className = 'no-events-text mt-2 text-gray-500';
-                        card.querySelector('.event-container').appendChild(p);
-                    }
-                } else {
-                    // Hide "No events scheduled for this day" message
-                    if (noEventsText) {
-                        noEventsText.classList.add('hidden');
-                    }
-                }
-            });
         }
 
         // Existing function to show event details in the modal
         window.showEventDetails = function (element) {
             // Retrieve data from data attributes
-            var eventName = element.getAttribute('data-event-name');
-            var eventDate = element.getAttribute('data-event-date');
-            var eventDoors = element.getAttribute('data-event-doors');
-            var venueName = element.getAttribute('data-venue-name');
-            var venueAddress = element.getAttribute('data-venue-address');
-            var venueCity = element.getAttribute('data-venue-city');
-            var venueCanton = element.getAttribute('data-venue-canton');
-            var venuePLZ = element.getAttribute('data-venue-plz');
-            var ticketPrice = element.getAttribute('data-ticket-price');
-            var ticketLink = element.getAttribute('data-ticket-link');
-            var venueCoords = element.getAttribute('data-venue-coords');
-            var genre = element.getAttribute('data-genre');
-            var acts = element.getAttribute('data-acts');
-            var flyer = element.getAttribute('data-flyer');
+            let eventName = element.getAttribute('data-event-name');
+            let eventDate = element.getAttribute('data-event-date');
+            let eventDoors = element.getAttribute('data-event-doors');
+            let venueName = element.getAttribute('data-venue-name');
+            let venueAddress = element.getAttribute('data-venue-address');
+            let venueCity = element.getAttribute('data-venue-city');
+            let venueCanton = element.getAttribute('data-venue-canton');
+            let venuePLZ = element.getAttribute('data-venue-plz');
+            let ticketPrice = element.getAttribute('data-ticket-price');
+            let ticketLink = element.getAttribute('data-ticket-link');
+            let venueCoords = element.getAttribute('data-venue-coords');
+            let genre = element.getAttribute('data-genre');
+            let acts = element.getAttribute('data-acts');
+            let flyer = element.getAttribute('data-flyer');
 
             // Set the modal content
             document.getElementById('modal-event-name').textContent = eventName;
@@ -431,9 +426,7 @@
 
         // Remove any event cards that have no events
         eventCards = document.querySelectorAll('.date-card');
-        console.log(eventCards);
         eventCards.forEach(function (card) {
-            console.log(card.querySelectorAll('.event-item').length);
             if (card.querySelectorAll('.event-item').length === 0) {
                 card.hidden = true;
             }
