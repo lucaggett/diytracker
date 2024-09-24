@@ -12,6 +12,8 @@
         <h1 class="text-3xl font-bold mb-6">Edit Event</h1>
         <form method="POST" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
+
+            <!-- Name -->
             <div class="mb-4">
                 {{ form.name.label(class="block text-gray-700 font-bold mb-2") }}
                 {{ form.name(class="w-full px-3 py-2 border rounded") }}
@@ -19,9 +21,8 @@
                     <span class="text-red-500 text-sm">{{ error }}</span>
                 {% endfor %}
             </div>
-            <!-- Repeat the above block for each form field -->
-            <!-- Include all necessary fields from EventForm -->
-            <!-- For example: -->
+
+            <!-- Date -->
             <div class="mb-4">
                 {{ form.date.label(class="block text-gray-700 font-bold mb-2") }}
                 {{ form.date(class="w-full px-3 py-2 border rounded") }}
@@ -29,7 +30,121 @@
                     <span class="text-red-500 text-sm">{{ error }}</span>
                 {% endfor %}
             </div>
-            <!-- Add other fields similarly -->
+
+            <!-- Venue Name -->
+            <div class="mb-4">
+                {{ form.venue_name.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.venue_name(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.venue_name.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Venue Address -->
+            <div class="mb-4">
+                {{ form.venue_address.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.venue_address(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.venue_address.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Venue City -->
+            <div class="mb-4">
+                {{ form.venue_city.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.venue_city(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.venue_city.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Venue Canton -->
+            <div class="mb-4">
+                {{ form.venue_canton.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.venue_canton(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.venue_canton.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Venue PLZ -->
+            <div class="mb-4">
+                {{ form.venue_plz.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.venue_plz(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.venue_plz.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Ticket Price -->
+            <div class="mb-4">
+                {{ form.ticket_price.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.ticket_price(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.ticket_price.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Ticket Link -->
+            <div class="mb-4">
+                {{ form.ticket_link.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.ticket_link(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.ticket_link.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Venue Coordinates -->
+            <div class="mb-4">
+                {{ form.venue_coords.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.venue_coords(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.venue_coords.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Doors Time -->
+            <div class="mb-4">
+                {{ form.doors.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.doors(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.doors.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Genre checkboxes -->
+            <div class="mb-4">
+                {{ form.genre.label(class="block font-bold") }}
+                {% for value in form.genre.choices %}
+                    <div class="flex items-center mb-2">
+                        <input type="checkbox" id="genre_{{ loop.index }}" name="genre" value="{{ value }}"
+                               class="border border-black p-2 mr-2"
+                               {% if value in form.genre.data %}checked{% endif %}>
+                        <label for="genre_{{ loop.index }}" class="font-medium">{{ value }}</label>
+                    </div>
+                {% endfor %}
+                {% for error in form.genre.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Acts -->
+            <div class="mb-4">
+                {{ form.acts.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.acts(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.acts.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Flyer Upload -->
+            <div class="mb-4">
+                {{ form.flyer.label(class="block text-gray-700 font-bold mb-2") }}
+                {{ form.flyer(class="w-full px-3 py-2 border rounded") }}
+                {% for error in form.flyer.errors %}
+                    <span class="text-red-500 text-sm">{{ error }}</span>
+                {% endfor %}
+            </div>
 
             <!-- Password Field -->
             <div class="mb-4">
@@ -40,6 +155,7 @@
                 {% endfor %}
             </div>
 
+            <!-- Submit and Cancel Buttons -->
             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update Event</button>
             <a href="{{ url_for('admin') }}" class="ml-4 text-gray-700 hover:underline">Cancel</a>
         </form>
