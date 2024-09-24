@@ -140,7 +140,7 @@
                                         <!-- Hidden event details div -->
                                         <div class="event-details hidden mt-2 p-2 bg-gray-400 rounded">
                                             {% if event.flyer %}
-                                                <img src="{{ event.flyer }}"
+                                                <img src="{{ event.flyer }}" loading="lazy"
                                                      alt="{{ event.name }}" class="w-full h-auto rounded">
                                                 <br>
                                             {% endif %}
@@ -239,7 +239,6 @@
                     if (tagsByCategory[category]) {
                         // if the tag value contains a ;, split it and add each tag to the list
                         if (tagValue.includes(';')) {
-                            console.log('Splitting tag value ' + tagValue + ' into multiple tags');
                             tagValue.split(';').forEach(function (tag) {
                                 tagsByCategory[category].add(tag.trim());
                             });
@@ -343,7 +342,6 @@
             eventItems = document.querySelectorAll('.event-item');
             eventItems.forEach(function (item) {
                 var itemTags = item.getAttribute('data-tags');
-                console.log(itemTags);
                 var itemTagList = itemTags ? itemTags.split(',').map(t => t.trim()) : [];
 
                 var itemTagsByCategory = {
@@ -359,7 +357,6 @@
                     if (itemTagsByCategory[category]) {
                         // if the tag value contains a ;, split it and add each tag to the list
                         if (tagValue.includes(';')) {
-                            console.log('Splitting tag value ' + tagValue + ' into multiple tags');
                             tagValue.split(';').forEach(function (tag) {
                                 itemTagsByCategory[category].push(tag);
                             });
@@ -374,7 +371,6 @@
                     if (selectedTags[category].size > 0) {
                         const hasTag = itemTagsByCategory[category].some(tag => selectedTags[category].has(tag));
                         if (!hasTag) {
-                            console.log('Hiding event because it does not have a selected tag in category ' + category);
                             visible = false;
                             break;
                         }
