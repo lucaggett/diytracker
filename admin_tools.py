@@ -14,8 +14,8 @@ def generate_password():
     a password generator
     :return: A secure password
     """
-    password_characters = list(string.ascii_letters) + list(string.digits) + list(string.punctuation)
-    return ''.join(random.choices(password_characters, k=16))
+    password_characters = list(string.ascii_letters) + list(string.digits)
+    return ''.join(random.choices(password_characters, k=32))
 
 def regenerate_password_and_notify():
     """
@@ -63,6 +63,20 @@ def add_user(email):
         db.session.add(new_user)
         db.session.commit()
     print(f'User {email} added successfully!')
+
+    # Welcome the user and notify them of the current password
+    diytracker_password = open("SUBMISSION_PASSWORD_CURRENT").read().strip()
+    EMAIL_SERVER, USERNAME, PASSWORD = open("EMAIL_DATA").read().split(":")
+    PASSWORD = PASSWORD.strip()
+
+    message = EmailMessage()
+    message.set_content(f"Welcome to diytracker.ch!\n\n"
+                        f"You may now submit events at https://diytracker.ch/submit using the password {diytracker_password}.\n\n"
+                        f"The password will be reset periodically, and you will be notified of the new password via email.\n\n"
+                        f"Happy Submitting\n"
+                        f"diytracker.ch application server\n\n"
+                        f"If you have any questions, please contact Luc at luc@aggett.com")
+
 
 
 def remove_user(email):
