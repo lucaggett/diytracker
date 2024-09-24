@@ -3,6 +3,7 @@ import random
 import smtplib
 import ssl
 import string
+import sys
 from email.message import EmailMessage
 from models import Submitter
 from app import app, db
@@ -86,23 +87,35 @@ def list_users():
 
 if __name__ == '__main__':
     # small admin script to add or remove users to/from the admin list, regenerate the password, etc
-    print("1. Regenerate password and notify all users")
-    print("2. Add a new user")
-    print("3. Remove a user")
-    print("4. List all users")
-    choice = input("Enter your choice: ")
+    if len(sys.argv) == 1:
+        print("Admin Tools CLI")
+        print("1. Regenerate password and notify all users")
+        print("2. Add a new user")
+        print("3. Remove a user")
+        print("4. List all users")
+        choice = input("Enter your choice: ")
 
-    if choice == '1':
-        regenerate_password_and_notify()
+        if choice == '1':
+            regenerate_password_and_notify()
 
-    elif choice == '2':
-        email = input("Enter the email of the new user: ")
-        add_user(email)
+        elif choice == '2':
+            email = input("Enter the email of the new user: ")
+            add_user(email)
 
-    elif choice == '3':
-        email = input("Enter the email of the user to remove: ")
-        remove_user(email)
+        elif choice == '3':
+            email = input("Enter the email of the user to remove: ")
+            remove_user(email)
 
-    elif choice == '4':
-        list_users()
+        elif choice == '4':
+            list_users()
+
+    elif len(sys.argv) == 2:
+        if sys.argv[1] == 'regenerate':
+            regenerate_password_and_notify()
+        elif sys.argv[1] == 'list':
+            list_users()
+        else:
+            print("Invalid argument")
+    else:
+        print("Too many arguments")
 
