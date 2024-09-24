@@ -76,6 +76,16 @@ def add_user(email):
                         f"Happy Submitting\n"
                         f"diytracker.ch application server\n\n"
                         f"If you have any questions, please contact Luc at luc@aggett.com")
+    message['Subject'] = 'Welcome new diytracker.ch submitter'
+    message['From'] = "diytracker@aggett.ch"
+    message['To'] = email
+
+    context = ssl.create_default_context()
+    print(f"Attempting to log in with credentials {USERNAME} and {PASSWORD} on {EMAIL_SERVER}")
+    with smtplib.SMTP_SSL(EMAIL_SERVER, 465, context=context) as server:
+        server.login(USERNAME, PASSWORD)
+        server.send_message(message)
+    print(f'Welcome email sent to {email} successfully!')
 
 
 
