@@ -237,7 +237,15 @@
                     var category = parts[0];
                     var tagValue = parts[1];
                     if (tagsByCategory[category]) {
-                        tagsByCategory[category].add(tagValue.trim());
+                        // if the tag value contains a ;, split it and add each tag to the list
+                        if (tagValue.includes(';')) {
+                            console.log('Splitting tag value ' + tagValue + ' into multiple tags');
+                            tagValue.split(';').forEach(function (tag) {
+                                tagsByCategory[category].add(tag.trim());
+                            });
+                        } else {
+                            tagsByCategory[category].add(tagValue.trim());
+                        }
                     }
                 });
             }
@@ -351,6 +359,7 @@
                     if (itemTagsByCategory[category]) {
                         // if the tag value contains a ;, split it and add each tag to the list
                         if (tagValue.includes(';')) {
+                            console.log('Splitting tag value ' + tagValue + ' into multiple tags');
                             tagValue.split(';').forEach(function (tag) {
                                 itemTagsByCategory[category].push(tag);
                             });
