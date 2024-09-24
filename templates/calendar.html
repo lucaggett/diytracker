@@ -222,20 +222,20 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Collect unique tags from events
-        var eventItems = document.querySelectorAll('.event-item');
-        var tagsByCategory = {
+        let eventItems = document.querySelectorAll('.event-item');
+        const tagsByCategory = {
             'canton': new Set(),
             'genre': new Set(),
             'various': new Set()
         };
 
         eventItems.forEach(function (item) {
-            var tags = item.getAttribute('data-tags');
+            const tags = item.getAttribute('data-tags');
             if (tags) {
                 tags.split(',').forEach(function (tag) {
-                    var parts = tag.split(':');
-                    var category = parts[0];
-                    var tagValue = parts[1];
+                    const parts = tag.split(':');
+                    const category = parts[0];
+                    const tagValue = parts[1];
                     if (tagsByCategory[category]) {
                         // if the tag value contains a ;, split it and add each tag to the list
                         if (tagValue.includes(';')) {
@@ -252,7 +252,7 @@
         });
 
         // Selected tags storage
-        var selectedTags = {
+        const selectedTags = {
             'canton': new Set(),
             'genre': new Set(),
             'various': new Set()
@@ -269,18 +269,18 @@
         }
 
         // Populate filter categories and options
-        var filterCategoriesContainer = document.getElementById('filter-categories');
+        const filterCategoriesContainer = document.getElementById('filter-categories');
         for (const category in tagsByCategory) {
             // Create category header
-            var categoryHeader = document.createElement('div');
+            const categoryHeader = document.createElement('div');
             categoryHeader.className = 'category-header flex items-center justify-between cursor-pointer py-2 border-b border-gray-500';
             categoryHeader.setAttribute('data-category', category);
 
-            var categoryTitle = document.createElement('span');
+            const categoryTitle = document.createElement('span');
             categoryTitle.className = 'font-bold text-gray-700';
             categoryTitle.textContent = category.charAt(0).toUpperCase() + category.slice(1);
 
-            var arrowIcon = document.createElement('span');
+            const arrowIcon = document.createElement('span');
             arrowIcon.className = 'arrow-icon transform transition-transform duration-200';
             arrowIcon.innerHTML = '&#9656;'; // Right arrow
 
@@ -288,16 +288,16 @@
             categoryHeader.appendChild(arrowIcon);
 
             // Create options container
-            var optionsContainer = document.createElement('div');
+            const optionsContainer = document.createElement('div');
             optionsContainer.className = 'options-container pl-4 mt-2 hidden';
             optionsContainer.setAttribute('data-category-options', category);
 
             // Populate options
-            var tagsArray = Array.from(tagsByCategory[category]).sort();
+            const tagsArray = Array.from(tagsByCategory[category]).sort();
             tagsArray.forEach(function (tag) {
-                var label = document.createElement('label');
+                let label = document.createElement('label');
                 label.className = 'flex items-center mb-2';
-                var checkbox = document.createElement('input');
+                let checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.className = 'mr-2';
                 checkbox.value = tag;
@@ -320,7 +320,7 @@
 
             // Add event listener to toggle options display
             categoryHeader.addEventListener('click', function () {
-                var category = this.getAttribute('data-category');
+                const category = this.getAttribute('data-category');
                 var options = document.querySelector('[data-category-options="' + category + '"]');
                 var arrow = this.querySelector('.arrow-icon');
                 if (options.classList.contains('hidden')) {
