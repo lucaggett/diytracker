@@ -73,10 +73,9 @@ def add_user(email):
     message.set_content(f"Welcome to diytracker.ch!\n\n"
                         f"You may now submit events at https://diytracker.ch/submit using the password {diytracker_password}.\n\n"
                         f"The password will be reset periodically, and you will be notified of the new password via email.\n\n"
-                        f"Happy Submitting\n"
-                        f"diytracker.ch application server\n\n"
+                        f"This is an automated message from the diytracker application server\n\n"
                         f"If you have any questions, please contact Luc at luc@aggett.com")
-    message['Subject'] = 'Welcome new diytracker.ch submitter'
+    message['Subject'] = 'Welcome new diytracker.ch submitter!'
     message['From'] = "diytracker@aggett.ch"
     message['To'] = email
 
