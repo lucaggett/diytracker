@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired, Optional
 
 
 def get_genre_choices():
-    return [
+    genres = [
         'Hardcore', 'Punk', 'Metal', 'Post-punk', 'EBM', 'Industrial',
         'Synthpop', 'Darkwave', 'Goth', 'New Wave', 'Alternative',
         'Indie', 'Rock', 'Pop', 'Hip Hop', 'Reggae', 'Dub', 'Dancehall',
@@ -14,6 +14,7 @@ def get_genre_choices():
         'Jazz', 'Blues', 'Ska', 'Garage', 'Hyperpop', 'Emo', 'Metalcore', 'Synth',
         'Ska'
     ]
+    return [(genre, genre) for genre in genres]
 
 
 def get_canton_choices():
@@ -53,20 +54,20 @@ def get_canton_choices():
 
 
 class EventForm(FlaskForm):
-    name = StringField('Event Name (Optional if Acts are provided)', validators=[Optional()])
+    name = StringField('Event Name', validators=[Optional()])
     date = DateField('Event Date', format='%Y-%m-%d', validators=[DataRequired()])
     venue_name = StringField('Venue', validators=[DataRequired()])
-    venue_address = StringField('Address (Optional)', validators=[Optional()])
+    venue_address = StringField('Address', validators=[Optional()])
     venue_city = StringField('City', validators=[DataRequired()])
     venue_canton = SelectField('Canton', choices=get_canton_choices(), validators=[DataRequired()])
     venue_plz = StringField('ZIP Code', validators=[DataRequired()])
-    venue_coords = StringField('Coordinates (Optional)', validators=[Optional()])
+    venue_coords = StringField('Coordinates', validators=[Optional()])
     ticket_price = StringField('Ticket Price', validators=[DataRequired()])
-    ticket_link = StringField('Ticket Link (Optional)', validators=[Optional()])
+    ticket_link = StringField('Ticket Link', validators=[Optional()])
     doors = TimeField('Doors Open (24-hour time)', format='%H:%M', validators=[DataRequired()])
     genre = SelectMultipleField('Genre', choices=get_genre_choices(), validators=[DataRequired()])
-    acts = TextAreaField('Acts (Optional if Event Name is provided)', validators=[Optional()])
-    flyer = FileField('Flyer (Optional, JPG/PNG)', validators=[Optional()])
+    acts = TextAreaField('Acts', validators=[Optional()])
+    flyer = FileField('Flyer', validators=[Optional()])
     password = StringField('Password', validators=[DataRequired()])
     submit = SubmitField('Submit Event')
 
