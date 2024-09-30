@@ -76,4 +76,7 @@ class EventForm(FlaskForm):
         if not self.name.data and not self.acts.data:
             print('Name or acts required')
             return False
+        if not self.password.data == open("SUBMISSION_PASSWORD_CURRENT").read().strip():
+            print('Invalid password')
+            return False
         return True
