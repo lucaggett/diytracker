@@ -1,108 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Meta Tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Event</title>
+
+    <!-- Tailwind CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+
+    <!-- Choices.js CSS for Autocomplete -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+
+    <!-- Flatpickr CSS for Date and Time Pickers -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body class="bg-white text-black">
 <section class="w-4/5 mx-auto p-8 border-2 border-black mt-8">
     <h2 class="text-3xl font-bold mb-4">Submit a New Event</h2>
 
     <!-- Display validation errors -->
-    {% for field, errors in form.errors.items() %}
+    {% if form.errors %}
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {{ field.label.text }}: {{ errors[0] }}
+            <ul class="list-disc pl-5">
+                {% for field, errors in form.errors.items() %}
+                    {% for error in errors %}
+                        <li><strong>{{ getattr(form, field).label.text }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
         </div>
-    {% endfor %}
+    {% endif %}
 
     <form action="{{ url_for('submit_event') }}" method="POST" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
 
+        <!-- Event Details Section -->
+        <h3 class="text-xl font-semibold mb-2 mt-4">Event Details</h3>
+
+        <!-- Event Name -->
         <div class="mb-4">
             {{ form.name.label(class="block font-bold") }}
-            {{ form.name(class="border border-black p-2 w-full") }}
+            {{ form.name(class="border border-black p-2 w-full", placeholder="Enter the event name") }}
+            <small class="text-gray-600">Optional if Acts are provided.</small>
         </div>
 
+        <!-- Event Date -->
         <div class="mb-4">
             {{ form.date.label(class="block font-bold") }}
-            {{ form.date(class="border border-black p-2 w-full") }}
+            {{ form.date(class="border border-black p-2 w-full", placeholder="Select the event date") }}
         </div>
 
+        <!-- Doors Open Time -->
+        <div class="mb-4">
+            {{ form.doors.label(class="block font-bold") }}
+            {{ form.doors(class="border border-black p-2 w-full", placeholder="Select the doors open time") }}
+        </div>
+
+        <!-- Genre -->
+        <div class="mb-4">
+            {{ form.genre.label(class="block font-bold") }}
+            {{ form.genre(class="border border-black p-2 w-full") }}
+        </div>
+
+        <!-- Acts -->
+        <div class="mb-4">
+            {{ form.acts.label(class="block font-bold") }}
+            {{ form.acts(class="border border-black p-2 w-full", placeholder="List the acts performing") }}
+            <small class="text-gray-600">Optional if Event Name is provided.</small>
+        </div>
+
+        <!-- Ticket Details Section -->
+        <h3 class="text-xl font-semibold mb-2 mt-6">Ticket Details</h3>
+
+        <!-- Ticket Price -->
+        <div class="mb-4">
+            {{ form.ticket_price.label(class="block font-bold") }}
+            {{ form.ticket_price(class="border border-black p-2 w-full", placeholder="Enter the ticket price") }}
+        </div>
+
+        <!-- Ticket Link -->
+        <div class="mb-4">
+            {{ form.ticket_link.label(class="block font-bold") }}
+            {{ form.ticket_link(class="border border-black p-2 w-full", placeholder="Enter the ticket purchase link") }}
+            <small class="text-gray-600">Optional.</small>
+        </div>
+
+        <!-- Venue Details Section -->
+        <h3 class="text-xl font-semibold mb-2 mt-6">Venue Details</h3>
+
+        <!-- Venue Name -->
         <div class="mb-4">
             {{ form.venue_name.label(class="block font-bold") }}
-            {{ form.venue_name(class="border border-black p-2 w-full") }}
+            {{ form.venue_name(class="border border-black p-2 w-full", placeholder="Enter the venue name") }}
         </div>
 
+        <!-- Venue Address -->
         <div class="mb-4">
             {{ form.venue_address.label(class="block font-bold") }}
-            {{ form.venue_address(class="border border-black p-2 w-full") }}
+            {{ form.venue_address(class="border border-black p-2 w-full", placeholder="Enter the venue address") }}
+            <small class="text-gray-600">Optional.</small>
         </div>
 
-        <div class="mb-4">
-            {{ form.venue_city.label(class="block font-bold") }}
-            {{ form.venue_city(class="border border-black p-2 w-full") }}
+        <!-- PLZ and City Side by Side -->
+        <div class="flex mb-4 space-x-4">
+            <div class="w-1/2">
+                {{ form.venue_city.label(class="block font-bold") }}
+                {{ form.venue_city(class="border border-black p-2 w-full", placeholder="Enter the city") }}
+            </div>
+            <div class="w-1/2">
+                {{ form.venue_plz.label(class="block font-bold") }}
+                {{ form.venue_plz(class="border border-black p-2 w-full", placeholder="Enter ZIP Code") }}
+            </div>
         </div>
 
+        <!-- Canton -->
         <div class="mb-4">
             {{ form.venue_canton.label(class="block font-bold") }}
             {{ form.venue_canton(class="border border-black p-2 w-full") }}
         </div>
 
-        <div class="mb-4">
-            {{ form.venue_plz.label(class="block font-bold") }}
-            {{ form.venue_plz(class="border border-black p-2 w-full") }}
-        </div>
-
+        <!-- Venue Coordinates (Optional) -->
         <div class="mb-4">
             {{ form.venue_coords.label(class="block font-bold") }}
-            {{ form.venue_coords(class="border border-black p-2 w-full") }}
+            {{ form.venue_coords(class="border border-black p-2 w-full", placeholder="Enter coordinates") }}
+            <small class="text-gray-600">Optional.</small>
         </div>
 
-        <div class="mb-4">
-            {{ form.doors.label(class="block font-bold") }}
-            {{ form.doors(class="border border-black p-2 w-full") }}
-        </div>
-
-        <div class="mb-4">
-            {{ form.genre.label(class="block font-bold") }}
-            {% for value in form.genre.choices %}
-                <div class="flex items-center mb-2">
-                    <input type="checkbox" id="genre_{{ loop.index }}" name="genre" value="{{ value }}"
-                           class="border border-black p-2 mr-2">
-                    <label for="genre_{{ loop.index }}" class="font-medium">{{ value }}</label>
-                </div>
-            {% endfor %}
-        </div>
-
-        <div class="mb-4">
-            {{ form.ticket_price.label(class="block font-bold") }}
-            {{ form.ticket_price(class="border border-black p-2 w-full") }}
-        </div>
-
-        <div class="mb-4">
-            {{ form.ticket_link.label(class="block font-bold") }}
-            {{ form.ticket_link(class="border border-black p-2 w-full") }}
-        </div>
-
-        <div class="mb-4">
-            {{ form.acts.label(class="block font-bold") }}
-            {{ form.acts(class="border border-black p-2 w-full") }}
-        </div>
-
+        <!-- Flyer Upload with Preview -->
         <div class="mb-4">
             {{ form.flyer.label(class="block font-bold") }}
             {{ form.flyer(class="border border-black p-2 w-full") }}
+            <small class="text-gray-600">Optional. JPG or PNG formats only.</small>
+            <!-- Image Preview -->
+            <div id="flyer-preview" class="mt-2"></div>
         </div>
 
+        <!-- Password Field -->
         <div class="mb-4">
             {{ form.password.label(class="block font-bold") }}
-            {{ form.password(class="border border-black p-2 w-full") }}
+            {{ form.password(class="border border-black p-2 w-full", placeholder="Enter the submission password") }}
         </div>
 
-        <button type="submit" class="bg-black text-white p-2 mt-4">{{ form.submit() }}</button>
+        <!-- Submit Button -->
+        <button type="submit" class="bg-black text-white p-2 mt-4 hover:bg-gray-800">Submit Event</button>
     </form>
 </section>
+
+<!-- Scripts -->
+<!-- Choices.js for Autocomplete -->
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<!-- Flatpickr for Date and Time Pickers -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<!-- Initialize Plugins -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Choices.js for Genre Field
+        const genreSelect = document.getElementById('{{ form.genre.id }}');
+        new Choices(genreSelect, {
+            removeItemButton: true,
+            searchResultLimit: 10,
+            renderChoiceLimit: -1,
+            shouldSort: false,
+            placeholderValue: 'Select genres',
+            searchPlaceholderValue: 'Type to search genres',
+            maxItemCount: -1
+        });
+
+        // Initialize Flatpickr for Date Field
+        flatpickr("#{{ form.date.id }}", {
+            altInput: true,
+            altFormat: "F j, Y",
+            dateFormat: "Y-m-d"
+        });
+
+        // Initialize Flatpickr for Time Field
+        flatpickr("#{{ form.doors.id }}", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true
+        });
+
+        // Image Preview for Flyer Upload
+        const flyerInput = document.getElementById('{{ form.flyer.id }}');
+        const flyerPreview = document.getElementById('flyer-preview');
+
+        flyerInput.addEventListener('change', function(event) {
+            flyerPreview.innerHTML = ''; // Clear previous preview
+            const file = event.target.files[0];
+            if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = 'Flyer Preview';
+                    img.classList.add('max-w-xs', 'mt-2', 'border', 'border-black');
+                    flyerPreview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                flyerPreview.innerHTML = '<p class="text-red-500">Please upload a JPG or PNG image.</p>';
+            }
+        });
+    });
+</script>
 </body>
 </html>
