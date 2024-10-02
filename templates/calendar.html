@@ -54,23 +54,23 @@
                                    data-event-name="{{ event.name|e }}"
                                    data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
                                    data-event-doors="{{ event.doors.strftime('%H:%M') }}"
-                                   data-venue-name="{{ event.venue_name|e }}"
-                                   data-venue-address="{{ event.venue_address|e }}"
-                                   data-venue-city="{{ event.venue_city|e }}"
-                                   data-venue-canton="{{ event.venue_canton|e }}"
-                                   data-venue-plz="{{ event.venue_plz|e }}"
+                                   data-venue-name="{{ event.venue.name|e }}"
+                                   data-venue-address="{{ event.venue.address|e }}"
+                                   data-venue-city="{{ event.venue.city|e }}"
+                                   data-venue-canton="{{ event.venue.canton|e }}"
+                                   data-venue-plz="{{ event.venue.plz|e }}"
                                    data-ticket-price="{{ event.ticket_price|e }}"
                                    data-ticket-link="{{ event.ticket_link|e }}"
-                                   data-venue-coords="{{ event.venue_coords|e }}"
+                                   data-venue-coords="{{ event.venue.coords|e }}"
                                    data-genre="{{ event.genre|e }}"
                                    data-acts="{{ event.acts|e }}"
                                    data-flyer="{{ event.flyer|e }}"
-                                   data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                                   data-tags="canton:{{ event.venue.canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                                    onclick="showEventDetails(this)">
                                     {% if event.name %}
-                                        <b>{{ event.name }}</b>, {{ event.venue_canton }}
+                                        <b>{{ event.name }}</b>, {{ event.venue.canton }}
                                     {% else %}
-                                        <b>{{ event.acts }}</b>, {{ event.venue_canton }}
+                                        <b>{{ event.acts }}</b>, {{ event.venue.canton }}
                                     {% endif %}
                                 </p>
                             {% endfor %}
@@ -118,25 +118,25 @@
                                          data-event-name="{{ event.name|e }}"
                                          data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
                                          data-event-doors="{{ event.doors.strftime('%H:%M') }}"
-                                         data-venue-name="{{ event.venue_name|e }}"
-                                         data-venue-address="{{ event.venue_address|e }}"
-                                         data-venue-city="{{ event.venue_city|e }}"
-                                         data-venue-canton="{{ event.venue_canton|e }}"
-                                         data-venue-plz="{{ event.venue_plz|e }}"
+                                         data-venue-name="{{ event.venue.name|e }}"
+                                         data-venue-address="{{ event.venue.address|e }}"
+                                         data-venue-city="{{ event.venue.city|e }}"
+                                         data-venue-canton="{{ event.venue.canton|e }}"
+                                         data-venue-plz="{{ event.venue.plz|e }}"
                                          data-ticket-price="{{ event.ticket_price|e }}"
                                          data-ticket-link="{{ event.ticket_link|e }}"
-                                         data-venue-coords="{{ event.venue_coords|e }}"
+                                         data-venue-coords="{{ event.venue.coords|e }}"
                                          data-genre="{{ event.genre|e }}"
                                          data-acts="{{ event.acts|e }}"
                                          data-flyer="{{ event.flyer|e }}"
-                                         data-tags="canton:{{ event.venue_canton|e }}{% if event.genre %},genre:{{ ';'.join(event.genre.split(', '))|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                                         data-tags="canton:{{ event.venue.canton|e }}{% if event.genre %},genre:{{ ';'.join(event.genre.split(', '))|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                                          onclick="toggleEventDetails(this)">
                                         {% if event.name %}
                                             <p class="font-semibold">{{ event.name }}</p>
                                         {% else %}
                                             <p class="font-semibold">{{ event.acts }}</p>
                                         {% endif %}
-                                        <p class="text-gray-600">{{ event.venue_name }}, {{ event.venue_city }}</p>
+                                        <p class="text-gray-600">{{ event.venue.name }}, {{ event.venue.city }}</p>
                                         <!-- Hidden event details div -->
                                         <div class="event-details hidden mt-2 p-2 bg-gray-400 rounded">
                                             {% if event.flyer %}
@@ -146,10 +146,10 @@
                                             {% endif %}
                                             <p><b>Date: </b>{{ event.date.strftime('%Y-%m-%d') }}
                                                 at {{ event.doors.strftime('%H:%M') }}</p>
-                                            <p><b>Venue: </b>{{ event.venue_name }}</p>
-                                            <p><b>Address: </b>{{ event.venue_address }}</p>
+                                            <p><b>Venue: </b>{{ event.venue.name }}</p>
+                                            <p><b>Address: </b>{{ event.venue.address }}</p>
                                             <p>
-                                                <b>City: </b>{{ event.venue_plz }} {{ event.venue_city }}, {{ event.venue_canton }}
+                                                <b>City: </b>{{ event.venue.plz }} {{ event.venue.city }}, {{ event.venue.canton }}
                                             </p>
                                             <p><b>Genre: </b>{{ event.genre }}</p>
                                             <p><b>Acts: </b>{{ event.acts }}</p>
