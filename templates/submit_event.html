@@ -89,16 +89,23 @@
         <!-- Venue Details Section -->
         <h3 class="text-xl font-semibold mb-2 mt-6">Venue Details</h3>
 
+        <!-- Venue Selection -->
+        <div class="mb-4">
+            <label for="venue-select" class="block font-bold">Select Venue</label>
+            <select id="venue-select" name="venue_id" class="border border-black p-2 w-full">
+                <option value="new" selected>New Venue</option>
+            </select>
+        </div>
         <!-- Venue Name -->
         <div class="mb-4">
             {{ form.venue_name.label(class="block font-bold") }}
-            {{ form.venue_name(class="border border-black p-2 w-full", placeholder="Enter the venue name") }}
+            {{ form.venue_name(id="venue_name", class="border border-black p-2 w-full", placeholder="Enter the venue name") }}
         </div>
 
         <!-- Venue Address -->
         <div class="mb-4">
             {{ form.venue_address.label(class="block font-bold") }}
-            {{ form.venue_address(class="border border-black p-2 w-full", placeholder="Enter the venue address") }}
+            {{ form.venue_address(id="venue_address", class="border border-black p-2 w-full", placeholder="Enter the venue address") }}
             <small class="text-gray-600">Optional.</small>
         </div>
 
@@ -106,24 +113,24 @@
         <div class="flex mb-4 space-x-4">
             <div class="w-1/2">
                 {{ form.venue_city.label(class="block font-bold") }}
-                {{ form.venue_city(class="border border-black p-2 w-full", placeholder="Enter the city") }}
+                {{ form.venue_city(id="venue_city", class="border border-black p-2 w-full", placeholder="Enter the city") }}
             </div>
             <div class="w-1/2">
                 {{ form.venue_plz.label(class="block font-bold") }}
-                {{ form.venue_plz(class="border border-black p-2 w-full", placeholder="Enter ZIP Code") }}
+                {{ form.venue_plz(id="venue_plz", class="border border-black p-2 w-full", placeholder="Enter ZIP Code") }}
             </div>
         </div>
 
         <!-- Canton -->
         <div class="mb-4">
             {{ form.venue_canton.label(class="block font-bold") }}
-            {{ form.venue_canton(class="border border-black p-2 w-full") }}
+            {{ form.venue_canton(id="venue_canton", class="border border-black p-2 w-full") }}
         </div>
 
         <!-- Venue Coordinates (Optional) -->
         <div class="mb-4">
             {{ form.venue_coords.label(class="block font-bold") }}
-            {{ form.venue_coords(class="border border-black p-2 w-full", placeholder="Enter coordinates") }}
+            {{ form.venue_coords(id="venue_coords", class="border border-black p-2 w-full", placeholder="Enter coordinates") }}
             <small class="text-gray-600">Optional.</small>
         </div>
 
@@ -132,31 +139,26 @@
             {{ form.flyer.label(class="block font-bold") }}
             {{ form.flyer(class="border border-black p-2 w-full") }}
             <small class="text-gray-600">Optional. JPG or PNG formats only.</small>
-            <!-- Image Preview -->
             <div id="flyer-preview" class="mt-2"></div>
         </div>
 
-        <!-- Password Field -->
         <div class="mb-4">
             {{ form.password.label(class="block font-bold") }}
             {{ form.password(class="border border-black p-2 w-full", placeholder="Enter the submission password") }}
         </div>
 
-        <!-- Submit Button -->
+
         <button type="submit" class="bg-black text-white p-2 mt-4 hover:bg-gray-800">Submit Event</button>
     </form>
 </section>
 
-<!-- Scripts -->
-<!-- Choices.js for Autocomplete -->
+
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
-<!-- Flatpickr for Date and Time Pickers -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-<!-- Initialize Plugins -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Initialize Choices.js for Genre Field
         const genreSelect = document.getElementById('{{ form.genre.id }}');
         new Choices(genreSelect, {
@@ -188,12 +190,12 @@
         const flyerInput = document.getElementById('{{ form.flyer.id }}');
         const flyerPreview = document.getElementById('flyer-preview');
 
-        flyerInput.addEventListener('change', function(event) {
+        flyerInput.addEventListener('change', function (event) {
             flyerPreview.innerHTML = ''; // Clear previous preview
             const file = event.target.files[0];
             if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     const img = document.createElement('img');
                     img.src = e.target.result;
                     img.alt = 'Flyer Preview';
@@ -205,7 +207,80 @@
                 flyerPreview.innerHTML = '<p class="text-red-500">Please upload a JPG or PNG image.</p>';
             }
         });
+
+        // Initialize the venues variable to store the fetched data
+        let venues = [];
+
+        // Fetch venues and populate the select options
+        fetch('/get_venues')
+            .then(response => response.json())
+            .then(data => {
+                venues = data.venues;
+                const venueSelect = document.getElementById('venue-select');
+
+                venues.forEach(venue => {
+                    const option = document.createElement('option');
+                    option.value = venue.id; // Use the venue ID as value
+                    option.textContent = `${venue.name} - ${venue.city}`;
+                    venueSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching venues:', error);
+            });
+
+        // Handle venue selection change
+        const venueSelect = document.getElementById('venue-select');
+        venueSelect.addEventListener('change', function () {
+            const selectedValue = this.value;
+
+            if (selectedValue === 'new') {
+                // Clear venue fields and make them editable
+                clearVenueFields();
+                setVenueFieldsEditable(true);
+            } else {
+                // Find the selected venue data
+                const selectedVenue = venues.find(venue => venue.id == selectedValue);
+                if (selectedVenue) {
+                    // Populate venue fields with selected venue data
+                    populateVenueFields(selectedVenue);
+                    setVenueFieldsEditable(false); // Make fields readonly if you prefer
+                }
+            }
+        });
+
+        // Function to populate venue fields
+        function populateVenueFields(venue) {
+            document.getElementById('venue_name').value = venue.name || '';
+            document.getElementById('venue_address').value = venue.address || '';
+            document.getElementById('venue_city').value = venue.city || '';
+            document.getElementById('venue_plz').value = venue.plz || '';
+            document.getElementById('venue_canton').value = venue.canton || '';
+            document.getElementById('venue_coords').value = venue.coords || '';
+        }
+
+        // Function to clear venue fields
+        function clearVenueFields() {
+            document.getElementById('venue_name').value = '';
+            document.getElementById('venue_address').value = '';
+            document.getElementById('venue_city').value = '';
+            document.getElementById('venue_plz').value = '';
+            document.getElementById('venue_canton').value = '';
+            document.getElementById('venue_coords').value = '';
+        }
+
+        // Function to set venue fields editable or readonly
+        function setVenueFieldsEditable(editable) {
+            document.getElementById('venue_name').readOnly = !editable;
+            document.getElementById('venue_address').readOnly = !editable;
+            document.getElementById('venue_city').readOnly = !editable;
+            document.getElementById('venue_plz').readOnly = !editable;
+            document.getElementById('venue_canton').readOnly = !editable;
+            document.getElementById('venue_coords').readOnly = !editable;
+        }
     });
+</script>
+});
 </script>
 </body>
 </html>
