@@ -4,12 +4,11 @@ from collections import defaultdict
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
 from werkzeug.utils import secure_filename
 
 from forms import EventForm
-from models import db, Event
-
+from models import db, Event, Venue
 
 # Check that required directories exist
 if not os.path.exists('logs'):
@@ -40,15 +39,9 @@ def allowed_file(filename):
 def submit_event():
     form = EventForm()
     if form.validate_on_submit():
-        # Get form data
+        # Extract form data
         name = form.name.data
         date = form.date.data
-        venue_name = form.venue_name.data
-        venue_address = form.venue_address.data
-        venue_city = form.venue_city.data
-        venue_canton = form.venue_canton.data
-        venue_plz = form.venue_plz.data
-        venue_coords = form.venue_coords.data
         doors = form.doors.data
         genres = form.genre.data
         acts = form.acts.data
@@ -56,35 +49,80 @@ def submit_event():
         ticket_price = form.ticket_price.data
         password = form.password.data
 
+        # Get the venue_id from the form
+        venue_id = form.venue_id.data
+
+        # Password validation
         if password != open("SUBMISSION_PASSWORD_CURRENT").read().strip():
             flash('Invalid password')
             return redirect(url_for('submit_event'))
 
-        # Handle flyer upload
+        # Handle flyer upload (unchanged)
         flyer = None
         if form.flyer.data:
             file = form.flyer.data
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                flyer = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(flyer)
+                flyer_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(flyer_path)
+                flyer = flyer_path
 
-        # Create and save new event
+        # Handle venue selection
+        if venue_id == 'new':
+            # Extract venue data from form fields
+            venue_name = form.venue_name.data
+            venue_address = form.venue_address.data
+            venue_city = form.venue_city.data
+            venue_canton = form.venue_canton.data
+            venue_plz = form.venue_plz.data
+            venue_coords = form.venue_coords.data
+
+            # Validate that essential venue fields are provided
+            if not venue_name or not venue_city or not venue_plz:
+                flash('Please provide all required venue details for a new venue.')
+                return redirect(url_for('submit_event'))
+
+            # Check if the venue already exists
+            venue = Venue.query.filter_by(
+                name=venue_name,
+                city=venue_city,
+                plz=venue_plz
+            ).first()
+
+            if not venue:
+                # Create a new venue
+                venue = Venue(
+                    name=venue_name,
+                    address=venue_address,
+                    city=venue_city,
+                    canton=venue_canton,
+                    plz=venue_plz,
+                    coords=venue_coords
+                )
+                db.session.add(venue)
+                db.session.commit()  # Commit to assign an ID to the venue
+            else:
+                # Venue already exists; you may want to inform the user
+                flash('Venue already exists. Using existing venue.')
+        else:
+            # Use existing venue by ID
+            venue = Venue.query.get(venue_id)
+            if not venue:
+                flash('Selected venue does not exist.')
+                return redirect(url_for('submit_event'))
+
+        # Create and save the new event
         new_event = Event(
             name=name,
             date=date,
-            venue_name=venue_name,
-            venue_address=venue_address,
-            venue_city=venue_city,
-            venue_canton=venue_canton,
-            venue_plz=venue_plz,
-            venue_coords=venue_coords,
             doors=doors,
-            genre=', '.join(genres),
+            genre=', '.join(genres) if genres else '',
             acts=acts,
             flyer=flyer,
             ticket_link=ticket_link,
-            ticket_price=ticket_price
+            ticket_price=ticket_price,
+            venue_id=venue.id,  # Associate the event with the venue
+            event_hash=hash(f"{name}{date}{doors}{genres}{acts}{ticket_link}{ticket_price}{venue.id}")
         )
         db.session.add(new_event)
         db.session.commit()
@@ -93,6 +131,7 @@ def submit_event():
         return redirect(url_for('calendar_view'))
 
     return render_template('submit_event.html', form=form)
+
 
 @app.route('/admin', methods=['GET'])
 def admin():
@@ -177,3 +216,19 @@ def calendar_view():
         })
 
     return render_template('calendar.html', grouped_events=grouped_events, months_data=months_data, datetime=datetime)
+
+@app.route('/get_venues')
+def get_venues():
+    venues = Venue.query.all()
+    venue_list = []
+    for venue in venues:
+        venue_list.append({
+            'id': venue.id,
+            'name': venue.name,
+            'address': venue.address,
+            'city': venue.city,
+            'plz': venue.plz,
+            'canton': venue.canton,
+            'coords': venue.coords if venue.coords else 'N/A'
+        })
+    return jsonify({'venues': venue_list})

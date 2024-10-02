@@ -1,6 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import (StringField, TextAreaField, DateField, TimeField,
                      FileField, SubmitField, SelectField, SelectMultipleField)
+from wtforms.fields.datetime import DateTimeField
+from wtforms.fields.simple import HiddenField, BooleanField
 from wtforms.validators import DataRequired, Optional
 
 
@@ -54,30 +56,30 @@ def get_canton_choices():
 
 
 class EventForm(FlaskForm):
+    # Existing event fields
     name = StringField('Event Name', validators=[Optional()])
-    date = DateField('Event Date', format='%Y-%m-%d', validators=[DataRequired()])
-    venue_name = StringField('Venue', validators=[DataRequired()])
-    venue_address = StringField('Address', validators=[Optional()])
-    venue_city = StringField('City', validators=[DataRequired()])
-    venue_canton = SelectField('Canton', choices=get_canton_choices(), validators=[DataRequired()])
-    venue_plz = StringField('ZIP Code', validators=[DataRequired()])
-    venue_coords = StringField('Coordinates', validators=[Optional()])
-    ticket_price = StringField('Ticket Price', validators=[DataRequired()])
-    ticket_link = StringField('Ticket Link', validators=[Optional()])
-    doors = TimeField('Doors Open (24-hour time)', format='%H:%M', validators=[DataRequired()])
-    genre = SelectMultipleField('Genre', choices=get_genre_choices(), validators=[DataRequired()])
+    date = DateTimeField('Event Date', format='%Y-%m-%d', validators=[DataRequired()])
+    doors = TimeField('Doors Open Time', format='%H:%M', validators=[DataRequired()])
+    genre = SelectMultipleField('Genre', choices=get_genre_choices(), validators=[Optional()])
     acts = TextAreaField('Acts', validators=[Optional()])
     flyer = FileField('Flyer', validators=[Optional()])
-    password = StringField('Password', validators=[DataRequired()])
-    submit = SubmitField('Submit Event')
 
-    def validate(self, *args, **kwargs):
-        if not super().validate():
-            return False
-        if not self.name.data and not self.acts.data:
-            print('Name or acts required')
-            return False
-        if not self.password.data == open("SUBMISSION_PASSWORD_CURRENT").read().strip():
-            print('Invalid password')
-            return False
-        return True
+    # Ticket Details
+    ticket_price = StringField('Ticket Price', validators=[DataRequired()])
+    ticket_link = StringField('Ticket Link', validators=[Optional()])
+
+    # Venue Selection Field
+    venue_selection = StringField('Venue', validators=[Optional()])
+    venue_id = HiddenField('Venue ID')  # To store the selected venue's ID
+
+    # Venue Details Fields (for new venues)
+    venue_name = StringField('Venue Name', validators=[Optional()])
+    venue_address = StringField('Venue Address', validators=[Optional()])
+    venue_city = StringField('City', validators=[Optional()])
+    venue_canton = StringField('Canton', validators=[Optional()])
+    venue_plz = StringField('ZIP Code', validators=[Optional()])
+    venue_coords = StringField('Coordinates', validators=[Optional()])
+
+    # Password
+    password = StringField('Submission Password', validators=[DataRequired()])
+
