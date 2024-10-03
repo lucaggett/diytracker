@@ -68,7 +68,7 @@ def submit_event():
                 flyer = flyer_path
 
         # Handle venue selection
-        if venue_id == 'new':
+        if venue_id == 'new' or not venue_id:
             # Extract venue data from form fields
             venue_name = form.venue_name.data
             venue_address = form.venue_address.data
