@@ -4,7 +4,7 @@
     <!-- Meta tags and title -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>diy tracker</title>
+    <title>diytracker.ch</title>
     <!-- Include Tailwind CSS -->
     <link rel="stylesheet" href={{ url_for('static', filename='css/output.css') }}>
 </head>
@@ -15,8 +15,6 @@
 <!-- Desktop Calendar -->
 <div class="container mx-auto px-4 py-6 hidden md:block">
     {% for month in months_data %}
-
-
         <!-- Calendar Header (Days of the Week) -->
         <div class="grid grid-cols-7 gap-2 text-gray-400 text-center font-semibold font-richEatin">
             <div>Mon</div>
