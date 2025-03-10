@@ -22,7 +22,7 @@ def regenerate_link_and_notify(email):
     # Notify all users
     EMAIL_SERVER, USERNAME, PASSWORD = open("EMAIL_DATA").read().split(":")
     PASSWORD = PASSWORD.strip()
-    link = f"https://diytracker.ch/submit_link/{target_submitter.submission_code}"
+    link = f"https://diytracker.ch/submit/{target_submitter.submission_code}"
 
     print(f'Sending email to {email}')
     message = EmailMessage()
@@ -53,7 +53,7 @@ def add_user(email):
         submission_code = new_user.submission_code
 
     # Then email them, e.g.:
-    link = f"https://diytracker.ch/submit_link/{submission_code}"
+    link = f"https://diytracker.ch/submit/{submission_code}"
     message = EmailMessage()
 
     # Welcome the user and notify them of the current password
