@@ -57,7 +57,6 @@ def add_user(email):
     message = EmailMessage()
 
     # Welcome the user and notify them of the current password
-    diytracker_password = open("SUBMISSION_PASSWORD_CURRENT").read().strip()
     EMAIL_SERVER, USERNAME, PASSWORD = open("EMAIL_DATA").read().split(":")
     PASSWORD = PASSWORD.strip()
 
