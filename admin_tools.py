@@ -37,9 +37,6 @@ def regenerate_link_and_notify(email):
         server.send_message(message)
 
 
-print('Password reset and notifications sent successfully!')
-
-
 def add_user(email):
     """
     Add a new user to the admin list

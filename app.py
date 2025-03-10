@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
 from werkzeug.utils import secure_filename
 
-from forms import EventForm
+from forms import EventForm, EventEditForm
 from models import db, Event, Venue, Submitter
 
 # Check that required directories exist
@@ -148,7 +148,7 @@ def admin():
 @app.route('/edit_event/<int:event_id>', methods=['GET', 'POST'])
 def edit_event(event_id):
     event = Event.query.get_or_404(event_id)
-    form = EventForm(obj=event)
+    form = EventEditForm(obj=event)
     if request.method == 'POST':
         if form.validate_on_submit():
             password = form.password.data
