@@ -80,6 +80,3 @@ class EventForm(FlaskForm):
     venue_plz = StringField('ZIP Code', validators=[Optional()])
     venue_coords = StringField('Coordinates', validators=[Optional()])
 
-    # Password
-    password = StringField('Submission Password', validators=[DataRequired()])
-

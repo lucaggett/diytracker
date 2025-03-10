@@ -1,56 +1,43 @@
-import os
-import random
 import smtplib
 import ssl
-import string
-import sys
+import uuid
 from email.message import EmailMessage
 from models import Submitter
 from app import app, db
 
 
-def generate_password():
-    """
-    a password generator
-    :return: A secure password
-    """
-    password_characters = list(string.ascii_letters) + list(string.digits)
-    return ''.join(random.choices(password_characters, k=32))
-
-def regenerate_password_and_notify():
+def regenerate_link_and_notify(email):
     """
     Regenerate the password and notify all users of the new password
     """
     # Get admin emails from the DB
     with app.app_context():
-        emails = [submitter.email for submitter in Submitter.query.all()]
-
-    new_password = generate_password()
-
-    # Update the password in the environment
-    with open("SUBMISSION_PASSWORD_CURRENT", "w") as f:
-        f.write(new_password)
+        target_submitter = Submitter.query.filter_by(email=email).first()
+        if target_submitter is None:
+            print("No submitter found for email", email)
+        # Reset UUID
+        target_submitter.submission_code = uuid.uuid4()
+        db.session.commit()
 
     # Notify all users
     EMAIL_SERVER, USERNAME, PASSWORD = open("EMAIL_DATA").read().split(":")
     PASSWORD = PASSWORD.strip()
+    link = f"https://diytracker.ch/submit_link/{target_submitter.submission_code}"
 
-    for email in emails:
-        print(f'Sending email to {email}')
-        message = EmailMessage()
-        quips = ["Beep Boop", "Hiiii :3"]
-        message.set_content(f'The DIY Tracker password has been reset to: {new_password}\n\n{random.choice(quips)},\ndiytracker.ch application server')
-        message['Subject'] = 'Password has been reset'
-        message['From'] = "diytracker@aggett.ch"
-        message['To'] = email
+    print(f'Sending email to {email}')
+    message = EmailMessage()
+    message.set_content(f"Your submission link has been reset. You can now submit using this link:\n\n{link} ")
+    message['Subject'] = 'diytracker submission link reset'
+    message['From'] = "diytracker@aggett.ch"
+    message['To'] = email
 
-        context = ssl.create_default_context()
-        print(f"Attempting to log in with credentials {USERNAME} and {PASSWORD} on {EMAIL_SERVER}")
-        with smtplib.SMTP_SSL(EMAIL_SERVER, 465, context=context) as server:
-            server.login(USERNAME, PASSWORD)
-            server.send_message(message)
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(EMAIL_SERVER, 465, context=context) as server:
+        server.login(USERNAME, PASSWORD)
+        server.send_message(message)
 
-    print('Password reset and notifications sent successfully!')
+
+print('Password reset and notifications sent successfully!')
 
 
 def add_user(email):
@@ -59,10 +46,15 @@ def add_user(email):
     :param email: Email of the user to add
     """
     with app.app_context():
+        # Generate a co
         new_user = Submitter(email=email)
         db.session.add(new_user)
         db.session.commit()
-    print(f'User {email} added successfully!')
+        submission_code = new_user.submission_code
+
+    # Then email them, e.g.:
+    link = f"https://diytracker.ch/submit_link/{submission_code}"
+    message = EmailMessage()
 
     # Welcome the user and notify them of the current password
     diytracker_password = open("SUBMISSION_PASSWORD_CURRENT").read().strip()
@@ -70,22 +62,22 @@ def add_user(email):
     PASSWORD = PASSWORD.strip()
 
     message = EmailMessage()
-    message.set_content(f"Welcome to diytracker.ch!\n\n"
-                        f"You may now submit events at https://diytracker.ch/submit using the password {diytracker_password}.\n\n"
-                        f"The password will be reset periodically, and you will be notified of the new password via email.\n\n"
-                        f"This is an automated message from the diytracker application server\n\n"
-                        f"If you have any questions, please contact Luc at luc@aggett.com")
+    message.set_content(
+        f"Welcome to diytracker.ch!\n\n"
+        f"You can now submit events using your unique link:\n{link}\n\n"
+        f"Keep this link safe or bookmark it.\n\n"
+        f"This is an automated message from the diytracker application server\n\n"
+        f"If you have any questions, please contact Luc at luc@aggett.com")
     message['Subject'] = 'Welcome new diytracker.ch submitter!'
     message['From'] = "diytracker@aggett.ch"
     message['To'] = email
 
     context = ssl.create_default_context()
-    print(f"Attempting to log in with credentials {USERNAME} and {PASSWORD} on {EMAIL_SERVER}")
+    print(f"Attempting to log in as {USERNAME} on {EMAIL_SERVER}")
     with smtplib.SMTP_SSL(EMAIL_SERVER, 465, context=context) as server:
         server.login(USERNAME, PASSWORD)
         server.send_message(message)
     print(f'Welcome email sent to {email} successfully!')
-
 
 
 def remove_user(email):
@@ -99,6 +91,7 @@ def remove_user(email):
         db.session.commit()
     print(f'User {email} removed successfully!')
 
+
 def list_users():
     """
     List all users in the admin list
@@ -108,37 +101,28 @@ def list_users():
         for user in users:
             print(user.email)
 
+
 if __name__ == '__main__':
     # small admin script to add or remove users to/from the admin list, regenerate the password, etc
-    if len(sys.argv) == 1:
-        print("Admin Tools CLI")
-        print("1. Regenerate password and notify all users")
-        print("2. Add a new user")
-        print("3. Remove a user")
-        print("4. List all users")
-        choice = input("Enter your choice: ")
+    print("Admin Tools CLI")
+    print("1. Regenerate password and notify all users")
+    print("2. Add a new user")
+    print("3. Remove a user")
+    print("4. List all users")
+    choice = input("Enter your choice: ")
 
-        if choice == '1':
-            regenerate_password_and_notify()
+    if choice == '1':
+        regenerate_link_and_notify(
+            input("Enter the email of the user to reset: ")
+        )
 
-        elif choice == '2':
-            email = input("Enter the email of the new user: ")
-            add_user(email)
+    elif choice == '2':
+        email = input("Enter the email of the new user: ")
+        add_user(email)
 
-        elif choice == '3':
-            email = input("Enter the email of the user to remove: ")
-            remove_user(email)
+    elif choice == '3':
+        email = input("Enter the email of the user to remove: ")
+        remove_user(email)
 
-        elif choice == '4':
-            list_users()
-
-    elif len(sys.argv) == 2:
-        if sys.argv[1] == 'regenerate':
-            regenerate_password_and_notify()
-        elif sys.argv[1] == 'list':
-            list_users()
-        else:
-            print("Invalid argument")
-    else:
-        print("Too many arguments")
-
+    elif choice == '4':
+        list_users()

@@ -8,7 +8,7 @@ from flask import Flask, render_template, redirect, url_for, flash, request, jso
 from werkzeug.utils import secure_filename
 
 from forms import EventForm
-from models import db, Event, Venue
+from models import db, Event, Venue, Submitter
 
 # Check that required directories exist
 if not os.path.exists('logs'):
@@ -35,9 +35,25 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-@app.route('/submit', methods=['GET', 'POST'])
-def submit_event():
+
+@app.route('/about', methods=['GET'])
+def about():
+    return render_template('about.html')
+
+
+@app.route('/submit/<string:submission_code>', methods=['GET', 'POST'])
+def submit_event_link(submission_code):
+    """
+    Allows event submission via a unique link associated with each user.
+    """
     form = EventForm()
+
+    # Look up the submitter by the submission code
+    submitter = Submitter.query.filter_by(submission_code=submission_code).first()
+    if not submitter:
+        flash("Invalid or expired submission link.")
+        return redirect(url_for('calendar_view'))
+
     if form.validate_on_submit():
         # Extract form data
         name = form.name.data
@@ -47,17 +63,11 @@ def submit_event():
         acts = form.acts.data
         ticket_link = form.ticket_link.data
         ticket_price = form.ticket_price.data
-        password = form.password.data
 
-        # Get the venue_id from the form
-        venue_id = form.venue_id.data
+        # NOTE: We do NOT require a password check here.
+        # Instead, we rely on the uniqueness of the link.
 
-        # Password validation
-        if password != open("SUBMISSION_PASSWORD_CURRENT").read().strip():
-            flash('Invalid password')
-            return redirect(url_for('submit_event'))
-
-        # Handle flyer upload (unchanged)
+        # Upload flyer if present
         flyer = None
         if form.flyer.data:
             file = form.flyer.data
@@ -67,9 +77,10 @@ def submit_event():
                 file.save(flyer_path)
                 flyer = flyer_path
 
-        # Handle venue selection
+        # Venue logic is unchanged from your existing code:
+        venue_id = form.venue_id.data
         if venue_id == 'new' or not venue_id:
-            # Extract venue data from form fields
+            # Create new venue or fetch existing
             venue_name = form.venue_name.data
             venue_address = form.venue_address.data
             venue_city = form.venue_city.data
@@ -77,12 +88,10 @@ def submit_event():
             venue_plz = form.venue_plz.data
             venue_coords = form.venue_coords.data
 
-            # Validate that essential venue fields are provided
             if not venue_name or not venue_city or not venue_plz:
                 flash('Please provide all required venue details for a new venue.')
-                return redirect(url_for('submit_event'))
+                return redirect(url_for('submit_event_link', submission_code=submission_code))
 
-            # Check if the venue already exists
             venue = Venue.query.filter_by(
                 name=venue_name,
                 city=venue_city,
@@ -90,7 +99,6 @@ def submit_event():
             ).first()
 
             if not venue:
-                # Create a new venue
                 venue = Venue(
                     name=venue_name,
                     address=venue_address,
@@ -100,18 +108,16 @@ def submit_event():
                     coords=venue_coords
                 )
                 db.session.add(venue)
-                db.session.commit()  # Commit to assign an ID to the venue
+                db.session.commit()
             else:
-                # Venue already exists; you may want to inform the user
                 flash('Venue already exists. Using existing venue.')
         else:
-            # Use existing venue by ID
             venue = Venue.query.get(venue_id)
             if not venue:
                 flash('Selected venue does not exist.')
-                return redirect(url_for('submit_event'))
+                return redirect(url_for('submit_event_link', submission_code=submission_code))
 
-        # Create and save the new event
+        # Create the Event
         new_event = Event(
             name=name,
             date=date,
@@ -121,8 +127,10 @@ def submit_event():
             flyer=flyer,
             ticket_link=ticket_link,
             ticket_price=ticket_price,
-            venue_id=venue.id,  # Associate the event with the venue
-            event_hash=hash(f"{name}{date}{doors}{genres}{acts}{ticket_link}{ticket_price}{venue.id}")
+            venue_id=venue.id,
+            event_hash=hash(f"{name}{date}{doors}{genres}{acts}{ticket_link}{ticket_price}{venue.id}"),
+            # Assign the submitter so we know who created it:
+            submitter_id=submitter.id
         )
         db.session.add(new_event)
         db.session.commit()
@@ -131,7 +139,6 @@ def submit_event():
         return redirect(url_for('calendar_view'))
 
     return render_template('submit_event.html', form=form)
-
 
 @app.route('/admin', methods=['GET'])
 def admin():
@@ -232,3 +239,9 @@ def get_venues():
             'coords': venue.coords if venue.coords else 'N/A'
         })
     return jsonify({'venues': venue_list})
+
+
+@app.route('/events/<int:event_id>/')
+def event_page(event_id):
+    event = Event.query.get_or_404(event_id)
+    return render_template('')
