@@ -68,7 +68,7 @@ def add_user(email):
         f"This is an automated message from the diytracker application server\n\n"
         f"If you have any questions, please contact Luc at luc@aggett.com")
     message['Subject'] = 'Welcome new diytracker.ch submitter!'
-    message['From'] = "diytracker@aggett.ch"
+    message['From'] = "info@diytracker.ch"
     message['To'] = email
 
     context = ssl.create_default_context()
