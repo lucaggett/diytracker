@@ -101,7 +101,7 @@ def list_users():
 if __name__ == '__main__':
     # small admin script to add or remove users to/from the admin list, regenerate the password, etc
     print("Admin Tools CLI")
-    print("1. Regenerate password and notify all users")
+    print("1. Regenerate link and notify the user")
     print("2. Add a new user")
     print("3. Remove a user")
     print("4. List all users")
