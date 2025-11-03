@@ -1,14 +1,14 @@
 import calendar
 import os
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, time as time_type
 from dateutil.relativedelta import relativedelta
 
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
 from werkzeug.utils import secure_filename
 
 from forms import EventForm, EventEditForm
-from models import db, Event, Venue, Submitter
+from models import db, Event, Venue, Submitter, ScrapedEvent
 
 # Check that required directories exist
 if not os.path.exists('logs'):
@@ -41,6 +41,95 @@ def about():
     return render_template('about.html')
 
 
+@app.route('/queue/<string:submission_code>', methods=['GET', 'POST'])
+def event_queue(submission_code):
+    """Display and approve scraped events for a given submitter.
+
+    GET: show the list of filtered events with approve buttons.
+    POST: create the selected event in the database.
+    """
+    submitter = Submitter.query.filter_by(submission_code=submission_code).first()
+    if not submitter:
+        flash('Invalid or expired submission link.')
+        return redirect(url_for('calendar_view'))
+    # Load events from the database via the ScrapedEvent model
+    events = parse_scraped_events()
+    if request.method == 'POST':
+        # Expect an index pointing into the events list.  Each event
+        # dictionary stores `_scraped_id` which references the primary
+        # key of the ScrapedEvent record.
+        try:
+            idx = int(request.form.get('index'))
+            data = events[idx]
+        except (ValueError, IndexError):
+            flash('Invalid event selection.')
+            return redirect(url_for('event_queue.event_queue', submission_code=submission_code))
+        # Create or fetch venue
+        venue_name = data.get('venue_name') or 'Unknown venue'
+        city = data.get('city') or ''
+        plz = data.get('postal_code') or ''
+        venue = Venue.query.filter_by(name=venue_name, city=city, plz=plz).first()
+        if not venue:
+            venue = Venue(
+                name=venue_name,
+                address=data.get('street_address'),
+                city=city,
+                canton=data.get('region'),
+                plz=plz,
+                coords=data.get('coords') or ''
+            )
+            db.session.add(venue)
+            db.session.commit()
+        # Parse event date and doors time
+        event_date = data.get('_event_date')
+        # Convert doors_open (HH:MM) to time object; default to 19:00 if missing
+        doors_open_str = data.get('doors_open') or '19:00'
+        try:
+            doors_time = datetime.strptime(doors_open_str, '%H:%M').time()
+        except ValueError:
+            doors_time = time_type(19, 0)
+        # Determine event name: use title if provided, else performer list
+        name = data.get('title') or data.get('performers') or 'Concert'
+        # Build genre list
+        genre = data.get('styles') or data.get('genre') or ''
+        acts = data.get('performers') or ''
+        ticket_price = data.get('ticket_price') or ''
+        ticket_link = data.get('ticket_url') or data.get('ticket_link') or ''
+        # Compute a hash to avoid duplicates (similar to submit_event_link)
+        event_hash = hash(f"{name}{event_date}{doors_time}{genre}{acts}{ticket_link}{ticket_price}{venue.id}")
+        # Check if event already exists
+        existing = Event.query.filter_by(event_hash=str(event_hash)).first()
+        if existing:
+            flash('This event already exists.')
+            return redirect(url_for('event_queue.event_queue', submission_code=submission_code))
+        new_event = Event(
+            name=name,
+            date=event_date,
+            doors=doors_time,
+            genre=genre,
+            acts=acts,
+            flyer=None,
+            ticket_link=ticket_link,
+            ticket_price=ticket_price,
+            venue_id=venue.id,
+            event_hash=str(event_hash),
+            submitter_id=submitter.id
+        )
+        db.session.add(new_event)
+        db.session.commit()
+        # Mark the scraped event as approved and link it to the new Event
+        scraped_id = data.get('_scraped_id')
+        if scraped_id:
+            scraped_obj = ScrapedEvent.query.get(scraped_id)
+            if scraped_obj:
+                scraped_obj.approved = True
+                scraped_obj.approved_at = datetime.now()
+                scraped_obj.approved_event_id = new_event.id
+                db.session.commit()
+        flash('Event approved and added to calendar!')
+        return redirect(url_for('event_queue', submission_code=submission_code))
+    return render_template('event_queue.html', events=events)
+
 @app.route('/submit/<string:submission_code>', methods=['GET', 'POST'])
 def submit_event_link(submission_code):
     """
@@ -63,9 +152,6 @@ def submit_event_link(submission_code):
         acts = form.acts.data
         ticket_link = form.ticket_link.data
         ticket_price = form.ticket_price.data
-
-        # NOTE: We do NOT require a password check here.
-        # Instead, we rely on the uniqueness of the link.
 
         # Upload flyer if present
         flyer = None
@@ -245,3 +331,55 @@ def get_venues():
 def event_page(event_id):
     event = Event.query.get_or_404(event_id)
     return render_template('')
+
+def parse_scraped_events():
+    """Query the ScrapedEvent table and filter events.
+
+    Returns only events that are unapproved, tagged as concerts and
+    occurring within the next two months.  Each returned record is
+    converted into a dictionary with an extra `_event_date` key for
+    compatibility with the approval logic.
+    """
+    now = datetime.now().date()
+    cutoff_date = now + relativedelta(months=2)
+    # Query all unapproved scraped events within the date window
+    candidates = ScrapedEvent.query.filter(
+        ScrapedEvent.approved.is_(False),
+        ScrapedEvent.start_date <= cutoff_date,
+        ScrapedEvent.start_date >= now
+    ).all()
+    events = []
+    for rec in candidates:
+        # Filter by styles containing 'concert'
+        styles = (rec.styles or '').lower()
+        if 'concert' not in styles:
+            continue
+        # convert to dictionary for template
+        data = {
+            'source': rec.source,
+            'url': rec.url,
+            'title': rec.title,
+            'performers': rec.performers if rec.performers else rec.title,
+            'styles': rec.styles,
+            'description': rec.description,
+            'start_date': rec.start_date.isoformat() if rec.start_date else None,
+            'end_date': rec.end_date.isoformat() if rec.end_date else None,
+            'doors_open': rec.doors_open.strftime('%H:%M') if rec.doors_open else None,
+            'start_time': rec.start_time.strftime('%H:%M') if rec.start_time else None,
+            'venue_name': rec.venue_name,
+            'street_address': rec.street_address,
+            'city': rec.city,
+            'region': rec.region,
+            'postal_code': rec.postal_code,
+            'ticket_price': rec.ticket_price,
+            'ticket_currency': rec.ticket_currency,
+            'ticket_url': rec.ticket_url,
+            'organizer': rec.organizer,
+            'event_status': rec.event_status,
+        }
+        # Add derived event_date for sorting/comparison
+        data['_event_date'] = datetime.combine(rec.start_date, datetime.min.time()) if rec.start_date else None
+        # Store primary key so we can mark as approved later
+        data['_scraped_id'] = rec.id
+        events.append(data)
+    return events

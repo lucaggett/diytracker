@@ -48,3 +48,42 @@ class Submitter(db.Model):
 
     def __repr__(self):
         return f"{self.email} ({self.submission_code})"
+
+
+class ScrapedEvent(db.Model):
+    """Database model storing events scraped from external sources."""
+    # Primary key
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Scraped metadata
+    source = db.Column(db.String(20), nullable=True)
+    url = db.Column(db.String(300), nullable=True)
+    title = db.Column(db.String(200), nullable=True)
+    performers = db.Column(db.Text, nullable=True)
+    styles = db.Column(db.String(200), nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
+    doors_open = db.Column(db.Time, nullable=True)
+    start_time = db.Column(db.Time, nullable=True)
+    venue_name = db.Column(db.String(200), nullable=True)
+    street_address = db.Column(db.String(200), nullable=True)
+    city = db.Column(db.String(100), nullable=True)
+    region = db.Column(db.String(100), nullable=True)
+    postal_code = db.Column(db.String(20), nullable=True)
+    ticket_price = db.Column(db.String(50), nullable=True)
+    ticket_currency = db.Column(db.String(10), nullable=True)
+    ticket_url = db.Column(db.String(300), nullable=True)
+    organizer = db.Column(db.String(200), nullable=True)
+    event_status = db.Column(db.String(100), nullable=True)
+
+    # Approval tracking
+    approved = db.Column(db.Boolean, nullable=False, default=False)
+    approved_at = db.Column(db.DateTime, nullable=True)
+    approved_event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=True)
+
+    # Metadata
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+
+    def __repr__(self):
+        return f"<ScrapedEvent {self.id}: {self.title} on {self.start_date}>"
