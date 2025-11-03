@@ -50,8 +50,8 @@ def add_user(email):
         submission_code = new_user.submission_code
 
     # Then email them, e.g.:
-    link = f"https://diytracker.ch/submit/{submission_code}"
-    message = EmailMessage()
+    submission_link = f"https://diytracker.ch/submit/{submission_code}"
+    queue_link = f"https://diytracker.ch/queue/{submission_code}"
 
     # Welcome the user and notify them of the current password
     EMAIL_SERVER, USERNAME, PASSWORD = open("EMAIL_DATA").read().split(":")
@@ -60,10 +60,11 @@ def add_user(email):
     message = EmailMessage()
     message.set_content(
         f"Welcome to diytracker.ch!\n\n"
-        f"You can now submit events using your unique link:\n{link}\n\n"
+        f"You can now submit events using your unique link:\n{submission_link}\n\n"
+        f"You can also approve events in the queue by using:\n{queue_link}\n\n"
         f"Keep this link safe or bookmark it.\n\n"
         f"This is an automated message from the diytracker application server\n\n"
-        f"If you have any questions, please contact Luc at luc@aggett.com")
+        f"If you have any questions, please contact Luc at luc@aggett.com or over")
     message['Subject'] = 'Welcome new diytracker.ch submitter!'
     message['From'] = "info@diytracker.ch"
     message['To'] = email

@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime, time as time_type
 from dateutil.relativedelta import relativedelta
 
-from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, abort
 from werkzeug.utils import secure_filename
 
 from forms import EventForm, EventEditForm
@@ -50,8 +50,7 @@ def event_queue(submission_code):
     """
     submitter = Submitter.query.filter_by(submission_code=submission_code).first()
     if not submitter:
-        flash('Invalid or expired submission link.')
-        return redirect(url_for('calendar_view'))
+        abort(404)
     # Load events from the database via the ScrapedEvent model
     events = parse_scraped_events()
     if request.method == 'POST':
