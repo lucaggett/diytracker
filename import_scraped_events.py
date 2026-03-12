@@ -19,6 +19,7 @@ from datetime import datetime, time
 from flask import Flask
 
 from models import db, ScrapedEvent
+from utils import resolve_canton
 
 
 def parse_date(date_str: str):
@@ -52,6 +53,7 @@ def import_events(csv_path: str, db_uri: str = 'sqlite:///events.db'):
                 existing = ScrapedEvent.query.filter_by(source=source, url=url).first()
                 if existing:
                     continue
+                region = resolve_canton(row.get('region') or '', row.get('city') or '')
                 event = ScrapedEvent(
                     source=source,
                     url=url,
@@ -66,7 +68,7 @@ def import_events(csv_path: str, db_uri: str = 'sqlite:///events.db'):
                     venue_name=row.get('venue_name'),
                     street_address=row.get('street_address'),
                     city=row.get('city'),
-                    region=row.get('region'),
+                    region=region,
                     postal_code=row.get('postal_code'),
                     ticket_price=row.get('ticket_price'),
                     ticket_currency=row.get('ticket_currency'),

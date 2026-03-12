@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 
 from forms import EventForm, EventEditForm
 from models import db, Event, Venue, Submitter, ScrapedEvent
+from utils import resolve_canton
 
 # Check that required directories exist
 if not os.path.exists('logs'):
@@ -123,7 +124,7 @@ def event_queue(submission_code):
                 name=venue_name,
                 address=street,
                 city=city,
-                canton=data.get('region'),
+                canton=resolve_canton(data.get('region') or '', city),
                 plz=plz,
                 coords=data.get('coords') or ''
             )

@@ -23,6 +23,7 @@ import csv
 import json
 import re
 import sys
+import os
 from datetime import datetime
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -30,6 +31,10 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import random
+
+# Allow importing shared utilities from the project root
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import resolve_canton
 
 # Configure verbose logging
 import logging
@@ -394,7 +399,15 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
             if len(parts) > 1:
                 event["street_address"] = parts[1]
             if len(parts) > 2:
-                event["city"] = parts[2]
+                raw_city = parts[2]
+                # Strip leading PLZ (e.g. "8005 Zürich" → city="Zürich", postal_code="8005")
+                plz_match = re.match(r'^(\d{4})\s+(.+)$', raw_city)
+                if plz_match:
+                    if not event.get("postal_code"):
+                        event["postal_code"] = plz_match.group(1)
+                    event["city"] = plz_match.group(2)
+                else:
+                    event["city"] = raw_city
             logger.debug(f"MetalGigs location: {event.get('venue_name')}, {event.get('street_address')}, {event.get('city')}")
 
     # Ticket price if missing
@@ -407,6 +420,10 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
                 event["ticket_price"] = price_match.group(1).replace(",", ".")
             event["ticket_url"] = ticket_link.get("href", "")
             logger.debug(f"MetalGigs ticket: {event.get('ticket_price')} CHF, URL: {event.get('ticket_url')}")
+
+    # Resolve canton from region + city (handles full names, case variants, PLZ prefixes)
+    event["region"] = resolve_canton(event.get("region", ""), event.get("city", ""))
+    logger.debug(f"MetalGigs canton resolved to: {event.get('region')!r}")
 
     return event
 
@@ -577,6 +594,10 @@ def parse_petzi_event(url: str) -> Optional[Dict[str, str]]:
     event["description"] = description
     if description:
         logger.debug(f"PETZI description (truncated): {description[:60]}…")
+
+    # Resolve canton from region + city (handles full names, case variants)
+    event["region"] = resolve_canton(event.get("region", ""), event.get("city", ""))
+    logger.debug(f"PETZI canton resolved to: {event.get('region')!r}")
 
     return event
 
