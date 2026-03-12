@@ -35,6 +35,8 @@ def regenerate_link_and_notify(email):
     with smtplib.SMTP_SSL(EMAIL_SERVER, 465, context=context) as server:
         server.login(USERNAME, PASSWORD)
         server.send_message(message)
+        print(f'Email sent to {email}')
+        
 
 
 def add_user(email):

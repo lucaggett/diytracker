@@ -3,12 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Approve Scraped Events</title>
-    <!-- Include Tailwind CSS via CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-6">
         <h1 class="text-3xl font-bold mb-6">Approve Scraped Events</h1>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         {% if events %}
         <table class="min-w-full bg-white shadow-md rounded">
             <thead>
@@ -16,6 +22,7 @@
                     <th class="py-2 px-4 border-b">Date</th>
                     <th class="py-2 px-4 border-b">Event</th>
                     <th class="py-2 px-4 border-b">Venue</th>
+                    <th class="py-2 px-4 border-b">Genres</th>
                     <th class="py-2 px-4 border-b">Actions</th>
                 </tr>
             </thead>
@@ -25,10 +32,94 @@
                     <td class="py-2 px-4 border-b">{{ event.start_date }}</td>
                     <td class="py-2 px-4 border-b">{{ event.title or event.performers }}</td>
                     <td class="py-2 px-4 border-b">{{ event.venue_name }}, {{ event.city }}</td>
+                    <td class="py-2 px-4 border-b">{{ event.styles or '' }}</td>
                     <td class="py-2 px-4 border-b">
                         <form method="post" class="inline">
                             <input type="hidden" name="index" value="{{ loop.index0 }}">
                             <button type="submit" class="text-blue-500 hover:underline">Approve</button>
+                        </form>
+                        <button type="button" onclick="toggleEdit('edit-{{ loop.index0 }}')"
+                                class="ml-2 text-gray-600 hover:underline">Edit</button>
+                    </td>
+                </tr>
+                <tr id="edit-{{ loop.index0 }}" style="display:none">
+                    <td colspan="5" class="px-4 py-4 bg-gray-50 border-b">
+                        <form method="post">
+                            <input type="hidden" name="index" value="{{ loop.index0 }}">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-bold">Event Name</label>
+                                    <input type="text" name="override_name"
+                                           value="{{ event.title or event.performers or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">Date (YYYY-MM-DD)</label>
+                                    <input type="text" name="override_date"
+                                           value="{{ event.start_date or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">Doors Open (HH:MM)</label>
+                                    <input type="text" name="override_doors"
+                                           value="{{ event.doors_open or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">Genre</label>
+                                    <input type="text" name="override_genre"
+                                           value="{{ event.styles or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">Acts</label>
+                                    <input type="text" name="override_acts"
+                                           value="{{ event.performers or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">Venue Name</label>
+                                    <input type="text" name="override_venue_name"
+                                           value="{{ event.venue_name or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">City</label>
+                                    <input type="text" name="override_city"
+                                           value="{{ event.city or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">Postal Code</label>
+                                    <input type="text" name="override_postal_code"
+                                           value="{{ event.postal_code or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">Street Address</label>
+                                    <input type="text" name="override_street_address"
+                                           value="{{ event.street_address or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">Ticket Price</label>
+                                    <input type="text" name="override_ticket_price"
+                                           value="{{ event.ticket_price or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">Ticket URL</label>
+                                    <input type="text" name="override_ticket_url"
+                                           value="{{ event.ticket_url or event.ticket_link or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                            </div>
+                            <button type="submit"
+                                    class="mt-3 bg-black text-white px-4 py-1 text-sm hover:bg-gray-800">
+                                Approve with Changes
+                            </button>
+                            <button type="button" onclick="toggleEdit('edit-{{ loop.index0 }}')"
+                                    class="ml-2 text-sm text-gray-600 hover:underline">Cancel</button>
                         </form>
                     </td>
                 </tr>
@@ -39,5 +130,12 @@
         <p>No scraped events available for approval.</p>
         {% endif %}
     </div>
+
+    <script>
+        function toggleEdit(id) {
+            const row = document.getElementById(id);
+            row.style.display = row.style.display === 'none' ? '' : 'none';
+        }
+    </script>
 </body>
 </html>

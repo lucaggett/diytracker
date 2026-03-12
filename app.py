@@ -62,16 +62,43 @@ def event_queue(submission_code):
             data = events[idx]
         except (ValueError, IndexError):
             flash('Invalid event selection.')
-            return redirect(url_for('event_queue.event_queue', submission_code=submission_code))
+            return redirect(url_for('event_queue', submission_code=submission_code))
+        # Apply overrides from inline edit form (fall back to scraped data)
+        def _ov(key, fallback):
+            val = request.form.get(key, '').strip()
+            return val if val else fallback
+
+        name         = _ov('override_name', data.get('title') or data.get('performers') or 'Concert')
+        venue_name   = _ov('override_venue_name', data.get('venue_name') or 'Unknown venue')
+        city         = _ov('override_city', data.get('city') or '')
+        plz          = _ov('override_postal_code', data.get('postal_code') or '')
+        street       = _ov('override_street_address', data.get('street_address'))
+        genre        = _ov('override_genre', data.get('styles') or '')
+        acts         = _ov('override_acts', data.get('performers') or '')
+        ticket_price = _ov('override_ticket_price', data.get('ticket_price') or '')
+        ticket_link  = _ov('override_ticket_url', data.get('ticket_url') or data.get('ticket_link') or '')
+
+        override_date = request.form.get('override_date', '').strip()
+        event_date = datetime.strptime(override_date, '%Y-%m-%d') if override_date else data.get('_event_date')
+
+        override_doors = request.form.get('override_doors', '').strip()
+        if override_doors:
+            try:
+                doors_time = datetime.strptime(override_doors, '%H:%M').time()
+            except ValueError:
+                doors_time = time_type(19, 0)
+        else:
+            try:
+                doors_time = datetime.strptime(data.get('doors_open') or '19:00', '%H:%M').time()
+            except ValueError:
+                doors_time = time_type(19, 0)
+
         # Create or fetch venue
-        venue_name = data.get('venue_name') or 'Unknown venue'
-        city = data.get('city') or ''
-        plz = data.get('postal_code') or ''
         venue = Venue.query.filter_by(name=venue_name, city=city, plz=plz).first()
         if not venue:
             venue = Venue(
                 name=venue_name,
-                address=data.get('street_address'),
+                address=street,
                 city=city,
                 canton=data.get('region'),
                 plz=plz,
@@ -79,28 +106,13 @@ def event_queue(submission_code):
             )
             db.session.add(venue)
             db.session.commit()
-        # Parse event date and doors time
-        event_date = data.get('_event_date')
-        # Convert doors_open (HH:MM) to time object; default to 19:00 if missing
-        doors_open_str = data.get('doors_open') or '19:00'
-        try:
-            doors_time = datetime.strptime(doors_open_str, '%H:%M').time()
-        except ValueError:
-            doors_time = time_type(19, 0)
-        # Determine event name: use title if provided, else performer list
-        name = data.get('title') or data.get('performers') or 'Concert'
-        # Build genre list
-        genre = data.get('styles') or data.get('genre') or ''
-        acts = data.get('performers') or ''
-        ticket_price = data.get('ticket_price') or ''
-        ticket_link = data.get('ticket_url') or data.get('ticket_link') or ''
         # Compute a hash to avoid duplicates (similar to submit_event_link)
         event_hash = hash(f"{name}{event_date}{doors_time}{genre}{acts}{ticket_link}{ticket_price}{venue.id}")
         # Check if event already exists
         existing = Event.query.filter_by(event_hash=str(event_hash)).first()
         if existing:
             flash('This event already exists.')
-            return redirect(url_for('event_queue.event_queue', submission_code=submission_code))
+            return redirect(url_for('event_queue', submission_code=submission_code))
         new_event = Event(
             name=name,
             date=event_date,
@@ -234,6 +246,15 @@ def admin():
 def edit_event(event_id):
     event = Event.query.get_or_404(event_id)
     form = EventEditForm(obj=event)
+    if request.method == 'GET':
+        form.venue_id.data = str(event.venue_id)
+        form.venue_name.data = event.venue.name
+        form.venue_address.data = event.venue.address
+        form.venue_city.data = event.venue.city
+        form.venue_canton.data = event.venue.canton
+        form.venue_plz.data = event.venue.plz
+        form.venue_coords.data = event.venue.coords or ''
+        form.genre.data = [g.strip() for g in (event.genre or '').split(',') if g.strip()]
     if request.method == 'POST':
         if form.validate_on_submit():
             password = form.password.data
@@ -241,8 +262,36 @@ def edit_event(event_id):
                 flash('Invalid password')
                 return redirect(url_for('edit_event', event_id=event_id))
 
-            # Update event details
-            form.populate_obj(event)
+            event.name = form.name.data
+            event.date = form.date.data
+            event.doors = form.doors.data
+            event.acts = form.acts.data
+            event.ticket_price = form.ticket_price.data
+            event.ticket_link = form.ticket_link.data
+            event.genre = ', '.join(form.genre.data) if form.genre.data else ''
+
+            venue_id = form.venue_id.data
+            if venue_id and venue_id != 'new':
+                venue = Venue.query.get(venue_id)
+                if not venue:
+                    flash('Selected venue does not exist.')
+                    return redirect(url_for('edit_event', event_id=event_id))
+            else:
+                venue = Venue.query.filter_by(
+                    name=form.venue_name.data, city=form.venue_city.data, plz=form.venue_plz.data
+                ).first()
+                if not venue:
+                    venue = Venue(
+                        name=form.venue_name.data,
+                        address=form.venue_address.data,
+                        city=form.venue_city.data,
+                        canton=form.venue_canton.data,
+                        plz=form.venue_plz.data,
+                        coords=form.venue_coords.data
+                    )
+                    db.session.add(venue)
+                    db.session.flush()
+            event.venue_id = venue.id
 
             # Handle flyer upload
             if form.flyer.data:
