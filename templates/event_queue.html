@@ -30,7 +30,15 @@
                 {% for event in events %}
                 <tr class="text-center">
                     <td class="py-2 px-4 border-b">{{ event.start_date }}</td>
-                    <td class="py-2 px-4 border-b">{{ event.title or event.performers }}</td>
+                    <td class="py-2 px-4 border-b text-left">
+                        <div class="font-medium">{{ event.title or event.performers }}</div>
+                        {% if event.description %}
+                            <div class="text-xs text-gray-500 mt-1">{{ event.description[:120] }}{% if event.description|length > 120 %}…{% endif %}</div>
+                        {% endif %}
+                        {% if event.url %}
+                            <a href="{{ event.url }}" target="_blank" class="text-xs text-blue-400 hover:underline">source ↗</a>
+                        {% endif %}
+                    </td>
                     <td class="py-2 px-4 border-b">{{ event.venue_name }}, {{ event.city }}</td>
                     <td class="py-2 px-4 border-b">{{ event.styles or '' }}</td>
                     <td class="py-2 px-4 border-b">
@@ -112,6 +120,17 @@
                                     <input type="text" name="override_ticket_url"
                                            value="{{ event.ticket_url or event.ticket_link or '' }}"
                                            class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold">Source URL</label>
+                                    <input type="text" name="override_source_url"
+                                           value="{{ event.url or '' }}"
+                                           class="border border-gray-400 p-1 w-full text-sm">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-bold">Description</label>
+                                    <textarea name="override_description" rows="3"
+                                              class="border border-gray-400 p-1 w-full text-sm">{{ event.description or '' }}</textarea>
                                 </div>
                             </div>
                             <button type="submit"

@@ -36,6 +36,26 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 
+def _clean_genre(raw: str) -> str:
+    skip = {'concert', 'konzert', 'live'}
+    parts = [p.strip() for p in raw.replace('·', ',').split(',')]
+    return ', '.join(p for p in parts if p and p.lower() not in skip)
+
+
+@app.route('/get_genres')
+def get_genres():
+    from forms import get_genre_choices
+    seed = [g for g, _ in get_genre_choices()]
+    db_genres = []
+    for event in Event.query.with_entities(Event.genre).filter(Event.genre != None).all():
+        for g in (event.genre or '').split(','):
+            g = g.strip()
+            if g:
+                db_genres.append(g)
+    combined = sorted(set(seed + db_genres), key=str.lower)
+    return jsonify({'genres': combined})
+
+
 @app.route('/about', methods=['GET'])
 def about():
     return render_template('about.html')
@@ -73,10 +93,13 @@ def event_queue(submission_code):
         city         = _ov('override_city', data.get('city') or '')
         plz          = _ov('override_postal_code', data.get('postal_code') or '')
         street       = _ov('override_street_address', data.get('street_address'))
-        genre        = _ov('override_genre', data.get('styles') or '')
+        raw_genre    = _ov('override_genre', data.get('styles') or '')
+        genre        = _clean_genre(raw_genre)
         acts         = _ov('override_acts', data.get('performers') or '')
         ticket_price = _ov('override_ticket_price', data.get('ticket_price') or '')
         ticket_link  = _ov('override_ticket_url', data.get('ticket_url') or data.get('ticket_link') or '')
+        description  = _ov('override_description', data.get('description') or '')
+        source_url   = _ov('override_source_url', data.get('url') or '')
 
         override_date = request.form.get('override_date', '').strip()
         event_date = datetime.strptime(override_date, '%Y-%m-%d') if override_date else data.get('_event_date')
@@ -119,6 +142,8 @@ def event_queue(submission_code):
             doors=doors_time,
             genre=genre,
             acts=acts,
+            description=description or None,
+            source_url=source_url or None,
             flyer=None,
             ticket_link=ticket_link,
             ticket_price=ticket_price,
@@ -398,9 +423,9 @@ def parse_scraped_events():
     ).all()
     events = []
     for rec in candidates:
-        # Filter by styles containing 'concert'
+        # Filter by styles containing 'concert' (MetalGigs uses genre tags instead)
         styles = (rec.styles or '').lower()
-        if 'concert' not in styles:
+        if rec.source != 'metalgigs' and 'concert' not in styles:
             continue
         # convert to dictionary for template
         data = {

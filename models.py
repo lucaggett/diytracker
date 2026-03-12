@@ -16,6 +16,8 @@ class Event(db.Model):
     doors = db.Column(db.Time, nullable=False)  # Storing door time as 24-hour format
     genre = db.Column(db.String(100), nullable=True)
     acts = db.Column(db.Text, nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    source_url  = db.Column(db.String(300), nullable=True)
     flyer = db.Column(db.String(200), nullable=True)  # File path to the uploaded flyer
     submitter_id = db.Column(db.Integer, db.ForeignKey('submitter.id'), nullable=True)
     submitter = db.relationship('Submitter', backref=db.backref('events', lazy=True))

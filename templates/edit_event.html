@@ -149,16 +149,36 @@
     document.addEventListener('DOMContentLoaded', function () {
         const preselectedVenueId = "{{ form.venue_id.data }}";
 
-        // Choices.js for Genre
+        // Choices.js for Genre with DB-backed autocomplete + free-text
         const genreSelect = document.getElementById('{{ form.genre.id }}');
-        new Choices(genreSelect, {
-            removeItemButton: true,
-            searchResultLimit: 10,
-            renderChoiceLimit: -1,
-            shouldSort: false,
-            placeholderValue: 'Select genres',
-            searchPlaceholderValue: 'Type to search genres',
-            maxItemCount: -1
+        let genreChoices;
+        fetch('/get_genres')
+            .then(r => r.json())
+            .then(data => {
+                genreChoices = new Choices(genreSelect, {
+                    removeItemButton: true,
+                    shouldSort: false,
+                    searchResultLimit: 20,
+                    allowHTML: false,
+                    duplicateItemsAllowed: false,
+                    placeholderValue: 'Search or add genres',
+                });
+                genreChoices.setChoices(
+                    data.genres.map(g => ({ value: g, label: g })),
+                    'value', 'label', true
+                );
+            });
+
+        genreSelect.addEventListener('search', function(e) {
+            const query = e.detail.value.trim();
+            if (query && genreChoices) {
+                const existing = genreChoices._currentState.choices.find(
+                    c => c.value.toLowerCase() === query.toLowerCase()
+                );
+                if (!existing) {
+                    genreChoices.setChoices([{ value: query, label: query }], 'value', 'label', false);
+                }
+            }
         });
 
         // Flatpickr for Date

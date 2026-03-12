@@ -60,7 +60,7 @@ class EventForm(FlaskForm):
     name = StringField('Event Name', validators=[Optional()])
     date = DateTimeField('Event Date', format='%Y-%m-%d', validators=[DataRequired()])
     doors = TimeField('Doors Open Time', format='%H:%M', validators=[DataRequired()])
-    genre = SelectMultipleField('Genre', choices=get_genre_choices(), validators=[Optional()])
+    genre = SelectMultipleField('Genre', choices=[], validate_choice=False, validators=[Optional()])
     acts = TextAreaField('Acts', validators=[Optional()])
     flyer = FileField('Flyer', validators=[Optional()])
 
@@ -85,7 +85,7 @@ class EventEditForm(FlaskForm):
     name = StringField('Event Name', validators=[Optional()])
     date = DateTimeField('Event Date', format='%Y-%m-%d', validators=[DataRequired()])
     doors = TimeField('Doors Open Time', format='%H:%M', validators=[DataRequired()])
-    genre = SelectMultipleField('Genre', choices=get_genre_choices(), validators=[Optional()])
+    genre = SelectMultipleField('Genre', choices=[], validate_choice=False, validators=[Optional()])
     acts = TextAreaField('Acts', validators=[Optional()])
     flyer = FileField('Flyer', validators=[Optional()])
 
