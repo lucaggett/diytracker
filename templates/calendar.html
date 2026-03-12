@@ -105,16 +105,15 @@
                 {% set current_date = datetime(month.year, month.month, day).date() %}
                 {% if current_date >= today %}
                     <!-- Date Card -->
-                    <div class="date-card bg-gray-400 shadow shadow-gray-800 rounded-md p-4">
-                        <div class="flex justify-between items-center">
+                    <div class="date-card bg-gray-400 border {% if current_date == today %}border-red-800{% else %}border-gray-600{% endif %} shadow shadow-gray-800 rounded-md p-4">
+                        <div class="flex justify-between items-center border-b border-gray-500 pb-2 mb-2">
                             <span class="font-bold text-lg text-red-800">{{ current_date.strftime('%A, %B %d, %Y') }}</span>
-                            <!-- Optionally display the date in your preferred format -->
                         </div>
-                        <div class="mt-2 text-sm event-container">
+                        <div class="text-sm event-container">
                             {% if current_date in grouped_events %}
                                 <!-- Display events for this day -->
                                 {% for event in grouped_events[current_date] %}
-                                    <div class="event-item mt-2 p-2 rounded cursor-pointer shadow-gray-800"
+                                    <div class="event-item mt-2 p-2 rounded cursor-pointer bg-gray-300 border border-gray-600"
                                          data-event-id="{{ event.id }}"
                                          data-event-name="{{ event.name|e }}"
                                          data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
@@ -139,15 +138,16 @@
                                                 {% else %}
                                                     <p class="font-semibold">{{ event.acts }}</p>
                                                 {% endif %}
-                                                <p class="text-gray-600">{{ event.venue.name }}, {{ event.venue.city }}</p>
+                                                <p class="text-gray-600 text-xs mt-0.5">{{ event.venue.name }}, {{ event.venue.city }}</p>
                                             </div>
-                                            <svg class="event-chevron h-4 w-4 flex-shrink-0 ml-2 transition-transform duration-200"
+                                            <svg class="event-chevron flex-shrink-0 transition-transform duration-200"
+                                                 style="width:16px;height:16px;min-width:16px;color:#374151;"
                                                  xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                             </svg>
                                         </div>
                                         <!-- Hidden event details div -->
-                                        <div class="event-details hidden mt-2 p-2 bg-gray-400 rounded">
+                                        <div class="event-details hidden mt-2 p-2 bg-gray-200 rounded border border-gray-500">
                                             {% if event.flyer %}
                                                 <img src="{{ event.flyer }}" loading="lazy"
                                                      alt="{{ event.name }}" class="w-full h-auto rounded">
