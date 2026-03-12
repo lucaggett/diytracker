@@ -10,19 +10,19 @@ def regenerate_link_and_notify(email):
     """
     Regenerate the password and notify all users of the new password
     """
-    # Get admin emails from the DB
     with app.app_context():
         target_submitter = Submitter.query.filter_by(email=email).first()
         if target_submitter is None:
             print("No submitter found for email", email)
-        # Reset UUID
-        target_submitter.submission_code = uuid.uuid4()
+            return
+        target_submitter.submission_code = str(uuid.uuid4())
         db.session.commit()
+        new_code = target_submitter.submission_code
 
     # Notify all users
     EMAIL_SERVER, USERNAME, PASSWORD = open("EMAIL_DATA").read().split(":")
     PASSWORD = PASSWORD.strip()
-    link = f"https://diytracker.ch/submit/{target_submitter.submission_code}"
+    link = f"https://diytracker.ch/submit/{new_code}"
 
     print(f'Sending email to {email}')
     message = EmailMessage()
@@ -86,6 +86,9 @@ def remove_user(email):
     """
     with app.app_context():
         user = Submitter.query.filter_by(email=email).first()
+        if user is None:
+            print(f'No user found for email {email}')
+            return
         db.session.delete(user)
         db.session.commit()
     print(f'User {email} removed successfully!')
