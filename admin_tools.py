@@ -1,7 +1,6 @@
 import os
 import smtplib
 import ssl
-import uuid
 from email.message import EmailMessage
 
 from dotenv import load_dotenv
@@ -11,6 +10,8 @@ load_dotenv()
 from models import Submitter
 from app import app, db
 
+
+# ── helpers ───────────────────────────────────────────────────────────────────
 
 def _send_email(to_address, subject, body):
     email_server = os.environ['EMAIL_SERVER']
@@ -24,107 +25,175 @@ def _send_email(to_address, subject, body):
     message['To'] = to_address
 
     context = ssl.create_default_context()
-    print(f"Attempting to log in as {username} on {email_server}")
     with smtplib.SMTP_SSL(email_server, 465, context=context) as server:
         server.login(username, password)
         server.send_message(message)
-    print(f'Email sent to {to_address}')
+    print(f'  Email sent to {to_address}')
 
 
-def set_password(email, password):
-    """Set a password for an existing submitter."""
+def _get_all_users():
     with app.app_context():
-        user = Submitter.query.filter_by(email=email).first()
-        if user is None:
-            print(f"No submitter found for email {email}")
-            return
+        return Submitter.query.order_by(Submitter.email).all()
+
+
+def _print_user_row(i, user):
+    admin_flag = ' [ADMIN]' if user.is_admin else '       '
+    pw_flag    = ' [pw]' if user.password_hash else ' [NO PW]'
+    print(f"  {i:>2}.  {admin_flag}{pw_flag}  {user.email}")
+
+
+def _print_user_list(users):
+    print()
+    print(f"  {'':>4}  {'':7}  {'':5}  email")
+    print(f"  {'-'*50}")
+    for i, user in enumerate(users, 1):
+        _print_user_row(i, user)
+    print()
+
+
+def _pick_user(prompt="Select a user by number: "):
+    """Show the user list and return a (user_id, email) tuple for the chosen row."""
+    users = _get_all_users()
+    if not users:
+        print("  No users found.")
+        return None
+    _print_user_list(users)
+    raw = input(prompt).strip()
+    try:
+        idx = int(raw) - 1
+        if not (0 <= idx < len(users)):
+            raise ValueError
+    except ValueError:
+        print("  Invalid selection.")
+        return None
+    chosen = users[idx]
+    return chosen.id, chosen.email
+
+
+# ── actions ───────────────────────────────────────────────────────────────────
+
+def set_password(user_id, password):
+    with app.app_context():
+        user = db.session.get(Submitter, user_id)
         user.set_password(password)
         db.session.commit()
-    print(f'Password set for {email}')
+        print(f'  Password updated for {user.email}')
 
 
-def set_admin(email, is_admin):
-    """Grant or revoke admin status for a submitter."""
+def set_admin(user_id, is_admin):
     with app.app_context():
-        user = Submitter.query.filter_by(email=email).first()
-        if user is None:
-            print(f"No submitter found for email {email}")
-            return
+        user = db.session.get(Submitter, user_id)
         user.is_admin = is_admin
         db.session.commit()
-    status = 'granted' if is_admin else 'revoked'
-    print(f'Admin status {status} for {email}')
+        status = 'granted' if is_admin else 'revoked'
+        print(f'  Admin status {status} for {user.email}')
 
 
-def add_user(email, password):
-    """Add a new submitter and send a welcome email with the login URL."""
+def remove_user(user_id, email):
+    confirm = input(f"  Delete {email}? This cannot be undone. (yes/no): ").strip().lower()
+    if confirm != 'yes':
+        print("  Cancelled.")
+        return
     with app.app_context():
+        user = db.session.get(Submitter, user_id)
+        db.session.delete(user)
+        db.session.commit()
+    print(f'  {email} removed.')
+
+
+def add_user():
+    email = input("  Email: ").strip()
+    if not email:
+        print("  Cancelled.")
+        return
+    password = input("  Password: ").strip()
+    if not password:
+        print("  Cancelled.")
+        return
+    send_welcome = input("  Send welcome email? (y/n): ").strip().lower()
+
+    with app.app_context():
+        if Submitter.query.filter_by(email=email).first():
+            print(f"  A user with that email already exists.")
+            return
         new_user = Submitter(email=email)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
+        print(f'  User {email} created.')
 
-    login_link = "https://diytracker.ch/login"
-    _send_email(
-        email,
-        'Welcome new diytracker.ch submitter!',
-        f"Welcome to diytracker.ch!\n\n"
-        f"You can now submit and review events by logging in at:\n{login_link}\n\n"
-        f"Your login email: {email}\n\n"
-        f"If you have any questions, please contact Luc at luc@aggett.com"
-    )
-    print(f'Welcome email sent to {email} successfully!')
-
-
-def remove_user(email):
-    """Remove a submitter."""
-    with app.app_context():
-        user = Submitter.query.filter_by(email=email).first()
-        if user is None:
-            print(f'No user found for email {email}')
-            return
-        db.session.delete(user)
-        db.session.commit()
-    print(f'User {email} removed successfully!')
+    if send_welcome == 'y':
+        _send_email(
+            email,
+            'Welcome to diytracker.ch!',
+            f"Welcome to diytracker.ch!\n\n"
+            f"You can submit and review events by logging in at:\nhttps://diytracker.ch/login\n\n"
+            f"Your login email: {email}\n\n"
+            f"If you have any questions, contact Luc at luc@aggett.com"
+        )
 
 
-def list_users():
-    """List all submitters."""
-    with app.app_context():
-        users = Submitter.query.all()
-        for user in users:
-            admin_flag = ' [ADMIN]' if user.is_admin else ''
-            has_pw = ' [has password]' if user.password_hash else ' [no password]'
-            print(f"{user.email}{admin_flag}{has_pw}")
+def edit_user():
+    """Select a user, then choose what to change."""
+    result = _pick_user("Select user to edit: ")
+    if result is None:
+        return
+    user_id, email = result
+
+    print(f"\n  Editing: {email}")
+    print("    a.  Set password")
+    print("    b.  Toggle admin status")
+    print("    c.  Delete user")
+    print("    q.  Cancel")
+    action = input("  Action: ").strip().lower()
+
+    if action == 'a':
+        password = input("  New password: ").strip()
+        if password:
+            set_password(user_id, password)
+        else:
+            print("  Cancelled.")
+    elif action == 'b':
+        with app.app_context():
+            user = db.session.get(Submitter, user_id)
+            current = user.is_admin
+        new_state = not current
+        label = "grant" if new_state else "revoke"
+        confirm = input(f"  {label.capitalize()} admin for {email}? (y/n): ").strip().lower()
+        if confirm == 'y':
+            set_admin(user_id, new_state)
+    elif action == 'c':
+        remove_user(user_id, email)
+    else:
+        print("  Cancelled.")
+
+
+# ── main loop ─────────────────────────────────────────────────────────────────
+
+def main():
+    while True:
+        print("\n── diytracker admin ──────────────────")
+        print("  1.  List users")
+        print("  2.  Add user")
+        print("  3.  Edit / delete user")
+        print("  q.  Quit")
+        choice = input("Choice: ").strip().lower()
+
+        if choice == '1':
+            users = _get_all_users()
+            if users:
+                _print_user_list(users)
+            else:
+                print("  No users.")
+        elif choice == '2':
+            add_user()
+        elif choice == '3':
+            edit_user()
+        elif choice == 'q':
+            break
+        else:
+            print("  Unknown option.")
 
 
 if __name__ == '__main__':
-    print("Admin Tools CLI")
-    print("1. Set password for a user")
-    print("2. Add a new user")
-    print("3. Remove a user")
-    print("4. List all users")
-    print("5. Grant/revoke admin status")
-    choice = input("Enter your choice: ")
-
-    if choice == '1':
-        email = input("Enter the email of the user: ")
-        password = input("Enter the new password: ")
-        set_password(email, password)
-
-    elif choice == '2':
-        email = input("Enter the email of the new user: ")
-        password = input("Enter the password for the new user: ")
-        add_user(email, password)
-
-    elif choice == '3':
-        email = input("Enter the email of the user to remove: ")
-        remove_user(email)
-
-    elif choice == '4':
-        list_users()
-
-    elif choice == '5':
-        email = input("Enter the email of the user: ")
-        action = input("Grant or revoke admin? (grant/revoke): ").strip().lower()
-        set_admin(email, action == 'grant')
+    main()
