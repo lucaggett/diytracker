@@ -131,13 +131,6 @@
             <div id="flyer-preview" class="mt-2"></div>
         </div>
 
-        <h3 class="text-xl font-semibold mb-2 mt-6">Admin</h3>
-
-        <div class="mb-4">
-            {{ form.password.label(class="block font-bold") }}
-            {{ form.password(class="border border-black p-2 w-full", type="password") }}
-        </div>
-
         <button type="submit" class="bg-black text-white p-2 mt-4 hover:bg-gray-800">Update Event</button>
         <a href="{{ url_for('admin') }}" class="ml-4 text-gray-700 hover:underline">Cancel</a>
     </form>

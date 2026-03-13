@@ -1,15 +1,20 @@
 import calendar
+import functools
+import hashlib
 import os
 from collections import defaultdict
-from datetime import datetime, time as time_type
+from datetime import datetime, time as time_type, timedelta
 from dateutil.relativedelta import relativedelta
 
-from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, abort
+from dotenv import load_dotenv
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, abort, session
 from werkzeug.utils import secure_filename
 
-from forms import EventForm, EventEditForm
+from forms import EventForm, EventEditForm, LoginForm, DeleteEventForm
 from models import db, Event, Venue, Submitter, ScrapedEvent
 from utils import resolve_canton
+
+load_dotenv()
 
 # Check that required directories exist
 if not os.path.exists('logs'):
@@ -20,11 +25,34 @@ if not os.path.exists('static/uploads'):
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///events.db'  # SQLite for simplicity
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///events.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 db.init_app(app)
+
+
+def login_required(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login', next=request.path))
+        return f(*args, **kwargs)
+    return decorated
+
+
+def admin_required(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login', next=request.path))
+        user = db.session.get(Submitter, session['user_id'])
+        if not user or not user.is_admin:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated
 
 with app.app_context():
     db.create_all()
@@ -32,15 +60,44 @@ with app.app_context():
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
-# Check allowed file extensions
+MAGIC_BYTES = [b'\xff\xd8\xff', b'\x89PNG\r\n\x1a\n', b'GIF87a', b'GIF89a']
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+
+def validate_image_content(file_storage):
+    header = file_storage.read(8)
+    file_storage.seek(0)
+    return any(header.startswith(m) for m in MAGIC_BYTES)
 
 
 def _clean_genre(raw: str) -> str:
     skip = {'concert', 'konzert', 'live'}
     parts = [p.strip() for p in raw.replace('·', ',').split(',')]
     return ', '.join(p for p in parts if p and p.lower() not in skip)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = Submitter.query.filter_by(email=form.email.data).first()
+        if user and user.check_password(form.password.data):
+            session['user_id'] = user.id
+            next_url = request.args.get('next', '')
+            if next_url.startswith('/'):
+                return redirect(next_url)
+            return redirect(url_for('calendar_view'))
+        flash('Invalid email or password.')
+    return render_template('login.html', form=form)
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('calendar_view'))
 
 
 @app.route('/get_genres')
@@ -62,16 +119,15 @@ def about():
     return render_template('about.html')
 
 
-@app.route('/queue/<string:submission_code>', methods=['GET', 'POST'])
-def event_queue(submission_code):
+@app.route('/queue', methods=['GET', 'POST'])
+@login_required
+def event_queue():
     """Display and approve scraped events for a given submitter.
 
     GET: show the list of filtered events with approve buttons.
     POST: create the selected event in the database.
     """
-    submitter = Submitter.query.filter_by(submission_code=submission_code).first()
-    if not submitter:
-        abort(404)
+    submitter = db.session.get(Submitter, session['user_id'])
     # Load events from the database via the ScrapedEvent model
     events = parse_scraped_events()
     if request.method == 'POST':
@@ -83,7 +139,7 @@ def event_queue(submission_code):
             data = events[idx]
         except (ValueError, IndexError):
             flash('Invalid event selection.')
-            return redirect(url_for('event_queue', submission_code=submission_code))
+            return redirect(url_for('event_queue'))
         # Apply overrides from inline edit form (fall back to scraped data)
         def _ov(key, fallback):
             val = request.form.get(key, '').strip()
@@ -131,12 +187,14 @@ def event_queue(submission_code):
             db.session.add(venue)
             db.session.commit()
         # Compute a hash to avoid duplicates (similar to submit_event_link)
-        event_hash = hash(f"{name}{event_date}{doors_time}{genre}{acts}{ticket_link}{ticket_price}{venue.id}")
+        event_hash = hashlib.sha256(
+            f"{name}{event_date}{doors_time}{genre}{acts}{ticket_link}{ticket_price}{venue.id}".encode()
+        ).hexdigest()
         # Check if event already exists
-        existing = Event.query.filter_by(event_hash=str(event_hash)).first()
+        existing = Event.query.filter_by(event_hash=event_hash).first()
         if existing:
             flash('This event already exists.')
-            return redirect(url_for('event_queue', submission_code=submission_code))
+            return redirect(url_for('event_queue'))
         new_event = Event(
             name=name,
             date=event_date,
@@ -149,7 +207,7 @@ def event_queue(submission_code):
             ticket_link=ticket_link,
             ticket_price=ticket_price,
             venue_id=venue.id,
-            event_hash=str(event_hash),
+            event_hash=event_hash,
             submitter_id=submitter.id
         )
         db.session.add(new_event)
@@ -164,21 +222,17 @@ def event_queue(submission_code):
                 scraped_obj.approved_event_id = new_event.id
                 db.session.commit()
         flash('Event approved and added to calendar!')
-        return redirect(url_for('event_queue', submission_code=submission_code))
+        return redirect(url_for('event_queue'))
     return render_template('event_queue.html', events=events)
 
-@app.route('/submit/<string:submission_code>', methods=['GET', 'POST'])
-def submit_event_link(submission_code):
+@app.route('/submit', methods=['GET', 'POST'])
+@login_required
+def submit_event_link():
     """
-    Allows event submission via a unique link associated with each user.
+    Allows event submission by logged-in submitters.
     """
     form = EventForm()
-
-    # Look up the submitter by the submission code
-    submitter = Submitter.query.filter_by(submission_code=submission_code).first()
-    if not submitter:
-        flash("Invalid or expired submission link.")
-        return redirect(url_for('calendar_view'))
+    submitter = db.session.get(Submitter, session['user_id'])
 
     if form.validate_on_submit():
         # Extract form data
@@ -194,7 +248,7 @@ def submit_event_link(submission_code):
         flyer = None
         if form.flyer.data:
             file = form.flyer.data
-            if file and allowed_file(file.filename):
+            if file and allowed_file(file.filename) and validate_image_content(file):
                 filename = secure_filename(file.filename)
                 flyer_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(flyer_path)
@@ -213,7 +267,7 @@ def submit_event_link(submission_code):
 
             if not venue_name or not venue_city or not venue_plz:
                 flash('Please provide all required venue details for a new venue.')
-                return redirect(url_for('submit_event_link', submission_code=submission_code))
+                return redirect(url_for('submit_event_link'))
 
             venue = Venue.query.filter_by(
                 name=venue_name,
@@ -238,7 +292,7 @@ def submit_event_link(submission_code):
             venue = Venue.query.get(venue_id)
             if not venue:
                 flash('Selected venue does not exist.')
-                return redirect(url_for('submit_event_link', submission_code=submission_code))
+                return redirect(url_for('submit_event_link'))
 
         # Create the Event
         new_event = Event(
@@ -251,7 +305,9 @@ def submit_event_link(submission_code):
             ticket_link=ticket_link,
             ticket_price=ticket_price,
             venue_id=venue.id,
-            event_hash=hash(f"{name}{date}{doors}{genres}{acts}{ticket_link}{ticket_price}{venue.id}"),
+            event_hash=hashlib.sha256(
+                f"{name}{date}{doors}{genres}{acts}{ticket_link}{ticket_price}{venue.id}".encode()
+            ).hexdigest(),
             # Assign the submitter so we know who created it:
             submitter_id=submitter.id
         )
@@ -264,11 +320,14 @@ def submit_event_link(submission_code):
     return render_template('submit_event.html', form=form)
 
 @app.route('/admin', methods=['GET'])
+@admin_required
 def admin():
     events = Event.query.order_by(Event.date.asc()).all()
-    return render_template('admin.html', events=events)
+    delete_form = DeleteEventForm()
+    return render_template('admin.html', events=events, delete_form=delete_form)
 
 @app.route('/edit_event/<int:event_id>', methods=['GET', 'POST'])
+@admin_required
 def edit_event(event_id):
     event = Event.query.get_or_404(event_id)
     form = EventEditForm(obj=event)
@@ -283,11 +342,6 @@ def edit_event(event_id):
         form.genre.data = [g.strip() for g in (event.genre or '').split(',') if g.strip()]
     if request.method == 'POST':
         if form.validate_on_submit():
-            password = form.password.data
-            if password != open('ADMIN_PASSWORD').read().strip():
-                flash('Invalid password')
-                return redirect(url_for('edit_event', event_id=event_id))
-
             event.name = form.name.data
             event.date = form.date.data
             event.doors = form.doors.data
@@ -322,7 +376,7 @@ def edit_event(event_id):
             # Handle flyer upload
             if form.flyer.data:
                 file = form.flyer.data
-                if file and allowed_file(file.filename):
+                if file and allowed_file(file.filename) and validate_image_content(file):
                     filename = secure_filename(file.filename)
                     flyer = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                     file.save(flyer)
@@ -335,13 +389,12 @@ def edit_event(event_id):
     return render_template('edit_event.html', form=form, event=event)
 
 @app.route('/delete_event/<int:event_id>', methods=['POST'])
+@admin_required
 def delete_event(event_id):
+    form = DeleteEventForm()
+    if not form.validate_on_submit():
+        abort(400)
     event = Event.query.get_or_404(event_id)
-    password = request.form.get('password')
-    if password != open('ADMIN_PASSWORD').read().strip():
-        flash('Invalid password')
-        return redirect(url_for('admin'))
-
     db.session.delete(event)
     db.session.commit()
     flash('Event deleted successfully!')
@@ -457,3 +510,6 @@ def parse_scraped_events():
         data['_scraped_id'] = rec.id
         events.append(data)
     return events
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5001)

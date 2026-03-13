@@ -23,3 +23,5 @@ WTForms-SQLAlchemy==0.4.1
 
 alembic~=1.13.3
 python-telegram-bot~=21.10
+python-dotenv==1.0.1
+email-validator==2.1.1

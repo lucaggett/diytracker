@@ -1,89 +1,83 @@
+import os
 import smtplib
 import ssl
 import uuid
 from email.message import EmailMessage
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from models import Submitter
 from app import app, db
 
 
-def regenerate_link_and_notify(email):
-    """
-    Regenerate the password and notify all users of the new password
-    """
-    with app.app_context():
-        target_submitter = Submitter.query.filter_by(email=email).first()
-        if target_submitter is None:
-            print("No submitter found for email", email)
-            return
-        target_submitter.submission_code = str(uuid.uuid4())
-        db.session.commit()
-        new_code = target_submitter.submission_code
+def _send_email(to_address, subject, body):
+    email_server = os.environ['EMAIL_SERVER']
+    username = os.environ['EMAIL_USERNAME']
+    password = os.environ['EMAIL_PASSWORD']
 
-    # Notify all users
-    EMAIL_SERVER, USERNAME, PASSWORD = open("EMAIL_DATA").read().split(":")
-    PASSWORD = PASSWORD.strip()
-    link = f"https://diytracker.ch/submit/{new_code}"
-
-    print(f'Sending email to {email}')
     message = EmailMessage()
-    message.set_content(f"Your submission link has been reset. You can now submit using this link:\n\n{link} ")
-    message['Subject'] = 'diytracker submission link reset'
-    message['From'] = "diytracker@aggett.ch"
-    message['To'] = email
+    message.set_content(body)
+    message['Subject'] = subject
+    message['From'] = "info@diytracker.ch"
+    message['To'] = to_address
 
     context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(EMAIL_SERVER, 465, context=context) as server:
-        server.login(USERNAME, PASSWORD)
+    print(f"Attempting to log in as {username} on {email_server}")
+    with smtplib.SMTP_SSL(email_server, 465, context=context) as server:
+        server.login(username, password)
         server.send_message(message)
-        print(f'Email sent to {email}')
-        
+    print(f'Email sent to {to_address}')
 
 
-def add_user(email):
-    """
-    Add a new user to the admin list
-    :param email: Email of the user to add
-    """
+def set_password(email, password):
+    """Set a password for an existing submitter."""
     with app.app_context():
-        # Generate a co
+        user = Submitter.query.filter_by(email=email).first()
+        if user is None:
+            print(f"No submitter found for email {email}")
+            return
+        user.set_password(password)
+        db.session.commit()
+    print(f'Password set for {email}')
+
+
+def set_admin(email, is_admin):
+    """Grant or revoke admin status for a submitter."""
+    with app.app_context():
+        user = Submitter.query.filter_by(email=email).first()
+        if user is None:
+            print(f"No submitter found for email {email}")
+            return
+        user.is_admin = is_admin
+        db.session.commit()
+    status = 'granted' if is_admin else 'revoked'
+    print(f'Admin status {status} for {email}')
+
+
+def add_user(email, password):
+    """Add a new submitter and send a welcome email with the login URL."""
+    with app.app_context():
         new_user = Submitter(email=email)
+        new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
-        submission_code = new_user.submission_code
 
-    # Then email them, e.g.:
-    submission_link = f"https://diytracker.ch/submit/{submission_code}"
-    queue_link = f"https://diytracker.ch/queue/{submission_code}"
-
-    # Welcome the user and notify them of the current password
-    EMAIL_SERVER, USERNAME, PASSWORD = open("EMAIL_DATA").read().split(":")
-    PASSWORD = PASSWORD.strip()
-
-    message = EmailMessage()
-    message.set_content(
+    login_link = "https://diytracker.ch/login"
+    _send_email(
+        email,
+        'Welcome new diytracker.ch submitter!',
         f"Welcome to diytracker.ch!\n\n"
-        f"You can now submit events using your unique link:\n{submission_link}\n\n"
-        f"You can also approve events in the queue by using:\n{queue_link}\n\n"
-        f"Keep this link safe or bookmark it.\n\n"
-        f"This is an automated message from the diytracker application server\n\n"
-        f"If you have any questions, please contact Luc at luc@aggett.com or over")
-    message['Subject'] = 'Welcome new diytracker.ch submitter!'
-    message['From'] = "info@diytracker.ch"
-    message['To'] = email
-
-    context = ssl.create_default_context()
-    print(f"Attempting to log in as {USERNAME} on {EMAIL_SERVER}")
-    with smtplib.SMTP_SSL(EMAIL_SERVER, 465, context=context) as server:
-        server.login(USERNAME, PASSWORD)
-        server.send_message(message)
+        f"You can now submit and review events by logging in at:\n{login_link}\n\n"
+        f"Your login email: {email}\n\n"
+        f"If you have any questions, please contact Luc at luc@aggett.com"
+    )
     print(f'Welcome email sent to {email} successfully!')
 
 
 def remove_user(email):
-    """
-    Remove a user from the admin list
-    :param email: Email of the user to remove
-    """
+    """Remove a submitter."""
     with app.app_context():
         user = Submitter.query.filter_by(email=email).first()
         if user is None:
@@ -95,32 +89,33 @@ def remove_user(email):
 
 
 def list_users():
-    """
-    List all users in the admin list
-    """
+    """List all submitters."""
     with app.app_context():
         users = Submitter.query.all()
         for user in users:
-            print(user.email)
+            admin_flag = ' [ADMIN]' if user.is_admin else ''
+            has_pw = ' [has password]' if user.password_hash else ' [no password]'
+            print(f"{user.email}{admin_flag}{has_pw}")
 
 
 if __name__ == '__main__':
-    # small admin script to add or remove users to/from the admin list, regenerate the password, etc
     print("Admin Tools CLI")
-    print("1. Regenerate link and notify the user")
+    print("1. Set password for a user")
     print("2. Add a new user")
     print("3. Remove a user")
     print("4. List all users")
+    print("5. Grant/revoke admin status")
     choice = input("Enter your choice: ")
 
     if choice == '1':
-        regenerate_link_and_notify(
-            input("Enter the email of the user to reset: ")
-        )
+        email = input("Enter the email of the user: ")
+        password = input("Enter the new password: ")
+        set_password(email, password)
 
     elif choice == '2':
         email = input("Enter the email of the new user: ")
-        add_user(email)
+        password = input("Enter the password for the new user: ")
+        add_user(email, password)
 
     elif choice == '3':
         email = input("Enter the email of the user to remove: ")
@@ -128,3 +123,8 @@ if __name__ == '__main__':
 
     elif choice == '4':
         list_users()
+
+    elif choice == '5':
+        email = input("Enter the email of the user: ")
+        action = input("Grant or revoke admin? (grant/revoke): ").strip().lower()
+        set_admin(email, action == 'grant')

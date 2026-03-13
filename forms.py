@@ -1,9 +1,10 @@
 from flask_wtf import FlaskForm
 from wtforms import (StringField, TextAreaField, DateField, TimeField,
-                     FileField, SubmitField, SelectField, SelectMultipleField)
+                     FileField, SubmitField, SelectField, SelectMultipleField,
+                     PasswordField)
 from wtforms.fields.datetime import DateTimeField
 from wtforms.fields.simple import HiddenField, BooleanField
-from wtforms.validators import DataRequired, Optional
+from wtforms.validators import DataRequired, Optional, Email
 
 
 def get_genre_choices():
@@ -104,5 +105,13 @@ class EventEditForm(FlaskForm):
     venue_canton = StringField('Canton', validators=[Optional()])
     venue_plz = StringField('ZIP Code', validators=[Optional()])
     venue_coords = StringField('Coordinates', validators=[Optional()])
-    password = StringField('Password', validators=[DataRequired()])
+
+
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+
+
+class DeleteEventForm(FlaskForm):
+    pass
 

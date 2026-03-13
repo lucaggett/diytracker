@@ -9,7 +9,10 @@
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-6">
-        <h1 class="text-3xl font-bold mb-6">Admin - Manage Events</h1>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">Admin - Manage Events</h1>
+            <a href="{{ url_for('logout') }}" class="text-sm text-gray-600 hover:underline">Logout</a>
+        </div>
         <table class="min-w-full bg-white shadow-md rounded">
             <thead>
                 <tr>
@@ -31,8 +34,9 @@
                         <a href="{{ url_for('edit_event', event_id=event.id) }}" class="text-blue-500 hover:underline">Edit</a>
                         |
                         <form action="{{ url_for('delete_event', event_id=event.id) }}" method="POST" class="inline">
-                            <input type="password" name="password" placeholder="Password" class="border rounded px-2 py-1 text-sm">
-                            <button type="submit" class="text-red-500 hover:underline ml-2">Delete</button>
+                            {{ delete_form.hidden_tag() }}
+                            <button type="submit" class="text-red-500 hover:underline ml-2"
+                                    onclick="return confirm('Delete this event?')">Delete</button>
                         </form>
                     </td>
                 </tr>

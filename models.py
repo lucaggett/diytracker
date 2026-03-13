@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 
 db = SQLAlchemy()
@@ -42,11 +43,20 @@ class Submitter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), nullable=False)
     submission_code = db.Column(db.String(100), unique=True, nullable=True)
+    password_hash = db.Column(db.String(256), nullable=True)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(self, email, submission_code=None):
         self.email = email
-        # We can generate a code if not provided
         self.submission_code = submission_code or str(uuid.uuid4())
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f"{self.email} ({self.submission_code})"
