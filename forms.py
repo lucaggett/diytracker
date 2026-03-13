@@ -4,7 +4,7 @@ from wtforms import (StringField, TextAreaField, DateField, TimeField,
                      PasswordField)
 from wtforms.fields.datetime import DateTimeField
 from wtforms.fields.simple import HiddenField, BooleanField
-from wtforms.validators import DataRequired, Optional, Email
+from wtforms.validators import DataRequired, Optional, Email, EqualTo, Length
 
 
 def get_genre_choices():
@@ -114,4 +114,9 @@ class LoginForm(FlaskForm):
 
 class DeleteEventForm(FlaskForm):
     pass
+
+
+class SetPasswordForm(FlaskForm):
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
 

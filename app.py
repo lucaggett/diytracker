@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, abort, session
 from werkzeug.utils import secure_filename
 
-from forms import EventForm, EventEditForm, LoginForm, DeleteEventForm
+from forms import EventForm, EventEditForm, LoginForm, DeleteEventForm, SetPasswordForm
 from models import db, Event, Venue, Submitter, ScrapedEvent
 from utils import resolve_canton
 
@@ -98,6 +98,22 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('calendar_view'))
+
+
+@app.route('/set-password/<token>', methods=['GET', 'POST'])
+def set_password(token):
+    user = Submitter.query.filter_by(invite_token=token).first()
+    if not user or not user.invite_token_expiry or user.invite_token_expiry < datetime.utcnow():
+        flash('This invite link is invalid or has expired.')
+        return redirect(url_for('login'))
+    form = SetPasswordForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        user.clear_invite_token()
+        db.session.commit()
+        session['user_id'] = user.id
+        return redirect(url_for('submit_event_link'))
+    return render_template('set_password.html', form=form)
 
 
 @app.route('/get_genres')

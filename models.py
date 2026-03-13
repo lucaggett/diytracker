@@ -1,3 +1,6 @@
+import secrets
+from datetime import datetime, timedelta
+
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
@@ -45,6 +48,8 @@ class Submitter(db.Model):
     submission_code = db.Column(db.String(100), unique=True, nullable=True)
     password_hash = db.Column(db.String(256), nullable=True)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
+    invite_token = db.Column(db.String(64), nullable=True, unique=True)
+    invite_token_expiry = db.Column(db.DateTime, nullable=True)
 
     def __init__(self, email, submission_code=None):
         self.email = email
@@ -57,6 +62,15 @@ class Submitter(db.Model):
         if not self.password_hash:
             return False
         return check_password_hash(self.password_hash, password)
+
+    def generate_invite_token(self):
+        self.invite_token = secrets.token_urlsafe(32)
+        self.invite_token_expiry = datetime.utcnow() + timedelta(days=7)
+        return self.invite_token
+
+    def clear_invite_token(self):
+        self.invite_token = None
+        self.invite_token_expiry = None
 
     def __repr__(self):
         return f"{self.email} ({self.submission_code})"

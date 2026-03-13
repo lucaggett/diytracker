@@ -101,36 +101,34 @@ def remove_user(user_id, email):
     print(f'  {email} removed.')
 
 
+def _send_invite_email(email, token):
+    _send_email(
+        email,
+        'Set your diytracker.ch password',
+        f"You've been invited to diytracker.ch!\n\n"
+        f"Set your password using this link (valid for 7 days):\n"
+        f"https://diytracker.ch/set-password/{token}\n\n"
+        f"If you have any questions, contact Luc at luc@aggett.com"
+    )
+
+
 def add_user():
     email = input("  Email: ").strip()
     if not email:
         print("  Cancelled.")
         return
-    password = input("  Password: ").strip()
-    if not password:
-        print("  Cancelled.")
-        return
-    send_welcome = input("  Send welcome email? (y/n): ").strip().lower()
 
     with app.app_context():
         if Submitter.query.filter_by(email=email).first():
             print(f"  A user with that email already exists.")
             return
         new_user = Submitter(email=email)
-        new_user.set_password(password)
+        token = new_user.generate_invite_token()
         db.session.add(new_user)
         db.session.commit()
         print(f'  User {email} created.')
 
-    if send_welcome == 'y':
-        _send_email(
-            email,
-            'Welcome to diytracker.ch!',
-            f"Welcome to diytracker.ch!\n\n"
-            f"You can submit and review events by logging in at:\nhttps://diytracker.ch/login\n\n"
-            f"Your login email: {email}\n\n"
-            f"If you have any questions, contact Luc at luc@aggett.com"
-        )
+    _send_invite_email(email, token)
 
 
 def edit_user():
@@ -144,6 +142,7 @@ def edit_user():
     print("    a.  Set password")
     print("    b.  Toggle admin status")
     print("    c.  Delete user")
+    print("    d.  Resend invite")
     print("    q.  Cancel")
     action = input("  Action: ").strip().lower()
 
@@ -153,6 +152,13 @@ def edit_user():
             set_password(user_id, password)
         else:
             print("  Cancelled.")
+    elif action == 'd':
+        with app.app_context():
+            user = db.session.get(Submitter, user_id)
+            token = user.generate_invite_token()
+            db.session.commit()
+        _send_invite_email(email, token)
+        print(f'  Invite resent to {email}.')
     elif action == 'b':
         with app.app_context():
             user = db.session.get(Submitter, user_id)
