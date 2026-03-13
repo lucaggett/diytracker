@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - diytracker.ch</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+</head>
+<body class="bg-white text-black">
+<section class="w-full max-w-md mx-auto p-8 border-2 border-black mt-16">
+    <h2 class="text-3xl font-bold mb-6">Login</h2>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-4">
+            {{ form.email.label(class="block font-bold mb-1") }}
+            {{ form.email(class="border border-black p-2 w-full", placeholder="your@email.com") }}
+            {% if form.email.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.email.errors[0] }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-6">
+            {{ form.password.label(class="block font-bold mb-1") }}
+            {{ form.password(class="border border-black p-2 w-full") }}
+            {% if form.password.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.password.errors[0] }}</p>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="bg-black text-white p-2 w-full hover:bg-gray-800">Log in</button>
+    </form>
+</section>
+</body>
+</html>
