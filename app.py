@@ -116,8 +116,16 @@ def _load_scraper():
     return mod
 
 
+def _get_known_urls():
+    """Return a set of all URLs already in the queue or calendar."""
+    with app.app_context():
+        scraped_urls = {r.url for r in ScrapedEvent.query.with_entities(ScrapedEvent.url).all() if r.url}
+        event_urls = {r.source_url for r in Event.query.with_entities(Event.source_url).filter(Event.source_url.isnot(None)).all()}
+        return scraped_urls | event_urls
+
+
 def _scrape_and_import():
-    """Run scrapers and insert results directly into the ScrapedEvent table."""
+    """Run scrapers and insert only new events into the ScrapedEvent table."""
     global _scrape_running, _scrape_progress
     try:
         scraper = _load_scraper()
@@ -129,17 +137,24 @@ def _scrape_and_import():
 
         _scrape_progress = {'total': 0, 'processed': 0, 'started_at': datetime.now().isoformat(), 'phase': 'Fetching sitemaps'}
 
-        events = []
         mg_urls = get_sitemap_event_urls("https://metalgigs.ch/sitemap.xml", "/konzerte/")
         petzi_urls = get_sitemap_event_urls("https://www.petzi.ch/en/sitemap.xml", "/en/events/")
         if not petzi_urls:
             petzi_urls = get_petzi_event_urls()
 
-        all_urls = [('metalgigs', url, parse_metalgigs_event) for url in mg_urls] + \
-                   [('petzi', url, parse_petzi_event) for url in petzi_urls]
+        # Filter out URLs already in the queue or calendar before making any HTTP requests
+        known_urls = _get_known_urls()
+        all_urls = [
+            ('metalgigs', url, parse_metalgigs_event) for url in mg_urls if url not in known_urls
+        ] + [
+            ('petzi', url, parse_petzi_event) for url in petzi_urls if url not in known_urls
+        ]
+
+        app.logger.info(f"Scrape: {len(mg_urls) + len(petzi_urls)} total URLs, {len(all_urls)} new after dedup")
         _scrape_progress['total'] = len(all_urls)
         _scrape_progress['phase'] = 'Scraping events'
 
+        events = []
         for _source, url, parser in all_urls:
             parsed = parser(url)
             if parsed:
@@ -148,16 +163,16 @@ def _scrape_and_import():
 
         _scrape_progress['phase'] = 'Importing to database'
         with app.app_context():
+            # Re-fetch known URLs inside the app context for the safety check
+            known_urls_now = _get_known_urls()
             count = 0
             for row in events:
-                source = row.get('source')
                 url = row.get('url')
-                existing = ScrapedEvent.query.filter_by(source=source, url=url).first()
-                if existing:
+                if url and url in known_urls_now:
                     continue
                 region = resolve_canton(row.get('region') or '', row.get('city') or '')
                 scraped = ScrapedEvent(
-                    source=source,
+                    source=row.get('source'),
                     url=url,
                     title=row.get('title'),
                     performers=row.get('performers'),
