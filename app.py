@@ -514,6 +514,7 @@ def _load_font(size, bold=False):
 
 def generate_weekly_calendar_image(monday_date):
     from PIL import Image, ImageDraw
+    import random as _r
 
     GERMAN_MONTHS = ['JANUAR', 'FEBRUAR', 'MÄRZ', 'APRIL', 'MAI', 'JUNI',
                      'JULI', 'AUGUST', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DEZEMBER']
@@ -532,6 +533,7 @@ def generate_weekly_calendar_image(monday_date):
     for e in events:
         by_day[e.date.weekday()].append(e)
 
+    # All genre colours (for dot lookup)
     genre_color = {}
     for e in events:
         for g in (e.genre or '').split(','):
@@ -546,20 +548,29 @@ def generate_weekly_calendar_image(monday_date):
                 return genre_color[g]
         return (100, 100, 110)
 
+    # Legend only shows genres that are actually the primary colour of an event
+    legend_genres = {}
+    for e in events:
+        for g in (e.genre or '').split(','):
+            g = g.strip()
+            if g in genre_color and g not in legend_genres:
+                legend_genres[g] = genre_color[g]
+                break
+
     # ── design tokens ────────────────────────────────────────────────────────
     W, H      = 1080, 1350
-    BG        = (13,  13,  15)
-    RED       = (210, 22,  22)
-    WHITE     = (255, 255, 255)
-    LGRAY     = (190, 190, 200)
-    MGRAY     = (105, 108, 118)
-    SEP_COL   = (60,  62,  70)
+    BG        = (12,  12,  13)
+    RED       = (208, 20,  20)
+    RED_DARK  = (158, 12,  12)
+    WHITE     = (246, 243, 238)   # warm off-white
+    LGRAY     = (182, 178, 172)   # warm light gray
+    MGRAY     = ( 98,  95,  90)   # warm mid gray
+    SEP_COL   = ( 72,  70,  76)
     MARGIN    = 36
     USABLE_W  = W - 2 * MARGIN
 
     # ── fonts ────────────────────────────────────────────────────────────────
     def load_black(size):
-        """Arial Black → Arial Bold → fallback."""
         for path in ['/Library/Fonts/Arial Black.ttf',
                      '/Library/Fonts/Arial Bold.ttf',
                      '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
@@ -572,125 +583,145 @@ def generate_weekly_calendar_image(monday_date):
                     pass
         return _load_font(size, bold=True)
 
-    f_hero     = load_black(108)   # "EVENTS"
-    f_datenum  = load_black(82)    # "16.-22."
-    f_month    = load_black(92)    # "MÄRZ"
-    f_pill     = _load_font(23, bold=True)
-    f_act      = _load_font(21, bold=True)
-    f_venue    = _load_font(16)
-    f_genre    = _load_font(17)
-    f_footer   = _load_font(19, bold=True)
+    f_hero    = load_black(108)
+    f_datenum = load_black(82)
+    f_month   = load_black(92)
+    f_pill    = _load_font(23, bold=True)
+    f_act     = _load_font(21, bold=True)
+    f_venue   = _load_font(16)
+    f_genre   = _load_font(17)
+    f_footer  = _load_font(18, bold=True)
 
-    # ── canvas + scanline texture ─────────────────────────────────────────────
+    # ── canvas ───────────────────────────────────────────────────────────────
     img  = Image.new('RGB', (W, H), BG)
     draw = ImageDraw.Draw(img)
-    for y in range(0, H, 4):          # subtle horizontal scanlines
-        draw.line([0, y, W, y], fill=(19, 19, 22))
 
-    def trunc(text, font, max_w):
-        if not text:
-            return ''
+    # Diagonal crosshatch — very faint fabric-like texture
+    HATCH = (20, 20, 22)
+    for i in range(-H, W + H, 9):
+        draw.line([i, 0, i + H, H], fill=HATCH, width=1)
+
+    # ── helpers ──────────────────────────────────────────────────────────────
+    def wrap_text(text, font, max_w):
+        """Word-wrap a single string; returns a list of lines."""
         if draw.textlength(text, font=font) <= max_w:
-            return text
-        t = text
-        while len(t) > 1:
-            t = t[:-1]
-            if draw.textlength(t + '…', font=font) <= max_w:
-                return t + '…'
-        return '…'
+            return [text]
+        words = text.split()
+        lines, current = [], ''
+        for word in words:
+            test = (current + ' ' + word).strip()
+            if draw.textlength(test, font=font) <= max_w:
+                current = test
+            else:
+                if current:
+                    lines.append(current)
+                current = word
+        if current:
+            lines.append(current)
+        return lines or [text]
 
-    def dotted_vline(x, y0, y1, dot=4, gap=7):
+    def rough_vline(x, y0, y1):
         y = y0
         while y < y1:
-            draw.line([x, y, x, min(y + dot, y1)], fill=SEP_COL, width=2)
+            dot = _r.randint(3, 7)
+            gap = _r.randint(4, 10)
+            jx  = _r.randint(-1, 1)
+            w   = _r.choice([1, 1, 1, 2])
+            draw.line([x + jx, y, x + jx, min(y + dot, y1)], fill=SEP_COL, width=w)
             y += dot + gap
 
-    def dotted_hline(x0, x1, y, dot=4, gap=7):
+    def rough_hline(x0, x1, y):
         x = x0
         while x < x1:
-            draw.line([x, y, min(x + dot, x1), y], fill=SEP_COL, width=2)
+            dot = _r.randint(3, 7)
+            gap = _r.randint(4, 10)
+            jy  = _r.randint(-1, 1)
+            w   = _r.choice([1, 1, 1, 2])
+            draw.line([x, y + jy, min(x + dot, x1), y + jy], fill=SEP_COL, width=w)
             x += dot + gap
 
-    # ── Swiss cross (top-left) ────────────────────────────────────────────────
-    cx0, cy0 = MARGIN, 18
-    arm = 9          # half-arm width
-    bar = 28         # arm length
-    # vertical arm
-    draw.rectangle([cx0 + bar//2 - arm, cy0,
-                    cx0 + bar//2 + arm, cy0 + bar*2], fill=WHITE)
-    # horizontal arm
-    draw.rectangle([cx0, cy0 + bar//2,
-                    cx0 + bar*2, cy0 + bar//2 + arm*2], fill=WHITE)
+    def rough_hrule(y, color, thickness=7):
+        """Solid horizontal rule with a slightly eaten top/bottom edge."""
+        draw.rectangle([0, y, W, y + thickness], fill=color)
+        # Chew into the edges randomly for a worn-print look
+        for _ in range(W // 5):
+            rx = _r.randint(0, W - 1)
+            ry = _r.choice([y, y + thickness - 1])
+            draw.point((rx, ry), fill=BG)
 
-    # ── HEADER: "EVENTS" + date range + month ────────────────────────────────
+    def rough_pill(x0, y0, x1, y1, color):
+        """Rounded rectangle pill with grain texture on the surface."""
+        draw.rounded_rectangle([x0, y0, x1, y1], radius=5, fill=color)
+        # Sparse darker dots for printed-ink texture
+        for _ in range((x1 - x0) // 3):
+            px = _r.randint(x0 + 2, x1 - 3)
+            py = _r.randint(y0 + 1, y1 - 2)
+            draw.point((px, py), fill=RED_DARK)
+
+    # ── HEADER ───────────────────────────────────────────────────────────────
+    rough_hrule(0, RED, thickness=7)
+
     ev_y = 14
-    draw.text((MARGIN + 70, ev_y), 'EVENTS', font=f_hero, fill=WHITE)
+    draw.text((MARGIN, ev_y), 'EVENTS', font=f_hero, fill=WHITE)
 
-    # date range: "16.-22." right-aligned
-    if monday_date.month == sunday_date.month:
-        dr = f"{monday_date.day}.-{sunday_date.day}."
-    else:
-        dr = f"{monday_date.day}.-{sunday_date.day}."
+    dr = f"{monday_date.day}.-{sunday_date.day}."
     dr_w = draw.textlength(dr, font=f_datenum)
     draw.text((W - MARGIN - dr_w, ev_y + 14), dr, font=f_datenum, fill=WHITE)
 
-    # month name in red, right-aligned, below date
     month_str = GERMAN_MONTHS[monday_date.month - 1]
     m_w = draw.textlength(month_str, font=f_month)
     draw.text((W - MARGIN - m_w, ev_y + 100), month_str, font=f_month, fill=RED)
 
-    # ── genre legend ─────────────────────────────────────────────────────────
-    LEG_TOP  = 240
-    DOT_D    = 16
-    ITEM_W   = USABLE_W // 3
-    ROW_H    = 30
-    for idx, (genre, color) in enumerate(genre_color.items()):
+    # ── genre legend (primary colours only) ──────────────────────────────────
+    LEG_TOP = 240
+    DOT_D   = 15
+    ITEM_W  = USABLE_W // 3
+    ROW_H   = 30
+
+    for idx, (genre, color) in enumerate(legend_genres.items()):
         row_i = idx // 3
         col_i = idx % 3
         lx = MARGIN + col_i * ITEM_W
         ly = LEG_TOP + row_i * ROW_H
-        if ly + DOT_D > LEG_TOP + 4 * ROW_H:   # max 4 legend rows
+        if ly + DOT_D > LEG_TOP + 4 * ROW_H:
             break
         draw.ellipse([lx, ly, lx + DOT_D, ly + DOT_D], fill=color)
-        label = trunc(genre, f_genre, ITEM_W - DOT_D - 10)
+        tw_g  = ITEM_W - DOT_D - 10
+        label = genre
+        while label and draw.textlength(label, font=f_genre) > tw_g:
+            label = label[:-1]
         draw.text((lx + DOT_D + 7, ly - 1), label, font=f_genre, fill=LGRAY)
 
-    # ── red rules framing the header ─────────────────────────────────────────
-    RULE_H       = 7
-    HDR_RULE_TOP = 7
-    num_leg_rows = max(1, min(4, -(-len(genre_color) // 3)))   # ceiling div
-    HDR_BOT      = LEG_TOP + num_leg_rows * ROW_H + 18
-    draw.rectangle([0, 0,       W, HDR_RULE_TOP], fill=RED)
-    draw.rectangle([0, HDR_BOT, W, HDR_BOT + RULE_H], fill=RED)
+    num_leg_rows = max(1, -(-len(legend_genres) // 3))  # ceiling div
+    HDR_BOT = LEG_TOP + num_leg_rows * ROW_H + 18
+    rough_hrule(HDR_BOT, RED, thickness=7)
 
     # ── CALENDAR GRID ─────────────────────────────────────────────────────────
-    GRID_TOP = HDR_BOT + RULE_H + 18
-    FOOTER_H = 52
+    GRID_TOP = HDR_BOT + 7 + 18
+    FOOTER_H = 44
     GRID_BOT = H - FOOTER_H
 
-    # Column groups: early-week stacked | Fri | Sat | Sun
-    ALL_GROUPS  = [[0, 1, 2, 3], [4], [5], [6]]
-    col_groups  = [g for g in ALL_GROUPS if any(by_day.get(d) for d in g)]
+    ALL_GROUPS = [[0, 1, 2, 3], [4], [5], [6]]
+    col_groups = [g for g in ALL_GROUPS if any(by_day.get(d) for d in g)]
 
     if not col_groups:
         msg = 'Keine Events diese Woche'
         mw  = draw.textlength(msg, font=f_act)
-        draw.text(((W - mw) / 2, GRID_TOP + (GRID_BOT - GRID_TOP) // 2 - 12),
+        draw.text(((W - mw) / 2, GRID_TOP + (GRID_BOT - GRID_TOP) // 2),
                   msg, font=f_act, fill=MGRAY)
     else:
-        n_cols  = len(col_groups)
-        SEP_W   = 3
-        col_w   = (USABLE_W - SEP_W * (n_cols - 1)) // n_cols
+        n_cols = len(col_groups)
+        SEP_W  = 4
+        col_w  = (USABLE_W - SEP_W * (n_cols - 1)) // n_cols
 
-        # vertical dotted separators between columns
         for i in range(1, n_cols):
             sx = MARGIN + i * (col_w + SEP_W) - SEP_W
-            dotted_vline(sx, GRID_TOP, GRID_BOT)
+            rough_vline(sx, GRID_TOP, GRID_BOT)
 
         for col_i, day_group in enumerate(col_groups):
             cx = MARGIN + col_i * (col_w + SEP_W)
             cy = GRID_TOP
-            tw = col_w - 28     # text width inside column
+            tw = col_w - 28
 
             active_days = [d for d in day_group if by_day.get(d)]
 
@@ -698,76 +729,67 @@ def generate_weekly_calendar_image(monday_date):
                 day_events = by_day[weekday]
                 day_date   = monday_date + timedelta(days=weekday)
 
-                # horizontal dotted separator between stacked days
                 if day_i > 0:
-                    dotted_hline(cx, cx + col_w, cy)
+                    rough_hline(cx, cx + col_w, cy)
                     cy += 16
 
                 # ── day pill ─────────────────────────────────────────────────
-                pill_label = (f"{GERMAN_DAYS[weekday]} "
-                              f"{day_date.strftime('%d.%m.')}")
-                pill_tw    = int(draw.textlength(pill_label, font=f_pill))
+                pill_label = f"{GERMAN_DAYS[weekday]} {day_date.strftime('%d.%m.')}"
                 pill_h     = 34
                 pill_pad   = 12
-                pill_w     = min(pill_tw + pill_pad * 2, col_w - 4)
-                draw.rounded_rectangle(
-                    [cx + 2, cy, cx + 2 + pill_w, cy + pill_h],
-                    radius=5, fill=RED)
-                draw.text((cx + 2 + pill_pad, cy + 6),
-                          pill_label, font=f_pill, fill=WHITE)
+                pill_w     = min(int(draw.textlength(pill_label, font=f_pill)) + pill_pad * 2,
+                                 col_w - 4)
+                rough_pill(cx + 2, cy, cx + 2 + pill_w, cy + pill_h, RED)
+                draw.text((cx + 2 + pill_pad, cy + 6), pill_label,
+                          font=f_pill, fill=WHITE)
                 cy += pill_h + 10
 
-                # ── events under this day ─────────────────────────────────────
+                # ── events ───────────────────────────────────────────────────
                 for evt in day_events:
-                    if cy > GRID_BOT - 30:
+                    if cy > GRID_BOT - 28:
                         draw.text((cx + 20, cy), '…', font=f_venue, fill=MGRAY)
                         break
 
                     color    = event_primary_color(evt)
                     DOT_D_EV = 14
-                    dot_x    = cx + 4
-                    dot_y    = cy + 4
-
-                    # act names (split acts field on newline / comma)
-                    acts_raw  = (evt.acts or evt.name or '').strip()
-                    act_lines = [a.strip()
-                                 for a in acts_raw.replace('\n', ',').split(',')
-                                 if a.strip()]
-                    if not act_lines:
-                        act_lines = [evt.name or '?']
-
-                    # genre dot aligned with first act line
-                    draw.ellipse([dot_x, dot_y,
-                                  dot_x + DOT_D_EV, dot_y + DOT_D_EV],
+                    draw.ellipse([cx + 4, cy + 4,
+                                  cx + 4 + DOT_D_EV, cy + 4 + DOT_D_EV],
                                  fill=color)
 
                     tx = cx + DOT_D_EV + 12
-                    for act in act_lines:
-                        draw.text((tx, cy), trunc(act, f_act, tw),
-                                  font=f_act, fill=WHITE)
-                        cy += 25
+                    acts_raw  = (evt.acts or evt.name or '').strip()
+                    act_lines = [a.strip()
+                                 for a in acts_raw.replace('\n', ',').split(',')
+                                 if a.strip()] or [evt.name or '?']
 
-                    # venue + city
-                    if evt.venue:
+                    for act in act_lines:
+                        for line in wrap_text(act, f_act, tw):
+                            if cy > GRID_BOT - 26:
+                                break
+                            draw.text((tx, cy), line, font=f_act, fill=WHITE)
+                            cy += 25
+
+                    if evt.venue and cy <= GRID_BOT - 20:
                         vstr = evt.venue.name
                         if evt.venue.city:
                             vstr += f', {evt.venue.city}'
-                        draw.text((tx, cy),
-                                  trunc(vstr, f_venue, tw),
-                                  font=f_venue, fill=MGRAY)
-                        cy += 22
+                        for line in wrap_text(vstr, f_venue, tw)[:1]:
+                            draw.text((tx, cy), line, font=f_venue, fill=MGRAY)
+                        cy += 20
 
-                    cy += 10   # spacing between events
+                    cy += 10
 
-    # ── footer ───────────────────────────────────────────────────────────────
+    # ── footer: year only, centred ───────────────────────────────────────────
     year_str = str(monday_date.year)
     yw = draw.textlength(year_str, font=f_footer)
-    draw.text(((W - yw) / 2, H - FOOTER_H + 16), year_str,
+    draw.text(((W - yw) / 2, H - FOOTER_H + 12), year_str,
               font=f_footer, fill=MGRAY)
-    brand = 'DIY TRACKER'
-    bw = draw.textlength(brand, font=f_footer)
-    draw.text((W - MARGIN - bw, H - FOOTER_H + 16), brand,
-              font=f_footer, fill=MGRAY)
+
+    # ── film grain overlay ────────────────────────────────────────────────────
+    light_dots = [(_r.randint(0, W - 1), _r.randint(0, H - 1)) for _ in range(16000)]
+    draw.point(light_dots, fill=(32, 30, 35))
+    dark_dots  = [(_r.randint(0, W - 1), _r.randint(0, H - 1)) for _ in range(8000)]
+    draw.point(dark_dots, fill=(4, 4, 5))
 
     return img
 
