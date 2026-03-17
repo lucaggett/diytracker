@@ -1,13 +1,15 @@
 import calendar
 import functools
 import hashlib
+import io
 import os
+import threading
 from collections import defaultdict
 from datetime import datetime, time as time_type, timedelta
 from dateutil.relativedelta import relativedelta
 
 from dotenv import load_dotenv
-from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, abort, session
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, abort, session, send_file
 from werkzeug.utils import secure_filename
 
 from forms import EventForm, EventEditForm, LoginForm, DeleteEventForm, SetPasswordForm
@@ -77,6 +79,115 @@ def _clean_genre(raw: str) -> str:
     skip = {'concert', 'konzert', 'live'}
     parts = [p.strip() for p in raw.replace('·', ',').split(',')]
     return ', '.join(p for p in parts if p and p.lower() not in skip)
+
+
+# ---------------------------------------------------------------------------
+# Scrape infrastructure
+# ---------------------------------------------------------------------------
+LAST_SCRAPE_FILE = os.path.join('instance', 'last_scrape.txt')
+_scrape_lock = threading.Lock()
+_scrape_running = False
+_scrape_progress = {'total': 0, 'processed': 0, 'started_at': None, 'phase': ''}
+
+
+def _get_last_scrape_time():
+    try:
+        with open(LAST_SCRAPE_FILE) as f:
+            return datetime.fromisoformat(f.read().strip())
+    except (FileNotFoundError, ValueError):
+        return None
+
+
+def _set_last_scrape_time(dt):
+    os.makedirs(os.path.dirname(LAST_SCRAPE_FILE), exist_ok=True)
+    with open(LAST_SCRAPE_FILE, 'w') as f:
+        f.write(dt.isoformat())
+
+
+def _load_scraper():
+    """Load the scrape_events module from utils/ directory via importlib."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "scrape_events",
+        os.path.join(os.path.dirname(__file__), "utils", "scrape_events.py"),
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _scrape_and_import():
+    """Run scrapers and insert results directly into the ScrapedEvent table."""
+    global _scrape_running, _scrape_progress
+    try:
+        scraper = _load_scraper()
+        get_sitemap_event_urls = scraper.get_sitemap_event_urls
+        get_petzi_event_urls = scraper.get_petzi_event_urls
+        parse_metalgigs_event = scraper.parse_metalgigs_event
+        parse_petzi_event = scraper.parse_petzi_event
+        from scripts.import_scraped_events import parse_date, parse_time
+
+        _scrape_progress = {'total': 0, 'processed': 0, 'started_at': datetime.now().isoformat(), 'phase': 'Fetching sitemaps'}
+
+        events = []
+        mg_urls = get_sitemap_event_urls("https://metalgigs.ch/sitemap.xml", "/konzerte/")
+        petzi_urls = get_sitemap_event_urls("https://www.petzi.ch/en/sitemap.xml", "/en/events/")
+        if not petzi_urls:
+            petzi_urls = get_petzi_event_urls()
+
+        all_urls = [('metalgigs', url, parse_metalgigs_event) for url in mg_urls] + \
+                   [('petzi', url, parse_petzi_event) for url in petzi_urls]
+        _scrape_progress['total'] = len(all_urls)
+        _scrape_progress['phase'] = 'Scraping events'
+
+        for _source, url, parser in all_urls:
+            parsed = parser(url)
+            if parsed:
+                events.append(parsed)
+            _scrape_progress['processed'] += 1
+
+        _scrape_progress['phase'] = 'Importing to database'
+        with app.app_context():
+            count = 0
+            for row in events:
+                source = row.get('source')
+                url = row.get('url')
+                existing = ScrapedEvent.query.filter_by(source=source, url=url).first()
+                if existing:
+                    continue
+                region = resolve_canton(row.get('region') or '', row.get('city') or '')
+                scraped = ScrapedEvent(
+                    source=source,
+                    url=url,
+                    title=row.get('title'),
+                    performers=row.get('performers'),
+                    styles=row.get('styles'),
+                    description=row.get('description'),
+                    start_date=parse_date(row.get('start_date') or ''),
+                    end_date=parse_date(row.get('end_date') or ''),
+                    doors_open=parse_time(row.get('doors_open') or ''),
+                    start_time=parse_time(row.get('start_time') or ''),
+                    venue_name=row.get('venue_name'),
+                    street_address=row.get('street_address'),
+                    city=row.get('city'),
+                    region=region,
+                    postal_code=row.get('postal_code'),
+                    ticket_price=row.get('ticket_price'),
+                    ticket_currency=row.get('ticket_currency'),
+                    ticket_url=row.get('ticket_url'),
+                    organizer=row.get('organizer'),
+                    event_status=row.get('event_status'),
+                )
+                db.session.add(scraped)
+                count += 1
+            db.session.commit()
+            app.logger.info(f"Scrape complete: imported {count} new events")
+        _set_last_scrape_time(datetime.now())
+    except Exception:
+        app.logger.exception("Scrape failed")
+    finally:
+        with _scrape_lock:
+            _scrape_running = False
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -340,7 +451,15 @@ def submit_event_link():
 def admin():
     events = Event.query.order_by(Event.date.asc()).all()
     delete_form = DeleteEventForm()
-    return render_template('admin.html', events=events, delete_form=delete_form)
+    last_scrape = _get_last_scrape_time()
+    scrape_cooldown = False
+    if last_scrape and (datetime.now() - last_scrape) < timedelta(hours=24):
+        scrape_cooldown = True
+    return render_template(
+        'admin.html', events=events, delete_form=delete_form,
+        last_scrape=last_scrape, scrape_cooldown=scrape_cooldown,
+        scrape_running=_scrape_running,
+    )
 
 @app.route('/edit_event/<int:event_id>', methods=['GET', 'POST'])
 @admin_required
@@ -415,6 +534,120 @@ def delete_event(event_id):
     db.session.commit()
     flash('Event deleted successfully!')
     return redirect(url_for('admin'))
+
+@app.route('/admin/trigger-scrape', methods=['POST'])
+@admin_required
+def trigger_scrape():
+    global _scrape_running
+    form = DeleteEventForm()
+    if not form.validate_on_submit():
+        abort(400)
+    with _scrape_lock:
+        if _scrape_running:
+            flash('A scrape is already running.')
+            return redirect(url_for('admin'))
+        last_scrape = _get_last_scrape_time()
+        if last_scrape and (datetime.now() - last_scrape) < timedelta(hours=24):
+            flash('Scrape cooldown active. Try again later.')
+            return redirect(url_for('admin'))
+        _scrape_running = True
+    thread = threading.Thread(target=_scrape_and_import, daemon=True)
+    thread.start()
+    flash('Scrape started in the background. New events will appear in the queue.')
+    return redirect(url_for('admin'))
+
+
+@app.route('/admin/scrape-status')
+@admin_required
+def scrape_status():
+    if not _scrape_running:
+        return jsonify({'running': False})
+    progress = dict(_scrape_progress)
+    total = progress.get('total', 0)
+    processed = progress.get('processed', 0)
+    started_at = progress.get('started_at')
+    eta_seconds = None
+    if started_at and processed > 0 and total > 0:
+        elapsed = (datetime.now() - datetime.fromisoformat(started_at)).total_seconds()
+        rate = elapsed / processed
+        remaining = total - processed
+        eta_seconds = int(rate * remaining)
+    return jsonify({
+        'running': True,
+        'phase': progress.get('phase', ''),
+        'total': total,
+        'processed': processed,
+        'eta_seconds': eta_seconds,
+    })
+
+
+@app.route('/admin/export-excel')
+@admin_required
+def export_excel():
+    import openpyxl
+    from openpyxl.styles import Font
+
+    events = Event.query.order_by(Event.date.asc()).all()
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Events'
+
+    headers = ['Date', 'Name', 'Acts', 'Genre', 'Venue', 'City', 'Canton',
+               'Doors', 'Ticket Price', 'Ticket Link', 'Source URL']
+    bold = Font(bold=True)
+
+    current_date = None
+    row_num = 1
+
+    for event in events:
+        event_date = event.date.date() if event.date else None
+        if event_date != current_date:
+            if current_date is not None:
+                row_num += 1  # blank row between date groups
+            # Write date header
+            cell = ws.cell(row=row_num, column=1, value=event_date.strftime('%A, %d %B %Y') if event_date else 'Unknown')
+            cell.font = bold
+            row_num += 1
+            # Write column headers
+            for col, h in enumerate(headers, 1):
+                cell = ws.cell(row=row_num, column=col, value=h)
+                cell.font = bold
+            row_num += 1
+            current_date = event_date
+
+        venue = event.venue
+        ws.cell(row=row_num, column=1, value=event_date.strftime('%Y-%m-%d') if event_date else '')
+        ws.cell(row=row_num, column=2, value=event.name)
+        ws.cell(row=row_num, column=3, value=event.acts)
+        ws.cell(row=row_num, column=4, value=event.genre)
+        ws.cell(row=row_num, column=5, value=venue.name if venue else '')
+        ws.cell(row=row_num, column=6, value=venue.city if venue else '')
+        ws.cell(row=row_num, column=7, value=venue.canton if venue else '')
+        ws.cell(row=row_num, column=8, value=event.doors.strftime('%H:%M') if event.doors else '')
+        ws.cell(row=row_num, column=9, value=event.ticket_price)
+        ws.cell(row=row_num, column=10, value=event.ticket_link)
+        ws.cell(row=row_num, column=11, value=event.source_url)
+        row_num += 1
+
+    # Auto-size columns
+    for col in ws.columns:
+        max_len = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            if cell.value:
+                max_len = max(max_len, len(str(cell.value)))
+        ws.column_dimensions[col_letter].width = min(max_len + 2, 50)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(
+        buf,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'events_{datetime.now().strftime("%Y%m%d")}.xlsx',
+    )
+
 
 @app.route('/')
 def calendar_view():

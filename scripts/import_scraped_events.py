@@ -8,18 +8,21 @@ approval without re-reading the CSV on every request.
 
 Usage::
 
-    python import_scraped_events.py path/to/events.csv
+    python scripts/import_scraped_events.py path/to/events.csv
 
-If no path is provided, it defaults to `events.csv` in the current
-directory.
+If no path is provided, it defaults to `events.csv` in the project root.
 """
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import csv
-import sys
 from datetime import datetime, time
 from flask import Flask
 
 from models import db, ScrapedEvent
 from utils import resolve_canton
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def parse_date(date_str: str):
@@ -83,5 +86,5 @@ def import_events(csv_path: str, db_uri: str = 'sqlite:///events.db'):
 
 
 if __name__ == '__main__':
-    csv_file = sys.argv[1] if len(sys.argv) > 1 else 'events.csv'
+    csv_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(PROJECT_ROOT, 'events.csv')
     import_events(csv_file)

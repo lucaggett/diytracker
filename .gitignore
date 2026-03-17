@@ -5,3 +5,12 @@ package-lock.json
 .env
 ADMIN_PASSWORD
 EMAIL_DATA
+__pycache__/
+*.pyc
+instance/
+logs/
+venv/
+events.csv
+scrape_events.log
+static/uploads/
+SUBMISSION_PASSWORD_CURRENT

@@ -5,11 +5,12 @@ in the database and writes back any values that change.
 
 Usage::
 
-    python normalise_cantons.py [--dry-run]
+    python scripts/normalise_cantons.py [--dry-run]
 
 Pass --dry-run to print what would change without writing anything.
 """
-import sys
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import app, db
 from models import Venue, ScrapedEvent
