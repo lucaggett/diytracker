@@ -47,6 +47,17 @@
                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                 Export Excel
             </a>
+
+            <!-- Weekly calendar image -->
+            <form action="{{ url_for('weekly_calendar_image') }}" method="GET" class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 font-medium">Week of</label>
+                <input type="date" name="week" value="{{ current_monday }}"
+                       class="border border-gray-300 rounded px-2 py-1.5 text-sm bg-white">
+                <button type="submit"
+                        class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                    Export Weekly Image
+                </button>
+            </form>
         </div>
 
         <table class="min-w-full bg-white shadow-md rounded">

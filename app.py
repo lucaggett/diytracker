@@ -461,6 +461,317 @@ def submit_event_link():
 
     return render_template('submit_event.html', form=form)
 
+
+# ---------------------------------------------------------------------------
+# Weekly calendar image
+# ---------------------------------------------------------------------------
+
+# 12-colour palette (vivid, readable on dark bg)
+_GENRE_PALETTE = [
+    (239,  68,  68),  # red
+    (249, 115,  22),  # orange
+    (234, 179,   8),  # yellow
+    ( 34, 197,  94),  # green
+    ( 20, 184, 166),  # teal
+    (  6, 182, 212),  # cyan
+    ( 59, 130, 246),  # blue
+    (139,  92, 246),  # violet
+    (236,  72, 153),  # pink
+    (132, 204,  22),  # lime
+    (245, 158,  11),  # amber
+    ( 16, 185, 129),  # emerald
+]
+
+
+def _load_font(size, bold=False):
+    """Load Arial (or a DejaVu fallback) at the requested size."""
+    from PIL import ImageFont
+    candidates = (
+        ['/Library/Fonts/Arial Bold.ttf',
+         '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
+         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf']
+        if bold else
+        ['/Library/Fonts/Arial.ttf',
+         '/System/Library/Fonts/Supplemental/Arial.ttf',
+         '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+         '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf']
+    )
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size)
+            except Exception:
+                continue
+    # .ttc fallback (macOS Helvetica)
+    if os.path.exists('/System/Library/Fonts/Helvetica.ttc'):
+        try:
+            return ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', size, index=0)
+        except Exception:
+            pass
+    return ImageFont.load_default()
+
+
+def generate_weekly_calendar_image(monday_date):
+    from PIL import Image, ImageDraw
+
+    GERMAN_MONTHS = ['JANUAR', 'FEBRUAR', 'MÄRZ', 'APRIL', 'MAI', 'JUNI',
+                     'JULI', 'AUGUST', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DEZEMBER']
+    GERMAN_DAYS   = ['Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.', 'So.']
+
+    sunday_date = monday_date + timedelta(days=6)
+
+    # ── query ────────────────────────────────────────────────────────────────
+    events = (Event.query
+              .filter(Event.date >= datetime.combine(monday_date, time_type.min),
+                      Event.date <= datetime.combine(sunday_date, time_type.max))
+              .order_by(Event.date.asc())
+              .all())
+
+    by_day = defaultdict(list)
+    for e in events:
+        by_day[e.date.weekday()].append(e)
+
+    genre_color = {}
+    for e in events:
+        for g in (e.genre or '').split(','):
+            g = g.strip()
+            if g and g not in genre_color:
+                genre_color[g] = _GENRE_PALETTE[len(genre_color) % len(_GENRE_PALETTE)]
+
+    def event_primary_color(evt):
+        for g in (evt.genre or '').split(','):
+            g = g.strip()
+            if g in genre_color:
+                return genre_color[g]
+        return (100, 100, 110)
+
+    # ── design tokens ────────────────────────────────────────────────────────
+    W, H      = 1080, 1350
+    BG        = (13,  13,  15)
+    RED       = (210, 22,  22)
+    WHITE     = (255, 255, 255)
+    LGRAY     = (190, 190, 200)
+    MGRAY     = (105, 108, 118)
+    SEP_COL   = (60,  62,  70)
+    MARGIN    = 36
+    USABLE_W  = W - 2 * MARGIN
+
+    # ── fonts ────────────────────────────────────────────────────────────────
+    def load_black(size):
+        """Arial Black → Arial Bold → fallback."""
+        for path in ['/Library/Fonts/Arial Black.ttf',
+                     '/Library/Fonts/Arial Bold.ttf',
+                     '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
+                     '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf']:
+            if os.path.exists(path):
+                try:
+                    from PIL import ImageFont
+                    return ImageFont.truetype(path, size)
+                except Exception:
+                    pass
+        return _load_font(size, bold=True)
+
+    f_hero     = load_black(108)   # "EVENTS"
+    f_datenum  = load_black(82)    # "16.-22."
+    f_month    = load_black(92)    # "MÄRZ"
+    f_pill     = _load_font(23, bold=True)
+    f_act      = _load_font(21, bold=True)
+    f_venue    = _load_font(16)
+    f_genre    = _load_font(17)
+    f_footer   = _load_font(19, bold=True)
+
+    # ── canvas + scanline texture ─────────────────────────────────────────────
+    img  = Image.new('RGB', (W, H), BG)
+    draw = ImageDraw.Draw(img)
+    for y in range(0, H, 4):          # subtle horizontal scanlines
+        draw.line([0, y, W, y], fill=(19, 19, 22))
+
+    def trunc(text, font, max_w):
+        if not text:
+            return ''
+        if draw.textlength(text, font=font) <= max_w:
+            return text
+        t = text
+        while len(t) > 1:
+            t = t[:-1]
+            if draw.textlength(t + '…', font=font) <= max_w:
+                return t + '…'
+        return '…'
+
+    def dotted_vline(x, y0, y1, dot=4, gap=7):
+        y = y0
+        while y < y1:
+            draw.line([x, y, x, min(y + dot, y1)], fill=SEP_COL, width=2)
+            y += dot + gap
+
+    def dotted_hline(x0, x1, y, dot=4, gap=7):
+        x = x0
+        while x < x1:
+            draw.line([x, y, min(x + dot, x1), y], fill=SEP_COL, width=2)
+            x += dot + gap
+
+    # ── Swiss cross (top-left) ────────────────────────────────────────────────
+    cx0, cy0 = MARGIN, 18
+    arm = 9          # half-arm width
+    bar = 28         # arm length
+    # vertical arm
+    draw.rectangle([cx0 + bar//2 - arm, cy0,
+                    cx0 + bar//2 + arm, cy0 + bar*2], fill=WHITE)
+    # horizontal arm
+    draw.rectangle([cx0, cy0 + bar//2,
+                    cx0 + bar*2, cy0 + bar//2 + arm*2], fill=WHITE)
+
+    # ── HEADER: "EVENTS" + date range + month ────────────────────────────────
+    ev_y = 14
+    draw.text((MARGIN + 70, ev_y), 'EVENTS', font=f_hero, fill=WHITE)
+
+    # date range: "16.-22." right-aligned
+    if monday_date.month == sunday_date.month:
+        dr = f"{monday_date.day}.-{sunday_date.day}."
+    else:
+        dr = f"{monday_date.day}.-{sunday_date.day}."
+    dr_w = draw.textlength(dr, font=f_datenum)
+    draw.text((W - MARGIN - dr_w, ev_y + 14), dr, font=f_datenum, fill=WHITE)
+
+    # month name in red, right-aligned, below date
+    month_str = GERMAN_MONTHS[monday_date.month - 1]
+    m_w = draw.textlength(month_str, font=f_month)
+    draw.text((W - MARGIN - m_w, ev_y + 100), month_str, font=f_month, fill=RED)
+
+    # ── genre legend ─────────────────────────────────────────────────────────
+    LEG_TOP  = 240
+    DOT_D    = 16
+    ITEM_W   = USABLE_W // 3
+    ROW_H    = 30
+    for idx, (genre, color) in enumerate(genre_color.items()):
+        row_i = idx // 3
+        col_i = idx % 3
+        lx = MARGIN + col_i * ITEM_W
+        ly = LEG_TOP + row_i * ROW_H
+        if ly + DOT_D > LEG_TOP + 4 * ROW_H:   # max 4 legend rows
+            break
+        draw.ellipse([lx, ly, lx + DOT_D, ly + DOT_D], fill=color)
+        label = trunc(genre, f_genre, ITEM_W - DOT_D - 10)
+        draw.text((lx + DOT_D + 7, ly - 1), label, font=f_genre, fill=LGRAY)
+
+    # ── red rules framing the header ─────────────────────────────────────────
+    RULE_H       = 7
+    HDR_RULE_TOP = 7
+    num_leg_rows = max(1, min(4, -(-len(genre_color) // 3)))   # ceiling div
+    HDR_BOT      = LEG_TOP + num_leg_rows * ROW_H + 18
+    draw.rectangle([0, 0,       W, HDR_RULE_TOP], fill=RED)
+    draw.rectangle([0, HDR_BOT, W, HDR_BOT + RULE_H], fill=RED)
+
+    # ── CALENDAR GRID ─────────────────────────────────────────────────────────
+    GRID_TOP = HDR_BOT + RULE_H + 18
+    FOOTER_H = 52
+    GRID_BOT = H - FOOTER_H
+
+    # Column groups: early-week stacked | Fri | Sat | Sun
+    ALL_GROUPS  = [[0, 1, 2, 3], [4], [5], [6]]
+    col_groups  = [g for g in ALL_GROUPS if any(by_day.get(d) for d in g)]
+
+    if not col_groups:
+        msg = 'Keine Events diese Woche'
+        mw  = draw.textlength(msg, font=f_act)
+        draw.text(((W - mw) / 2, GRID_TOP + (GRID_BOT - GRID_TOP) // 2 - 12),
+                  msg, font=f_act, fill=MGRAY)
+    else:
+        n_cols  = len(col_groups)
+        SEP_W   = 3
+        col_w   = (USABLE_W - SEP_W * (n_cols - 1)) // n_cols
+
+        # vertical dotted separators between columns
+        for i in range(1, n_cols):
+            sx = MARGIN + i * (col_w + SEP_W) - SEP_W
+            dotted_vline(sx, GRID_TOP, GRID_BOT)
+
+        for col_i, day_group in enumerate(col_groups):
+            cx = MARGIN + col_i * (col_w + SEP_W)
+            cy = GRID_TOP
+            tw = col_w - 28     # text width inside column
+
+            active_days = [d for d in day_group if by_day.get(d)]
+
+            for day_i, weekday in enumerate(active_days):
+                day_events = by_day[weekday]
+                day_date   = monday_date + timedelta(days=weekday)
+
+                # horizontal dotted separator between stacked days
+                if day_i > 0:
+                    dotted_hline(cx, cx + col_w, cy)
+                    cy += 16
+
+                # ── day pill ─────────────────────────────────────────────────
+                pill_label = (f"{GERMAN_DAYS[weekday]} "
+                              f"{day_date.strftime('%d.%m.')}")
+                pill_tw    = int(draw.textlength(pill_label, font=f_pill))
+                pill_h     = 34
+                pill_pad   = 12
+                pill_w     = min(pill_tw + pill_pad * 2, col_w - 4)
+                draw.rounded_rectangle(
+                    [cx + 2, cy, cx + 2 + pill_w, cy + pill_h],
+                    radius=5, fill=RED)
+                draw.text((cx + 2 + pill_pad, cy + 6),
+                          pill_label, font=f_pill, fill=WHITE)
+                cy += pill_h + 10
+
+                # ── events under this day ─────────────────────────────────────
+                for evt in day_events:
+                    if cy > GRID_BOT - 30:
+                        draw.text((cx + 20, cy), '…', font=f_venue, fill=MGRAY)
+                        break
+
+                    color    = event_primary_color(evt)
+                    DOT_D_EV = 14
+                    dot_x    = cx + 4
+                    dot_y    = cy + 4
+
+                    # act names (split acts field on newline / comma)
+                    acts_raw  = (evt.acts or evt.name or '').strip()
+                    act_lines = [a.strip()
+                                 for a in acts_raw.replace('\n', ',').split(',')
+                                 if a.strip()]
+                    if not act_lines:
+                        act_lines = [evt.name or '?']
+
+                    # genre dot aligned with first act line
+                    draw.ellipse([dot_x, dot_y,
+                                  dot_x + DOT_D_EV, dot_y + DOT_D_EV],
+                                 fill=color)
+
+                    tx = cx + DOT_D_EV + 12
+                    for act in act_lines:
+                        draw.text((tx, cy), trunc(act, f_act, tw),
+                                  font=f_act, fill=WHITE)
+                        cy += 25
+
+                    # venue + city
+                    if evt.venue:
+                        vstr = evt.venue.name
+                        if evt.venue.city:
+                            vstr += f', {evt.venue.city}'
+                        draw.text((tx, cy),
+                                  trunc(vstr, f_venue, tw),
+                                  font=f_venue, fill=MGRAY)
+                        cy += 22
+
+                    cy += 10   # spacing between events
+
+    # ── footer ───────────────────────────────────────────────────────────────
+    year_str = str(monday_date.year)
+    yw = draw.textlength(year_str, font=f_footer)
+    draw.text(((W - yw) / 2, H - FOOTER_H + 16), year_str,
+              font=f_footer, fill=MGRAY)
+    brand = 'DIY TRACKER'
+    bw = draw.textlength(brand, font=f_footer)
+    draw.text((W - MARGIN - bw, H - FOOTER_H + 16), brand,
+              font=f_footer, fill=MGRAY)
+
+    return img
+
+
 @app.route('/admin', methods=['GET'])
 @admin_required
 def admin():
@@ -470,10 +781,12 @@ def admin():
     scrape_cooldown = False
     if last_scrape and (datetime.now() - last_scrape) < timedelta(hours=24):
         scrape_cooldown = True
+    today = datetime.now().date()
+    current_monday = (today - timedelta(days=today.weekday())).isoformat()
     return render_template(
         'admin.html', events=events, delete_form=delete_form,
         last_scrape=last_scrape, scrape_cooldown=scrape_cooldown,
-        scrape_running=_scrape_running,
+        scrape_running=_scrape_running, current_monday=current_monday,
     )
 
 @app.route('/edit_event/<int:event_id>', methods=['GET', 'POST'])
@@ -661,6 +974,28 @@ def export_excel():
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True,
         download_name=f'events_{datetime.now().strftime("%Y%m%d")}.xlsx',
+    )
+
+
+@app.route('/admin/weekly-image')
+@admin_required
+def weekly_calendar_image():
+    week_param = request.args.get('week', '')
+    try:
+        ref = datetime.strptime(week_param, '%Y-%m-%d').date()
+    except ValueError:
+        ref = datetime.now().date()
+    monday = ref - timedelta(days=ref.weekday())
+
+    img = generate_weekly_calendar_image(monday)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG', optimize=True)
+    buf.seek(0)
+    return send_file(
+        buf,
+        mimetype='image/png',
+        as_attachment=True,
+        download_name=f'events_week_{monday.strftime("%Y-%m-%d")}.png',
     )
 
 
