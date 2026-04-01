@@ -593,8 +593,11 @@ def generate_weekly_calendar_image(monday_date):
     f_footer  = _load_font(18, bold=True)
 
     # ── canvas ───────────────────────────────────────────────────────────────
-    img  = Image.new('RGB', (W, H), BG)
+    # Use RGBA with transparent background so Canva users can place their own
+    # background layer beneath the content.
+    img  = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
+    draw.rectangle([0, 0, W, H], fill=BG + (255,))
 
     # Diagonal crosshatch — very faint fabric-like texture
     HATCH = (20, 20, 22)
