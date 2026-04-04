@@ -15,87 +15,8 @@
 
 <!-- Calendar Content -->
 
-<!-- Desktop Calendar -->
-<div class="container mx-auto px-4 py-6 hidden md:block">
-    {% for month in months_data %}
-        <!-- Calendar Header (Days of the Week) -->
-        <div class="grid grid-cols-7 gap-2 text-gray-400 text-center font-semibold font-richEatin">
-            <div>Mon</div>
-            <div>Tue</div>
-            <div>Wed</div>
-            <div>Thu</div>
-            <div>Fri</div>
-            <div>Sat</div>
-            <div>Sun</div>
-        </div>
-
-        <!-- Calendar Grid -->
-        <div class="grid grid-cols-7 gap-2 mt-4">
-            {% set first_day_of_month = datetime(month.year, month.month, 1) %}
-            {% set first_weekday = first_day_of_month.weekday() %}
-
-            <!-- Empty Cells for days before the first of the month -->
-            {% for _ in range(first_weekday) %}
-                <div class="p-4 bg-red-800 h-32 opacity-60 rounded-md text-white font-bold flex items-center justify-center">
-                    {{ month.year }} / {{ month.month }}
-                </div>
-            {% endfor %}
-
-            <!-- Days with events -->
-            {% for day in range(1, month.last_day_of_month + 1) %}
-                {% set current_date = datetime(month.year, month.month, day).date() %}
-                <div class="day-cell p-4 bg-gray-400 shadow rounded-md h-32 overflow-y-auto">
-                    <span class="font-bold text-red-800 font-richEatin">{{ day }}</span>
-                    <div class="mt-2 text-xs event-container">
-                        {% if current_date in grouped_events %}
-                            <!-- Display events for this day -->
-                            {% for event in grouped_events[current_date] %}
-                                <p class="event-item cursor-pointer"
-                                   data-event-id="{{ event.id }}"
-                                   data-event-name="{{ event.name|e }}"
-                                   data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
-                                   data-event-doors="{{ event.doors.strftime('%H:%M') }}"
-                                   data-venue-name="{{ event.venue.name|e }}"
-                                   data-venue-address="{{ event.venue.address|e }}"
-                                   data-venue-city="{{ event.venue.city|e }}"
-                                   data-venue-canton="{{ event.venue.canton|e }}"
-                                   data-venue-plz="{{ event.venue.plz|e }}"
-                                   data-ticket-price="{{ event.ticket_price|e }}"
-                                   data-ticket-link="{{ event.ticket_link|e }}"
-                                   data-venue-coords="{{ event.venue.coords|e }}"
-                                   data-genre="{{ event.genre|e }}"
-                                   data-acts="{{ event.acts|e }}"
-                                   data-flyer="{{ event.flyer|e }}"
-                                   data-tags="canton:{{ event.venue.canton|e }}{% if event.genre %},genre:{{ event.genre|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
-                                   onclick="showEventDetails(this)">
-                                    {% if event.name %}
-                                        <b>{{ event.name }}</b>, {{ event.venue.canton }}
-                                    {% else %}
-                                        <b>{{ event.acts }}</b>, {{ event.venue.canton }}
-                                    {% endif %}
-                                </p>
-                            {% endfor %}
-                        {% else %}
-                            <p class="no-events-text hidden">No events</p>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endfor %}
-
-            <!-- Empty Cells for days after the last of the month -->
-            {% set last_day_of_week = datetime(month.year, month.month, month.last_day_of_month).weekday() %}
-            {% for _ in range(6 - last_day_of_week) %}
-                <div class="p-4 bg-red-800 h-32 opacity-60 rounded-md text-white font-bold flex items-center justify-center">
-                    {{ month.year }} / {{ month.month }}
-                </div>
-            {% endfor %}
-        </div>
-        <br>
-        <br>
-    {% endfor %}
-</div>
-<!-- Mobile Calendar -->
-<div class="container mx-auto px-4 py-6 block md:hidden">
+<!-- Event List -->
+<div class="container mx-auto px-4 py-6 max-w-2xl">
     {% set today = datetime.utcnow().date() %}
 
     <!-- List of Dates with Events -->
@@ -210,22 +131,6 @@
     </div>
 </div>
 
-<!-- Modal -->
-<div id="event-modal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
-    <div class="bg-gray-400 rounded-lg shadow-lg p-6 w-11/12 md:w-1/2">
-        <h2 id="modal-event-name" class="text-2xl font-bold mb-4 text-red-800">Event Name</h2>
-        <p id="modal-event-date" class="mb-2 font-bold">Date: </p>
-        <p id="modal-event-venue" class="mb-2">Venue: </p>
-        <p id="modal-event-address" class="mb-2">Address: </p>
-        <p id="modal-event-city" class="mb-2">City: </p>
-        <p id="modal-event-genre" class="mb-2">Genre: </p>
-        <p id="modal-event-acts" class="mb-2">Acts: </p>
-        <p id="modal-event-ticket-price" class="mb-2">Ticket Price: </p>
-        <p id="modal-event-ticket-link" class="mb-2">Ticket Link: </p>
-        <!-- Add other event details as needed -->
-        <button onclick="closeModal()" class="mt-4 px-4 py-2 bg-red-800 text-white rounded">Close</button>
-    </div>
-</div>
 
 <!-- JavaScript -->
 <script>
@@ -388,13 +293,11 @@
 
                 if (visible) {
                     item.classList.remove('hidden');
-                    // if the event is a mobile card, show the date card if any events are visible
                     if (item.parentElement.parentElement.classList.contains('date-card')) {
                         item.parentElement.parentElement.hidden = false;
                     }
                 } else {
                     item.classList.add('hidden');
-                    // if the event is a mobile card, hide the date card if all events are hidden
                     if (item.parentElement.parentElement.classList.contains('date-card')) {
                         const visibleEvents = item.parentElement.querySelectorAll('.event-item:not(.hidden)');
                         if (visibleEvents.length === 0) {
@@ -404,72 +307,6 @@
                 }
             });
 
-            // Update day cells to show "No events" if no events are visible (for desktop view)
-            const dayCells = document.querySelectorAll('.day-cell');
-            dayCells.forEach(function (cell) {
-                const visibleEvents = cell.querySelectorAll('.event-item:not(.hidden)');
-                const noEventsText = cell.querySelector('.no-events-text');
-                if (visibleEvents.length === 0) {
-                    // Show "No events" message
-                    if (noEventsText) {
-                        noEventsText.classList.remove('hidden');
-                    } else {
-                        const p = document.createElement('p');
-                        p.textContent = 'No events';
-                        p.className = 'no-events-text';
-                        cell.querySelector('.event-container').appendChild(p);
-                    }
-                } else {
-                    // Hide "No events" message
-                    if (noEventsText) {
-                        noEventsText.classList.add('hidden');
-                    }
-                }
-            });
-        }
-
-        // Existing function to show event details in the modal
-        window.showEventDetails = function (element) {
-            // Retrieve data from data attributes
-            let eventName = element.getAttribute('data-event-name');
-            let eventDate = element.getAttribute('data-event-date');
-            let eventDoors = element.getAttribute('data-event-doors');
-            let venueName = element.getAttribute('data-venue-name');
-            let venueAddress = element.getAttribute('data-venue-address');
-            let venueCity = element.getAttribute('data-venue-city');
-            let venueCanton = element.getAttribute('data-venue-canton');
-            let venuePLZ = element.getAttribute('data-venue-plz');
-            let ticketPrice = element.getAttribute('data-ticket-price');
-            let ticketLink = element.getAttribute('data-ticket-link');
-            let venueCoords = element.getAttribute('data-venue-coords');
-            let genre = element.getAttribute('data-genre');
-            let acts = element.getAttribute('data-acts');
-            let flyer = element.getAttribute('data-flyer');
-
-            // Set the modal content
-            document.getElementById('modal-event-name').textContent = eventName;
-            document.getElementById('modal-event-date').textContent = 'Date: ' + eventDate + ' at ' + eventDoors;
-            document.getElementById('modal-event-venue').textContent = 'Venue: ' + venueName;
-            document.getElementById('modal-event-address').textContent = 'Address: ' + venueAddress;
-            document.getElementById('modal-event-city').textContent = 'City: ' + venuePLZ + ' ' + venueCity + ', ' + venueCanton;
-            document.getElementById('modal-event-genre').textContent = 'Genre: ' + genre;
-            document.getElementById('modal-event-acts').textContent = 'Acts: ' + acts;
-            document.getElementById('modal-event-ticket-price').textContent = 'Ticket Price: ' + ticketPrice;
-
-            // Handle ticket link
-            if (ticketLink) {
-                document.getElementById('modal-event-ticket-link').innerHTML = 'Ticket Link: <a href="' + ticketLink + '" target="_blank" class="text-red-800">' + ticketLink + '</a>';
-            } else {
-                document.getElementById('modal-event-ticket-link').textContent = 'Ticket Link: N/A';
-            }
-
-            // Show the modal
-            document.getElementById('event-modal').classList.remove('hidden');
-        }
-
-        // Existing function to close the modal
-        window.closeModal = function () {
-            document.getElementById('event-modal').classList.add('hidden');
         }
 
         // Remove any event cards that have no events
