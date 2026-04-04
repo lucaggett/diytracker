@@ -380,6 +380,8 @@ def submit_event_link():
         # Extract form data
         name = form.name.data
         date = form.date.data
+        end_date = form.end_date.data
+        is_festival = form.is_festival.data
         doors = form.doors.data
         genres = form.genre.data
         acts = form.acts.data
@@ -440,6 +442,8 @@ def submit_event_link():
         new_event = Event(
             name=name,
             date=date,
+            end_date=end_date,
+            is_festival=is_festival,
             doors=doors,
             genre=', '.join(genres) if genres else '',
             acts=acts,
@@ -828,10 +832,14 @@ def edit_event(event_id):
         form.venue_plz.data = event.venue.plz
         form.venue_coords.data = event.venue.coords or ''
         form.genre.data = [g.strip() for g in (event.genre or '').split(',') if g.strip()]
+        form.end_date.data = event.end_date
+        form.is_festival.data = event.is_festival
     if request.method == 'POST':
         if form.validate_on_submit():
             event.name = form.name.data
             event.date = form.date.data
+            event.end_date = form.end_date.data
+            event.is_festival = form.is_festival.data
             event.doors = form.doors.data
             event.acts = form.acts.data
             event.ticket_price = form.ticket_price.data
@@ -1063,7 +1071,7 @@ def calendar_view():
 
 @app.route('/get_venues')
 def get_venues():
-    venues = Venue.query.all()
+    venues = Venue.query.order_by(Venue.name.asc()).all()
     venue_list = []
     for venue in venues:
         venue_list.append({

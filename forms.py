@@ -60,6 +60,8 @@ class EventForm(FlaskForm):
     # Existing event fields
     name = StringField('Event Name', validators=[Optional()])
     date = DateTimeField('Event Date', format='%Y-%m-%d', validators=[DataRequired()])
+    end_date = DateField('End Date', validators=[Optional()])
+    is_festival = BooleanField('Festival')
     doors = TimeField('Doors Open Time', format='%H:%M', validators=[DataRequired()])
     genre = SelectMultipleField('Genre', choices=[], validate_choice=False, validators=[Optional()])
     acts = TextAreaField('Acts', validators=[Optional()])
@@ -85,6 +87,8 @@ class EventEditForm(FlaskForm):
     # Existing event fields
     name = StringField('Event Name', validators=[Optional()])
     date = DateTimeField('Event Date', format='%Y-%m-%d', validators=[DataRequired()])
+    end_date = DateField('End Date', validators=[Optional()])
+    is_festival = BooleanField('Festival')
     doors = TimeField('Doors Open Time', format='%H:%M', validators=[DataRequired()])
     genre = SelectMultipleField('Genre', choices=[], validate_choice=False, validators=[Optional()])
     acts = TextAreaField('Acts', validators=[Optional()])

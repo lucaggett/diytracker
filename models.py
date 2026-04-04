@@ -19,6 +19,8 @@ class Event(db.Model):
     ticket_link = db.Column(db.String(200), nullable=True)
     doors = db.Column(db.Time, nullable=False)  # Storing door time as 24-hour format
     genre = db.Column(db.String(100), nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
+    is_festival = db.Column(db.Boolean, nullable=False, default=False)
     acts = db.Column(db.Text, nullable=True)
     description = db.Column(db.Text, nullable=True)
     source_url  = db.Column(db.String(300), nullable=True)

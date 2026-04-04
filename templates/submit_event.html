@@ -51,6 +51,19 @@
             {{ form.date(class="border border-black p-2 w-full", placeholder="Select the event date") }}
         </div>
 
+        <!-- End Date -->
+        <div class="mb-4">
+            <label for="{{ form.end_date.id }}" id="end-date-label" class="block font-bold">End Date <span class="font-normal text-gray-500">(optional)</span></label>
+            {{ form.end_date(class="border border-black p-2 w-full", placeholder="Select the end date") }}
+        </div>
+
+        <!-- Festival Toggle -->
+        <div class="mb-4 flex items-center gap-3">
+            {{ form.is_festival(id="is_festival", class="w-4 h-4 cursor-pointer") }}
+            {{ form.is_festival.label(class="font-bold cursor-pointer") }}
+            <small class="text-gray-500">Festivals require an end date.</small>
+        </div>
+
         <!-- Doors Open Time -->
         <div class="mb-4">
             {{ form.doors.label(class="block font-bold") }}
@@ -61,6 +74,7 @@
         <div class="mb-4">
             {{ form.genre.label(class="block font-bold") }}
             {{ form.genre(class="border border-black p-2 w-full") }}
+            <small class="text-gray-600">Type a genre and press Enter to add it.</small>
         </div>
 
         <!-- Acts -->
@@ -166,7 +180,9 @@
                     searchResultLimit: 20,
                     allowHTML: false,
                     duplicateItemsAllowed: false,
-                    placeholderValue: 'Search or add genres',
+                    addItems: true,
+                    addItemText: (value) => `Press Enter to add "<b>${value}</b>"`,
+                    placeholderValue: 'Search or type to add genres',
                 });
                 genreChoices.setChoices(
                     data.genres.map(g => ({ value: g, label: g })),
@@ -193,6 +209,13 @@
             dateFormat: "Y-m-d"
         });
 
+        // Initialize Flatpickr for End Date Field
+        flatpickr("#{{ form.end_date.id }}", {
+            altInput: true,
+            altFormat: "F j, Y",
+            dateFormat: "Y-m-d"
+        });
+
         // Initialize Flatpickr for Time Field
         flatpickr("#{{ form.doors.id }}", {
             enableTime: true,
@@ -200,6 +223,20 @@
             dateFormat: "H:i",
             time_24hr: true
         });
+
+        // Festival toggle: update end-date label
+        const festivalCheckbox = document.getElementById('is_festival');
+        const endDateLabel = document.getElementById('end-date-label');
+
+        function updateEndDateLabel() {
+            if (festivalCheckbox.checked) {
+                endDateLabel.innerHTML = 'End Date <span class="font-normal text-red-600">(required for festivals)</span>';
+            } else {
+                endDateLabel.innerHTML = 'End Date <span class="font-normal text-gray-500">(optional)</span>';
+            }
+        }
+
+        festivalCheckbox.addEventListener('change', updateEndDateLabel);
 
         // Image Preview for Flyer Upload
         const flyerInput = document.getElementById('{{ form.flyer.id }}');

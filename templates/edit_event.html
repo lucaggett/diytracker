@@ -53,6 +53,25 @@
             {{ form.date(class="border border-black p-2 w-full") }}
         </div>
 
+        <!-- End Date -->
+        <div class="mb-4">
+            <label for="{{ form.end_date.id }}" id="end-date-label" class="block font-bold">End Date
+                {% if form.is_festival.data %}
+                    <span class="font-normal text-red-600">(required for festivals)</span>
+                {% else %}
+                    <span class="font-normal text-gray-500">(optional)</span>
+                {% endif %}
+            </label>
+            {{ form.end_date(class="border border-black p-2 w-full") }}
+        </div>
+
+        <!-- Festival Toggle -->
+        <div class="mb-4 flex items-center gap-3">
+            {{ form.is_festival(id="is_festival", class="w-4 h-4 cursor-pointer") }}
+            {{ form.is_festival.label(class="font-bold cursor-pointer") }}
+            <small class="text-gray-500">Festivals require an end date.</small>
+        </div>
+
         <div class="mb-4">
             {{ form.doors.label(class="block font-bold") }}
             {{ form.doors(class="border border-black p-2 w-full") }}
@@ -61,6 +80,7 @@
         <div class="mb-4">
             {{ form.genre.label(class="block font-bold") }}
             {{ form.genre(class="border border-black p-2 w-full") }}
+            <small class="text-gray-600">Type a genre and press Enter to add it.</small>
         </div>
 
         <div class="mb-4">
@@ -141,6 +161,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const preselectedVenueId = "{{ form.venue_id.data }}";
+        const preselectedGenres = {{ form.genre.data | tojson }};
 
         // Choices.js for Genre with DB-backed autocomplete + free-text
         const genreSelect = document.getElementById('{{ form.genre.id }}');
@@ -154,12 +175,25 @@
                     searchResultLimit: 20,
                     allowHTML: false,
                     duplicateItemsAllowed: false,
-                    placeholderValue: 'Search or add genres',
+                    addItems: true,
+                    addItemText: (value) => `Press Enter to add "<b>${value}</b>"`,
+                    placeholderValue: 'Search or type to add genres',
                 });
+                // Set choices, marking preselected ones
                 genreChoices.setChoices(
-                    data.genres.map(g => ({ value: g, label: g })),
+                    data.genres.map(g => ({
+                        value: g,
+                        label: g,
+                        selected: preselectedGenres.includes(g)
+                    })),
                     'value', 'label', true
                 );
+                // Add any preselected genres not in the DB list
+                preselectedGenres.forEach(g => {
+                    if (!data.genres.includes(g)) {
+                        genreChoices.setChoices([{ value: g, label: g, selected: true }], 'value', 'label', false);
+                    }
+                });
             });
 
         genreSelect.addEventListener('search', function(e) {
@@ -181,6 +215,13 @@
             dateFormat: "Y-m-d"
         });
 
+        // Flatpickr for End Date
+        flatpickr("#{{ form.end_date.id }}", {
+            altInput: true,
+            altFormat: "F j, Y",
+            dateFormat: "Y-m-d"
+        });
+
         // Flatpickr for Doors Time
         flatpickr("#{{ form.doors.id }}", {
             enableTime: true,
@@ -188,6 +229,20 @@
             dateFormat: "H:i",
             time_24hr: true
         });
+
+        // Festival toggle: update end-date label
+        const festivalCheckbox = document.getElementById('is_festival');
+        const endDateLabel = document.getElementById('end-date-label');
+
+        function updateEndDateLabel() {
+            if (festivalCheckbox.checked) {
+                endDateLabel.innerHTML = 'End Date <span class="font-normal text-red-600">(required for festivals)</span>';
+            } else {
+                endDateLabel.innerHTML = 'End Date <span class="font-normal text-gray-500">(optional)</span>';
+            }
+        }
+
+        festivalCheckbox.addEventListener('change', updateEndDateLabel);
 
         // Flyer preview
         const flyerInput = document.getElementById('{{ form.flyer.id }}');
