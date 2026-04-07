@@ -15,7 +15,7 @@ def get_genre_choices():
         'Drum & Bass', 'Dubstep', 'Techno', 'House', 'Trance', 'Electro',
         'Ambient', 'Experimental', 'Noise', 'Wave', 'NDW', 'Folk', 'Neofolk',
         'Jazz', 'Blues', 'Ska', 'Garage', 'Hyperpop', 'Emo', 'Metalcore', 'Synth',
-        'Ska'
+        'Ska', 'Beatdown', 'Doom', 'Sludge', 'Stoner', 'Crustpunk'
     ]
     return [(genre, genre) for genre in genres]
 
