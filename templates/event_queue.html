@@ -15,6 +15,33 @@
                 </div>
             {% endif %}
         {% endwith %}
+
+        <!-- Filter bar -->
+        <form method="get" class="flex flex-wrap items-end gap-3 mb-6 bg-white shadow-sm rounded px-4 py-3">
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">From</label>
+                <input type="date" name="date_from" value="{{ filter_date_from }}"
+                       class="border border-gray-300 rounded px-2 py-1 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">To</label>
+                <input type="date" name="date_to" value="{{ filter_date_to }}"
+                       class="border border-gray-300 rounded px-2 py-1 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Source</label>
+                <select name="source" class="border border-gray-300 rounded px-2 py-1 text-sm">
+                    <option value="" {% if not filter_source %}selected{% endif %}>All</option>
+                    <option value="metalgigs" {% if filter_source == 'metalgigs' %}selected{% endif %}>MetalGigs</option>
+                    <option value="petzi" {% if filter_source == 'petzi' %}selected{% endif %}>Petzi</option>
+                </select>
+            </div>
+            <button type="submit"
+                    class="bg-black text-white px-4 py-1 rounded text-sm hover:bg-gray-800">Filter</button>
+            <a href="{{ url_for('event_queue') }}" class="text-sm text-gray-500 hover:underline self-end pb-1">Reset</a>
+            <span class="text-sm text-gray-500 self-end pb-1 ml-auto">{{ events|length }} event{% if events|length != 1 %}s{% endif %}</span>
+        </form>
+
         {% if events %}
         <table class="min-w-full bg-white shadow-md rounded">
             <thead>

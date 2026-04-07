@@ -270,8 +270,21 @@ def event_queue():
     POST: create the selected event in the database.
     """
     submitter = db.session.get(Submitter, session['user_id'])
-    # Load events from the database via the ScrapedEvent model
-    events = parse_scraped_events()
+    # Read filter params from query string
+    def _parse_date(key):
+        raw = request.args.get(key, '').strip()
+        try:
+            return datetime.strptime(raw, '%Y-%m-%d').date() if raw else None
+        except ValueError:
+            return None
+    filter_date_from = _parse_date('date_from')
+    filter_date_to   = _parse_date('date_to')
+    filter_source    = request.args.get('source', '').strip() or None
+    events = parse_scraped_events(
+        date_from=filter_date_from,
+        date_to=filter_date_to,
+        source=filter_source,
+    )
     if request.method == 'POST':
         # Expect an index pointing into the events list.  Each event
         # dictionary stores `_scraped_id` which references the primary
@@ -364,8 +377,17 @@ def event_queue():
                 scraped_obj.approved_event_id = new_event.id
                 db.session.commit()
         flash('Event approved and added to calendar!')
-        return redirect(url_for('event_queue'))
-    return render_template('event_queue.html', events=events)
+        # Preserve filter params through redirect
+        redirect_args = {k: v for k, v in request.args.items()}
+        return redirect(url_for('event_queue', **redirect_args))
+    now = datetime.now().date()
+    return render_template(
+        'event_queue.html',
+        events=events,
+        filter_date_from=(filter_date_from or now).isoformat(),
+        filter_date_to=(filter_date_to or (now + relativedelta(months=2))).isoformat(),
+        filter_source=filter_source or '',
+    )
 
 @app.route('/submit', methods=['GET', 'POST'])
 @login_required
@@ -1091,22 +1113,31 @@ def event_page(event_id):
     event = Event.query.get_or_404(event_id)
     return render_template('')
 
-def parse_scraped_events():
+def parse_scraped_events(date_from=None, date_to=None, source=None):
     """Query the ScrapedEvent table and filter events.
 
-    Returns only events that are unapproved, tagged as concerts and
-    occurring within the next two months.  Each returned record is
-    converted into a dictionary with an extra `_event_date` key for
-    compatibility with the approval logic.
+    Returns only unapproved events, sorted by date ascending.  Optional
+    filter parameters narrow the result set further.
+
+    Args:
+        date_from: Earliest start_date to include (date object, default: today).
+        date_to:   Latest start_date to include (date object, default: today + 2 months).
+        source:    If set, only include events from this source string.
     """
     now = datetime.now().date()
-    cutoff_date = now + relativedelta(months=2)
+    if date_from is None:
+        date_from = now
+    if date_to is None:
+        date_to = now + relativedelta(months=2)
     # Query all unapproved scraped events within the date window
-    candidates = ScrapedEvent.query.filter(
+    q = ScrapedEvent.query.filter(
         ScrapedEvent.approved.is_(False),
-        ScrapedEvent.start_date <= cutoff_date,
-        ScrapedEvent.start_date >= now
-    ).all()
+        ScrapedEvent.start_date >= date_from,
+        ScrapedEvent.start_date <= date_to,
+    )
+    if source:
+        q = q.filter(ScrapedEvent.source == source)
+    candidates = q.order_by(ScrapedEvent.start_date.asc()).all()
     events = []
     for rec in candidates:
         # Filter by styles containing 'concert' (MetalGigs uses genre tags instead)

@@ -25,7 +25,7 @@
             <ul class="list-disc pl-5">
                 {% for field, errors in form.errors.items() %}
                     {% for error in errors %}
-                        <li><strong>{{ getattr(form, field).label.text }}:</strong> {{ error }}</li>
+                        <li><strong>{{ form[field].label.text }}:</strong> {{ error }}</li>
                     {% endfor %}
                 {% endfor %}
             </ul>

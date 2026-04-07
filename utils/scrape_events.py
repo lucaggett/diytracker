@@ -131,8 +131,9 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
 def get_sitemap_event_urls(sitemap_url: str, pattern: str) -> List[str]:
     """Extract event URLs matching a pattern from a sitemap.xml file.
 
-    The sitemap is treated as plain text; all substrings containing the
-    provided pattern are returned.  Duplicate URLs are removed.
+    Handles both regular sitemaps and sitemap index files (which contain
+    ``<sitemap>`` entries pointing to sub-sitemaps).  In the index case,
+    each sub-sitemap is fetched and searched for matching URLs.
 
     Args:
         sitemap_url: URL to the sitemap.xml document.
@@ -145,17 +146,30 @@ def get_sitemap_event_urls(sitemap_url: str, pattern: str) -> List[str]:
     sitemap_text = fetch_url(sitemap_url)
     if not sitemap_text:
         return []
-    # Extract the text inside <loc> tags which contain fully qualified
-    # URLs.  This avoids capturing trailing markup like </loc>.
+
+    # Detect sitemap index: contains <sitemap> elements (not <url> elements)
+    sub_sitemap_urls = re.findall(r"<sitemap>\s*<loc>(.*?)</loc>", sitemap_text)
+    if sub_sitemap_urls:
+        logger.debug(f"Detected sitemap index at {sitemap_url} with {len(sub_sitemap_urls)} sub-sitemaps")
+        all_urls: List[str] = []
+        seen: set = set()
+        for sub_url in sub_sitemap_urls:
+            sub_url = sub_url.strip()
+            for url in get_sitemap_event_urls(sub_url, pattern):
+                if url not in seen:
+                    all_urls.append(url)
+                    seen.add(url)
+        return all_urls
+
+    # Regular sitemap: extract <loc> tags and filter by pattern
     loc_urls = re.findall(r"<loc>(.*?)</loc>", sitemap_text)
     urls: List[str] = []
     for loc in loc_urls:
         loc = loc.strip()
-        # Only include entries that match the desired substring pattern
         if pattern in loc:
             urls.append(loc)
     # Deduplicate while preserving order
-    seen: set = set()
+    seen = set()
     unique_urls: List[str] = []
     for url in urls:
         if url not in seen:
@@ -242,8 +256,9 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
         text = text.strip()
         if not text:
             continue
-        # Look for the MusicEvent object inside the script text
-        if "\"@type\":\"MusicEvent\"" in text or "\"MusicEvent\"" in text:
+        # Look for the MusicEvent or Festival object inside the script text
+        if ("\"@type\":\"MusicEvent\"" in text or "\"MusicEvent\"" in text
+                or "\"@type\":\"Festival\"" in text):
             start_idx = text.find("{")
             if start_idx >= 0:
                 brace_count = 0
@@ -308,6 +323,18 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
                             performer_names.append(name)
             event["performers"] = ", ".join(performer_names)
             event["event_status"] = data.get("eventStatus", "")
+            # For Festival type, collect genres from performer entries if styles not set
+            if not event.get("styles"):
+                genre_set: List[str] = []
+                seen_genres: set = set()
+                for p in (performers if isinstance(performers, list) else []):
+                    if isinstance(p, dict):
+                        for g in (p.get("genre") or []):
+                            if g and g not in seen_genres:
+                                genre_set.append(g)
+                                seen_genres.add(g)
+                if genre_set:
+                    event["styles"] = ", ".join(genre_set)
     else:
         logger.debug(f"No JSON-LD found for {url}, falling back to HTML parsing")
 
@@ -654,11 +681,13 @@ def write_csv(events: Iterable[Dict[str, str]], filename: str) -> None:
 def main() -> None:
     """Main entry point of the script."""
     events: List[Dict[str, str]] = []
-    # Fetch and parse metalgigs events
+    # Fetch and parse metalgigs concerts and festivals
     print("Fetching metalgigs event URLs…", file=sys.stderr)
     mg_urls = get_sitemap_event_urls("https://metalgigs.ch/sitemap.xml", "/konzerte/")
-    print(f"Found {len(mg_urls)} metalgigs events", file=sys.stderr)
-    for idx, url in enumerate(mg_urls, 1):
+    mg_festival_urls = get_sitemap_event_urls("https://metalgigs.ch/sitemap.xml", "/festivals/")
+    print(f"Found {len(mg_urls)} metalgigs concerts, {len(mg_festival_urls)} festivals", file=sys.stderr)
+    all_mg_urls = mg_urls + mg_festival_urls
+    for idx, url in enumerate(all_mg_urls, 1):
         parsed = parse_metalgigs_event(url)
         if parsed:
             events.append(parsed)
@@ -667,7 +696,7 @@ def main() -> None:
             logger.warning(f"Skipped MetalGigs event due to parse failure: {url}")
         # Print progress occasionally
         if idx % 50 == 0:
-            print(f"Processed {idx}/{len(mg_urls)} metalgigs events", file=sys.stderr)
+            print(f"Processed {idx}/{len(all_mg_urls)} metalgigs events", file=sys.stderr)
     # Fetch and parse PETZI events
     print("Fetching PETZI event URLs…", file=sys.stderr)
     # Try sitemap first; if empty, fall back to scraping the agenda page
