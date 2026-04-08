@@ -60,9 +60,6 @@ def admin_required(f):
 with app.app_context():
     db.create_all()
 
-_scheduler_thread = threading.Thread(target=_auto_scheduler, daemon=True, name='scrape-scheduler')
-_scheduler_thread.start()
-
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -231,6 +228,10 @@ def _auto_scheduler():
             _scrape_running = True
         _scrape_and_import()
         time_module.sleep(SCRAPE_INTERVAL_HOURS * 3600)
+
+
+_scheduler_thread = threading.Thread(target=_auto_scheduler, daemon=True, name='scrape-scheduler')
+_scheduler_thread.start()
 
 
 @app.route('/login', methods=['GET', 'POST'])
