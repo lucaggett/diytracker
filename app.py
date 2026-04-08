@@ -206,7 +206,7 @@ def _scrape_and_import():
             _scrape_running = False
 
 
-SCRAPE_INTERVAL_HOURS = 6
+SCRAPE_INTERVAL_HOURS = 1
 
 
 def _auto_scheduler():
