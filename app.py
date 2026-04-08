@@ -4,6 +4,7 @@ import hashlib
 import io
 import os
 import threading
+import time as time_module
 from collections import defaultdict
 from datetime import datetime, time as time_type, timedelta
 from dateutil.relativedelta import relativedelta
@@ -58,6 +59,9 @@ def admin_required(f):
 
 with app.app_context():
     db.create_all()
+
+_scheduler_thread = threading.Thread(target=_auto_scheduler, daemon=True, name='scrape-scheduler')
+_scheduler_thread.start()
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
@@ -203,6 +207,30 @@ def _scrape_and_import():
     finally:
         with _scrape_lock:
             _scrape_running = False
+
+
+SCRAPE_INTERVAL_HOURS = 6
+
+
+def _auto_scheduler():
+    """Background thread: run a scrape every SCRAPE_INTERVAL_HOURS hours."""
+    global _scrape_running
+    while True:
+        last = _get_last_scrape_time()
+        if last is None:
+            wait = 0
+        else:
+            elapsed = (datetime.now() - last).total_seconds()
+            wait = max(0, SCRAPE_INTERVAL_HOURS * 3600 - elapsed)
+        if wait > 0:
+            time_module.sleep(wait)
+        with _scrape_lock:
+            if _scrape_running:
+                time_module.sleep(300)
+                continue
+            _scrape_running = True
+        _scrape_and_import()
+        time_module.sleep(SCRAPE_INTERVAL_HOURS * 3600)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -817,20 +845,33 @@ def generate_weekly_calendar_image(monday_date):
     return img
 
 
+def _fmt_duration(td: timedelta) -> str:
+    total = int(abs(td.total_seconds()))
+    if total < 60:
+        return f"{total}s"
+    if total < 3600:
+        return f"{total // 60}m"
+    hours = total // 3600
+    minutes = (total % 3600) // 60
+    return f"{hours}h {minutes}m" if minutes else f"{hours}h"
+
+
 @app.route('/admin', methods=['GET'])
 @admin_required
 def admin():
     events = Event.query.order_by(Event.date.asc()).all()
     delete_form = DeleteEventForm()
     last_scrape = _get_last_scrape_time()
-    scrape_cooldown = False
-    if last_scrape and (datetime.now() - last_scrape) < timedelta(hours=24):
-        scrape_cooldown = True
-    today = datetime.now().date()
+    now = datetime.now()
+    next_scrape = (last_scrape + timedelta(hours=SCRAPE_INTERVAL_HOURS)) if last_scrape else None
+    time_since_last = _fmt_duration(now - last_scrape) + " ago" if last_scrape else "never"
+    time_until_next = _fmt_duration(next_scrape - now) if next_scrape and next_scrape > now else "soon"
+    today = now.date()
     current_monday = (today - timedelta(days=today.weekday())).isoformat()
     return render_template(
         'admin.html', events=events, delete_form=delete_form,
-        last_scrape=last_scrape, scrape_cooldown=scrape_cooldown,
+        last_scrape=last_scrape, next_scrape=next_scrape,
+        time_since_last=time_since_last, time_until_next=time_until_next,
         scrape_running=_scrape_running, current_monday=current_monday,
     )
 
@@ -910,27 +951,6 @@ def delete_event(event_id):
     db.session.delete(event)
     db.session.commit()
     flash('Event deleted successfully!')
-    return redirect(url_for('admin'))
-
-@app.route('/admin/trigger-scrape', methods=['POST'])
-@admin_required
-def trigger_scrape():
-    global _scrape_running
-    form = DeleteEventForm()
-    if not form.validate_on_submit():
-        abort(400)
-    with _scrape_lock:
-        if _scrape_running:
-            flash('A scrape is already running.')
-            return redirect(url_for('admin'))
-        last_scrape = _get_last_scrape_time()
-        if last_scrape and (datetime.now() - last_scrape) < timedelta(hours=24):
-            flash('Scrape cooldown active. Try again later.')
-            return redirect(url_for('admin'))
-        _scrape_running = True
-    thread = threading.Thread(target=_scrape_and_import, daemon=True)
-    thread.start()
-    flash('Scrape started in the background. New events will appear in the queue.')
     return redirect(url_for('admin'))
 
 

@@ -14,33 +14,30 @@
             <a href="{{ url_for('logout') }}" class="text-sm text-gray-600 hover:underline">Logout</a>
         </div>
 
-        <div class="flex gap-4 mb-6">
-            <!-- Scrape trigger -->
-            <form action="{{ url_for('trigger_scrape') }}" method="POST" class="inline" id="scrape-form">
-                {{ delete_form.hidden_tag() }}
+        <div class="flex gap-4 mb-6 flex-wrap items-center">
+            <!-- Scrape status (auto every 6 hours) -->
+            <div class="flex items-center gap-3 bg-white border border-gray-200 rounded px-4 py-2 text-sm text-gray-600">
                 {% if scrape_running %}
-                    <button type="button" disabled id="scrape-btn"
-                            class="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed">
-                        Scraping&hellip;
-                    </button>
-                    <span id="scrape-progress" class="text-sm text-gray-600 ml-2"></span>
-                {% elif scrape_cooldown %}
-                    <button type="button" disabled id="scrape-btn"
-                            class="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed"
-                            title="Last scrape: {{ last_scrape.strftime('%Y-%m-%d %H:%M') }}">
-                        Scrape (cooldown)
-                    </button>
+                    <span id="scrape-indicator" class="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    <span id="scrape-progress">Scraping in progress&hellip;</span>
                 {% else %}
-                    <button type="submit" id="scrape-btn"
-                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            onclick="return confirm('Start scraping metalgigs.ch and petzi.ch?')">
-                        Scrape Events
-                    </button>
+                    <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span>
                 {% endif %}
+                <span>Auto-scrapes every 6 hours.</span>
                 {% if last_scrape %}
-                    <span class="text-sm text-gray-500 ml-2" id="last-scrape">Last: {{ last_scrape.strftime('%Y-%m-%d %H:%M') }}</span>
+                    <span class="text-gray-400">&bull;</span>
+                    <span>Last: <span class="font-medium text-gray-700">{{ time_since_last }}</span>
+                    ({{ last_scrape.strftime('%Y-%m-%d %H:%M') }})</span>
+                    <span class="text-gray-400">&bull;</span>
+                    <span>Next: <span class="font-medium text-gray-700">{{ time_until_next }}</span>
+                    {% if next_scrape %}({{ next_scrape.strftime('%Y-%m-%d %H:%M') }}){% endif %}</span>
+                {% else %}
+                    <span class="text-gray-400">&bull;</span>
+                    <span>No scrape recorded yet.</span>
                 {% endif %}
-            </form>
+                <span class="text-gray-400">&bull;</span>
+                <span>Contact Luc if you need a refreshed scrape.</span>
+            </div>
 
             <!-- Excel export -->
             <a href="{{ url_for('export_excel') }}"
@@ -94,34 +91,29 @@
     {% if scrape_running %}
     <script>
     (function() {
-        const btn = document.getElementById('scrape-btn');
         const prog = document.getElementById('scrape-progress');
         function fmtTime(secs) {
             if (secs == null) return '';
             if (secs < 60) return secs + 's';
-            const m = Math.floor(secs / 60);
-            const s = secs % 60;
-            return m + 'm ' + s + 's';
+            const m = Math.floor(secs / 60), s = secs % 60;
+            return m + 'm ' + (s ? s + 's' : '');
         }
         function poll() {
             fetch('{{ url_for("scrape_status") }}')
                 .then(r => r.json())
                 .then(data => {
                     if (!data.running) {
-                        btn.textContent = 'Done!';
-                        btn.className = 'bg-green-600 text-white px-4 py-2 rounded';
-                        prog.textContent = 'Scrape complete — reloading\u2026';
+                        prog.textContent = 'Scrape complete \u2014 reloading\u2026';
                         setTimeout(() => location.reload(), 1500);
                         return;
                     }
-                    let text = data.phase;
+                    let text = data.phase || 'Scraping\u2026';
                     if (data.total > 0) {
-                        text += ': ' + data.processed + '/' + data.total;
                         const pct = Math.round(data.processed / data.total * 100);
-                        btn.textContent = 'Scraping\u2026 ' + pct + '%';
+                        text += ' ' + pct + '% (' + data.processed + '/' + data.total + ')';
                     }
                     if (data.eta_seconds != null) {
-                        text += ' \u2014 ~' + fmtTime(data.eta_seconds) + ' remaining';
+                        text += ' \u2014 ~' + fmtTime(data.eta_seconds) + ' left';
                     }
                     prog.textContent = text;
                     setTimeout(poll, 3000);
