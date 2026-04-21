@@ -1,0 +1,329 @@
+import os
+import random as _r
+from collections import defaultdict
+from datetime import datetime, time as time_type, timedelta
+
+from models import db, Event
+
+# 12-colour palette (vivid, readable on dark bg)
+_GENRE_PALETTE = [
+    (239,  68,  68),  # red
+    (249, 115,  22),  # orange
+    (234, 179,   8),  # yellow
+    ( 34, 197,  94),  # green
+    ( 20, 184, 166),  # teal
+    (  6, 182, 212),  # cyan
+    ( 59, 130, 246),  # blue
+    (139,  92, 246),  # violet
+    (236,  72, 153),  # pink
+    (132, 204,  22),  # lime
+    (245, 158,  11),  # amber
+    ( 16, 185, 129),  # emerald
+]
+
+
+def _load_font(size, bold=False):
+    """Load Arial (or a DejaVu fallback) at the requested size."""
+    from PIL import ImageFont
+    candidates = (
+        ['/Library/Fonts/Arial Bold.ttf',
+         '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
+         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf']
+        if bold else
+        ['/Library/Fonts/Arial.ttf',
+         '/System/Library/Fonts/Supplemental/Arial.ttf',
+         '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+         '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf']
+    )
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size)
+            except Exception:
+                continue
+    # .ttc fallback (macOS Helvetica)
+    if os.path.exists('/System/Library/Fonts/Helvetica.ttc'):
+        try:
+            return ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', size, index=0)
+        except Exception:
+            pass
+    return ImageFont.load_default()
+
+
+def generate_weekly_calendar_image(monday_date):
+    from PIL import Image, ImageDraw
+
+    GERMAN_MONTHS = ['JANUAR', 'FEBRUAR', 'MÄRZ', 'APRIL', 'MAI', 'JUNI',
+                     'JULI', 'AUGUST', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DEZEMBER']
+    GERMAN_DAYS   = ['Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.', 'So.']
+
+    sunday_date = monday_date + timedelta(days=6)
+
+    # ── query ────────────────────────────────────────────────────────────────
+    events = (Event.query
+              .filter(Event.date >= datetime.combine(monday_date, time_type.min),
+                      Event.date <= datetime.combine(sunday_date, time_type.max))
+              .order_by(Event.date.asc())
+              .all())
+
+    by_day = defaultdict(list)
+    for e in events:
+        by_day[e.date.weekday()].append(e)
+
+    # All genre colours (for dot lookup)
+    genre_color = {}
+    for e in events:
+        for g in (e.genre or '').split(','):
+            g = g.strip()
+            if g and g not in genre_color:
+                genre_color[g] = _GENRE_PALETTE[len(genre_color) % len(_GENRE_PALETTE)]
+
+    def event_primary_color(evt):
+        for g in (evt.genre or '').split(','):
+            g = g.strip()
+            if g in genre_color:
+                return genre_color[g]
+        return (100, 100, 110)
+
+    # Legend only shows genres that are actually the primary colour of an event
+    legend_genres = {}
+    for e in events:
+        for g in (e.genre or '').split(','):
+            g = g.strip()
+            if g in genre_color and g not in legend_genres:
+                legend_genres[g] = genre_color[g]
+                break
+
+    # ── design tokens ────────────────────────────────────────────────────────
+    W, H      = 1080, 1350
+    BG        = (12,  12,  13)
+    RED       = (208, 20,  20)
+    RED_DARK  = (158, 12,  12)
+    WHITE     = (246, 243, 238)   # warm off-white
+    LGRAY     = (182, 178, 172)   # warm light gray
+    MGRAY     = ( 98,  95,  90)   # warm mid gray
+    SEP_COL   = ( 72,  70,  76)
+    MARGIN    = 36
+    USABLE_W  = W - 2 * MARGIN
+
+    # ── fonts ────────────────────────────────────────────────────────────────
+    def load_black(size):
+        for path in ['/Library/Fonts/Arial Black.ttf',
+                     '/Library/Fonts/Arial Bold.ttf',
+                     '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
+                     '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf']:
+            if os.path.exists(path):
+                try:
+                    from PIL import ImageFont
+                    return ImageFont.truetype(path, size)
+                except Exception:
+                    pass
+        return _load_font(size, bold=True)
+
+    f_hero    = load_black(108)
+    f_datenum = load_black(82)
+    f_month   = load_black(92)
+    f_pill    = _load_font(23, bold=True)
+    f_act     = _load_font(21, bold=True)
+    f_venue   = _load_font(16)
+    f_genre   = _load_font(17)
+    f_footer  = _load_font(18, bold=True)
+
+    # ── canvas ───────────────────────────────────────────────────────────────
+    # Transparent background so Canva users can place their own background
+    # layer beneath the content. No fill rectangle, no texture.
+    img  = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    # ── helpers ──────────────────────────────────────────────────────────────
+    def wrap_text(text, font, max_w):
+        """Word-wrap a single string; returns a list of lines."""
+        if draw.textlength(text, font=font) <= max_w:
+            return [text]
+        words = text.split()
+        lines, current = [], ''
+        for word in words:
+            test = (current + ' ' + word).strip()
+            if draw.textlength(test, font=font) <= max_w:
+                current = test
+            else:
+                if current:
+                    lines.append(current)
+                current = word
+        if current:
+            lines.append(current)
+        return lines or [text]
+
+    def rough_vline(x, y0, y1):
+        y = y0
+        while y < y1:
+            dot = _r.randint(3, 7)
+            gap = _r.randint(4, 10)
+            jx  = _r.randint(-1, 1)
+            w   = _r.choice([1, 1, 1, 2])
+            draw.line([x + jx, y, x + jx, min(y + dot, y1)], fill=SEP_COL, width=w)
+            y += dot + gap
+
+    def rough_hline(x0, x1, y):
+        x = x0
+        while x < x1:
+            dot = _r.randint(3, 7)
+            gap = _r.randint(4, 10)
+            jy  = _r.randint(-1, 1)
+            w   = _r.choice([1, 1, 1, 2])
+            draw.line([x, y + jy, min(x + dot, x1), y + jy], fill=SEP_COL, width=w)
+            x += dot + gap
+
+    def rough_hrule(y, color, thickness=7):
+        """Solid horizontal rule with a slightly eaten top/bottom edge."""
+        draw.rectangle([0, y, W, y + thickness], fill=color)
+        # Chew into the edges randomly for a worn-print look
+        for _ in range(W // 5):
+            rx = _r.randint(0, W - 1)
+            ry = _r.choice([y, y + thickness - 1])
+            draw.point((rx, ry), fill=BG)
+
+    def rough_pill(x0, y0, x1, y1, color):
+        """Rounded rectangle pill with grain texture on the surface."""
+        draw.rounded_rectangle([x0, y0, x1, y1], radius=5, fill=color)
+        # Sparse darker dots for printed-ink texture
+        for _ in range((x1 - x0) // 3):
+            px = _r.randint(x0 + 2, x1 - 3)
+            py = _r.randint(y0 + 1, y1 - 2)
+            draw.point((px, py), fill=RED_DARK)
+
+    # ── HEADER ───────────────────────────────────────────────────────────────
+    rough_hrule(0, RED, thickness=7)
+
+    ev_y = 14
+    draw.text((MARGIN, ev_y), 'EVENTS', font=f_hero, fill=WHITE)
+
+    dr = f"{monday_date.day}.-{sunday_date.day}."
+    dr_w = draw.textlength(dr, font=f_datenum)
+    draw.text((W - MARGIN - dr_w, ev_y + 14), dr, font=f_datenum, fill=WHITE)
+
+    month_str = GERMAN_MONTHS[monday_date.month - 1]
+    m_w = draw.textlength(month_str, font=f_month)
+    draw.text((W - MARGIN - m_w, ev_y + 100), month_str, font=f_month, fill=RED)
+
+    # ── genre legend (primary colours only) ──────────────────────────────────
+    LEG_TOP = 240
+    DOT_D   = 15
+    ITEM_W  = USABLE_W // 3
+    ROW_H   = 30
+
+    for idx, (genre, color) in enumerate(legend_genres.items()):
+        row_i = idx // 3
+        col_i = idx % 3
+        lx = MARGIN + col_i * ITEM_W
+        ly = LEG_TOP + row_i * ROW_H
+        if ly + DOT_D > LEG_TOP + 4 * ROW_H:
+            break
+        draw.ellipse([lx, ly, lx + DOT_D, ly + DOT_D], fill=color)
+        tw_g  = ITEM_W - DOT_D - 10
+        label = genre
+        while label and draw.textlength(label, font=f_genre) > tw_g:
+            label = label[:-1]
+        draw.text((lx + DOT_D + 7, ly - 1), label, font=f_genre, fill=LGRAY)
+
+    num_leg_rows = max(1, -(-len(legend_genres) // 3))  # ceiling div
+    HDR_BOT = LEG_TOP + num_leg_rows * ROW_H + 18
+    rough_hrule(HDR_BOT, RED, thickness=7)
+
+    # ── CALENDAR GRID ─────────────────────────────────────────────────────────
+    GRID_TOP = HDR_BOT + 7 + 18
+    FOOTER_H = 44
+    GRID_BOT = H - FOOTER_H
+
+    ALL_GROUPS = [[0, 1, 2, 3], [4], [5], [6]]
+    col_groups = [g for g in ALL_GROUPS if any(by_day.get(d) for d in g)]
+
+    if not col_groups:
+        msg = 'Keine Events diese Woche'
+        mw  = draw.textlength(msg, font=f_act)
+        draw.text(((W - mw) / 2, GRID_TOP + (GRID_BOT - GRID_TOP) // 2),
+                  msg, font=f_act, fill=MGRAY)
+    else:
+        n_cols = len(col_groups)
+        SEP_W  = 4
+        col_w  = (USABLE_W - SEP_W * (n_cols - 1)) // n_cols
+
+        for i in range(1, n_cols):
+            sx = MARGIN + i * (col_w + SEP_W) - SEP_W
+            rough_vline(sx, GRID_TOP, GRID_BOT)
+
+        for col_i, day_group in enumerate(col_groups):
+            cx = MARGIN + col_i * (col_w + SEP_W)
+            cy = GRID_TOP
+            tw = col_w - 28
+
+            active_days = [d for d in day_group if by_day.get(d)]
+
+            for day_i, weekday in enumerate(active_days):
+                day_events = by_day[weekday]
+                day_date   = monday_date + timedelta(days=weekday)
+
+                if day_i > 0:
+                    rough_hline(cx, cx + col_w, cy)
+                    cy += 16
+
+                # ── day pill ─────────────────────────────────────────────────
+                pill_label = f"{GERMAN_DAYS[weekday]} {day_date.strftime('%d.%m.')}"
+                pill_h     = 34
+                pill_pad   = 12
+                pill_w     = min(int(draw.textlength(pill_label, font=f_pill)) + pill_pad * 2,
+                                 col_w - 4)
+                rough_pill(cx + 2, cy, cx + 2 + pill_w, cy + pill_h, RED)
+                draw.text((cx + 2 + pill_pad, cy + 6), pill_label,
+                          font=f_pill, fill=WHITE)
+                cy += pill_h + 10
+
+                # ── events ───────────────────────────────────────────────────
+                for evt in day_events:
+                    if cy > GRID_BOT - 28:
+                        draw.text((cx + 20, cy), '…', font=f_venue, fill=MGRAY)
+                        break
+
+                    color    = event_primary_color(evt)
+                    DOT_D_EV = 14
+                    draw.ellipse([cx + 4, cy + 4,
+                                  cx + 4 + DOT_D_EV, cy + 4 + DOT_D_EV],
+                                 fill=color)
+
+                    tx = cx + DOT_D_EV + 12
+                    acts_raw  = (evt.acts or evt.name or '').strip()
+                    act_lines = [a.strip()
+                                 for a in acts_raw.replace('\n', ',').split(',')
+                                 if a.strip()] or [evt.name or '?']
+
+                    for act in act_lines:
+                        for line in wrap_text(act, f_act, tw):
+                            if cy > GRID_BOT - 26:
+                                break
+                            draw.text((tx, cy), line, font=f_act, fill=WHITE)
+                            cy += 25
+
+                    if evt.venue and cy <= GRID_BOT - 20:
+                        vstr = evt.venue.name
+                        if evt.venue.city:
+                            vstr += f', {evt.venue.city}'
+                        for line in wrap_text(vstr, f_venue, tw)[:1]:
+                            draw.text((tx, cy), line, font=f_venue, fill=MGRAY)
+                        cy += 20
+
+                    cy += 10
+
+    # ── footer: year only, centred ───────────────────────────────────────────
+    year_str = str(monday_date.year)
+    yw = draw.textlength(year_str, font=f_footer)
+    draw.text(((W - yw) / 2, H - FOOTER_H + 12), year_str,
+              font=f_footer, fill=MGRAY)
+
+    # ── film grain overlay ────────────────────────────────────────────────────
+    light_dots = [(_r.randint(0, W - 1), _r.randint(0, H - 1)) for _ in range(16000)]
+    draw.point(light_dots, fill=(32, 30, 35))
+    dark_dots  = [(_r.randint(0, W - 1), _r.randint(0, H - 1)) for _ in range(8000)]
+    draw.point(dark_dots, fill=(4, 4, 5))
+
+    return img

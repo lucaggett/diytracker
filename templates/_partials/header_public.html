@@ -1,0 +1,24 @@
+{# Public header. Wordmark uses RichEatin, mis-registered on hover.
+   Nav stays minimal — the calendar IS the site, everything else is metadata. #}
+<header class="border-b border-ink relative">
+  <div class="max-w-3xl mx-auto px-4 pt-6 pb-4">
+    <a href="{{ url_for('calendar_view') }}" class="block">
+      <h1 class="font-richEatin text-5xl md:text-6xl text-ink mis-reg leading-none">DIYTRACKER</h1>
+      <p class="font-mono text-xs md:text-sm text-smudge mt-1 tracking-widest uppercase">
+        {{ tagline | default('Schweizer DIY Underground · Konzerte · Festivals · Shows') }}
+      </p>
+    </a>
+    <nav class="mt-4 flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs uppercase tracking-wider">
+      <a href="{{ url_for('calendar_view') }}" class="hover:text-bleed underline-offset-4 hover:underline">Kalender</a>
+      {% if session.get('user_id') %}
+        <a href="{{ url_for('submit_event_link') }}" class="hover:text-bleed underline-offset-4 hover:underline">Einreichen</a>
+        <a href="{{ url_for('event_queue') }}" class="hover:text-bleed underline-offset-4 hover:underline">Queue</a>
+        <a href="{{ url_for('logout') }}" class="hover:text-bleed underline-offset-4 hover:underline">Logout</a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="hover:text-bleed underline-offset-4 hover:underline">Login</a>
+      {% endif %}
+      <a href="{{ url_for('about') }}" class="hover:text-bleed underline-offset-4 hover:underline">About</a>
+    </nav>
+  </div>
+  <div class="torn-divider w-full text-ink" aria-hidden="true"></div>
+</header>

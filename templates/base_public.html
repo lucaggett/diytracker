@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="{{ (g.get('locale', 'de') if g else 'de') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}diytracker.ch{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}DIY Event Tracker Schweiz — Konzerte, Festivals und Shows aus dem Underground.{% endblock %}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="preload" as="font" type="font/otf" href="{{ url_for('static', filename='fonts/rich_eatin.otf') }}" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="bg-paper text-ink font-mono min-h-screen flex flex-col {% block body_class %}{% endblock %}">
+
+  {% include '_partials/svg_defs.html' %}
+
+  {# Grain overlay: a fixed full-viewport SVG noise rectangle, blended via multiply.
+     Pure CSS/SVG — no images, no third-party requests. #}
+  <div class="grain-overlay" aria-hidden="true">
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <rect width="100%" height="100%" filter="url(#xerox-grain)"/>
+    </svg>
+  </div>
+
+  {% include '_partials/header_public.html' %}
+
+  {% with variant = 'public' %}{% include '_partials/flash.html' %}{% endwith %}
+
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include '_partials/footer_public.html' %}
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

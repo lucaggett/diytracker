@@ -1,0 +1,28 @@
+{# Public footer. Three columns on md+, stacked on mobile. Legal links use
+   the locale-prefixed routes registered in app.py. #}
+{% set current_locale = (g.get('locale', 'de') if g else 'de') %}
+<footer class="mt-16 border-t border-ink bg-paper">
+  <div class="torn-divider w-full text-ink rotate-180" aria-hidden="true"></div>
+  <div class="max-w-3xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
+    <div>
+      <p class="uppercase tracking-widest text-smudge mb-2">diytracker.ch</p>
+      <p class="text-ink leading-relaxed">
+        Underground. Nicht-kommerziell. Von Hand gepflegt.
+      </p>
+    </div>
+    <div>
+      <p class="uppercase tracking-widest text-smudge mb-2">Rechtliches</p>
+      <ul class="space-y-1">
+        <li><a class="hover:text-bleed underline-offset-4 hover:underline" href="{{ url_for('impressum', lang=current_locale) }}">Impressum</a></li>
+        <li><a class="hover:text-bleed underline-offset-4 hover:underline" href="{{ url_for('agb', lang=current_locale) }}">AGB</a></li>
+        <li><a class="hover:text-bleed underline-offset-4 hover:underline" href="{{ url_for('datenschutz', lang=current_locale) }}">Datenschutz</a></li>
+      </ul>
+    </div>
+    <div class="md:text-right">
+      <p class="uppercase tracking-widest text-smudge mb-2">Sprache</p>
+      <div class="md:justify-end md:flex">
+        {% include '_partials/lang_switcher.html' %}
+      </div>
+    </div>
+  </div>
+</footer>

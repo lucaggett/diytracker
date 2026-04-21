@@ -1,0 +1,30 @@
+{# Hidden SVG definitions reused across the public site. Rendered once
+   per page in base_public.html. The xerox filter powers the grain overlay;
+   the symbols are referenced via <use> wherever staples/tape/stamps appear. #}
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="xerox-grain" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" seed="7"/>
+      <feColorMatrix values="0 0 0 0 0
+                              0 0 0 0 0
+                              0 0 0 0 0
+                              0 0 0 0.6 0"/>
+    </filter>
+
+    <symbol id="sym-staple" viewBox="0 0 16 16">
+      <path d="M2 4 L14 4 M2 12 L14 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/>
+    </symbol>
+
+    <symbol id="sym-tape" viewBox="0 0 80 24">
+      <rect x="0" y="0" width="80" height="24" fill="currentColor" opacity="0.55"/>
+      <line x1="0" y1="0" x2="80" y2="0" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 1.5" opacity="0.4"/>
+      <line x1="0" y1="24" x2="80" y2="24" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 1.5" opacity="0.4"/>
+    </symbol>
+
+    <symbol id="sym-today-stamp" viewBox="0 0 100 40">
+      <rect x="2" y="2" width="96" height="36" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="6" y="6" width="88" height="28" fill="none" stroke="currentColor" stroke-width="1"/>
+      <text x="50" y="27" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700" fill="currentColor" letter-spacing="2">HEUTE</text>
+    </symbol>
+  </defs>
+</svg>

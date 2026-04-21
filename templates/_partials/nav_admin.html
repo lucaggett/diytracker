@@ -1,0 +1,11 @@
+{# Admin top bar — utilitarian, mono-only. No grain, no flourishes. #}
+<nav class="bg-ink text-paper font-mono text-xs uppercase tracking-wider border-b border-bleed">
+  <div class="max-w-6xl mx-auto px-4 py-2 flex flex-wrap gap-4 items-center">
+    <a href="{{ url_for('calendar_view') }}" class="hover:text-bleed">← Kalender</a>
+    <span class="text-smudge">|</span>
+    <a href="{{ url_for('admin') }}" class="hover:text-bleed">Admin</a>
+    <a href="{{ url_for('event_queue') }}" class="hover:text-bleed">Queue</a>
+    <a href="{{ url_for('submit_event_link') }}" class="hover:text-bleed">Submit</a>
+    <span class="ml-auto"><a href="{{ url_for('logout') }}" class="hover:text-bleed">Logout</a></span>
+  </div>
+</nav>

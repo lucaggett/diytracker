@@ -1,0 +1,14 @@
+{# Language switcher. Reads g.locale (set by Flask-Babel locale selector);
+   defaults to 'de' before Babel is wired up. Each link points at /set-language/<lang>
+   which stores the choice in the session and redirects back. #}
+{% set current_locale = (g.get('locale', 'de') if g else 'de') %}
+<div class="font-mono text-xs uppercase tracking-widest flex gap-2">
+  {% for code in ['de', 'fr', 'en'] %}
+    {% if code == current_locale %}
+      <span class="text-bleed font-bold underline underline-offset-4">{{ code }}</span>
+    {% else %}
+      <a href="{{ url_for('set_language', lang=code) }}?next={{ request.path }}"
+         class="text-smudge hover:text-ink hover:underline underline-offset-4">{{ code }}</a>
+    {% endif %}
+  {% endfor %}
+</div>

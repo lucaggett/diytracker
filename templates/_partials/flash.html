@@ -1,0 +1,19 @@
+{# Shared flash-message renderer. Pass variant='public' for the xerox
+   treatment, anything else for the utilitarian admin look. #}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="max-w-3xl mx-auto px-4 mt-4 space-y-2">
+      {% for message in messages %}
+        {% if variant == 'public' %}
+          <div class="flyer-card border-bleed bg-paper px-4 py-3 font-mono text-sm text-ink">
+            <span class="text-bleed font-bold uppercase tracking-widest mr-2">!</span>{{ message }}
+          </div>
+        {% else %}
+          <div class="border border-bleed bg-paper px-3 py-2 font-mono text-sm text-ink">
+            <span class="text-bleed mr-2">!</span>{{ message }}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
