@@ -58,7 +58,7 @@
                        data-genre="{{ event.genre|e }}"
                        data-acts="{{ event.acts|e }}"
                        data-flyer="{{ event.flyer|e }}"
-                       data-tags="canton:{{ event.venue.canton|e }}{% if event.genre %},genre:{{ ';'.join(event.genre.split(', '))|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                       data-tags="canton:{{ event.venue.canton|e }}{% set _parents = parent_genres(event.genre) %}{% if _parents %},genre:{{ ';'.join(_parents)|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                        onclick="toggleEventDetails(this)">
 
                     <div class="flex justify-between items-start gap-3">

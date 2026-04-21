@@ -15,7 +15,7 @@ from werkzeug.utils import secure_filename
 
 from forms import EventForm, EventEditForm, LoginForm, DeleteEventForm, SetPasswordForm, CollaboratorRequestForm
 from models import db, Event, Venue, Submitter, ScrapedEvent
-from utils import resolve_canton
+from utils import resolve_canton, parent_genres, clean_genre_tokens
 
 # Flask-Babel is optional at import time so the app keeps booting even before
 # the dependency is installed.  With the real package available, {{ _('…') }}
@@ -138,9 +138,10 @@ def validate_image_content(file_storage):
 
 
 def _clean_genre(raw: str) -> str:
-    skip = {'concert', 'konzert', 'live'}
-    parts = [p.strip() for p in raw.replace('·', ',').split(',')]
-    return ', '.join(p for p in parts if p and p.lower() not in skip)
+    return ', '.join(clean_genre_tokens(raw))
+
+
+app.jinja_env.globals['parent_genres'] = parent_genres
 
 
 # ---------------------------------------------------------------------------
@@ -738,28 +739,25 @@ def generate_weekly_calendar_image(monday_date):
     for e in events:
         by_day[e.date.weekday()].append(e)
 
-    # All genre colours (for dot lookup)
+    # Parent-genre colours (one swatch per bucket, not per sub-genre)
     genre_color = {}
     for e in events:
-        for g in (e.genre or '').split(','):
-            g = g.strip()
-            if g and g not in genre_color:
-                genre_color[g] = _GENRE_PALETTE[len(genre_color) % len(_GENRE_PALETTE)]
+        for p in parent_genres(e.genre):
+            if p not in genre_color:
+                genre_color[p] = _GENRE_PALETTE[len(genre_color) % len(_GENRE_PALETTE)]
 
     def event_primary_color(evt):
-        for g in (evt.genre or '').split(','):
-            g = g.strip()
-            if g in genre_color:
-                return genre_color[g]
+        for p in parent_genres(evt.genre):
+            if p in genre_color:
+                return genre_color[p]
         return (100, 100, 110)
 
-    # Legend only shows genres that are actually the primary colour of an event
+    # Legend only shows parents that are actually the primary colour of an event
     legend_genres = {}
     for e in events:
-        for g in (e.genre or '').split(','):
-            g = g.strip()
-            if g in genre_color and g not in legend_genres:
-                legend_genres[g] = genre_color[g]
+        for p in parent_genres(e.genre):
+            if p in genre_color and p not in legend_genres:
+                legend_genres[p] = genre_color[p]
                 break
 
     # ── design tokens ────────────────────────────────────────────────────────

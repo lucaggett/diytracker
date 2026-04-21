@@ -296,3 +296,180 @@ def resolve_canton(region: str, city: str) -> str:
     if candidate and candidate.upper() in _VALID_CODES:
         return candidate
     return infer_canton_from_city(city or '') or candidate
+
+
+# ---------------------------------------------------------------------------
+# Genre taxonomy
+# ---------------------------------------------------------------------------
+
+# Event-format descriptors that appear in petzi's style field but are not
+# musical genres. Stripped before mapping to a parent genre.
+_GENRE_NOISE = {
+    'concert', 'konzert', 'live',
+    'club', 'festival', 'party', 'workshop', 'performance',
+    'theatre', 'theater', 'movie', 'outdoor', 'free', 'covers',
+    'unbekannt', 'unknown',
+}
+
+# Parent genres in the order they should appear in UI listings.
+PARENT_GENRES_ORDER = [
+    'Metal',
+    'Hardcore',
+    'Punk',
+    'Rock',
+    'Goth/Industrial',
+    'Electronic',
+    'Hip-Hop',
+    'Folk',
+    'Jazz/Blues',
+    'Reggae/Ska',
+    'Pop',
+    'Other',
+]
+
+# Sub-genre → parent genre. Keys are lowercased.
+_GENRE_PARENT_MAP = {
+    # Metal
+    'metal': 'Metal',
+    'heavy metal': 'Metal',
+    'black metal': 'Metal',
+    'melodic black metal': 'Metal',
+    'death metal': 'Metal',
+    'melodic death metal': 'Metal',
+    'brutal death metal': 'Metal',
+    'doom metal': 'Metal',
+    'doom': 'Metal',
+    'thrash metal': 'Metal',
+    'speed metal': 'Metal',
+    'power metal': 'Metal',
+    'folk metal': 'Metal',
+    'viking metal': 'Metal',
+    'pagan metal': 'Metal',
+    'gothic metal': 'Metal',
+    'melodic metal': 'Metal',
+    'progressive metal': 'Metal',
+    'alternative metal': 'Metal',
+    'nu metal': 'Metal',
+    'extreme metal': 'Metal',
+    'dark metal': 'Metal',
+    'post metal': 'Metal',
+    'post-metal': 'Metal',
+    'sludge': 'Metal',
+    'drone': 'Metal',
+    'djent': 'Metal',
+
+    # Hardcore
+    'hardcore': 'Hardcore',
+    'metalcore': 'Hardcore',
+    'deathcore': 'Hardcore',
+    'grindcore': 'Hardcore',
+    'post hardcore': 'Hardcore',
+    'post-hardcore': 'Hardcore',
+    'beatdown': 'Hardcore',
+    'crossover': 'Hardcore',
+    'emo': 'Hardcore',
+
+    # Punk
+    'punk': 'Punk',
+    'punk rock': 'Punk',
+    'crustpunk': 'Punk',
+    'crust punk': 'Punk',
+    'crust': 'Punk',
+    'post-punk': 'Punk',
+    'post punk': 'Punk',
+
+    # Rock
+    'rock': 'Rock',
+    'hard rock': 'Rock',
+    "rock'n'roll": 'Rock',
+    'rock n roll': 'Rock',
+    'rock and roll': 'Rock',
+    'alternative': 'Rock',
+    'indie': 'Rock',
+    'grunge': 'Rock',
+    'stoner rock': 'Rock',
+    'stoner': 'Rock',
+    'garage': 'Rock',
+    'psychedelic': 'Rock',
+    'experimental': 'Rock',
+
+    # Goth / Industrial
+    'goth': 'Goth/Industrial',
+    'gothic': 'Goth/Industrial',
+    'industrial': 'Goth/Industrial',
+    'ebm': 'Goth/Industrial',
+    'darkwave': 'Goth/Industrial',
+    'new wave': 'Goth/Industrial',
+    'ndw': 'Goth/Industrial',
+    'wave': 'Goth/Industrial',
+    'neofolk': 'Goth/Industrial',
+    'synthpop': 'Goth/Industrial',
+
+    # Electronic
+    'electro': 'Electronic',
+    'electronic': 'Electronic',
+    'techno': 'Electronic',
+    'house': 'Electronic',
+    'trance': 'Electronic',
+    'drum & bass': 'Electronic',
+    'drum and bass': 'Electronic',
+    'dnb': 'Electronic',
+    'dubstep': 'Electronic',
+    'synth': 'Electronic',
+    'ambient': 'Electronic',
+    'noise': 'Electronic',
+    'hyperpop': 'Electronic',
+
+    # Hip-Hop
+    'hip-hop': 'Hip-Hop',
+    'hip hop': 'Hip-Hop',
+    'hiphop': 'Hip-Hop',
+    'rap': 'Hip-Hop',
+    'urban': 'Hip-Hop',
+
+    # Folk
+    'folk': 'Folk',
+    'songwriting': 'Folk',
+    'songwriter': 'Folk',
+
+    # Jazz / Blues
+    'jazz': 'Jazz/Blues',
+    'blues': 'Jazz/Blues',
+    'soul': 'Jazz/Blues',
+
+    # Reggae / Ska
+    'reggae': 'Reggae/Ska',
+    'dub': 'Reggae/Ska',
+    'dancehall': 'Reggae/Ska',
+    'ska': 'Reggae/Ska',
+
+    # Pop
+    'pop': 'Pop',
+}
+
+
+def _split_genre_tokens(raw):
+    if not raw:
+        return []
+    return [p.strip() for p in raw.replace('·', ',').split(',') if p.strip()]
+
+
+def clean_genre_tokens(raw):
+    """Return the sub-genre tokens from *raw* with noise descriptors removed."""
+    return [t for t in _split_genre_tokens(raw) if t.lower() not in _GENRE_NOISE]
+
+
+def parent_genres(raw):
+    """Map a comma-separated genre string to a de-duplicated list of parents.
+
+    Noise descriptors (concert, club, festival, …) are dropped. Unknown
+    tokens collapse to ``'Other'``. The result is ordered by
+    :data:`PARENT_GENRES_ORDER`.
+    """
+    seen = set()
+    for token in _split_genre_tokens(raw):
+        low = token.lower()
+        if low in _GENRE_NOISE:
+            continue
+        seen.add(_GENRE_PARENT_MAP.get(low, 'Other'))
+    return [p for p in PARENT_GENRES_ORDER if p in seen]
