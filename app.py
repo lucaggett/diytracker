@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, abort, session, send_file, g
 from werkzeug.utils import secure_filename
 
-from forms import EventForm, EventEditForm, LoginForm, DeleteEventForm, SetPasswordForm
+from forms import EventForm, EventEditForm, LoginForm, DeleteEventForm, SetPasswordForm, CollaboratorRequestForm
 from models import db, Event, Venue, Submitter, ScrapedEvent
 from utils import resolve_canton
 
@@ -346,9 +346,58 @@ def get_genres():
     return jsonify({'genres': combined})
 
 
-@app.route('/about', methods=['GET'])
+CONTACT_RECIPIENT = 'luc@aggett.com'
+
+
+def _send_contact_email(name, sender_email, message):
+    """Send a collaborator-request email. Raises on misconfig or SMTP failure."""
+    import smtplib
+    import ssl
+    from email.message import EmailMessage
+
+    server_host = os.environ['EMAIL_SERVER']
+    username = os.environ['EMAIL_USERNAME']
+    password = os.environ['EMAIL_PASSWORD']
+
+    msg = EmailMessage()
+    msg['Subject'] = f'[diytracker] Mitwirkenden-Anfrage von {name}'
+    msg['From'] = 'info@diytracker.ch'
+    msg['To'] = CONTACT_RECIPIENT
+    msg['Reply-To'] = sender_email
+    msg.set_content(
+        f'Name:    {name}\n'
+        f'E-Mail:  {sender_email}\n'
+        f'\n'
+        f'Nachricht:\n'
+        f'{message}\n'
+    )
+
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(server_host, 465, context=context) as server:
+        server.login(username, password)
+        server.send_message(msg)
+
+
+@app.route('/about', methods=['GET', 'POST'])
 def about():
-    return render_template('about.html')
+    form = CollaboratorRequestForm()
+    if form.validate_on_submit():
+        # Honeypot: if the hidden 'website' field is filled, silently accept
+        # without sending — bots get a 200 and humans never notice.
+        if not (form.website.data or '').strip():
+            try:
+                _send_contact_email(
+                    form.name.data.strip(),
+                    form.email.data.strip(),
+                    form.message.data.strip(),
+                )
+            except Exception:
+                app.logger.exception('Failed to send collaborator email')
+                flash('Nachricht konnte nicht gesendet werden — bitte schreib uns direkt an kontakt@diytracker.ch.')
+                return redirect(url_for('about'))
+        flash('Danke! Wir melden uns sobald wie möglich.')
+        return redirect(url_for('about'))
+    return render_template('about.html', form=form)
 
 
 # ---------------------------------------------------------------------------

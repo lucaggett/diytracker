@@ -124,3 +124,11 @@ class SetPasswordForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
 
+
+class CollaboratorRequestForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired(), Length(max=100)])
+    email = StringField('E-Mail', validators=[DataRequired(), Email(), Length(max=200)])
+    message = TextAreaField('Nachricht', validators=[DataRequired(), Length(min=10, max=2000)])
+    # Honeypot — hidden via CSS, real users never fill it.
+    website = StringField('Website', validators=[Optional(), Length(max=0)])
+

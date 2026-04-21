@@ -1,68 +1,72 @@
 {% extends 'base_public.html' %}
 
 {% block title %}About · diytracker.ch{% endblock %}
-{% block meta_description %}Was ist diytracker.ch — wer steckt dahinter, wie funktioniert die Plattform.{% endblock %}
+{% block meta_description %}Was ist diytracker.ch — und wie du mitmachen kannst.{% endblock %}
 
 {% block content %}
-<article class="max-w-3xl mx-auto px-4 py-10">
+<article class="max-w-2xl mx-auto px-4 py-10">
 
   <header class="mb-10">
-    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-2">Was ist das hier eigentlich</p>
+    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-2">Was ist das hier</p>
     <h1 class="font-richEatin text-5xl md:text-7xl mis-reg leading-none">ABOUT</h1>
   </header>
 
-  {# Two-column on md+, stacked on mobile. #}
-  <div class="grid md:grid-cols-2 gap-10">
-    <section class="space-y-4 leading-relaxed">
-      <h2 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Die Idee</h2>
-      <p>
-        diytracker.ch ist ein nicht-kommerzieller Veranstaltungskalender für DIY-, Rock-, Metal-
-        und Punk-Konzerte in der Schweiz. Aggregiert aus öffentlich zugänglichen Quellen, von
-        Hand kuratiert, ohne Tracker, ohne Newsletter, ohne Push-Notifications.
-      </p>
-      <p>
-        Kein Aggregator-Algorithmus. Kein «empfohlen für dich». Nur die Liste, chronologisch,
-        filterbar nach Kanton und Genre.
-      </p>
-    </section>
-
-    <section class="space-y-4 leading-relaxed">
-      <h2 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Wie es funktioniert</h2>
-      <ul class="list-disc pl-5 space-y-2">
-        <li>Scraper holen regelmässig neue Anlässe von <em>metalgigs.ch</em> und <em>petzi.ch</em>.</li>
-        <li>Eingeladene Mitwirkende prüfen die Vorschläge in der Queue, korrigieren Daten und
-            geben sie für den Kalender frei.</li>
-        <li>Manuelle Einreichungen sind ebenfalls möglich — auch mit eigenen Flyern.</li>
-      </ul>
-    </section>
-
-    <section class="space-y-4 leading-relaxed">
-      <h2 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Mitmachen</h2>
-      <p>
-        Veranstaltest du selbst etwas, das hier auftauchen sollte? Schick eine kurze Mail mit
-        Link zur Veranstaltungsinfo an
-        <a class="text-bleed underline" href="mailto:kontakt@diytracker.ch">kontakt@diytracker.ch</a>.
-        Möchtest du selbst Anlässe einreichen können, melde dich für einen Mitwirkenden-Account.
-      </p>
-    </section>
-
-    <section class="space-y-4 leading-relaxed">
-      <h2 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Hinter den Kulissen</h2>
-      <p>
-        Gebaut mit Flask, SQLite, Tailwind und einer Menge selbstgehosteter Schriftarten. Keine
-        Drittanbieter-Tracker, keine externen Schriften, keine fremden CDN-Aufrufe — was den
-        <a class="text-bleed underline" href="{{ url_for('datenschutz', lang=(g.get('locale','de') if g else 'de')) }}">Datenschutz</a>
-        einfach hält.
-      </p>
-    </section>
-  </div>
-
-  <div class="torn-divider w-full text-ink my-12 rotate-180" aria-hidden="true"></div>
-
-  <p class="font-mono text-xs text-smudge text-center">
-    Fragen, Korrekturen, Beschwerden, Lob:
-    <a class="text-bleed underline" href="mailto:kontakt@diytracker.ch">kontakt@diytracker.ch</a>
+  <p class="leading-relaxed mb-10">
+    diytracker.ch ist ein nicht-kommerzieller Veranstaltungskalender für DIY-, Rock-, Metal-
+    und Punk-Konzerte in der Schweiz. Von Hand kuratiert, ohne Tracker, ohne Algorithmus.
   </p>
+
+  <div class="torn-divider w-full text-ink mb-10" aria-hidden="true"></div>
+
+  <section>
+    <h2 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4">Mitmachen</h2>
+    <p class="leading-relaxed mb-6">
+      Die Seite wird von Hand gepflegt. Wir freuen uns über neue Mitwirkende —
+      schreib uns kurz, wer du bist und wie du dir deine Mithilfe vorstellst.
+    </p>
+
+    <form method="POST" class="flyer-card p-6 relative space-y-4">
+      <svg class="absolute -top-3 left-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+      <svg class="absolute -top-3 right-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+
+      {{ form.hidden_tag() }}
+
+      {# Honeypot — hidden from humans, fillable by bots. #}
+      <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+        {{ form.website.label }}
+        {{ form.website(tabindex="-1", autocomplete="off") }}
+      </div>
+
+      <div>
+        {{ form.name.label(class="block font-mono text-xs uppercase tracking-widest text-smudge mb-1") }}
+        {{ form.name(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", placeholder="Vor- und Nachname") }}
+        {% if form.name.errors %}
+          <p class="text-bleed text-xs font-mono mt-1">{{ form.name.errors[0] }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        {{ form.email.label(class="block font-mono text-xs uppercase tracking-widest text-smudge mb-1") }}
+        {{ form.email(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", placeholder="dein@mail.ch", type="email") }}
+        {% if form.email.errors %}
+          <p class="text-bleed text-xs font-mono mt-1">{{ form.email.errors[0] }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        {{ form.message.label(class="block font-mono text-xs uppercase tracking-widest text-smudge mb-1") }}
+        {{ form.message(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", rows="5", placeholder="Was machsch, was wötsch biträge?") }}
+        {% if form.message.errors %}
+          <p class="text-bleed text-xs font-mono mt-1">{{ form.message.errors[0] }}</p>
+        {% endif %}
+      </div>
+
+      <button type="submit"
+              class="w-full bg-ink text-paper font-mono uppercase tracking-widest text-sm py-3 hover:bg-bleed transition-colors">
+        Senden →
+      </button>
+    </form>
+  </section>
 
 </article>
 {% endblock %}
