@@ -1455,7 +1455,7 @@ video {
 @font-face {
   font-family: 'RichEatinAllCaps';
 
-  src: url('../fonts/rich_eatin.otf') format('opentype');
+  src: url('../fonts/MISPROJECT.TTF') format('truetype');
 
   font-display: swap;
 }
