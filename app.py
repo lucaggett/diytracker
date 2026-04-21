@@ -350,6 +350,21 @@ def get_genres():
 CONTACT_RECIPIENT = 'luc@aggett.com'
 
 
+def _build_contact_logger():
+    import logging
+    logger = logging.getLogger('diytracker.contact')
+    if not logger.handlers:
+        handler = logging.FileHandler(os.path.join('logs', 'contact_form.log'))
+        handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+    return logger
+
+
+contact_logger = _build_contact_logger()
+
+
 def _send_contact_email(name, sender_email, message):
     """Send a collaborator-request email. Raises on misconfig or SMTP failure."""
     import smtplib
@@ -377,25 +392,38 @@ def _send_contact_email(name, sender_email, message):
     with smtplib.SMTP_SSL(server_host, 465, context=context) as server:
         server.login(username, password)
         server.send_message(msg)
+    print("Email sent!")
 
 
 @app.route('/about', methods=['GET', 'POST'])
 def about():
     form = CollaboratorRequestForm()
     if form.validate_on_submit():
-        # Honeypot: if the hidden 'website' field is filled, silently accept
-        # without sending — bots get a 200 and humans never notice.
-        if not (form.website.data or '').strip():
+        name = form.name.data.strip()
+        sender_email = form.email.data.strip()
+        message = form.message.data.strip()
+        honeypot_filled = bool((form.website.data or '').strip())
+        single_line_message = message.replace('\n', ' \\n ')
+        if honeypot_filled:
+            contact_logger.info(
+                'honeypot name=%r email=%r message=%r',
+                name, sender_email, single_line_message,
+            )
+        else:
             try:
-                _send_contact_email(
-                    form.name.data.strip(),
-                    form.email.data.strip(),
-                    form.message.data.strip(),
+                _send_contact_email(name, sender_email, message)
+            except Exception as exc:
+                contact_logger.exception(
+                    'send_failed name=%r email=%r message=%r error=%s',
+                    name, sender_email, single_line_message, exc,
                 )
-            except Exception:
                 app.logger.exception('Failed to send collaborator email')
                 flash('Nachricht konnte nicht gesendet werden — bitte schreib uns direkt an kontakt@diytracker.ch.')
                 return redirect(url_for('about'))
+            contact_logger.info(
+                'sent name=%r email=%r message=%r',
+                name, sender_email, single_line_message,
+            )
         flash('Danke! Wir melden uns sobald wie möglich.')
         return redirect(url_for('about'))
     return render_template('about.html', form=form)
