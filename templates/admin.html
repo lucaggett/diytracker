@@ -11,52 +11,56 @@
   <p class="text-xs text-smudge">{{ events|length }} Event{% if events|length != 1 %}s{% endif %} live</p>
 </header>
 
-{# Action bar — scrape, export, weekly image. #}
-<section class="border-2 border-ink bg-paper p-4 mb-6 flex flex-wrap items-end gap-4">
-  <form action="{{ url_for('trigger_scrape') }}" method="POST" id="scrape-form" class="flex items-center gap-2">
-    {{ delete_form.hidden_tag() }}
+{# Action bar — auto-scrape status, export, weekly image. #}
+<section class="border-2 border-ink bg-paper p-4 mb-6 flex flex-wrap items-center gap-4">
+
+  {# Auto-scrape status pill — runs every hour in the background. #}
+  <div class="flex items-center gap-3 border-2 border-ink px-3 py-2 text-xs">
     {% if scrape_running %}
-      <button type="button" disabled id="scrape-btn"
-              class="bg-smudge text-paper text-xs uppercase tracking-widest px-4 py-2 cursor-not-allowed">
-        Scraping…
-      </button>
-      <span id="scrape-progress" class="text-xs text-smudge"></span>
-    {% elif scrape_cooldown %}
-      <button type="button" disabled id="scrape-btn"
-              class="bg-smudge text-paper text-xs uppercase tracking-widest px-4 py-2 cursor-not-allowed"
-              title="Last scrape: {{ last_scrape.strftime('%Y-%m-%d %H:%M') }}">
-        Scrape (cooldown)
-      </button>
+      <span id="scrape-indicator" class="inline-block w-2 h-2 rounded-full bg-bleed animate-pulse"></span>
+      <span id="scrape-progress" class="text-ink">Scraping läuft…</span>
     {% else %}
-      <button type="submit" id="scrape-btn"
-              class="bg-ink text-paper text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed transition-colors"
-              onclick="return confirm('Start scraping metalgigs.ch und petzi.ch?')">
-        Scrape Events
-      </button>
+      <span class="inline-block w-2 h-2 rounded-full bg-ink"></span>
+      <span id="scrape-progress" class="sr-only"></span>
     {% endif %}
+    <span class="text-smudge">Auto-scrape einisch pro stund.</span>
     {% if last_scrape %}
-      <span class="text-xs text-smudge" id="last-scrape">Last: {{ last_scrape.strftime('%Y-%m-%d %H:%M') }}</span>
+      <span class="text-smudge/60">·</span>
+      <span class="text-smudge">Last:
+        <span class="font-bold text-ink" id="last-scrape">{{ time_since_last }}</span>
+        <span class="text-smudge/70">({{ last_scrape.strftime('%Y-%m-%d %H:%M') }})</span>
+      </span>
+      <span class="text-smudge/60">·</span>
+      <span class="text-smudge">Next:
+        <span class="font-bold text-ink">{{ time_until_next }}</span>
+        {% if next_scrape %}<span class="text-smudge/70">({{ next_scrape.strftime('%Y-%m-%d %H:%M') }})</span>{% endif %}
+      </span>
+    {% else %}
+      <span class="text-smudge/60">·</span>
+      <span class="text-smudge">No scrape recorded yet.</span>
     {% endif %}
-  </form>
+    <span class="text-smudge/60">·</span>
+    <span class="text-smudge italic">Schribed mer falls’s jetzt sofort en scrape bruucht.</span>
+  </div>
 
-  <div class="h-8 w-px bg-ink/30"></div>
+  <div class="ml-auto flex items-end gap-3">
+    <a href="{{ url_for('export_excel') }}"
+       class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
+      Export Excel
+    </a>
 
-  <a href="{{ url_for('export_excel') }}"
-     class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
-    Export Excel
-  </a>
-
-  <form action="{{ url_for('weekly_calendar_image') }}" method="GET" class="flex items-end gap-2">
-    <div>
-      <label class="block text-xs uppercase tracking-widest text-smudge mb-1">Week of</label>
-      <input type="date" name="week" value="{{ current_monday }}"
-             class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
-    </div>
-    <button type="submit"
-            class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed hover:text-paper hover:border-bleed transition-colors">
-      Weekly Image
-    </button>
-  </form>
+    <form action="{{ url_for('weekly_calendar_image') }}" method="GET" class="flex items-end gap-2">
+      <div>
+        <label class="block text-xs uppercase tracking-widest text-smudge mb-1">Week of</label>
+        <input type="date" name="week" value="{{ current_monday }}"
+               class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
+      </div>
+      <button type="submit"
+              class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed hover:text-paper hover:border-bleed transition-colors">
+        Weekly Image
+      </button>
+    </form>
+  </div>
 </section>
 
 {# Events table — data-dense, 1px ink borders. #}
@@ -99,34 +103,29 @@
 {% if scrape_running %}
 <script>
 (function() {
-    const btn = document.getElementById('scrape-btn');
     const prog = document.getElementById('scrape-progress');
     function fmtTime(secs) {
         if (secs == null) return '';
         if (secs < 60) return secs + 's';
-        const m = Math.floor(secs / 60);
-        const s = secs % 60;
-        return m + 'm ' + s + 's';
+        const m = Math.floor(secs / 60), s = secs % 60;
+        return m + 'm' + (s ? ' ' + s + 's' : '');
     }
     function poll() {
         fetch('{{ url_for("scrape_status") }}')
             .then(r => r.json())
             .then(data => {
                 if (!data.running) {
-                    btn.textContent = 'Done!';
-                    btn.className = 'bg-ink text-paper text-xs uppercase tracking-widest px-4 py-2';
                     prog.textContent = 'Scrape complete — reloading…';
                     setTimeout(() => location.reload(), 1500);
                     return;
                 }
-                let text = data.phase;
+                let text = data.phase || 'Scraping…';
                 if (data.total > 0) {
-                    text += ': ' + data.processed + '/' + data.total;
                     const pct = Math.round(data.processed / data.total * 100);
-                    btn.textContent = 'Scraping… ' + pct + '%';
+                    text += ' ' + pct + '% (' + data.processed + '/' + data.total + ')';
                 }
                 if (data.eta_seconds != null) {
-                    text += ' — ~' + fmtTime(data.eta_seconds) + ' remaining';
+                    text += ' — ~' + fmtTime(data.eta_seconds) + ' left';
                 }
                 prog.textContent = text;
                 setTimeout(poll, 3000);
