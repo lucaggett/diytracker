@@ -4,9 +4,6 @@
   <div class="max-w-3xl mx-auto px-4 pt-6 pb-4">
     <a href="{{ url_for('calendar_view') }}" class="block">
       <h1 class="font-richEatin text-5xl md:text-6xl text-ink mis-reg leading-none">DIYTRACKER</h1>
-      <p class="font-mono text-xs md:text-sm text-smudge mt-1 tracking-widest uppercase">
-        {{ tagline | default('Schweizer DIY Underground · Konzerte · Festivals · Shows') }}
-      </p>
     </a>
     <nav class="mt-4 flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs uppercase tracking-wider">
       <a href="{{ url_for('calendar_view') }}" class="hover:text-bleed underline-offset-4 hover:underline">Kalender</a>
