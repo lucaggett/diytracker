@@ -9,12 +9,27 @@ from datetime import datetime, time as time_type, timedelta
 from dateutil.relativedelta import relativedelta
 
 from dotenv import load_dotenv
-from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, abort, session, send_file
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, abort, session, send_file, g
 from werkzeug.utils import secure_filename
 
 from forms import EventForm, EventEditForm, LoginForm, DeleteEventForm, SetPasswordForm
 from models import db, Event, Venue, Submitter, ScrapedEvent
 from utils import resolve_canton
+
+# Flask-Babel is optional at import time so the app keeps booting even before
+# the dependency is installed.  With the real package available, {{ _('…') }}
+# is translated; without it, strings pass through unchanged.
+try:
+    from flask_babel import Babel, gettext as _babel_gettext  # type: ignore
+    _HAS_BABEL = True
+except ImportError:  # pragma: no cover - defensive fallback
+    Babel = None  # type: ignore
+    _HAS_BABEL = False
+    def _babel_gettext(s, **kwargs):
+        return s % kwargs if kwargs else s
+
+SUPPORTED_LOCALES = ('de', 'fr', 'en')
+DEFAULT_LOCALE = 'de'
 
 load_dotenv()
 
@@ -34,6 +49,52 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 db.init_app(app)
+
+# ---------------------------------------------------------------------------
+# i18n (DE / FR / EN) — Flask-Babel with graceful degradation
+# ---------------------------------------------------------------------------
+app.config['BABEL_DEFAULT_LOCALE'] = DEFAULT_LOCALE
+app.config['BABEL_SUPPORTED_LOCALES'] = list(SUPPORTED_LOCALES)
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+
+
+def select_locale():
+    lang = session.get('lang')
+    if lang in SUPPORTED_LOCALES:
+        return lang
+    best = request.accept_languages.best_match(list(SUPPORTED_LOCALES))
+    return best or DEFAULT_LOCALE
+
+
+if _HAS_BABEL:
+    babel = Babel(app, locale_selector=select_locale)
+else:
+    app.jinja_env.globals['_'] = _babel_gettext
+    app.jinja_env.globals['gettext'] = _babel_gettext
+
+
+@app.before_request
+def _bind_locale_to_g():
+    try:
+        g.locale = select_locale()
+    except RuntimeError:
+        g.locale = DEFAULT_LOCALE
+
+
+@app.context_processor
+def _inject_locale():
+    return {'current_locale': getattr(g, 'locale', DEFAULT_LOCALE)}
+
+
+@app.route('/set-language/<lang>')
+def set_language(lang):
+    if lang not in SUPPORTED_LOCALES:
+        abort(404)
+    session['lang'] = lang
+    next_url = request.args.get('next', '')
+    if next_url.startswith('/') and not next_url.startswith('//'):
+        return redirect(next_url)
+    return redirect(url_for('calendar_view'))
 
 
 def login_required(f):
@@ -259,6 +320,46 @@ def get_genres():
 @app.route('/about', methods=['GET'])
 def about():
     return render_template('about.html')
+
+
+# ---------------------------------------------------------------------------
+# Legal pages — locale-prefixed so each language has a stable, shareable URL.
+# ---------------------------------------------------------------------------
+def _validate_lang(lang):
+    if lang not in SUPPORTED_LOCALES:
+        abort(404)
+    g.locale = lang
+
+
+@app.route('/<lang>/impressum')
+def impressum(lang):
+    _validate_lang(lang)
+    return render_template('impressum.html')
+
+
+@app.route('/<lang>/agb')
+def agb(lang):
+    _validate_lang(lang)
+    return render_template('agb.html')
+
+
+@app.route('/<lang>/datenschutz')
+def datenschutz(lang):
+    _validate_lang(lang)
+    return render_template('datenschutz.html')
+
+
+# ---------------------------------------------------------------------------
+# Error handlers
+# ---------------------------------------------------------------------------
+@app.errorhandler(404)
+def _handle_404(_err):
+    return render_template('errors/404.html'), 404
+
+
+@app.errorhandler(500)
+def _handle_500(_err):
+    return render_template('errors/500.html'), 500
 
 
 @app.route('/queue', methods=['GET', 'POST'])

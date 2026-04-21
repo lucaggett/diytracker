@@ -1,138 +1,152 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <!-- Meta tags and title -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>diytracker.ch</title>
-    <meta name="description" content="DIY Event Tracker in Switzerland - Find upcoming events, concerts, and gatherings.">
-    <meta name="keywords" content="DIY events, Switzerland, concerts, gatherings, event tracker">
-    <!-- Include Tailwind CSS -->
-    <link rel="stylesheet" href={{ url_for('static', filename='css/output.css') }}>
-    <link rel="icon" href={{ url_for('static', filename='favicon.ico') }}>
-</head>
-<body class="bg-gray-300">
+{% extends 'base_public.html' %}
 
-<!-- Calendar Content -->
+{% block title %}diytracker.ch · Schweizer DIY-Konzerte{% endblock %}
+{% block meta_description %}DIY Event Tracker Schweiz — Konzerte, Festivals und Shows aus dem Underground.{% endblock %}
 
-<!-- Event List -->
+{# Activates the crosshair cursor (only on hover-capable, fine-pointer devices). #}
+{% block body_class %}calendar-cursor{% endblock %}
+
+{% block content %}
 <div class="container mx-auto px-4 py-6 max-w-2xl">
-    {% set today = datetime.utcnow().date() %}
+  {% set today = datetime.utcnow().date() %}
 
-    <!-- List of Dates with Events -->
-    <div class="space-y-4">
-        {% for month in months_data %}
-            {% for day in range(1, month.last_day_of_month + 1) %}
-                {% set current_date = datetime(month.year, month.month, day).date() %}
-                {% if current_date >= today %}
-                    <!-- Date Card -->
-                    <div class="date-card bg-gray-400 border {% if current_date == today %}border-red-800{% else %}border-gray-600{% endif %} shadow shadow-gray-800 rounded-md p-4">
-                        <div class="flex justify-between items-center border-b border-gray-500 pb-2 mb-2">
-                            <span class="font-bold text-lg text-red-800">{{ current_date.strftime('%A, %B %d, %Y') }}</span>
-                        </div>
-                        <div class="text-sm event-container">
-                            {% if current_date in grouped_events %}
-                                <!-- Display events for this day -->
-                                {% for event in grouped_events[current_date] %}
-                                    <div class="event-item mt-2 p-2 rounded cursor-pointer bg-gray-300 border border-gray-600"
-                                         data-event-id="{{ event.id }}"
-                                         data-event-name="{{ event.name|e }}"
-                                         data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
-                                         data-event-doors="{{ event.doors.strftime('%H:%M') }}"
-                                         data-venue-name="{{ event.venue.name|e }}"
-                                         data-venue-address="{{ event.venue.address|e }}"
-                                         data-venue-city="{{ event.venue.city|e }}"
-                                         data-venue-canton="{{ event.venue.canton|e }}"
-                                         data-venue-plz="{{ event.venue.plz|e }}"
-                                         data-ticket-price="{{ event.ticket_price|e }}"
-                                         data-ticket-link="{{ event.ticket_link|e }}"
-                                         data-venue-coords="{{ event.venue.coords|e }}"
-                                         data-genre="{{ event.genre|e }}"
-                                         data-acts="{{ event.acts|e }}"
-                                         data-flyer="{{ event.flyer|e }}"
-                                         data-tags="canton:{{ event.venue.canton|e }}{% if event.genre %},genre:{{ ';'.join(event.genre.split(', '))|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
-                                         onclick="toggleEventDetails(this)">
-                                        <div class="flex justify-between items-center">
-                                            <div>
-                                                {% if event.name %}
-                                                    <p class="font-semibold">{{ event.name }}</p>
-                                                {% else %}
-                                                    <p class="font-semibold">{{ event.acts }}</p>
-                                                {% endif %}
-                                                <p class="text-gray-600 text-xs mt-0.5">{{ event.venue.name }}, {{ event.venue.city }}</p>
-                                            </div>
-                                            <svg class="event-chevron flex-shrink-0 transition-transform duration-200"
-                                                 style="width:16px;height:16px;min-width:16px;color:#374151;"
-                                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                            </svg>
-                                        </div>
-                                        <!-- Hidden event details div -->
-                                        <div class="event-details hidden mt-2 p-2 bg-gray-200 rounded border border-gray-500">
-                                            {% if event.flyer %}
-                                                <img src="{{ event.flyer }}" loading="lazy"
-                                                     alt="{{ event.name }}" class="w-full h-auto rounded">
-                                                <br>
-                                            {% endif %}
-                                            <p><b>Date: </b>{{ event.date.strftime('%Y-%m-%d') }}
-                                                at {{ event.doors.strftime('%H:%M') }}</p>
-                                            <p><b>Venue: </b>{{ event.venue.name }}</p>
-                                            <p><b>Address: </b>{{ event.venue.address }}</p>
-                                            <p>
-                                                <b>City: </b>{{ event.venue.plz }} {{ event.venue.city }}, {{ event.venue.canton }}
-                                            </p>
-                                            <p><b>Genre: </b>{{ event.genre }}</p>
-                                            <p><b>Acts: </b>{{ event.acts }}</p>
-                                            <p><b>Ticket Price: </b>{{ event.ticket_price }}</p>
-                                            {% if event.ticket_link %}
-                                                <p><b>Ticket Link: </b><a href="{{ event.ticket_link }}" target="_blank"
-                                                                          class="text-red-800">{{ event.ticket_link }}</a>
-                                                </p>
-                                            {% else %}
-                                                <p><b>Ticket Link: N/A</b></p>
-                                            {% endif %}
+  {# Loop unchanged — same nesting (.date-card > .event-container > .event-item)
+     so the filter / toggle JS at the bottom of this file keeps working. #}
+  <div class="space-y-6">
+    {% for month in months_data %}
+      {% for day in range(1, month.last_day_of_month + 1) %}
+        {% set current_date = datetime(month.year, month.month, day).date() %}
+        {% if current_date >= today %}
+          {% set is_today = (current_date == today) %}
 
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
+          <article class="date-card flyer-card scroll-jitter relative {% if is_today %}border-bleed{% endif %} p-4 pt-5">
+
+            {# Staple flourishes — unique-ish per card via loop.index modulo. #}
+            {% if loop.index0 % 2 == 0 %}
+              <svg class="absolute -top-2 left-5 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+              <svg class="absolute -top-2 right-5 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+            {% else %}
+              <svg class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+            {% endif %}
+
+            {# Date header — uppercase mono, bleed accent. Today gets the HEUTE stamp. #}
+            <header class="flex justify-between items-baseline border-b border-ink/40 pb-2 mb-3">
+              <div class="font-mono text-xs uppercase tracking-widest {% if is_today %}text-bleed{% else %}text-ink{% endif %}">
+                {{ current_date.strftime('%a · %d.%m.%Y') }}
+              </div>
+              {% if is_today %}
+                <svg class="today-stamp w-20 h-8 text-bleed" aria-hidden="true"><use href="#sym-today-stamp"/></svg>
+              {% endif %}
+            </header>
+
+            <div class="event-container space-y-2">
+              {% if current_date in grouped_events %}
+                {% for event in grouped_events[current_date] %}
+                  <div class="event-item bg-paper border border-ink p-3 cursor-pointer hover:bg-ink/5 transition-colors"
+                       data-event-id="{{ event.id }}"
+                       data-event-name="{{ event.name|e }}"
+                       data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
+                       data-event-doors="{{ event.doors.strftime('%H:%M') }}"
+                       data-venue-name="{{ event.venue.name|e }}"
+                       data-venue-address="{{ event.venue.address|e }}"
+                       data-venue-city="{{ event.venue.city|e }}"
+                       data-venue-canton="{{ event.venue.canton|e }}"
+                       data-venue-plz="{{ event.venue.plz|e }}"
+                       data-ticket-price="{{ event.ticket_price|e }}"
+                       data-ticket-link="{{ event.ticket_link|e }}"
+                       data-venue-coords="{{ event.venue.coords|e }}"
+                       data-genre="{{ event.genre|e }}"
+                       data-acts="{{ event.acts|e }}"
+                       data-flyer="{{ event.flyer|e }}"
+                       data-tags="canton:{{ event.venue.canton|e }}{% if event.genre %},genre:{{ ';'.join(event.genre.split(', '))|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                       onclick="toggleEventDetails(this)">
+
+                    <div class="flex justify-between items-start gap-3">
+                      <div class="min-w-0 flex-1">
+                        {% if event.name %}
+                          <p class="font-richEatin text-lg leading-tight text-ink truncate">{{ event.name }}</p>
+                        {% else %}
+                          <p class="font-richEatin text-lg leading-tight text-ink truncate">{{ event.acts }}</p>
+                        {% endif %}
+                        <p class="font-mono text-xs text-smudge mt-0.5 truncate">
+                          {{ event.venue.name }}, {{ event.venue.city }}
+                          {% if event.venue.canton %}<span class="text-ink/40">·</span> {{ event.venue.canton }}{% endif %}
+                        </p>
+                      </div>
+                      <svg class="event-chevron flex-shrink-0 transition-transform duration-200 mt-1"
+                           style="width:14px;height:14px;color:var(--ink);"
+                           xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                      </svg>
                     </div>
-                {% endif %}
-            {% endfor %}
-        {% endfor %}
-    </div>
+
+                    <div class="event-details hidden mt-3 pt-3 border-t border-ink/30 text-sm font-mono text-ink space-y-1">
+                      {% if event.flyer %}
+                        <img src="{{ event.flyer }}" loading="lazy"
+                             alt="{{ event.name }}"
+                             class="w-full h-auto border border-ink mb-3">
+                      {% endif %}
+                      <p><span class="text-smudge uppercase tracking-wider text-xs">Datum</span> {{ event.date.strftime('%Y-%m-%d') }} · {{ event.doors.strftime('%H:%M') }}</p>
+                      <p><span class="text-smudge uppercase tracking-wider text-xs">Venue</span> {{ event.venue.name }}</p>
+                      {% if event.venue.address %}<p><span class="text-smudge uppercase tracking-wider text-xs">Adresse</span> {{ event.venue.address }}</p>{% endif %}
+                      <p><span class="text-smudge uppercase tracking-wider text-xs">Ort</span> {{ event.venue.plz }} {{ event.venue.city }}, {{ event.venue.canton }}</p>
+                      {% if event.genre %}<p><span class="text-smudge uppercase tracking-wider text-xs">Genre</span> {{ event.genre }}</p>{% endif %}
+                      {% if event.acts %}<p><span class="text-smudge uppercase tracking-wider text-xs">Acts</span> {{ event.acts }}</p>{% endif %}
+                      {% if event.ticket_price %}<p><span class="text-smudge uppercase tracking-wider text-xs">Preis</span> {{ event.ticket_price }}</p>{% endif %}
+                      {% if event.ticket_link %}
+                        <p>
+                          <span class="text-smudge uppercase tracking-wider text-xs">Tickets</span>
+                          <a href="{{ event.ticket_link }}" target="_blank" rel="noopener"
+                             class="text-bleed underline break-all">{{ event.ticket_link }}</a>
+                        </p>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <p class="font-mono text-xs text-smudge italic">— keine Anlässe —</p>
+              {% endif %}
+            </div>
+          </article>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </div>
 </div>
 
-<!-- Floating Action Button -->
+{# Floating filter button — same id, restyled. #}
 <button id="filter-button"
-        class="fixed bottom-4 right-4 bg-red-800 text-white rounded-full p-4 shadow-lg focus:outline-none">
-    <!-- Filter Icon -->
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-         stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 2v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-    </svg>
+        aria-label="Filter öffnen"
+        class="fixed bottom-5 right-5 bg-ink text-paper border-2 border-ink p-3 shadow-[3px_3px_0_var(--bleed)] hover:bg-bleed hover:shadow-[3px_3px_0_var(--ink)] transition-colors z-40">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 2v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+  </svg>
 </button>
 
-<!-- Popup Modal for Filters -->
-<div id="filter-modal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
-    <div class="bg-gray-400 rounded-lg shadow-lg p-4 w-11/12 md:w-1/2 h-3/4 overflow-y-auto">
-        <h2 class="text-xl font-bold mb-4 font-richEatin text-red-800">Filter Events</h2>
-        <!-- Filter Categories -->
-        <div id="filter-categories">
-            <!-- Categories and options will be populated via JavaScript -->
-        </div>
-        <!-- Apply and Close Buttons -->
-        <div class="flex justify-end mt-4">
-            <button id="apply-filters" class="bg-red-800 text-white px-4 py-2 rounded mr-2">Apply Filters</button>
-            <button onclick="closeFilterModal()" class="bg-red-500 text-white px-4 py-2 rounded">Close</button>
-        </div>
+{# Filter modal — same ids, restyled as a taped-on index card. #}
+<div id="filter-modal" class="fixed inset-0 flex items-center justify-center bg-ink/60 hidden z-50 p-4">
+  <div class="bg-paper border-2 border-ink shadow-[6px_6px_0_var(--bleed)] p-5 w-full max-w-md max-h-[80vh] overflow-y-auto relative">
+    <svg class="absolute -top-3 left-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+    <svg class="absolute -top-3 right-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+
+    <h2 class="font-richEatin text-3xl mis-reg leading-none mb-4">FILTER</h2>
+    <div id="filter-categories" class="font-mono text-sm">
+      {# Populated via JavaScript below. #}
     </div>
+    <div class="flex justify-end gap-2 mt-5 pt-4 border-t border-ink">
+      <button onclick="closeFilterModal()" class="font-mono text-xs uppercase tracking-widest border-2 border-ink bg-paper text-ink px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
+        Schliessen
+      </button>
+      <button id="apply-filters" class="font-mono text-xs uppercase tracking-widest border-2 border-ink bg-ink text-paper px-4 py-2 hover:bg-bleed transition-colors">
+        Anwenden
+      </button>
+    </div>
+  </div>
 </div>
+{% endblock %}
 
-
-<!-- JavaScript -->
+{% block scripts %}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Collect unique tags from events
@@ -150,11 +164,10 @@
                     const parts = tag.split(':');
                     const category = parts[0];
                     const tagValue = parts[1];
-                    if (tagsByCategory[category]) {
-                        // if the tag value contains a ;, split it and add each tag to the list
+                    if (tagsByCategory[category] && tagValue) {
                         if (tagValue.includes(';')) {
-                            tagValue.split(';').forEach(function (tag) {
-                                tagsByCategory[category].add(tag.trim());
+                            tagValue.split(';').forEach(function (t) {
+                                tagsByCategory[category].add(t.trim());
                             });
                         } else {
                             tagsByCategory[category].add(tagValue.trim());
@@ -171,82 +184,80 @@
             'various': new Set()
         };
 
-        // Event listener for the filter button to open the modal
+        // Open / close modal
         document.getElementById('filter-button').addEventListener('click', function () {
             document.getElementById('filter-modal').classList.remove('hidden');
         });
 
-        // Function to close the filter modal
         window.closeFilterModal = function () {
             document.getElementById('filter-modal').classList.add('hidden');
         }
 
+        // Close on outside click
+        document.getElementById('filter-modal').addEventListener('click', function (e) {
+            if (e.target === this) closeFilterModal();
+        });
+
         // Populate filter categories and options
         const filterCategoriesContainer = document.getElementById('filter-categories');
+        const categoryLabels = { 'canton': 'Kanton', 'genre': 'Genre', 'various': 'Tags' };
         for (const category in tagsByCategory) {
-            // Create category header
+            if (tagsByCategory[category].size === 0) continue;
+
             const categoryHeader = document.createElement('div');
-            categoryHeader.className = 'category-header flex items-center justify-between cursor-pointer py-2 border-b border-gray-500';
+            categoryHeader.className = 'category-header flex items-center justify-between cursor-pointer py-2 border-b border-ink/30 uppercase tracking-widest text-xs';
             categoryHeader.setAttribute('data-category', category);
 
             const categoryTitle = document.createElement('span');
-            categoryTitle.className = 'font-bold text-gray-700';
-            categoryTitle.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+            categoryTitle.className = 'font-bold text-ink';
+            categoryTitle.textContent = categoryLabels[category] || category;
 
             const arrowIcon = document.createElement('span');
-            arrowIcon.className = 'arrow-icon transform transition-transform duration-200';
-            arrowIcon.innerHTML = '&#9656;'; // Right arrow
+            arrowIcon.className = 'arrow-icon transform transition-transform duration-200 text-bleed';
+            arrowIcon.innerHTML = '&#9656;';
 
             categoryHeader.appendChild(categoryTitle);
             categoryHeader.appendChild(arrowIcon);
 
-            // Create options container
             const optionsContainer = document.createElement('div');
-            optionsContainer.className = 'options-container pl-4 mt-2 hidden';
+            optionsContainer.className = 'options-container pl-3 mt-2 mb-3 hidden';
             optionsContainer.setAttribute('data-category-options', category);
 
-            // Populate options
             const tagsArray = Array.from(tagsByCategory[category]).sort();
             tagsArray.forEach(function (tag) {
                 let label = document.createElement('label');
-                label.className = 'flex items-center mb-2';
+                label.className = 'flex items-center mb-1.5 text-ink hover:text-bleed cursor-pointer';
                 let checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
-                checkbox.className = 'mr-2';
+                checkbox.className = 'mr-2 accent-bleed';
                 checkbox.value = tag;
                 checkbox.checked = selectedTags[category].has(tag);
                 checkbox.addEventListener('change', function () {
-                    if (this.checked) {
-                        selectedTags[category].add(this.value);
-                    } else {
-                        selectedTags[category].delete(this.value);
-                    }
+                    if (this.checked) selectedTags[category].add(this.value);
+                    else selectedTags[category].delete(this.value);
                 });
                 label.appendChild(checkbox);
                 label.appendChild(document.createTextNode(tag));
                 optionsContainer.appendChild(label);
             });
 
-            // Append header and options to the container
             filterCategoriesContainer.appendChild(categoryHeader);
             filterCategoriesContainer.appendChild(optionsContainer);
 
-            // Add event listener to toggle options display
             categoryHeader.addEventListener('click', function () {
-                const category = this.getAttribute('data-category');
-                var options = document.querySelector('[data-category-options="' + category + '"]');
-                var arrow = this.querySelector('.arrow-icon');
+                const cat = this.getAttribute('data-category');
+                const options = document.querySelector('[data-category-options="' + cat + '"]');
+                const arrow = this.querySelector('.arrow-icon');
                 if (options.classList.contains('hidden')) {
                     options.classList.remove('hidden');
-                    arrow.style.transform = 'rotate(90deg)'; // Pointing down
+                    arrow.style.transform = 'rotate(90deg)';
                 } else {
                     options.classList.add('hidden');
-                    arrow.style.transform = 'rotate(0deg)'; // Pointing right
+                    arrow.style.transform = 'rotate(0deg)';
                 }
             });
         }
 
-        // Apply filters when the user clicks the "Apply Filters" button
         document.getElementById('apply-filters').addEventListener('click', function () {
             filterEventsByTags();
             closeFilterModal();
@@ -255,24 +266,19 @@
         function filterEventsByTags() {
             eventItems = document.querySelectorAll('.event-item');
             eventItems.forEach(function (item) {
-                var itemTags = item.getAttribute('data-tags');
-                var itemTagList = itemTags ? itemTags.split(',').map(t => t.trim()) : [];
+                const itemTags = item.getAttribute('data-tags');
+                const itemTagList = itemTags ? itemTags.split(',').map(t => t.trim()) : [];
 
-                var itemTagsByCategory = {
-                    'canton': [],
-                    'genre': [],
-                    'various': []
-                };
+                const itemTagsByCategory = { 'canton': [], 'genre': [], 'various': [] };
 
                 itemTagList.forEach(function (tag) {
-                    var parts = tag.split(':');
-                    var category = parts[0];
-                    var tagValue = parts[1];
-                    if (itemTagsByCategory[category]) {
-                        // if the tag value contains a ;, split it and add each tag to the list
+                    const parts = tag.split(':');
+                    const category = parts[0];
+                    const tagValue = parts[1];
+                    if (itemTagsByCategory[category] && tagValue) {
                         if (tagValue.includes(';')) {
-                            tagValue.split(';').forEach(function (tag) {
-                                itemTagsByCategory[category].push(tag);
+                            tagValue.split(';').forEach(function (t) {
+                                itemTagsByCategory[category].push(t);
                             });
                         } else {
                             itemTagsByCategory[category].push(tagValue);
@@ -284,10 +290,7 @@
                 for (const category in selectedTags) {
                     if (selectedTags[category].size > 0) {
                         const hasTag = itemTagsByCategory[category].some(tag => selectedTags[category].has(tag));
-                        if (!hasTag) {
-                            visible = false;
-                            break;
-                        }
+                        if (!hasTag) { visible = false; break; }
                     }
                 }
 
@@ -306,35 +309,27 @@
                     }
                 }
             });
-
         }
 
-        // Remove any event cards that have no events
-        eventCards = document.querySelectorAll('.date-card');
-        eventCards.forEach(function (card) {
+        // Hide date cards that have no events
+        document.querySelectorAll('.date-card').forEach(function (card) {
             if (card.querySelectorAll('.event-item').length === 0) {
                 card.hidden = true;
             }
         });
-        // Function to toggle event details
+
+        // Toggle event details
         window.toggleEventDetails = function (element) {
-            var details = element.querySelector('.event-details');
-            var chevron = element.querySelector('.event-chevron');
+            const details = element.querySelector('.event-details');
+            const chevron = element.querySelector('.event-chevron');
             if (details.classList.contains('hidden')) {
                 details.classList.remove('hidden');
-                {#element.classList.add('border');#}
-                element.classList.add('shadow');
                 if (chevron) chevron.style.transform = 'rotate(90deg)';
             } else {
                 details.classList.add('hidden');
-                {#element.classList.remove('border');#}
-                element.classList.remove('shadow');
                 if (chevron) chevron.style.transform = 'rotate(0deg)';
             }
         }
-
     });
 </script>
-
-</body>
-</html>
+{% endblock %}

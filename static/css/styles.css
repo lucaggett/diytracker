@@ -2,7 +2,134 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Fonts — self-hosted, font-display: swap keeps first paint unblocked.
+   JetBrains Mono files are expected at /static/fonts/.  If absent, the
+   stack defined in tailwind.config.js falls back to system monospace.
+   ───────────────────────────────────────────────────────────────────── */
 @font-face {
     font-family: 'RichEatinAllCaps';
     src: url('../fonts/rich_eatin.otf') format('opentype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../fonts/JetBrainsMono-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../fonts/JetBrainsMono-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Design tokens — exposed as CSS custom properties so SVG filter attrs
+   and inline styles can reference them without Tailwind interpolation.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+    --paper: #ece7dc;
+    --ink: #0a0a0a;
+    --bleed: #c21a1a;
+    --bleed-offset: #1a4ec2;
+    --smudge: #6b6259;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Component layer — shared primitives for the xerox-zine public pages.
+   Admin pages get only the font + palette tokens, none of these classes.
+   ───────────────────────────────────────────────────────────────────── */
+@layer components {
+    .grain-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        mix-blend-mode: multiply;
+        opacity: 0.35;
+        z-index: 50;
+    }
+
+    .mis-reg {
+        text-shadow:
+            2px 0 0 var(--bleed),
+            -2px 0 0 var(--bleed-offset);
+    }
+
+    .flyer-card {
+        position: relative;
+        background: var(--paper);
+        border: 1px solid var(--ink);
+        box-shadow: 3px 3px 0 var(--ink);
+    }
+
+    .torn-divider {
+        height: 10px;
+        background: var(--ink);
+        mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'><path d='M0,10 L0,4 L4,6 L8,2 L14,5 L20,1 L26,6 L34,3 L40,7 L48,2 L54,5 L62,1 L68,6 L76,3 L82,6 L90,1 L96,5 L100,3 L100,10 Z' fill='black'/></svg>");
+        mask-size: 100% 100%;
+        mask-repeat: no-repeat;
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'><path d='M0,10 L0,4 L4,6 L8,2 L14,5 L20,1 L26,6 L34,3 L40,7 L48,2 L54,5 L62,1 L68,6 L76,3 L82,6 L90,1 L96,5 L100,3 L100,10 Z' fill='black'/></svg>");
+        -webkit-mask-size: 100% 100%;
+        -webkit-mask-repeat: no-repeat;
+    }
+
+    .halftone {
+        background-image: var(--tw-halftone, radial-gradient(circle, var(--ink) 1px, transparent 1.6px));
+        background-size: 4px 4px;
+    }
+
+    .stamp {
+        display: inline-block;
+        color: var(--bleed);
+        border: 4px double var(--bleed);
+        padding: 0.25rem 0.75rem;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        transform: rotate(-8deg);
+    }
+
+    .official-doc {
+        background: #f5f1e6;
+        border: 1px solid var(--ink);
+        box-shadow: 2px 2px 0 var(--ink);
+        font-family: 'Times New Roman', Times, Georgia, serif;
+        color: var(--ink);
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Motion — every animation is opt-in by default.  When the user has NOT
+   asked for reduced motion, we layer subtle movement on top.  Nothing
+   essential relies on motion; grain/halftone/mis-reg stay either way.
+   ───────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+    .today-stamp {
+        animation: slam 600ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+    }
+
+    @supports (animation-timeline: scroll()) {
+        .scroll-jitter {
+            animation: jitter linear both;
+            animation-timeline: view();
+            animation-range: entry 0% cover 40%;
+        }
+    }
+
+    .mis-reg:hover {
+        animation: misreg 0.9s ease-in-out infinite;
+    }
+}
+
+/* Crosshair cursor only on fine-pointer devices (never on touch). */
+@media (hover: hover) and (pointer: fine) {
+    body.calendar-cursor {
+        cursor: url('../img/cursor-crosshair.svg') 16 16, crosshair;
+    }
 }

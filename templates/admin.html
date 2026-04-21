@@ -1,136 +1,140 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <!-- Meta tags and title -->
-    <meta charset="UTF-8">
-    <title>Admin - Manage Events</title>
-    <!-- Include Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">Admin - Manage Events</h1>
-            <a href="{{ url_for('logout') }}" class="text-sm text-gray-600 hover:underline">Logout</a>
-        </div>
+{% extends 'base_admin.html' %}
 
-        <div class="flex gap-4 mb-6">
-            <!-- Scrape trigger -->
-            <form action="{{ url_for('trigger_scrape') }}" method="POST" class="inline" id="scrape-form">
-                {{ delete_form.hidden_tag() }}
-                {% if scrape_running %}
-                    <button type="button" disabled id="scrape-btn"
-                            class="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed">
-                        Scraping&hellip;
-                    </button>
-                    <span id="scrape-progress" class="text-sm text-gray-600 ml-2"></span>
-                {% elif scrape_cooldown %}
-                    <button type="button" disabled id="scrape-btn"
-                            class="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed"
-                            title="Last scrape: {{ last_scrape.strftime('%Y-%m-%d %H:%M') }}">
-                        Scrape (cooldown)
-                    </button>
-                {% else %}
-                    <button type="submit" id="scrape-btn"
-                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            onclick="return confirm('Start scraping metalgigs.ch and petzi.ch?')">
-                        Scrape Events
-                    </button>
-                {% endif %}
-                {% if last_scrape %}
-                    <span class="text-sm text-gray-500 ml-2" id="last-scrape">Last: {{ last_scrape.strftime('%Y-%m-%d %H:%M') }}</span>
-                {% endif %}
-            </form>
+{% block title %}Admin · diytracker.ch{% endblock %}
 
-            <!-- Excel export -->
-            <a href="{{ url_for('export_excel') }}"
-               class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                Export Excel
-            </a>
+{% block content %}
+<header class="mb-6 flex items-end justify-between">
+  <div>
+    <p class="text-xs uppercase tracking-widest text-smudge">Admin-Konsole</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none">MANAGE EVENTS</h1>
+  </div>
+  <p class="text-xs text-smudge">{{ events|length }} Event{% if events|length != 1 %}s{% endif %} live</p>
+</header>
 
-            <!-- Weekly calendar image -->
-            <form action="{{ url_for('weekly_calendar_image') }}" method="GET" class="flex items-center gap-2">
-                <label class="text-sm text-gray-600 font-medium">Week of</label>
-                <input type="date" name="week" value="{{ current_monday }}"
-                       class="border border-gray-300 rounded px-2 py-1.5 text-sm bg-white">
-                <button type="submit"
-                        class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
-                    Export Weekly Image
-                </button>
-            </form>
-        </div>
-
-        <table class="min-w-full bg-white shadow-md rounded">
-            <thead>
-                <tr>
-                    <th class="py-2 px-4 border-b">ID</th>
-                    <th class="py-2 px-4 border-b">Name</th>
-                    <th class="py-2 px-4 border-b">Date</th>
-                    <th class="py-2 px-4 border-b">Venue</th>
-                    <th class="py-2 px-4 border-b">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for event in events %}
-                <tr class="text-center">
-                    <td class="py-2 px-4 border-b">{{ event.id }}</td>
-                    <td class="py-2 px-4 border-b">{{ event.name }}</td>
-                    <td class="py-2 px-4 border-b">{{ event.date.strftime('%Y-%m-%d') }}</td>
-                    <td class="py-2 px-4 border-b">{{ event.venue_name }}</td>
-                    <td class="py-2 px-4 border-b">
-                        <a href="{{ url_for('edit_event', event_id=event.id) }}" class="text-blue-500 hover:underline">Edit</a>
-                        |
-                        <form action="{{ url_for('delete_event', event_id=event.id) }}" method="POST" class="inline">
-                            {{ delete_form.hidden_tag() }}
-                            <button type="submit" class="text-red-500 hover:underline ml-2"
-                                    onclick="return confirm('Delete this event?')">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+{# Action bar — scrape, export, weekly image. #}
+<section class="border-2 border-ink bg-paper p-4 mb-6 flex flex-wrap items-end gap-4">
+  <form action="{{ url_for('trigger_scrape') }}" method="POST" id="scrape-form" class="flex items-center gap-2">
+    {{ delete_form.hidden_tag() }}
     {% if scrape_running %}
-    <script>
-    (function() {
-        const btn = document.getElementById('scrape-btn');
-        const prog = document.getElementById('scrape-progress');
-        function fmtTime(secs) {
-            if (secs == null) return '';
-            if (secs < 60) return secs + 's';
-            const m = Math.floor(secs / 60);
-            const s = secs % 60;
-            return m + 'm ' + s + 's';
-        }
-        function poll() {
-            fetch('{{ url_for("scrape_status") }}')
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.running) {
-                        btn.textContent = 'Done!';
-                        btn.className = 'bg-green-600 text-white px-4 py-2 rounded';
-                        prog.textContent = 'Scrape complete — reloading\u2026';
-                        setTimeout(() => location.reload(), 1500);
-                        return;
-                    }
-                    let text = data.phase;
-                    if (data.total > 0) {
-                        text += ': ' + data.processed + '/' + data.total;
-                        const pct = Math.round(data.processed / data.total * 100);
-                        btn.textContent = 'Scraping\u2026 ' + pct + '%';
-                    }
-                    if (data.eta_seconds != null) {
-                        text += ' \u2014 ~' + fmtTime(data.eta_seconds) + ' remaining';
-                    }
-                    prog.textContent = text;
-                    setTimeout(poll, 3000);
-                })
-                .catch(() => setTimeout(poll, 5000));
-        }
-        poll();
-    })();
-    </script>
+      <button type="button" disabled id="scrape-btn"
+              class="bg-smudge text-paper text-xs uppercase tracking-widest px-4 py-2 cursor-not-allowed">
+        Scraping…
+      </button>
+      <span id="scrape-progress" class="text-xs text-smudge"></span>
+    {% elif scrape_cooldown %}
+      <button type="button" disabled id="scrape-btn"
+              class="bg-smudge text-paper text-xs uppercase tracking-widest px-4 py-2 cursor-not-allowed"
+              title="Last scrape: {{ last_scrape.strftime('%Y-%m-%d %H:%M') }}">
+        Scrape (cooldown)
+      </button>
+    {% else %}
+      <button type="submit" id="scrape-btn"
+              class="bg-ink text-paper text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed transition-colors"
+              onclick="return confirm('Start scraping metalgigs.ch und petzi.ch?')">
+        Scrape Events
+      </button>
     {% endif %}
-</body>
-</html>
+    {% if last_scrape %}
+      <span class="text-xs text-smudge" id="last-scrape">Last: {{ last_scrape.strftime('%Y-%m-%d %H:%M') }}</span>
+    {% endif %}
+  </form>
+
+  <div class="h-8 w-px bg-ink/30"></div>
+
+  <a href="{{ url_for('export_excel') }}"
+     class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
+    Export Excel
+  </a>
+
+  <form action="{{ url_for('weekly_calendar_image') }}" method="GET" class="flex items-end gap-2">
+    <div>
+      <label class="block text-xs uppercase tracking-widest text-smudge mb-1">Week of</label>
+      <input type="date" name="week" value="{{ current_monday }}"
+             class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
+    </div>
+    <button type="submit"
+            class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed hover:text-paper hover:border-bleed transition-colors">
+      Weekly Image
+    </button>
+  </form>
+</section>
+
+{# Events table — data-dense, 1px ink borders. #}
+<div class="overflow-x-auto border-2 border-ink">
+  <table class="min-w-full text-sm">
+    <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
+      <tr>
+        <th class="px-3 py-2 text-left">ID</th>
+        <th class="px-3 py-2 text-left">Name</th>
+        <th class="px-3 py-2 text-left">Date</th>
+        <th class="px-3 py-2 text-left">Venue</th>
+        <th class="px-3 py-2 text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in events %}
+      <tr class="border-t border-ink/30 hover:bg-ink/5">
+        <td class="px-3 py-2 text-smudge">{{ event.id }}</td>
+        <td class="px-3 py-2 font-semibold">{{ event.name }}</td>
+        <td class="px-3 py-2">{{ event.date.strftime('%Y-%m-%d') }}</td>
+        <td class="px-3 py-2">{{ event.venue_name }}</td>
+        <td class="px-3 py-2 text-right whitespace-nowrap">
+          <a href="{{ url_for('edit_event', event_id=event.id) }}"
+             class="text-bleed hover:underline uppercase text-xs tracking-widest">Edit</a>
+          <span class="text-smudge mx-1">·</span>
+          <form action="{{ url_for('delete_event', event_id=event.id) }}" method="POST" class="inline">
+            {{ delete_form.hidden_tag() }}
+            <button type="submit" class="text-bleed hover:underline uppercase text-xs tracking-widest"
+                    onclick="return confirm('Delete this event?')">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if scrape_running %}
+<script>
+(function() {
+    const btn = document.getElementById('scrape-btn');
+    const prog = document.getElementById('scrape-progress');
+    function fmtTime(secs) {
+        if (secs == null) return '';
+        if (secs < 60) return secs + 's';
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return m + 'm ' + s + 's';
+    }
+    function poll() {
+        fetch('{{ url_for("scrape_status") }}')
+            .then(r => r.json())
+            .then(data => {
+                if (!data.running) {
+                    btn.textContent = 'Done!';
+                    btn.className = 'bg-ink text-paper text-xs uppercase tracking-widest px-4 py-2';
+                    prog.textContent = 'Scrape complete — reloading…';
+                    setTimeout(() => location.reload(), 1500);
+                    return;
+                }
+                let text = data.phase;
+                if (data.total > 0) {
+                    text += ': ' + data.processed + '/' + data.total;
+                    const pct = Math.round(data.processed / data.total * 100);
+                    btn.textContent = 'Scraping… ' + pct + '%';
+                }
+                if (data.eta_seconds != null) {
+                    text += ' — ~' + fmtTime(data.eta_seconds) + ' remaining';
+                }
+                prog.textContent = text;
+                setTimeout(poll, 3000);
+            })
+            .catch(() => setTimeout(poll, 5000));
+    }
+    poll();
+})();
+</script>
+{% endif %}
+{% endblock %}
