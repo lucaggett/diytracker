@@ -201,6 +201,15 @@
         // Populate filter categories and options
         const filterCategoriesContainer = document.getElementById('filter-categories');
         const categoryLabels = { 'canton': 'Kanton', 'genre': 'Genre', 'various': 'Tags' };
+        const cantonNames = {
+            'AG': 'Aargau', 'AI': 'Appenzell Innerrhoden', 'AR': 'Appenzell Ausserrhoden',
+            'BE': 'Bern', 'BL': 'Basel-Landschaft', 'BS': 'Basel-Stadt',
+            'FR': 'Freiburg', 'GE': 'Genf', 'GL': 'Glarus', 'GR': 'Graubünden',
+            'JU': 'Jura', 'LU': 'Luzern', 'NE': 'Neuenburg', 'NW': 'Nidwalden',
+            'OW': 'Obwalden', 'SG': 'St. Gallen', 'SH': 'Schaffhausen', 'SO': 'Solothurn',
+            'SZ': 'Schwyz', 'TG': 'Thurgau', 'TI': 'Tessin', 'UR': 'Uri',
+            'VD': 'Waadt', 'VS': 'Wallis', 'ZG': 'Zug', 'ZH': 'Zürich'
+        };
         for (const category in tagsByCategory) {
             if (tagsByCategory[category].size === 0) continue;
 
@@ -223,7 +232,12 @@
             optionsContainer.className = 'options-container pl-3 mt-2 mb-3 hidden';
             optionsContainer.setAttribute('data-category-options', category);
 
-            const tagsArray = Array.from(tagsByCategory[category]).sort();
+            const displayFor = function (t) {
+                return category === 'canton' ? (cantonNames[t] || t) : t;
+            };
+            const tagsArray = Array.from(tagsByCategory[category]).sort(function (a, b) {
+                return displayFor(a).localeCompare(displayFor(b));
+            });
             tagsArray.forEach(function (tag) {
                 let label = document.createElement('label');
                 label.className = 'flex items-center mb-1.5 text-ink hover:text-bleed cursor-pointer';
@@ -237,7 +251,7 @@
                     else selectedTags[category].delete(this.value);
                 });
                 label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(tag));
+                label.appendChild(document.createTextNode(displayFor(tag)));
                 optionsContainer.appendChild(label);
             });
 
