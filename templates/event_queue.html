@@ -32,7 +32,7 @@
           class="bg-ink text-paper text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed transition-colors">
     {{ _('Filter') }}
   </button>
-  <a href="{{ url_for('event_queue') }}"
+  <a href="{{ url_for('submissions.event_queue') }}"
      class="text-xs uppercase tracking-widest text-smudge hover:text-bleed self-end pb-2">{{ _('Reset') }}</a>
   <span class="text-xs text-smudge self-end pb-2 ml-auto">
     {{ events|length }} {% if events|length != 1 %}{{ _('events') }}{% else %}{{ _('event') }}{% endif %}

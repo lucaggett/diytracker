@@ -1,12 +1,15 @@
 import importlib.util
 import os
 import threading
+import time as time_module
 from datetime import datetime
 
 from models import db, Event, ScrapedEvent
 from utils import resolve_canton
 
 LAST_SCRAPE_FILE = os.path.join('instance', 'last_scrape.txt')
+SCRAPE_INTERVAL_HOURS = 1
+
 _scrape_lock = threading.Lock()
 _scrape_running = False
 _scrape_progress = {'total': 0, 'processed': 0, 'started_at': None, 'phase': ''}
@@ -26,37 +29,38 @@ def set_last_scrape_time(dt):
         f.write(dt.isoformat())
 
 
+def is_running():
+    return _scrape_running
+
+
+def get_progress():
+    return dict(_scrape_progress)
+
+
 def _load_scraper():
-    """Load the scrape_events module from utils/ directory via importlib."""
     spec = importlib.util.spec_from_file_location(
         "scrape_events",
-        os.path.join(os.path.dirname(__file__), "utils", "scrape_events.py"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "utils", "scrape_events.py"),
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
 
-def _get_known_urls(app):
-    """Return a set of all URLs already in the queue or calendar."""
-    with app.app_context():
-        scraped_urls = {r.url for r in ScrapedEvent.query.with_entities(ScrapedEvent.url).all() if r.url}
-        event_urls = {r.source_url for r in Event.query.with_entities(Event.source_url).filter(Event.source_url.isnot(None)).all()}
-        return scraped_urls | event_urls
+def _get_known_urls():
+    scraped_urls = {r.url for r in ScrapedEvent.query.with_entities(ScrapedEvent.url).all() if r.url}
+    event_urls = {r.source_url for r in Event.query.with_entities(Event.source_url).filter(Event.source_url.isnot(None)).all()}
+    return scraped_urls | event_urls
 
 
-def run_scrape(app):
-    """Run scrapers and insert only new events into the ScrapedEvent table.
-
-    Accepts the Flask app instance to push an app context for DB access.
-    """
+def _scrape_and_import(app):
     global _scrape_running, _scrape_progress
     try:
-        scraper_mod = _load_scraper()
-        get_sitemap_event_urls = scraper_mod.get_sitemap_event_urls
-        get_petzi_event_urls = scraper_mod.get_petzi_event_urls
-        parse_metalgigs_event = scraper_mod.parse_metalgigs_event
-        parse_petzi_event = scraper_mod.parse_petzi_event
+        scraper = _load_scraper()
+        get_sitemap_event_urls = scraper.get_sitemap_event_urls
+        get_petzi_event_urls = scraper.get_petzi_event_urls
+        parse_metalgigs_event = scraper.parse_metalgigs_event
+        parse_petzi_event = scraper.parse_petzi_event
         from scripts.import_scraped_events import parse_date, parse_time
 
         _scrape_progress = {'total': 0, 'processed': 0, 'started_at': datetime.now().isoformat(), 'phase': 'Fetching sitemaps'}
@@ -66,8 +70,8 @@ def run_scrape(app):
         if not petzi_urls:
             petzi_urls = get_petzi_event_urls()
 
-        # Filter out URLs already in the queue or calendar before making any HTTP requests
-        known_urls = _get_known_urls(app)
+        with app.app_context():
+            known_urls = _get_known_urls()
         all_urls = [
             ('metalgigs', url, parse_metalgigs_event) for url in mg_urls if url not in known_urls
         ] + [
@@ -87,8 +91,7 @@ def run_scrape(app):
 
         _scrape_progress['phase'] = 'Importing to database'
         with app.app_context():
-            # Re-fetch known URLs inside the app context for the safety check
-            known_urls_now = _get_known_urls(app)
+            known_urls_now = _get_known_urls()
             count = 0
             for row in events:
                 url = row.get('url')
@@ -127,3 +130,29 @@ def run_scrape(app):
     finally:
         with _scrape_lock:
             _scrape_running = False
+
+
+def _auto_scheduler(app):
+    global _scrape_running
+    while True:
+        last = get_last_scrape_time()
+        if last is None:
+            wait = 0
+        else:
+            elapsed = (datetime.now() - last).total_seconds()
+            wait = max(0, SCRAPE_INTERVAL_HOURS * 3600 - elapsed)
+        if wait > 0:
+            time_module.sleep(wait)
+        with _scrape_lock:
+            if _scrape_running:
+                time_module.sleep(300)
+                continue
+            _scrape_running = True
+        _scrape_and_import(app)
+        time_module.sleep(SCRAPE_INTERVAL_HOURS * 3600)
+
+
+def start_auto_scheduler(app):
+    thread = threading.Thread(target=_auto_scheduler, args=(app,), daemon=True, name='scrape-scheduler')
+    thread.start()
+    return thread

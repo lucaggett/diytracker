@@ -3,12 +3,12 @@
    which stores the choice in the session and redirects back. #}
 {% set current_locale = (g.get('locale', 'de') if g else 'de') %}
 {% set locales = SUPPORTED_LOCALES if SUPPORTED_LOCALES is defined else ['de', 'fr', 'it', 'en'] %}
-<div class="font-mono text-xs uppercase tracking-widest flex gap-2">
+<div class="font-mono text-xs uppercase tracking-widest flex gap-6">
   {% for code in locales %}
     {% if code == current_locale %}
       <span class="text-bleed font-bold underline underline-offset-4">{{ code }}</span>
     {% else %}
-      <a href="{{ url_for('set_language', lang=code) }}?next={{ request.path }}"
+      <a href="{{ url_for('public.set_language', lang=code) }}?next={{ request.path }}"
          class="text-smudge hover:text-ink hover:underline underline-offset-4">{{ code }}</a>
     {% endif %}
   {% endfor %}

@@ -1,5 +1,5 @@
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
+UPLOAD_FOLDER = 'static/uploads'
 MAGIC_BYTES = [b'\xff\xd8\xff', b'\x89PNG\r\n\x1a\n', b'GIF87a', b'GIF89a']
 
 

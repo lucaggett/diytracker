@@ -1,0 +1,44 @@
+import logging
+import os
+import smtplib
+import ssl
+from email.message import EmailMessage
+
+CONTACT_RECIPIENT = 'luc@aggett.com'
+
+
+def build_contact_logger():
+    logger = logging.getLogger('diytracker.contact')
+    if not logger.handlers:
+        os.makedirs('logs', exist_ok=True)
+        handler = logging.FileHandler(os.path.join('logs', 'contact_form.log'))
+        handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+    return logger
+
+
+def send_contact_email(name, sender_email, message):
+    """Send a collaborator-request email. Raises on misconfig or SMTP failure."""
+    server_host = os.environ['EMAIL_SERVER']
+    username = os.environ['EMAIL_USERNAME']
+    password = os.environ['EMAIL_PASSWORD']
+
+    msg = EmailMessage()
+    msg['Subject'] = f'[diytracker] Mitwirkenden-Anfrage von {name}'
+    msg['From'] = 'info@diytracker.ch'
+    msg['To'] = CONTACT_RECIPIENT
+    msg['Reply-To'] = sender_email
+    msg.set_content(
+        f'Name:    {name}\n'
+        f'E-Mail:  {sender_email}\n'
+        f'\n'
+        f'Nachricht:\n'
+        f'{message}\n'
+    )
+
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(server_host, 465, context=context) as server:
+        server.login(username, password)
+        server.send_message(msg)

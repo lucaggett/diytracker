@@ -2,19 +2,19 @@
    Nav stays minimal — the calendar IS the site, everything else is metadata. #}
 <header class="border-b border-ink relative">
   <div class="max-w-3xl mx-auto px-4 pt-6 pb-4">
-    <a href="{{ url_for('calendar_view') }}" class="block">
+    <a href="{{ url_for('public.calendar_view') }}" class="block">
       <h1 class="font-richEatin text-5xl md:text-6xl text-ink mis-reg leading-none center">DIYTRACKER</h1>
     </a>
     <nav class="mt-4 flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs uppercase tracking-wider">
-      <a href="{{ url_for('calendar_view') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Calendar') }}</a>
+      <a href="{{ url_for('public.calendar_view') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Calendar') }}</a>
       {% if session.get('user_id') %}
-        <a href="{{ url_for('submit_event_link') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Submit') }}</a>
-        <a href="{{ url_for('event_queue') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Queue') }}</a>
-        <a href="{{ url_for('logout') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Logout') }}</a>
+        <a href="{{ url_for('admin.admin') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Admin') }}</a>
+        <a href="{{ url_for('auth.logout') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Logout') }}</a>
       {% else %}
-        <a href="{{ url_for('login') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Login') }}</a>
+        <a href="{{ url_for('auth.login') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Login') }}</a>
       {% endif %}
-      <a href="{{ url_for('about') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('About') }}</a>
+      <a href="{{ url_for('public.about') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('About') }}</a>
+        {% include '_partials/lang_switcher.html' %}
     </nav>
   </div>
   <div class="torn-divider w-full text-ink" aria-hidden="true"></div>

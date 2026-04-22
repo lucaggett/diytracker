@@ -44,12 +44,12 @@
   </div>
 
   <div class="ml-auto flex items-end gap-3">
-    <a href="{{ url_for('export_excel') }}"
+    <a href="{{ url_for('admin.export_excel') }}"
        class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
       {{ _('Export Excel') }}
     </a>
 
-    <form action="{{ url_for('weekly_calendar_image') }}" method="GET" class="flex items-end gap-2">
+    <form action="{{ url_for('admin.weekly_calendar_image') }}" method="GET" class="flex items-end gap-2">
       <div>
         <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Week of') }}</label>
         <input type="date" name="week" value="{{ current_monday }}"
@@ -83,10 +83,10 @@
         <td class="px-3 py-2">{{ event.date.strftime('%Y-%m-%d') }}</td>
         <td class="px-3 py-2">{{ event.venue_name }}</td>
         <td class="px-3 py-2 text-right whitespace-nowrap">
-          <a href="{{ url_for('edit_event', event_id=event.id) }}"
+          <a href="{{ url_for('admin.edit_event', event_id=event.id) }}"
              class="text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Edit') }}</a>
           <span class="text-smudge mx-1">·</span>
-          <form action="{{ url_for('delete_event', event_id=event.id) }}" method="POST" class="inline">
+          <form action="{{ url_for('admin.delete_event', event_id=event.id) }}" method="POST" class="inline">
             {{ delete_form.hidden_tag() }}
             <button type="submit" class="text-bleed hover:underline uppercase text-xs tracking-widest"
                     onclick="return confirm({{ _('Delete this event?')|tojson }})">{{ _('Delete') }}</button>
@@ -111,7 +111,7 @@
         return m + 'm' + (s ? ' ' + s + 's' : '');
     }
     function poll() {
-        fetch('{{ url_for("scrape_status") }}')
+        fetch('{{ url_for("admin.scrape_status") }}')
             .then(r => r.json())
             .then(data => {
                 if (!data.running) {

@@ -86,5 +86,5 @@ def import_events(csv_path: str, db_uri: str = 'sqlite:///events.db'):
 
 
 if __name__ == '__main__':
-    csv_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(PROJECT_ROOT, 'events.csv')
+    csv_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(PROJECT_ROOT, 'instance', 'events.csv')
     import_events(csv_file)

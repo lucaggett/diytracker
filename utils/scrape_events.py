@@ -48,8 +48,8 @@ logger = logging.getLogger("scrape_events")
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 
-# File handler writes logs to scrape_events.log
-file_handler = logging.FileHandler("scrape_events.log", mode="w", encoding="utf-8")
+os.makedirs("logs", exist_ok=True)
+file_handler = logging.FileHandler("logs/scrape_events.log", mode="w", encoding="utf-8")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
@@ -713,9 +713,10 @@ def main() -> None:
             logger.warning(f"Skipped PETZI event due to parse failure: {url}")
         if idx % 50 == 0:
             print(f"Processed {idx}/{len(petzi_urls)} PETZI events", file=sys.stderr)
-    # Write to CSV
-    print(f"Writing {len(events)} events to events.csv", file=sys.stderr)
-    write_csv(events, "events.csv")
+    os.makedirs("instance", exist_ok=True)
+    out_path = "instance/events.csv"
+    print(f"Writing {len(events)} events to {out_path}", file=sys.stderr)
+    write_csv(events, out_path)
     print("Done", file=sys.stderr)
 
 
