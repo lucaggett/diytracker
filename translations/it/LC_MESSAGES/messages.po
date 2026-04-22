@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-22 12:21+0200\n"
+"POT-Creation-Date: 2026-04-22 21:49+0200\n"
 "PO-Revision-Date: 2026-04-22 12:23+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: it\n"
@@ -17,62 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
-
-#: app.py:316
-msgid "Invalid email or password."
-msgstr "E-mail o password non validi."
-
-#: app.py:330
-msgid "This invite link is invalid or has expired."
-msgstr "Questo link d’invito non è valido o è scaduto."
-
-#: app.py:427
-msgid ""
-"Your message could not be sent — please write to us directly at "
-"kontakt@diytracker.ch."
-msgstr ""
-"Il messaggio non è stato inviato — scrivici direttamente a "
-"kontakt@diytracker.ch."
-
-#: app.py:433
-msgid "Thanks! We will get back to you as soon as possible."
-msgstr "Grazie! Ti risponderemo al più presto."
-
-#: app.py:510
-msgid "Invalid event selection."
-msgstr "Selezione evento non valida."
-
-#: app.py:565
-msgid "This event already exists."
-msgstr "Questo evento esiste già."
-
-#: app.py:593
-msgid "Event approved and added to calendar!"
-msgstr "Evento approvato e aggiunto al calendario!"
-
-#: app.py:649
-msgid "Please provide all required venue details for a new venue."
-msgstr "Inserisci tutti i dati richiesti per un nuovo locale."
-
-#: app.py:670
-msgid "Venue already exists. Using existing venue."
-msgstr "Il locale esiste già. Verrà usato quello esistente."
-
-#: app.py:674 app.py:1093
-msgid "Selected venue does not exist."
-msgstr "Il locale selezionato non esiste."
-
-#: app.py:699
-msgid "Event submitted successfully!"
-msgstr "Evento inviato con successo!"
-
-#: app.py:1122
-msgid "Event updated successfully!"
-msgstr "Evento aggiornato con successo!"
-
-#: app.py:1136
-msgid "Event deleted successfully!"
-msgstr "Evento eliminato con successo!"
 
 #: forms.py:67 forms.py:94 templates/event_queue.html:89
 msgid "Event Name"
@@ -97,12 +41,12 @@ msgstr "Festival"
 msgid "Doors Open Time"
 msgstr "Apertura porte"
 
-#: forms.py:72 forms.py:99 templates/calendar.html:93
-#: templates/calendar.html:205 templates/event_queue.html:101
+#: forms.py:72 forms.py:99 templates/calendar.html:95
+#: templates/calendar.html:207 templates/event_queue.html:101
 msgid "Genre"
 msgstr "Genere"
 
-#: forms.py:73 forms.py:100 templates/calendar.html:94
+#: forms.py:73 forms.py:100 templates/calendar.html:96
 #: templates/event_queue.html:105
 msgid "Acts"
 msgstr "Artisti"
@@ -119,7 +63,7 @@ msgstr "Prezzo biglietto"
 msgid "Ticket Link"
 msgstr "Link biglietti"
 
-#: forms.py:81 forms.py:108 templates/admin.html:74 templates/calendar.html:90
+#: forms.py:81 forms.py:108 templates/admin.html:74 templates/calendar.html:92
 #: templates/event_queue.html:49
 msgid "Venue"
 msgstr "Locale"
@@ -136,7 +80,7 @@ msgstr "Indirizzo locale"
 msgid "City"
 msgstr "Città"
 
-#: forms.py:88 forms.py:115 templates/calendar.html:204
+#: forms.py:88 forms.py:115 templates/calendar.html:206
 msgid "Canton"
 msgstr "Cantone"
 
@@ -168,7 +112,7 @@ msgstr "Nome"
 msgid "Message"
 msgstr "Messaggio"
 
-#: templates/_partials/header_public.html:17 templates/about.html:3
+#: templates/_partials/header_public.html:16 templates/about.html:3
 msgid "About"
 msgstr "Info"
 
@@ -220,6 +164,7 @@ msgstr "Cosa fai, cosa vorresti contribuire?"
 msgid "Send"
 msgstr "Invia"
 
+#: templates/_partials/header_public.html:11
 #: templates/_partials/nav_admin.html:6 templates/admin.html:3
 msgid "Admin"
 msgstr "Admin"
@@ -284,7 +229,7 @@ msgstr "Immagine settimanale"
 msgid "ID"
 msgstr "ID"
 
-#: templates/admin.html:73 templates/calendar.html:89
+#: templates/admin.html:73 templates/calendar.html:91
 #: templates/event_queue.html:47
 msgid "Date"
 msgstr "Data"
@@ -327,43 +272,47 @@ msgid ""
 "shows."
 msgstr "Agenda eventi DIY per la Svizzera — concerti, festival e show underground."
 
-#: templates/calendar.html:91
+#: templates/calendar.html:39
+msgid "TODAY"
+msgstr "OGGI"
+
+#: templates/calendar.html:93
 msgid "Address"
 msgstr "Indirizzo"
 
-#: templates/calendar.html:92
+#: templates/calendar.html:94
 msgid "Location"
 msgstr "Luogo"
 
-#: templates/calendar.html:95
+#: templates/calendar.html:97
 msgid "Price"
 msgstr "Prezzo"
 
-#: templates/calendar.html:98
+#: templates/calendar.html:100
 msgid "Tickets"
 msgstr "Biglietti"
 
-#: templates/calendar.html:107
+#: templates/calendar.html:109
 msgid "no events"
 msgstr "nessun evento"
 
-#: templates/calendar.html:119
+#: templates/calendar.html:121
 msgid "Open filters"
 msgstr "Apri filtri"
 
-#: templates/calendar.html:133
+#: templates/calendar.html:135
 msgid "FILTER"
 msgstr "FILTRO"
 
-#: templates/calendar.html:139
+#: templates/calendar.html:141
 msgid "Close"
 msgstr "Chiudi"
 
-#: templates/calendar.html:142
+#: templates/calendar.html:144
 msgid "Apply"
 msgstr "Applica"
 
-#: templates/calendar.html:206
+#: templates/calendar.html:208
 msgid "Tags"
 msgstr "Tag"
 
@@ -445,7 +394,6 @@ msgstr "Premi Invio per aggiungere"
 msgid "Search or type to add genres"
 msgstr "Cerca o digita generi"
 
-#: templates/_partials/header_public.html:12
 #: templates/_partials/nav_admin.html:7 templates/event_queue.html:3
 msgid "Queue"
 msgstr "Coda"
@@ -526,7 +474,7 @@ msgstr "Approva con modifiche"
 msgid "No events awaiting approval."
 msgstr "Nessun evento da approvare."
 
-#: templates/_partials/header_public.html:15 templates/login.html:3
+#: templates/_partials/header_public.html:14 templates/login.html:3
 msgid "Login"
 msgstr "Accedi"
 
@@ -668,15 +616,14 @@ msgstr "Lingua"
 msgid "Calendar"
 msgstr "Calendario"
 
-#: templates/_partials/header_public.html:11
-#: templates/_partials/nav_admin.html:8
-msgid "Submit"
-msgstr "Invia"
-
-#: templates/_partials/header_public.html:13
+#: templates/_partials/header_public.html:12
 #: templates/_partials/nav_admin.html:9
 msgid "Logout"
 msgstr "Esci"
+
+#: templates/_partials/nav_admin.html:8
+msgid "Submit"
+msgstr "Invia"
 
 #: templates/errors/404.html:3
 msgid "404 · Missing"
@@ -731,4 +678,48 @@ msgstr "Qualcosa è andato storto lato server."
 #: templates/errors/500.html:16
 msgid "Fuse blown, cable busted, something between stage and mixing desk."
 msgstr "Fusibile saltato, cavo rotto, qualcosa tra il palco e il mixer."
+
+#~ msgid "Invalid email or password."
+#~ msgstr "E-mail o password non validi."
+
+#~ msgid "This invite link is invalid or has expired."
+#~ msgstr "Questo link d’invito non è valido o è scaduto."
+
+#~ msgid ""
+#~ "Your message could not be sent —"
+#~ " please write to us directly at "
+#~ "kontakt@diytracker.ch."
+#~ msgstr ""
+#~ "Il messaggio non è stato inviato —"
+#~ " scrivici direttamente a kontakt@diytracker.ch."
+
+#~ msgid "Thanks! We will get back to you as soon as possible."
+#~ msgstr "Grazie! Ti risponderemo al più presto."
+
+#~ msgid "Invalid event selection."
+#~ msgstr "Selezione evento non valida."
+
+#~ msgid "This event already exists."
+#~ msgstr "Questo evento esiste già."
+
+#~ msgid "Event approved and added to calendar!"
+#~ msgstr "Evento approvato e aggiunto al calendario!"
+
+#~ msgid "Please provide all required venue details for a new venue."
+#~ msgstr "Inserisci tutti i dati richiesti per un nuovo locale."
+
+#~ msgid "Venue already exists. Using existing venue."
+#~ msgstr "Il locale esiste già. Verrà usato quello esistente."
+
+#~ msgid "Selected venue does not exist."
+#~ msgstr "Il locale selezionato non esiste."
+
+#~ msgid "Event submitted successfully!"
+#~ msgstr "Evento inviato con successo!"
+
+#~ msgid "Event updated successfully!"
+#~ msgstr "Evento aggiornato con successo!"
+
+#~ msgid "Event deleted successfully!"
+#~ msgstr "Evento eliminato con successo!"
 

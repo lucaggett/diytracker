@@ -84,6 +84,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Close': 'Schliessen',
         'Apply': 'Anwenden',
         'Tags': 'Tags',
+        'TODAY': 'HEUTE',
 
         # About page
         'What diytracker.ch is — and how you can contribute.': 'Was ist diytracker.ch — und wie du mitmachen kannst.',
@@ -279,6 +280,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Close': 'Fermer',
         'Apply': 'Appliquer',
         'Tags': 'Tags',
+        'TODAY': "AUJOURD'HUI",
 
         'What diytracker.ch is — and how you can contribute.': 'Ce qu’est diytracker.ch — et comment y contribuer.',
         'What this is': 'Qu’est-ce que c’est',
@@ -468,6 +470,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Close': 'Chiudi',
         'Apply': 'Applica',
         'Tags': 'Tag',
+        'TODAY': 'OGGI',
 
         'What diytracker.ch is — and how you can contribute.': 'Cos’è diytracker.ch — e come puoi contribuire.',
         'What this is': 'Di cosa si tratta',

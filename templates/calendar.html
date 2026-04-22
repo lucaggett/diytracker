@@ -32,10 +32,12 @@
             {# Date header — uppercase mono, bleed accent. Today gets the HEUTE stamp. #}
             <header class="flex justify-between items-baseline border-b border-ink/40 pb-2 mb-3">
               <div class="font-mono text-xs uppercase tracking-widest {% if is_today %}text-bleed{% else %}text-ink{% endif %}">
-                {{ current_date.strftime('%a · %d.%m.%Y') }}
+                {{ format_date(current_date, "EEE '·' dd.MM.yyyy") }}
               </div>
               {% if is_today %}
-                <svg class="today-stamp w-20 h-8 text-bleed" aria-hidden="true"><use href="#sym-today-stamp"/></svg>
+                <span class="today-stamp inline-block font-mono font-bold text-base uppercase tracking-[0.2em] text-bleed px-3 py-1 border-double border-[5px] border-current leading-none">
+                  {{ _('TODAY') }}
+                </span>
               {% endif %}
             </header>
 

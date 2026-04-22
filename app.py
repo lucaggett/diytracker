@@ -40,11 +40,16 @@ with app.app_context():
     db.create_all()
 
 try:
-    from flask_babel import Babel
+    from flask_babel import Babel, format_date
     babel = Babel(app, locale_selector=select_locale)
 except ImportError:
     app.jinja_env.globals['_'] = gettext
     app.jinja_env.globals['gettext'] = gettext
+
+    def format_date(date, _fmt=None):
+        return date.strftime('%a · %d.%m.%Y')
+
+app.jinja_env.globals['format_date'] = format_date
 
 app.jinja_env.globals['SUPPORTED_LOCALES'] = SUPPORTED_LOCALES
 app.jinja_env.globals['parent_genres'] = parent_genres
