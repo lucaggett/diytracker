@@ -21,13 +21,8 @@
 
           <article class="date-card flyer-card scroll-jitter relative {% if is_today %}border-bleed{% endif %} p-4 pt-5">
 
-            {# Staple flourishes — unique-ish per card via loop.index modulo. #}
-            {% if loop.index0 % 2 == 0 %}
               <svg class="absolute -top-2 left-5 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
               <svg class="absolute -top-2 right-5 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
-            {% else %}
-              <svg class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
-            {% endif %}
 
             {# Date header — uppercase mono, bleed accent. Today gets the HEUTE stamp. #}
             <header class="flex justify-between items-baseline border-b border-ink/40 pb-2 mb-3">
