@@ -25,12 +25,12 @@
               <svg class="absolute -top-2 right-5 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
 
             {# Date header — uppercase mono, bleed accent. Today gets the HEUTE stamp. #}
-            <header class="flex justify-between items-baseline border-b border-ink/40 pb-2 mb-3">
+            <header class="flex flex-wrap justify-between items-baseline gap-x-3 gap-y-2 border-b border-ink/40 pb-2 mb-3">
               <div class="font-mono text-xs uppercase tracking-widest {% if is_today %}text-bleed{% else %}text-ink{% endif %}">
                 {{ format_date(current_date, "EEE '·' dd.MM.yyyy") }}
               </div>
               {% if is_today %}
-                <span class="today-stamp inline-block font-mono font-bold text-base uppercase tracking-[0.2em] text-bleed px-3 py-1 border-double border-[5px] border-current leading-none">
+                <span class="today-stamp inline-block font-mono font-bold text-xs sm:text-base uppercase tracking-[0.15em] sm:tracking-[0.2em] text-bleed px-2 sm:px-3 py-1 border-double border-[4px] sm:border-[5px] border-current leading-none">
                   {{ _('TODAY') }}
                 </span>
               {% endif %}
