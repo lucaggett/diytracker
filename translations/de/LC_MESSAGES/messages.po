@@ -112,7 +112,7 @@ msgstr "Nachricht"
 
 #: templates/_partials/header_public.html:16 templates/about.html:3
 msgid "About"
-msgstr "About"
+msgstr "Info"
 
 #: templates/about.html:4
 msgid "What diytracker.ch is — and how you can contribute."
