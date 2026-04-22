@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 21:49+0200\n"
+"POT-Creation-Date: 2026-04-23 00:06+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -39,12 +39,12 @@ msgstr "Festival"
 msgid "Doors Open Time"
 msgstr "Doors Open Time"
 
-#: forms.py:72 forms.py:99 templates/calendar.html:95
-#: templates/calendar.html:207 templates/event_queue.html:101
+#: forms.py:72 forms.py:99 templates/calendar.html:90
+#: templates/calendar.html:202 templates/event_queue.html:101
 msgid "Genre"
 msgstr "Genre"
 
-#: forms.py:73 forms.py:100 templates/calendar.html:96
+#: forms.py:73 forms.py:100 templates/calendar.html:91
 #: templates/event_queue.html:105
 msgid "Acts"
 msgstr "Acts"
@@ -61,7 +61,7 @@ msgstr "Ticket Price"
 msgid "Ticket Link"
 msgstr "Ticket Link"
 
-#: forms.py:81 forms.py:108 templates/admin.html:74 templates/calendar.html:92
+#: forms.py:81 forms.py:108 templates/admin.html:74 templates/calendar.html:87
 #: templates/event_queue.html:49
 msgid "Venue"
 msgstr "Venue"
@@ -78,7 +78,7 @@ msgstr "Venue Address"
 msgid "City"
 msgstr "City"
 
-#: forms.py:88 forms.py:115 templates/calendar.html:206
+#: forms.py:88 forms.py:115 templates/calendar.html:201
 msgid "Canton"
 msgstr "Canton"
 
@@ -227,7 +227,7 @@ msgstr "Weekly Image"
 msgid "ID"
 msgstr "ID"
 
-#: templates/admin.html:73 templates/calendar.html:91
+#: templates/admin.html:73 templates/calendar.html:86
 #: templates/event_queue.html:47
 msgid "Date"
 msgstr "Date"
@@ -272,47 +272,47 @@ msgstr ""
 "DIY event tracker for Switzerland — concerts, festivals and underground "
 "shows."
 
-#: templates/calendar.html:39
+#: templates/calendar.html:34
 msgid "TODAY"
 msgstr "TODAY"
 
-#: templates/calendar.html:93
+#: templates/calendar.html:88
 msgid "Address"
 msgstr "Address"
 
-#: templates/calendar.html:94
+#: templates/calendar.html:89
 msgid "Location"
 msgstr "Location"
 
-#: templates/calendar.html:97
+#: templates/calendar.html:92
 msgid "Price"
 msgstr "Price"
 
-#: templates/calendar.html:100
+#: templates/calendar.html:95
 msgid "Tickets"
 msgstr "Tickets"
 
-#: templates/calendar.html:109
+#: templates/calendar.html:104
 msgid "no events"
 msgstr "no events"
 
-#: templates/calendar.html:121
+#: templates/calendar.html:116
 msgid "Open filters"
 msgstr "Open filters"
 
-#: templates/calendar.html:135
+#: templates/calendar.html:130
 msgid "FILTER"
 msgstr "FILTER"
 
-#: templates/calendar.html:141
+#: templates/calendar.html:136
 msgid "Close"
 msgstr "Close"
 
-#: templates/calendar.html:144
+#: templates/calendar.html:139
 msgid "Apply"
 msgstr "Apply"
 
-#: templates/calendar.html:208
+#: templates/calendar.html:203
 msgid "Tags"
 msgstr "Tags"
 
