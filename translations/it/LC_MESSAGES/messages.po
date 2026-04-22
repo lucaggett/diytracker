@@ -614,7 +614,7 @@ msgstr "Lingua"
 #: templates/_partials/header_public.html:9
 #: templates/_partials/nav_admin.html:4
 msgid "Calendar"
-msgstr "Calendario"
+msgstr "Agenda"
 
 #: templates/_partials/header_public.html:12
 #: templates/_partials/nav_admin.html:9

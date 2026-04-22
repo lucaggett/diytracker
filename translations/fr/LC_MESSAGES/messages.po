@@ -474,7 +474,7 @@ msgstr "Aucun événement en attente d’approbation."
 
 #: templates/_partials/header_public.html:14 templates/login.html:3
 msgid "Login"
-msgstr "Connexion"
+msgstr "Entrer"
 
 #: templates/login.html:11
 msgid "LOGIN"
@@ -612,12 +612,12 @@ msgstr "Langue"
 #: templates/_partials/header_public.html:9
 #: templates/_partials/nav_admin.html:4
 msgid "Calendar"
-msgstr "Calendrier"
+msgstr "Agenda"
 
 #: templates/_partials/header_public.html:12
 #: templates/_partials/nav_admin.html:9
 msgid "Logout"
-msgstr "Déconnexion"
+msgstr "Sortir"
 
 #: templates/_partials/nav_admin.html:8
 msgid "Submit"
