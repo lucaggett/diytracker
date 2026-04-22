@@ -9,6 +9,8 @@
     {% set lang = (g.get('locale', 'de') if g else 'de') %}
     {% if lang == 'fr' %}
       {% include 'legal/datenschutz_fr.html' %}
+    {% elif lang == 'it' %}
+      {% include 'legal/datenschutz_it.html' %}
     {% elif lang == 'en' %}
       {% include 'legal/datenschutz_en.html' %}
     {% else %}

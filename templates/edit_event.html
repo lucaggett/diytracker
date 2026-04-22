@@ -1,6 +1,6 @@
 {% extends 'base_admin.html' %}
 
-{% block title %}Edit Event · diytracker.ch{% endblock %}
+{% block title %}{{ _('Edit Event') }} · diytracker.ch{% endblock %}
 
 {% block head_extra %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
@@ -10,15 +10,15 @@
 {% block content %}
 <header class="mb-6 flex items-end justify-between">
   <div>
-    <p class="text-xs uppercase tracking-widest text-smudge">Event #{{ event.id }}</p>
-    <h1 class="font-richEatin text-4xl mis-reg leading-none">EDIT EVENT</h1>
+    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Event') }} #{{ event.id }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('EDIT EVENT') }}</h1>
   </div>
-  <a href="{{ url_for('admin') }}" class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">← back</a>
+  <a href="{{ url_for('admin') }}" class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">← {{ _('back') }}</a>
 </header>
 
 {% if form.errors %}
   <div class="border-2 border-bleed bg-paper p-4 mb-6">
-    <p class="text-xs uppercase tracking-widest text-bleed mb-2">Validation</p>
+    <p class="text-xs uppercase tracking-widest text-bleed mb-2">{{ _('Validation') }}</p>
     <ul class="list-disc pl-5 text-sm">
       {% for field, errors in form.errors.items() %}
         {% for error in errors %}
@@ -36,7 +36,7 @@
   {% set lbl = "block text-xs uppercase tracking-widest text-smudge mb-1" %}
   {% set inp = "border-2 border-ink bg-paper px-3 py-2 w-full text-sm focus:outline-none focus:border-bleed" %}
 
-  <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4">Event Details</h3>
+  <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4">{{ _('Event Details') }}</h3>
 
   <div class="mb-4">
     {{ form.name.label(class=lbl) }}
@@ -50,11 +50,11 @@
 
   <div class="mb-4">
     <label for="{{ form.end_date.id }}" id="end-date-label" class="{{ lbl }}">
-      End Date
+      {{ _('End Date') }}
       {% if form.is_festival.data %}
-        <span class="normal-case text-bleed">(required for festivals)</span>
+        <span class="normal-case text-bleed">{{ _('(required for festivals)') }}</span>
       {% else %}
-        <span class="normal-case text-smudge">(optional)</span>
+        <span class="normal-case text-smudge">{{ _('(optional)') }}</span>
       {% endif %}
     </label>
     {{ form.end_date(class=inp) }}
@@ -63,7 +63,7 @@
   <div class="mb-4 flex items-center gap-3">
     {{ form.is_festival(id="is_festival", class="w-4 h-4 cursor-pointer accent-bleed") }}
     {{ form.is_festival.label(class="text-xs uppercase tracking-widest cursor-pointer") }}
-    <small class="text-xs text-smudge">Festivals require an end date.</small>
+    <small class="text-xs text-smudge">{{ _('Festivals require an end date.') }}</small>
   </div>
 
   <div class="mb-4">
@@ -74,7 +74,7 @@
   <div class="mb-4">
     {{ form.genre.label(class=lbl) }}
     {{ form.genre(class=inp) }}
-    <small class="text-xs text-smudge">Type a genre and press Enter to add it.</small>
+    <small class="text-xs text-smudge">{{ _('Type a genre and press Enter to add it.') }}</small>
   </div>
 
   <div class="mb-4">
@@ -82,7 +82,7 @@
     {{ form.acts(class=inp) }}
   </div>
 
-  <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4 mt-6">Ticket Details</h3>
+  <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4 mt-6">{{ _('Ticket Details') }}</h3>
 
   <div class="mb-4">
     {{ form.ticket_price.label(class=lbl) }}
@@ -94,12 +94,12 @@
     {{ form.ticket_link(class=inp) }}
   </div>
 
-  <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4 mt-6">Venue Details</h3>
+  <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4 mt-6">{{ _('Venue Details') }}</h3>
 
   <div class="mb-4">
-    <label for="venue-select" class="{{ lbl }}">Select Venue</label>
+    <label for="venue-select" class="{{ lbl }}">{{ _('Select Venue') }}</label>
     <select id="venue-select" class="{{ inp }}">
-      <option value="new">New Venue</option>
+      <option value="new">{{ _('New Venue') }}</option>
     </select>
   </div>
 
@@ -134,13 +134,13 @@
     {{ form.venue_coords(id="venue_coords", class=inp) }}
   </div>
 
-  <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4 mt-6">Flyer</h3>
+  <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4 mt-6">{{ _('Flyer') }}</h3>
 
   <div class="mb-4">
     {{ form.flyer.label(class=lbl) }}
     {{ form.flyer(class=inp) }}
     {% if event.flyer %}
-      <p class="text-xs text-smudge mt-1">Current: {{ event.flyer }}</p>
+      <p class="text-xs text-smudge mt-1">{{ _('Current:') }} {{ event.flyer }}</p>
     {% endif %}
     <div id="flyer-preview" class="mt-2"></div>
   </div>
@@ -148,10 +148,10 @@
   <div class="flex items-center gap-4 mt-6">
     <button type="submit"
             class="bg-ink text-paper text-xs uppercase tracking-widest px-6 py-3 hover:bg-bleed transition-colors">
-      Update Event →
+      {{ _('Update Event') }} →
     </button>
     <a href="{{ url_for('admin') }}"
-       class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">Cancel</a>
+       class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('Cancel') }}</a>
   </div>
 </form>
 {% endblock %}
@@ -177,8 +177,8 @@
                     allowHTML: false,
                     duplicateItemsAllowed: false,
                     addItems: true,
-                    addItemText: (value) => `Press Enter to add "<b>${value}</b>"`,
-                    placeholderValue: 'Search or type to add genres',
+                    addItemText: (value) => `{{ _('Press Enter to add') }} "<b>${value}</b>"`,
+                    placeholderValue: {{ _('Search or type to add genres')|tojson }},
                 });
                 genreChoices.setChoices(
                     data.genres.map(g => ({
@@ -235,9 +235,9 @@
 
         function updateEndDateLabel() {
             if (festivalCheckbox.checked) {
-                endDateLabel.innerHTML = 'End Date <span class="normal-case text-bleed">(required for festivals)</span>';
+                endDateLabel.innerHTML = {{ _('End Date')|tojson }} + ' <span class="normal-case text-bleed">' + {{ _('(required for festivals)')|tojson }} + '</span>';
             } else {
-                endDateLabel.innerHTML = 'End Date <span class="normal-case text-smudge">(optional)</span>';
+                endDateLabel.innerHTML = {{ _('End Date')|tojson }} + ' <span class="normal-case text-smudge">' + {{ _('(optional)')|tojson }} + '</span>';
             }
         }
 

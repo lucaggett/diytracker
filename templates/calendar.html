@@ -1,7 +1,7 @@
 {% extends 'base_public.html' %}
 
-{% block title %}diytracker.ch · Schweizer DIY-Konzerte{% endblock %}
-{% block meta_description %}DIY Event Tracker Schweiz — Konzerte, Festivals und Shows aus dem Underground.{% endblock %}
+{% block title %}{{ _('diytracker.ch · Swiss DIY concerts') }}{% endblock %}
+{% block meta_description %}{{ _('DIY event tracker for Switzerland — concerts, festivals and underground shows.') }}{% endblock %}
 
 {# Activates the crosshair cursor (only on hover-capable, fine-pointer devices). #}
 {% block body_class %}calendar-cursor{% endblock %}
@@ -86,16 +86,16 @@
                              alt="{{ event.name }}"
                              class="w-full h-auto border border-ink mb-3">
                       {% endif %}
-                      <p><span class="text-smudge uppercase tracking-wider text-xs">Datum</span> {{ event.date.strftime('%Y-%m-%d') }} · {{ event.doors.strftime('%H:%M') }}</p>
-                      <p><span class="text-smudge uppercase tracking-wider text-xs">Venue</span> {{ event.venue.name }}</p>
-                      {% if event.venue.address %}<p><span class="text-smudge uppercase tracking-wider text-xs">Adresse</span> {{ event.venue.address }}</p>{% endif %}
-                      <p><span class="text-smudge uppercase tracking-wider text-xs">Ort</span> {{ event.venue.plz }} {{ event.venue.city }}, {{ event.venue.canton }}</p>
-                      {% if event.genre %}<p><span class="text-smudge uppercase tracking-wider text-xs">Genre</span> {{ event.genre }}</p>{% endif %}
-                      {% if event.acts %}<p><span class="text-smudge uppercase tracking-wider text-xs">Acts</span> {{ event.acts }}</p>{% endif %}
-                      {% if event.ticket_price %}<p><span class="text-smudge uppercase tracking-wider text-xs">Preis</span> {{ event.ticket_price }}</p>{% endif %}
+                      <p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Date') }}</span> {{ event.date.strftime('%Y-%m-%d') }} · {{ event.doors.strftime('%H:%M') }}</p>
+                      <p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Venue') }}</span> {{ event.venue.name }}</p>
+                      {% if event.venue.address %}<p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Address') }}</span> {{ event.venue.address }}</p>{% endif %}
+                      <p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Location') }}</span> {{ event.venue.plz }} {{ event.venue.city }}, {{ event.venue.canton }}</p>
+                      {% if event.genre %}<p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Genre') }}</span> {{ event.genre }}</p>{% endif %}
+                      {% if event.acts %}<p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Acts') }}</span> {{ event.acts }}</p>{% endif %}
+                      {% if event.ticket_price %}<p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Price') }}</span> {{ event.ticket_price }}</p>{% endif %}
                       {% if event.ticket_link %}
                         <p>
-                          <span class="text-smudge uppercase tracking-wider text-xs">Tickets</span>
+                          <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Tickets') }}</span>
                           <a href="{{ event.ticket_link }}" target="_blank" rel="noopener"
                              class="text-bleed underline break-all">{{ event.ticket_link }}</a>
                         </p>
@@ -104,7 +104,7 @@
                   </div>
                 {% endfor %}
               {% else %}
-                <p class="font-mono text-xs text-smudge italic">— keine Anlässe —</p>
+                <p class="font-mono text-xs text-smudge italic">— {{ _('no events') }} —</p>
               {% endif %}
             </div>
           </article>
@@ -116,7 +116,7 @@
 
 {# Floating filter button — same id, restyled. #}
 <button id="filter-button"
-        aria-label="Filter öffnen"
+        aria-label="{{ _('Open filters') }}"
         class="fixed bottom-5 right-5 bg-ink text-paper border-2 border-ink p-3 shadow-[3px_3px_0_var(--bleed)] hover:bg-bleed hover:shadow-[3px_3px_0_var(--ink)] transition-colors z-40">
   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -130,16 +130,16 @@
     <svg class="absolute -top-3 left-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
     <svg class="absolute -top-3 right-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
 
-    <h2 class="font-richEatin text-3xl mis-reg leading-none mb-4">FILTER</h2>
+    <h2 class="font-richEatin text-3xl mis-reg leading-none mb-4">{{ _('FILTER') }}</h2>
     <div id="filter-categories" class="font-mono text-sm">
       {# Populated via JavaScript below. #}
     </div>
     <div class="flex justify-end gap-2 mt-5 pt-4 border-t border-ink">
       <button onclick="closeFilterModal()" class="font-mono text-xs uppercase tracking-widest border-2 border-ink bg-paper text-ink px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
-        Schliessen
+        {{ _('Close') }}
       </button>
       <button id="apply-filters" class="font-mono text-xs uppercase tracking-widest border-2 border-ink bg-ink text-paper px-4 py-2 hover:bg-bleed transition-colors">
-        Anwenden
+        {{ _('Apply') }}
       </button>
     </div>
   </div>
@@ -200,7 +200,11 @@
 
         // Populate filter categories and options
         const filterCategoriesContainer = document.getElementById('filter-categories');
-        const categoryLabels = { 'canton': 'Kanton', 'genre': 'Genre', 'various': 'Tags' };
+        const categoryLabels = {
+            'canton': {{ _('Canton')|tojson }},
+            'genre': {{ _('Genre')|tojson }},
+            'various': {{ _('Tags')|tojson }}
+        };
         const cantonNames = {
             'AG': 'Aargau', 'AI': 'Appenzell Innerrhoden', 'AR': 'Appenzell Ausserrhoden',
             'BE': 'Bern', 'BL': 'Basel-Landschaft', 'BS': 'Basel-Stadt',

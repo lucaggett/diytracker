@@ -1,28 +1,26 @@
 {% extends 'base_public.html' %}
 
-{% block title %}About · diytracker.ch{% endblock %}
-{% block meta_description %}Was ist diytracker.ch — und wie du mitmachen kannst.{% endblock %}
+{% block title %}{{ _('About') }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ _('What diytracker.ch is — and how you can contribute.') }}{% endblock %}
 
 {% block content %}
 <article class="max-w-2xl mx-auto px-4 py-10">
 
   <header class="mb-10">
-    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-2">Was ist das hier</p>
-    <h1 class="font-richEatin text-5xl md:text-7xl mis-reg leading-none">ABOUT</h1>
+    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-2">{{ _('What this is') }}</p>
+    <h1 class="font-richEatin text-5xl md:text-7xl mis-reg leading-none">{{ _('ABOUT') }}</h1>
   </header>
 
   <p class="leading-relaxed mb-10">
-    diytracker.ch ist ein nicht-kommerzieller Veranstaltungskalender für DIY-, Rock-, Metal-
-    und Punk-Konzerte in der Schweiz.
+    {{ _('diytracker.ch is a non-commercial event calendar for DIY, rock, metal and punk concerts in Switzerland.') }}
   </p>
 
   <div class="torn-divider w-full text-ink mb-10" aria-hidden="true"></div>
 
   <section>
-    <h2 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4">Mitmachen</h2>
+    <h2 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4">{{ _('Contribute') }}</h2>
     <p class="leading-relaxed mb-6">
-      Die Seite wird von Hand gepflegt. Wir freuen uns über neue Mitwirkende —
-      schreib uns kurz, wer du bist und wie du dir deine Mithilfe vorstellst.
+      {{ _('The site is maintained by hand. We welcome new contributors — tell us briefly who you are and how you would like to help.') }}
     </p>
 
     <form method="POST" class="flyer-card p-6 relative space-y-4">
@@ -39,7 +37,7 @@
 
       <div>
         {{ form.name.label(class="block font-mono text-xs uppercase tracking-widest text-smudge mb-1") }}
-        {{ form.name(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", placeholder="Vor- und Nachname") }}
+        {{ form.name(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", placeholder=_('First and last name')) }}
         {% if form.name.errors %}
           <p class="text-bleed text-xs font-mono mt-1">{{ form.name.errors[0] }}</p>
         {% endif %}
@@ -47,7 +45,7 @@
 
       <div>
         {{ form.email.label(class="block font-mono text-xs uppercase tracking-widest text-smudge mb-1") }}
-        {{ form.email(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", placeholder="dein@mail.ch", type="email") }}
+        {{ form.email(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", placeholder=_('you@example.com'), type="email") }}
         {% if form.email.errors %}
           <p class="text-bleed text-xs font-mono mt-1">{{ form.email.errors[0] }}</p>
         {% endif %}
@@ -55,7 +53,7 @@
 
       <div>
         {{ form.message.label(class="block font-mono text-xs uppercase tracking-widest text-smudge mb-1") }}
-        {{ form.message(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", rows="5", placeholder="Was machsch, was wötsch biträge?") }}
+        {{ form.message(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", rows="5", placeholder=_('What do you do, what would you like to contribute?')) }}
         {% if form.message.errors %}
           <p class="text-bleed text-xs font-mono mt-1">{{ form.message.errors[0] }}</p>
         {% endif %}
@@ -63,7 +61,7 @@
 
       <button type="submit"
               class="w-full bg-ink text-paper font-mono uppercase tracking-widest text-sm py-3 hover:bg-bleed transition-colors">
-        Senden →
+        {{ _('Send') }} →
       </button>
     </form>
   </section>

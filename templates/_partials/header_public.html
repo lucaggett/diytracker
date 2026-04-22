@@ -6,15 +6,15 @@
       <h1 class="font-richEatin text-5xl md:text-6xl text-ink mis-reg leading-none center">DIYTRACKER</h1>
     </a>
     <nav class="mt-4 flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs uppercase tracking-wider">
-      <a href="{{ url_for('calendar_view') }}" class="hover:text-bleed underline-offset-4 hover:underline">Kalender</a>
+      <a href="{{ url_for('calendar_view') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Calendar') }}</a>
       {% if session.get('user_id') %}
-        <a href="{{ url_for('submit_event_link') }}" class="hover:text-bleed underline-offset-4 hover:underline">Einreichen</a>
-        <a href="{{ url_for('event_queue') }}" class="hover:text-bleed underline-offset-4 hover:underline">Queue</a>
-        <a href="{{ url_for('logout') }}" class="hover:text-bleed underline-offset-4 hover:underline">Logout</a>
+        <a href="{{ url_for('submit_event_link') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Submit') }}</a>
+        <a href="{{ url_for('event_queue') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Queue') }}</a>
+        <a href="{{ url_for('logout') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Logout') }}</a>
       {% else %}
-        <a href="{{ url_for('login') }}" class="hover:text-bleed underline-offset-4 hover:underline">Login</a>
+        <a href="{{ url_for('login') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('Login') }}</a>
       {% endif %}
-      <a href="{{ url_for('about') }}" class="hover:text-bleed underline-offset-4 hover:underline">About</a>
+      <a href="{{ url_for('about') }}" class="hover:text-bleed underline-offset-4 hover:underline">{{ _('About') }}</a>
     </nav>
   </div>
   <div class="torn-divider w-full text-ink" aria-hidden="true"></div>

@@ -5,12 +5,728 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-21 00:00+0000\n"
+"POT-Creation-Date: 2026-04-22 12:21+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: app.py:316
+msgid "Invalid email or password."
+msgstr "Invalid email or password."
+
+#: app.py:330
+msgid "This invite link is invalid or has expired."
+msgstr "This invite link is invalid or has expired."
+
+#: app.py:427
+msgid ""
+"Your message could not be sent — please write to us directly at "
+"kontakt@diytracker.ch."
+msgstr ""
+"Your message could not be sent — please write to us directly at "
+"kontakt@diytracker.ch."
+
+#: app.py:433
+msgid "Thanks! We will get back to you as soon as possible."
+msgstr "Thanks! We will get back to you as soon as possible."
+
+#: app.py:510
+msgid "Invalid event selection."
+msgstr "Invalid event selection."
+
+#: app.py:565
+msgid "This event already exists."
+msgstr "This event already exists."
+
+#: app.py:593
+msgid "Event approved and added to calendar!"
+msgstr "Event approved and added to calendar!"
+
+#: app.py:649
+msgid "Please provide all required venue details for a new venue."
+msgstr "Please provide all required venue details for a new venue."
+
+#: app.py:670
+msgid "Venue already exists. Using existing venue."
+msgstr "Venue already exists. Using existing venue."
+
+#: app.py:674 app.py:1093
+msgid "Selected venue does not exist."
+msgstr "Selected venue does not exist."
+
+#: app.py:699
+msgid "Event submitted successfully!"
+msgstr "Event submitted successfully!"
+
+#: app.py:1122
+msgid "Event updated successfully!"
+msgstr "Event updated successfully!"
+
+#: app.py:1136
+msgid "Event deleted successfully!"
+msgstr "Event deleted successfully!"
+
+#: forms.py:67 forms.py:94 templates/event_queue.html:89
+msgid "Event Name"
+msgstr "Event Name"
+
+#: forms.py:68 forms.py:95
+msgid "Event Date"
+msgstr "Event Date"
+
+#: forms.py:69 forms.py:96 templates/edit_event.html:53
+#: templates/edit_event.html:238 templates/edit_event.html:240
+#: templates/submit_event.html:51 templates/submit_event.html:216
+#: templates/submit_event.html:218
+msgid "End Date"
+msgstr "End Date"
+
+#: forms.py:70 forms.py:97
+msgid "Festival"
+msgstr "Festival"
+
+#: forms.py:71 forms.py:98
+msgid "Doors Open Time"
+msgstr "Doors Open Time"
+
+#: forms.py:72 forms.py:99 templates/calendar.html:93
+#: templates/calendar.html:205 templates/event_queue.html:101
+msgid "Genre"
+msgstr "Genre"
+
+#: forms.py:73 forms.py:100 templates/calendar.html:94
+#: templates/event_queue.html:105
+msgid "Acts"
+msgstr "Acts"
+
+#: forms.py:74 forms.py:101 templates/edit_event.html:137
+msgid "Flyer"
+msgstr "Flyer"
+
+#: forms.py:77 forms.py:104 templates/event_queue.html:125
+msgid "Ticket Price"
+msgstr "Ticket Price"
+
+#: forms.py:78 forms.py:105
+msgid "Ticket Link"
+msgstr "Ticket Link"
+
+#: forms.py:81 forms.py:108 templates/admin.html:74 templates/calendar.html:90
+#: templates/event_queue.html:49
+msgid "Venue"
+msgstr "Venue"
+
+#: forms.py:85 forms.py:112 templates/event_queue.html:109
+msgid "Venue Name"
+msgstr "Venue Name"
+
+#: forms.py:86 forms.py:113
+msgid "Venue Address"
+msgstr "Venue Address"
+
+#: forms.py:87 forms.py:114 templates/event_queue.html:113
+msgid "City"
+msgstr "City"
+
+#: forms.py:88 forms.py:115 templates/calendar.html:204
+msgid "Canton"
+msgstr "Canton"
+
+#: forms.py:89 forms.py:116
+msgid "ZIP Code"
+msgstr "ZIP Code"
+
+#: forms.py:90 forms.py:117
+msgid "Coordinates"
+msgstr "Coordinates"
+
+#: forms.py:121 forms.py:136
+msgid "Email"
+msgstr "Email"
+
+#: forms.py:122 forms.py:130
+msgid "Password"
+msgstr "Password"
+
+#: forms.py:131
+msgid "Confirm Password"
+msgstr "Confirm Password"
+
+#: forms.py:135 templates/admin.html:72
+msgid "Name"
+msgstr "Name"
+
+#: forms.py:137
+msgid "Message"
+msgstr "Message"
+
+#: templates/_partials/header_public.html:17 templates/about.html:3
+msgid "About"
+msgstr "About"
+
+#: templates/about.html:4
+msgid "What diytracker.ch is — and how you can contribute."
+msgstr "What diytracker.ch is — and how you can contribute."
+
+#: templates/about.html:10
+msgid "What this is"
+msgstr "What this is"
+
+#: templates/about.html:11
+msgid "ABOUT"
+msgstr "ABOUT"
+
+#: templates/about.html:15
+msgid ""
+"diytracker.ch is a non-commercial event calendar for DIY, rock, metal and"
+" punk concerts in Switzerland."
+msgstr ""
+"diytracker.ch is a non-commercial event calendar for DIY, rock, metal and"
+" punk concerts in Switzerland."
+
+#: templates/about.html:21
+msgid "Contribute"
+msgstr "Contribute"
+
+#: templates/about.html:23
+msgid ""
+"The site is maintained by hand. We welcome new contributors — tell us "
+"briefly who you are and how you would like to help."
+msgstr ""
+"The site is maintained by hand. We welcome new contributors — tell us "
+"briefly who you are and how you would like to help."
+
+#: templates/about.html:40
+msgid "First and last name"
+msgstr "First and last name"
+
+#: templates/about.html:48
+msgid "you@example.com"
+msgstr "you@example.com"
+
+#: templates/about.html:56
+msgid "What do you do, what would you like to contribute?"
+msgstr "What do you do, what would you like to contribute?"
+
+#: templates/about.html:64
+msgid "Send"
+msgstr "Send"
+
+#: templates/_partials/nav_admin.html:6 templates/admin.html:3
+msgid "Admin"
+msgstr "Admin"
+
+#: templates/admin.html:8
+msgid "Admin console"
+msgstr "Admin console"
+
+#: templates/admin.html:9
+msgid "MANAGE EVENTS"
+msgstr "MANAGE EVENTS"
+
+#: templates/admin.html:11 templates/event_queue.html:38
+msgid "events"
+msgstr "events"
+
+#: templates/admin.html:11 templates/event_queue.html:38
+msgid "event"
+msgstr "event"
+
+#: templates/admin.html:11
+msgid "live"
+msgstr "live"
+
+#: templates/admin.html:21
+msgid "Scraping in progress…"
+msgstr "Scraping in progress…"
+
+#: templates/admin.html:26
+msgid "Auto-scrape once per hour."
+msgstr "Auto-scrape once per hour."
+
+#: templates/admin.html:29
+msgid "Last:"
+msgstr "Last:"
+
+#: templates/admin.html:34
+msgid "Next:"
+msgstr "Next:"
+
+#: templates/admin.html:40
+msgid "No scrape recorded yet."
+msgstr "No scrape recorded yet."
+
+#: templates/admin.html:43
+msgid "Drop us a line if an immediate scrape is needed."
+msgstr "Drop us a line if an immediate scrape is needed."
+
+#: templates/admin.html:49
+msgid "Export Excel"
+msgstr "Export Excel"
+
+#: templates/admin.html:54
+msgid "Week of"
+msgstr "Week of"
+
+#: templates/admin.html:60
+msgid "Weekly Image"
+msgstr "Weekly Image"
+
+#: templates/admin.html:71
+msgid "ID"
+msgstr "ID"
+
+#: templates/admin.html:73 templates/calendar.html:89
+#: templates/event_queue.html:47
+msgid "Date"
+msgstr "Date"
+
+#: templates/admin.html:75 templates/event_queue.html:51
+msgid "Actions"
+msgstr "Actions"
+
+#: templates/admin.html:87 templates/event_queue.html:78
+msgid "Edit"
+msgstr "Edit"
+
+#: templates/admin.html:92
+msgid "Delete this event?"
+msgstr "Delete this event?"
+
+#: templates/admin.html:92
+msgid "Delete"
+msgstr "Delete"
+
+#: templates/admin.html:118
+msgid "Scrape complete — reloading…"
+msgstr "Scrape complete — reloading…"
+
+#: templates/admin.html:122
+msgid "Scraping…"
+msgstr "Scraping…"
+
+#: templates/admin.html:128
+msgid "left"
+msgstr "left"
+
+#: templates/calendar.html:3
+msgid "diytracker.ch · Swiss DIY concerts"
+msgstr "diytracker.ch · Swiss DIY concerts"
+
+#: templates/calendar.html:4
+msgid ""
+"DIY event tracker for Switzerland — concerts, festivals and underground "
+"shows."
+msgstr ""
+"DIY event tracker for Switzerland — concerts, festivals and underground "
+"shows."
+
+#: templates/calendar.html:91
+msgid "Address"
+msgstr "Address"
+
+#: templates/calendar.html:92
+msgid "Location"
+msgstr "Location"
+
+#: templates/calendar.html:95
+msgid "Price"
+msgstr "Price"
+
+#: templates/calendar.html:98
+msgid "Tickets"
+msgstr "Tickets"
+
+#: templates/calendar.html:107
+msgid "no events"
+msgstr "no events"
+
+#: templates/calendar.html:119
+msgid "Open filters"
+msgstr "Open filters"
+
+#: templates/calendar.html:133
+msgid "FILTER"
+msgstr "FILTER"
+
+#: templates/calendar.html:139
+msgid "Close"
+msgstr "Close"
+
+#: templates/calendar.html:142
+msgid "Apply"
+msgstr "Apply"
+
+#: templates/calendar.html:206
+msgid "Tags"
+msgstr "Tags"
+
+#: templates/edit_event.html:3
+msgid "Edit Event"
+msgstr "Edit Event"
+
+#: templates/edit_event.html:13 templates/event_queue.html:48
+msgid "Event"
+msgstr "Event"
+
+#: templates/edit_event.html:14
+msgid "EDIT EVENT"
+msgstr "EDIT EVENT"
+
+#: templates/edit_event.html:16
+msgid "back"
+msgstr "back"
+
+#: templates/edit_event.html:21 templates/submit_event.html:18
+msgid "Validation"
+msgstr "Validation"
+
+#: templates/edit_event.html:39 templates/submit_event.html:36
+msgid "Event Details"
+msgstr "Event Details"
+
+#: templates/edit_event.html:55 templates/edit_event.html:238
+#: templates/submit_event.html:216
+msgid "(required for festivals)"
+msgstr "(required for festivals)"
+
+#: templates/edit_event.html:57 templates/edit_event.html:240
+#: templates/submit_event.html:51 templates/submit_event.html:218
+msgid "(optional)"
+msgstr "(optional)"
+
+#: templates/edit_event.html:66 templates/submit_event.html:59
+msgid "Festivals require an end date."
+msgstr "Festivals require an end date."
+
+#: templates/edit_event.html:77 templates/submit_event.html:70
+msgid "Type a genre and press Enter to add it."
+msgstr "Type a genre and press Enter to add it."
+
+#: templates/edit_event.html:85 templates/submit_event.html:79
+msgid "Ticket Details"
+msgstr "Ticket Details"
+
+#: templates/edit_event.html:97 templates/submit_event.html:92
+msgid "Venue Details"
+msgstr "Venue Details"
+
+#: templates/edit_event.html:100 templates/submit_event.html:95
+msgid "Select Venue"
+msgstr "Select Venue"
+
+#: templates/edit_event.html:102 templates/submit_event.html:97
+msgid "New Venue"
+msgstr "New Venue"
+
+#: templates/edit_event.html:143
+msgid "Current:"
+msgstr "Current:"
+
+#: templates/edit_event.html:151
+msgid "Update Event"
+msgstr "Update Event"
+
+#: templates/edit_event.html:154 templates/event_queue.html:148
+msgid "Cancel"
+msgstr "Cancel"
+
+#: templates/edit_event.html:180 templates/submit_event.html:167
+msgid "Press Enter to add"
+msgstr "Press Enter to add"
+
+#: templates/edit_event.html:181 templates/submit_event.html:168
+msgid "Search or type to add genres"
+msgstr "Search or type to add genres"
+
+#: templates/_partials/header_public.html:12
+#: templates/_partials/nav_admin.html:7 templates/event_queue.html:3
+msgid "Queue"
+msgstr "Queue"
+
+#: templates/event_queue.html:7
+msgid "Scraped event approval"
+msgstr "Scraped event approval"
+
+#: templates/event_queue.html:8
+msgid "QUEUE"
+msgstr "QUEUE"
+
+#: templates/event_queue.html:14
+msgid "From"
+msgstr "From"
+
+#: templates/event_queue.html:19
+msgid "To"
+msgstr "To"
+
+#: templates/event_queue.html:24
+msgid "Source"
+msgstr "Source"
+
+#: templates/event_queue.html:26
+msgid "All"
+msgstr "All"
+
+#: templates/event_queue.html:33
+msgid "Filter"
+msgstr "Filter"
+
+#: templates/event_queue.html:36
+msgid "Reset"
+msgstr "Reset"
+
+#: templates/event_queue.html:50
+msgid "Genres"
+msgstr "Genres"
+
+#: templates/event_queue.html:74
+msgid "Approve"
+msgstr "Approve"
+
+#: templates/event_queue.html:93
+msgid "Date (YYYY-MM-DD)"
+msgstr "Date (YYYY-MM-DD)"
+
+#: templates/event_queue.html:97
+msgid "Doors Open (HH:MM)"
+msgstr "Doors Open (HH:MM)"
+
+#: templates/event_queue.html:117
+msgid "Postal Code"
+msgstr "Postal Code"
+
+#: templates/event_queue.html:121
+msgid "Street Address"
+msgstr "Street Address"
+
+#: templates/event_queue.html:129
+msgid "Ticket URL"
+msgstr "Ticket URL"
+
+#: templates/event_queue.html:133
+msgid "Source URL"
+msgstr "Source URL"
+
+#: templates/event_queue.html:137
+msgid "Description"
+msgstr "Description"
+
+#: templates/event_queue.html:144
+msgid "Approve with Changes"
+msgstr "Approve with Changes"
+
+#: templates/event_queue.html:160
+msgid "No events awaiting approval."
+msgstr "No events awaiting approval."
+
+#: templates/_partials/header_public.html:15 templates/login.html:3
+msgid "Login"
+msgstr "Login"
+
+#: templates/login.html:11
+msgid "LOGIN"
+msgstr "LOGIN"
+
+#: templates/login.html:34
+msgid "Log in"
+msgstr "Log in"
+
+#: templates/set_password.html:3
+msgid "Set password"
+msgstr "Set password"
+
+#: templates/set_password.html:11
+msgid "SET PASSWORD"
+msgstr "SET PASSWORD"
+
+#: templates/set_password.html:12
+msgid "One time only — log in normally afterwards."
+msgstr "One time only — log in normally afterwards."
+
+#: templates/set_password.html:35
+msgid "Save password"
+msgstr "Save password"
+
+#: templates/submit_event.html:3 templates/submit_event.html:143
+msgid "Submit Event"
+msgstr "Submit Event"
+
+#: templates/submit_event.html:12
+msgid "Manual submission"
+msgstr "Manual submission"
+
+#: templates/submit_event.html:13
+msgid "SUBMIT EVENT"
+msgstr "SUBMIT EVENT"
+
+#: templates/submit_event.html:40
+msgid "Enter the event name"
+msgstr "Enter the event name"
+
+#: templates/submit_event.html:41
+msgid "Optional if Acts are provided."
+msgstr "Optional if Acts are provided."
+
+#: templates/submit_event.html:46
+msgid "Select the event date"
+msgstr "Select the event date"
+
+#: templates/submit_event.html:53
+msgid "Select the end date"
+msgstr "Select the end date"
+
+#: templates/submit_event.html:64
+msgid "Select the doors open time"
+msgstr "Select the doors open time"
+
+#: templates/submit_event.html:75
+msgid "List the acts performing"
+msgstr "List the acts performing"
+
+#: templates/submit_event.html:76
+msgid "Optional if Event Name is provided."
+msgstr "Optional if Event Name is provided."
+
+#: templates/submit_event.html:83
+msgid "Enter the ticket price"
+msgstr "Enter the ticket price"
+
+#: templates/submit_event.html:88
+msgid "Enter the ticket purchase link"
+msgstr "Enter the ticket purchase link"
+
+#: templates/submit_event.html:89 templates/submit_event.html:109
+#: templates/submit_event.html:131
+msgid "Optional."
+msgstr "Optional."
+
+#: templates/submit_event.html:103
+msgid "Enter the venue name"
+msgstr "Enter the venue name"
+
+#: templates/submit_event.html:108
+msgid "Enter the venue address"
+msgstr "Enter the venue address"
+
+#: templates/submit_event.html:115
+msgid "Enter the city"
+msgstr "Enter the city"
+
+#: templates/submit_event.html:119
+msgid "Enter ZIP code"
+msgstr "Enter ZIP code"
+
+#: templates/submit_event.html:130
+msgid "Enter coordinates"
+msgstr "Enter coordinates"
+
+#: templates/submit_event.html:137
+msgid "Optional. JPG or PNG formats only."
+msgstr "Optional. JPG or PNG formats only."
+
+#: templates/submit_event.html:236
+msgid "Flyer Preview"
+msgstr "Flyer Preview"
+
+#: templates/submit_event.html:242
+msgid "Please upload a JPG or PNG image."
+msgstr "Please upload a JPG or PNG image."
+
+#: templates/_partials/footer_public.html:10
+msgid "Underground. Non-commercial. Hand-curated."
+msgstr "Underground. Non-commercial. Hand-curated."
+
+#: templates/_partials/footer_public.html:14
+msgid "Legal"
+msgstr "Legal"
+
+#: templates/_partials/footer_public.html:16
+msgid "Imprint"
+msgstr "Imprint"
+
+#: templates/_partials/footer_public.html:17
+msgid "Terms"
+msgstr "Terms"
+
+#: templates/_partials/footer_public.html:18
+msgid "Privacy"
+msgstr "Privacy"
+
+#: templates/_partials/footer_public.html:22
+msgid "Language"
+msgstr "Language"
+
+#: templates/_partials/header_public.html:9
+#: templates/_partials/nav_admin.html:4
+msgid "Calendar"
+msgstr "Calendar"
+
+#: templates/_partials/header_public.html:11
+#: templates/_partials/nav_admin.html:8
+msgid "Submit"
+msgstr "Submit"
+
+#: templates/_partials/header_public.html:13
+#: templates/_partials/nav_admin.html:9
+msgid "Logout"
+msgstr "Logout"
+
+#: templates/errors/404.html:3
+msgid "404 · Missing"
+msgstr "404 · Missing"
+
+#: templates/errors/404.html:11
+msgid "Error 404"
+msgstr "Error 404"
+
+#: templates/errors/404.html:12
+msgid "MISSING"
+msgstr "MISSING"
+
+#: templates/errors/404.html:13
+msgid "GONE"
+msgstr "GONE"
+
+#: templates/errors/404.html:15
+msgid "This page does not (or no longer) exist."
+msgstr "This page does not (or no longer) exist."
+
+#: templates/errors/404.html:16
+msgid "The show was cancelled, the flyer torn down, the link is in the bin."
+msgstr "The show was cancelled, the flyer torn down, the link is in the bin."
+
+#: templates/errors/404.html:21 templates/errors/500.html:21
+msgid "Back to calendar"
+msgstr "Back to calendar"
+
+#: templates/errors/500.html:3
+msgid "500 · Something broke"
+msgstr "500 · Something broke"
+
+#: templates/errors/500.html:11
+msgid "Error 500"
+msgstr "Error 500"
+
+#: templates/errors/500.html:12
+msgid "DOWN"
+msgstr "DOWN"
+
+#: templates/errors/500.html:13
+msgid "SOUNDCHECK"
+msgstr "SOUNDCHECK"
+
+#: templates/errors/500.html:15
+msgid "Something went wrong on the server side."
+msgstr "Something went wrong on the server side."
+
+#: templates/errors/500.html:16
+msgid "Fuse blown, cable busted, something between stage and mixing desk."
+msgstr "Fuse blown, cable busted, something between stage and mixing desk."
+

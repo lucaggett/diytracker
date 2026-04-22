@@ -2,8 +2,9 @@
    defaults to 'de' before Babel is wired up. Each link points at /set-language/<lang>
    which stores the choice in the session and redirects back. #}
 {% set current_locale = (g.get('locale', 'de') if g else 'de') %}
+{% set locales = SUPPORTED_LOCALES if SUPPORTED_LOCALES is defined else ['de', 'fr', 'it', 'en'] %}
 <div class="font-mono text-xs uppercase tracking-widest flex gap-2">
-  {% for code in ['de', 'fr', 'en'] %}
+  {% for code in locales %}
     {% if code == current_locale %}
       <span class="text-bleed font-bold underline underline-offset-4">{{ code }}</span>
     {% else %}

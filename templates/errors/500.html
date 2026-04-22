@@ -1,6 +1,6 @@
 {% extends 'base_public.html' %}
 
-{% block title %}500 · Etwas ist schiefgelaufen — diytracker.ch{% endblock %}
+{% block title %}{{ _('500 · Something broke') }} — diytracker.ch{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto px-4 py-16 text-center">
@@ -8,17 +8,17 @@
     <svg class="absolute -top-3 left-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
     <svg class="absolute -top-3 right-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
 
-    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-4">Fehler 500</p>
-    <h1 class="font-richEatin text-7xl md:text-9xl mis-reg leading-none">DOWN</h1>
-    <div class="my-6 inline-block stamp">SOUNDCHECK</div>
+    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-4">{{ _('Error 500') }}</p>
+    <h1 class="font-richEatin text-7xl md:text-9xl mis-reg leading-none">{{ _('DOWN') }}</h1>
+    <div class="my-6 inline-block stamp">{{ _('SOUNDCHECK') }}</div>
     <p class="font-mono text-sm md:text-base text-ink leading-relaxed max-w-md mx-auto">
-      Etwas ist serverseitig schiefgelaufen.<br>
-      Sicherung raus, Kabel kaputt, irgendwas zwischen Bühne und Mischpult.
+      {{ _('Something went wrong on the server side.') }}<br>
+      {{ _('Fuse blown, cable busted, something between stage and mixing desk.') }}
     </p>
     <p class="mt-8">
       <a href="{{ url_for('calendar_view') }}"
          class="inline-block font-mono text-xs uppercase tracking-widest border-2 border-ink px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
-        Zurück zum Kalender →
+        {{ _('Back to calendar') }} →
       </a>
     </p>
   </div>

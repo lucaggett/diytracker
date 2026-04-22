@@ -1,6 +1,6 @@
 {% extends 'base_public.html' %}
 
-{% block title %}404 · Verschwunden — diytracker.ch{% endblock %}
+{% block title %}{{ _('404 · Missing') }} — diytracker.ch{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto px-4 py-16 text-center">
@@ -8,17 +8,17 @@
     <svg class="absolute -top-3 left-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
     <svg class="absolute -top-3 right-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
 
-    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-4">Fehler 404</p>
-    <h1 class="font-richEatin text-7xl md:text-9xl mis-reg leading-none">MISSING</h1>
-    <div class="my-6 inline-block stamp">VERSCHWUNDEN</div>
+    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-4">{{ _('Error 404') }}</p>
+    <h1 class="font-richEatin text-7xl md:text-9xl mis-reg leading-none">{{ _('MISSING') }}</h1>
+    <div class="my-6 inline-block stamp">{{ _('GONE') }}</div>
     <p class="font-mono text-sm md:text-base text-ink leading-relaxed max-w-md mx-auto">
-      Diese Seite existiert nicht (mehr).<br>
-      Die Show wurde abgesagt, der Flyer abgerissen, der Link liegt im Container.
+      {{ _('This page does not (or no longer) exist.') }}<br>
+      {{ _('The show was cancelled, the flyer torn down, the link is in the bin.') }}
     </p>
     <p class="mt-8">
       <a href="{{ url_for('calendar_view') }}"
          class="inline-block font-mono text-xs uppercase tracking-widest border-2 border-ink px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
-        Zurück zum Kalender →
+        {{ _('Back to calendar') }} →
       </a>
     </p>
   </div>

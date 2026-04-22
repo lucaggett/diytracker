@@ -17,6 +17,10 @@ from forms import EventForm, EventEditForm, LoginForm, DeleteEventForm, SetPassw
 from models import db, Event, Venue, Submitter, ScrapedEvent
 from utils import resolve_canton, parent_genres, clean_genre_tokens
 
+# Short alias used for flash messages / runtime strings below.
+def _(s, **kwargs):
+    return _babel_gettext(s, **kwargs)
+
 # Flask-Babel is optional at import time so the app keeps booting even before
 # the dependency is installed.  With the real package available, {{ _('…') }}
 # is translated; without it, strings pass through unchanged.
@@ -29,7 +33,7 @@ except ImportError:  # pragma: no cover - defensive fallback
     def _babel_gettext(s, **kwargs):
         return s % kwargs if kwargs else s
 
-SUPPORTED_LOCALES = ('de', 'fr', 'en')
+SUPPORTED_LOCALES = ('de', 'fr', 'it', 'en')
 DEFAULT_LOCALE = 'de'
 
 load_dotenv()
@@ -72,6 +76,8 @@ if _HAS_BABEL:
 else:
     app.jinja_env.globals['_'] = _babel_gettext
     app.jinja_env.globals['gettext'] = _babel_gettext
+
+app.jinja_env.globals['SUPPORTED_LOCALES'] = SUPPORTED_LOCALES
 
 
 @app.before_request
@@ -307,7 +313,7 @@ def login():
             if next_url.startswith('/'):
                 return redirect(next_url)
             return redirect(url_for('calendar_view'))
-        flash('Invalid email or password.')
+        flash(_('Invalid email or password.'))
     return render_template('login.html', form=form)
 
 
@@ -321,7 +327,7 @@ def logout():
 def set_password(token):
     user = Submitter.query.filter_by(invite_token=token).first()
     if not user or not user.invite_token_expiry or user.invite_token_expiry < datetime.utcnow():
-        flash('This invite link is invalid or has expired.')
+        flash(_('This invite link is invalid or has expired.'))
         return redirect(url_for('login'))
     form = SetPasswordForm()
     if form.validate_on_submit():
@@ -418,13 +424,13 @@ def about():
                     name, sender_email, single_line_message, exc,
                 )
                 app.logger.exception('Failed to send collaborator email')
-                flash('Nachricht konnte nicht gesendet werden — bitte schreib uns direkt an kontakt@diytracker.ch.')
+                flash(_('Your message could not be sent — please write to us directly at kontakt@diytracker.ch.'))
                 return redirect(url_for('about'))
             contact_logger.info(
                 'sent name=%r email=%r message=%r',
                 name, sender_email, single_line_message,
             )
-        flash('Danke! Wir melden uns sobald wie möglich.')
+        flash(_('Thanks! We will get back to you as soon as possible.'))
         return redirect(url_for('about'))
     return render_template('about.html', form=form)
 
@@ -501,7 +507,7 @@ def event_queue():
             idx = int(request.form.get('index'))
             data = events[idx]
         except (ValueError, IndexError):
-            flash('Invalid event selection.')
+            flash(_('Invalid event selection.'))
             return redirect(url_for('event_queue'))
         # Apply overrides from inline edit form (fall back to scraped data)
         def _ov(key, fallback):
@@ -556,7 +562,7 @@ def event_queue():
         # Check if event already exists
         existing = Event.query.filter_by(event_hash=event_hash).first()
         if existing:
-            flash('This event already exists.')
+            flash(_('This event already exists.'))
             return redirect(url_for('event_queue'))
         new_event = Event(
             name=name,
@@ -584,7 +590,7 @@ def event_queue():
                 scraped_obj.approved_at = datetime.now()
                 scraped_obj.approved_event_id = new_event.id
                 db.session.commit()
-        flash('Event approved and added to calendar!')
+        flash(_('Event approved and added to calendar!'))
         # Preserve filter params through redirect
         redirect_args = {k: v for k, v in request.args.items()}
         return redirect(url_for('event_queue', **redirect_args))
@@ -640,7 +646,7 @@ def submit_event_link():
             venue_coords = form.venue_coords.data
 
             if not venue_name or not venue_city or not venue_plz:
-                flash('Please provide all required venue details for a new venue.')
+                flash(_('Please provide all required venue details for a new venue.'))
                 return redirect(url_for('submit_event_link'))
 
             venue = Venue.query.filter_by(
@@ -661,11 +667,11 @@ def submit_event_link():
                 db.session.add(venue)
                 db.session.commit()
             else:
-                flash('Venue already exists. Using existing venue.')
+                flash(_('Venue already exists. Using existing venue.'))
         else:
             venue = Venue.query.get(venue_id)
             if not venue:
-                flash('Selected venue does not exist.')
+                flash(_('Selected venue does not exist.'))
                 return redirect(url_for('submit_event_link'))
 
         # Create the Event
@@ -690,7 +696,7 @@ def submit_event_link():
         db.session.add(new_event)
         db.session.commit()
 
-        flash('Event submitted successfully!')
+        flash(_('Event submitted successfully!'))
         return redirect(url_for('calendar_view'))
 
     return render_template('submit_event.html', form=form)
@@ -1084,7 +1090,7 @@ def edit_event(event_id):
             if venue_id and venue_id != 'new':
                 venue = Venue.query.get(venue_id)
                 if not venue:
-                    flash('Selected venue does not exist.')
+                    flash(_('Selected venue does not exist.'))
                     return redirect(url_for('edit_event', event_id=event_id))
             else:
                 venue = Venue.query.filter_by(
@@ -1113,7 +1119,7 @@ def edit_event(event_id):
                     event.flyer = flyer
 
             db.session.commit()
-            flash('Event updated successfully!')
+            flash(_('Event updated successfully!'))
             return redirect(url_for('admin'))
 
     return render_template('edit_event.html', form=form, event=event)
@@ -1127,7 +1133,7 @@ def delete_event(event_id):
     event = Event.query.get_or_404(event_id)
     db.session.delete(event)
     db.session.commit()
-    flash('Event deleted successfully!')
+    flash(_('Event deleted successfully!'))
     return redirect(url_for('admin'))
 
 

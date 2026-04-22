@@ -1,14 +1,14 @@
 {% extends 'base_admin.html' %}
 
-{% block title %}Admin · diytracker.ch{% endblock %}
+{% block title %}{{ _('Admin') }} · diytracker.ch{% endblock %}
 
 {% block content %}
 <header class="mb-6 flex items-end justify-between">
   <div>
-    <p class="text-xs uppercase tracking-widest text-smudge">Admin-Konsole</p>
-    <h1 class="font-richEatin text-4xl mis-reg leading-none">MANAGE EVENTS</h1>
+    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Admin console') }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('MANAGE EVENTS') }}</h1>
   </div>
-  <p class="text-xs text-smudge">{{ events|length }} Event{% if events|length != 1 %}s{% endif %} live</p>
+  <p class="text-xs text-smudge">{{ events|length }} {% if events|length != 1 %}{{ _('events') }}{% else %}{{ _('event') }}{% endif %} {{ _('live') }}</p>
 </header>
 
 {# Action bar — auto-scrape status, export, weekly image. #}
@@ -18,46 +18,46 @@
   <div class="flex items-center gap-3 border-2 border-ink px-3 py-2 text-xs">
     {% if scrape_running %}
       <span id="scrape-indicator" class="inline-block w-2 h-2 rounded-full bg-bleed animate-pulse"></span>
-      <span id="scrape-progress" class="text-ink">Scraping läuft…</span>
+      <span id="scrape-progress" class="text-ink">{{ _('Scraping in progress…') }}</span>
     {% else %}
       <span class="inline-block w-2 h-2 rounded-full bg-ink"></span>
       <span id="scrape-progress" class="sr-only"></span>
     {% endif %}
-    <span class="text-smudge">Auto-scrape einisch pro stund.</span>
+    <span class="text-smudge">{{ _('Auto-scrape once per hour.') }}</span>
     {% if last_scrape %}
       <span class="text-smudge/60">·</span>
-      <span class="text-smudge">Last:
+      <span class="text-smudge">{{ _('Last:') }}
         <span class="font-bold text-ink" id="last-scrape">{{ time_since_last }}</span>
         <span class="text-smudge/70">({{ last_scrape.strftime('%Y-%m-%d %H:%M') }})</span>
       </span>
       <span class="text-smudge/60">·</span>
-      <span class="text-smudge">Next:
+      <span class="text-smudge">{{ _('Next:') }}
         <span class="font-bold text-ink">{{ time_until_next }}</span>
         {% if next_scrape %}<span class="text-smudge/70">({{ next_scrape.strftime('%Y-%m-%d %H:%M') }})</span>{% endif %}
       </span>
     {% else %}
       <span class="text-smudge/60">·</span>
-      <span class="text-smudge">No scrape recorded yet.</span>
+      <span class="text-smudge">{{ _('No scrape recorded yet.') }}</span>
     {% endif %}
     <span class="text-smudge/60">·</span>
-    <span class="text-smudge italic">Schribed mer falls’s jetzt sofort en scrape bruucht.</span>
+    <span class="text-smudge italic">{{ _('Drop us a line if an immediate scrape is needed.') }}</span>
   </div>
 
   <div class="ml-auto flex items-end gap-3">
     <a href="{{ url_for('export_excel') }}"
        class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
-      Export Excel
+      {{ _('Export Excel') }}
     </a>
 
     <form action="{{ url_for('weekly_calendar_image') }}" method="GET" class="flex items-end gap-2">
       <div>
-        <label class="block text-xs uppercase tracking-widest text-smudge mb-1">Week of</label>
+        <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Week of') }}</label>
         <input type="date" name="week" value="{{ current_monday }}"
                class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
       </div>
       <button type="submit"
               class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed hover:text-paper hover:border-bleed transition-colors">
-        Weekly Image
+        {{ _('Weekly Image') }}
       </button>
     </form>
   </div>
@@ -68,11 +68,11 @@
   <table class="min-w-full text-sm">
     <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
       <tr>
-        <th class="px-3 py-2 text-left">ID</th>
-        <th class="px-3 py-2 text-left">Name</th>
-        <th class="px-3 py-2 text-left">Date</th>
-        <th class="px-3 py-2 text-left">Venue</th>
-        <th class="px-3 py-2 text-right">Actions</th>
+        <th class="px-3 py-2 text-left">{{ _('ID') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Name') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Date') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Venue') }}</th>
+        <th class="px-3 py-2 text-right">{{ _('Actions') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -84,12 +84,12 @@
         <td class="px-3 py-2">{{ event.venue_name }}</td>
         <td class="px-3 py-2 text-right whitespace-nowrap">
           <a href="{{ url_for('edit_event', event_id=event.id) }}"
-             class="text-bleed hover:underline uppercase text-xs tracking-widest">Edit</a>
+             class="text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Edit') }}</a>
           <span class="text-smudge mx-1">·</span>
           <form action="{{ url_for('delete_event', event_id=event.id) }}" method="POST" class="inline">
             {{ delete_form.hidden_tag() }}
             <button type="submit" class="text-bleed hover:underline uppercase text-xs tracking-widest"
-                    onclick="return confirm('Delete this event?')">Delete</button>
+                    onclick="return confirm({{ _('Delete this event?')|tojson }})">{{ _('Delete') }}</button>
           </form>
         </td>
       </tr>
@@ -115,17 +115,17 @@
             .then(r => r.json())
             .then(data => {
                 if (!data.running) {
-                    prog.textContent = 'Scrape complete — reloading…';
+                    prog.textContent = {{ _('Scrape complete — reloading…')|tojson }};
                     setTimeout(() => location.reload(), 1500);
                     return;
                 }
-                let text = data.phase || 'Scraping…';
+                let text = data.phase || {{ _('Scraping…')|tojson }};
                 if (data.total > 0) {
                     const pct = Math.round(data.processed / data.total * 100);
                     text += ' ' + pct + '% (' + data.processed + '/' + data.total + ')';
                 }
                 if (data.eta_seconds != null) {
-                    text += ' — ~' + fmtTime(data.eta_seconds) + ' left';
+                    text += ' — ~' + fmtTime(data.eta_seconds) + ' ' + {{ _('left')|tojson }};
                 }
                 prog.textContent = text;
                 setTimeout(poll, 3000);

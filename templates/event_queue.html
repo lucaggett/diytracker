@@ -1,41 +1,41 @@
 {% extends 'base_admin.html' %}
 
-{% block title %}Queue · diytracker.ch{% endblock %}
+{% block title %}{{ _('Queue') }} · diytracker.ch{% endblock %}
 
 {% block content %}
 <header class="mb-6">
-  <p class="text-xs uppercase tracking-widest text-smudge">Scraped event approval</p>
-  <h1 class="font-richEatin text-4xl mis-reg leading-none">QUEUE</h1>
+  <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Scraped event approval') }}</p>
+  <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('QUEUE') }}</h1>
 </header>
 
 {# Filter bar — mono, ink-bordered. #}
 <form method="get" class="border-2 border-ink bg-paper p-4 mb-6 flex flex-wrap items-end gap-3">
   <div>
-    <label class="block text-xs uppercase tracking-widest text-smudge mb-1">From</label>
+    <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('From') }}</label>
     <input type="date" name="date_from" value="{{ filter_date_from }}"
            class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
   </div>
   <div>
-    <label class="block text-xs uppercase tracking-widest text-smudge mb-1">To</label>
+    <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('To') }}</label>
     <input type="date" name="date_to" value="{{ filter_date_to }}"
            class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
   </div>
   <div>
-    <label class="block text-xs uppercase tracking-widest text-smudge mb-1">Source</label>
+    <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Source') }}</label>
     <select name="source" class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
-      <option value="" {% if not filter_source %}selected{% endif %}>All</option>
+      <option value="" {% if not filter_source %}selected{% endif %}>{{ _('All') }}</option>
       <option value="metalgigs" {% if filter_source == 'metalgigs' %}selected{% endif %}>MetalGigs</option>
       <option value="petzi" {% if filter_source == 'petzi' %}selected{% endif %}>Petzi</option>
     </select>
   </div>
   <button type="submit"
           class="bg-ink text-paper text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed transition-colors">
-    Filter
+    {{ _('Filter') }}
   </button>
   <a href="{{ url_for('event_queue') }}"
-     class="text-xs uppercase tracking-widest text-smudge hover:text-bleed self-end pb-2">Reset</a>
+     class="text-xs uppercase tracking-widest text-smudge hover:text-bleed self-end pb-2">{{ _('Reset') }}</a>
   <span class="text-xs text-smudge self-end pb-2 ml-auto">
-    {{ events|length }} event{% if events|length != 1 %}s{% endif %}
+    {{ events|length }} {% if events|length != 1 %}{{ _('events') }}{% else %}{{ _('event') }}{% endif %}
   </span>
 </form>
 
@@ -44,11 +44,11 @@
   <table class="min-w-full text-sm">
     <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
       <tr>
-        <th class="px-3 py-2 text-left">Date</th>
-        <th class="px-3 py-2 text-left">Event</th>
-        <th class="px-3 py-2 text-left">Venue</th>
-        <th class="px-3 py-2 text-left">Genres</th>
-        <th class="px-3 py-2 text-right">Actions</th>
+        <th class="px-3 py-2 text-left">{{ _('Date') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Event') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Venue') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Genres') }}</th>
+        <th class="px-3 py-2 text-right">{{ _('Actions') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -71,11 +71,11 @@
           <form method="post" class="inline">
             <input type="hidden" name="index" value="{{ loop.index0 }}">
             <button type="submit"
-                    class="text-bleed hover:underline uppercase text-xs tracking-widest">Approve</button>
+                    class="text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Approve') }}</button>
           </form>
           <span class="text-smudge mx-1">·</span>
           <button type="button" onclick="toggleEdit('edit-{{ loop.index0 }}')"
-                  class="text-ink hover:text-bleed hover:underline uppercase text-xs tracking-widest">Edit</button>
+                  class="text-ink hover:text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Edit') }}</button>
         </td>
       </tr>
       <tr id="edit-{{ loop.index0 }}" style="display:none" class="border-t border-ink/30">
@@ -86,66 +86,66 @@
               {% set lbl = "block text-xs uppercase tracking-widest text-smudge mb-1" %}
               {% set inp = "border-2 border-ink bg-paper px-2 py-1 w-full text-sm focus:outline-none focus:border-bleed" %}
               <div>
-                <label class="{{ lbl }}">Event Name</label>
+                <label class="{{ lbl }}">{{ _('Event Name') }}</label>
                 <input type="text" name="override_name" value="{{ event.title or event.performers or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">Date (YYYY-MM-DD)</label>
+                <label class="{{ lbl }}">{{ _('Date (YYYY-MM-DD)') }}</label>
                 <input type="text" name="override_date" value="{{ event.start_date or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">Doors Open (HH:MM)</label>
+                <label class="{{ lbl }}">{{ _('Doors Open (HH:MM)') }}</label>
                 <input type="text" name="override_doors" value="{{ event.doors_open or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">Genre</label>
+                <label class="{{ lbl }}">{{ _('Genre') }}</label>
                 <input type="text" name="override_genre" value="{{ event.styles or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">Acts</label>
+                <label class="{{ lbl }}">{{ _('Acts') }}</label>
                 <input type="text" name="override_acts" value="{{ event.performers or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">Venue Name</label>
+                <label class="{{ lbl }}">{{ _('Venue Name') }}</label>
                 <input type="text" name="override_venue_name" value="{{ event.venue_name or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">City</label>
+                <label class="{{ lbl }}">{{ _('City') }}</label>
                 <input type="text" name="override_city" value="{{ event.city or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">Postal Code</label>
+                <label class="{{ lbl }}">{{ _('Postal Code') }}</label>
                 <input type="text" name="override_postal_code" value="{{ event.postal_code or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">Street Address</label>
+                <label class="{{ lbl }}">{{ _('Street Address') }}</label>
                 <input type="text" name="override_street_address" value="{{ event.street_address or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">Ticket Price</label>
+                <label class="{{ lbl }}">{{ _('Ticket Price') }}</label>
                 <input type="text" name="override_ticket_price" value="{{ event.ticket_price or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">Ticket URL</label>
+                <label class="{{ lbl }}">{{ _('Ticket URL') }}</label>
                 <input type="text" name="override_ticket_url" value="{{ event.ticket_url or event.ticket_link or '' }}" class="{{ inp }}">
               </div>
               <div>
-                <label class="{{ lbl }}">Source URL</label>
+                <label class="{{ lbl }}">{{ _('Source URL') }}</label>
                 <input type="text" name="override_source_url" value="{{ event.url or '' }}" class="{{ inp }}">
               </div>
               <div class="md:col-span-2">
-                <label class="{{ lbl }}">Description</label>
+                <label class="{{ lbl }}">{{ _('Description') }}</label>
                 <textarea name="override_description" rows="3" class="{{ inp }}">{{ event.description or '' }}</textarea>
               </div>
             </div>
             <div class="mt-4 flex gap-2">
               <button type="submit"
                       class="bg-ink text-paper text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed transition-colors">
-                Approve with Changes
+                {{ _('Approve with Changes') }}
               </button>
               <button type="button" onclick="toggleEdit('edit-{{ loop.index0 }}')"
                       class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">
-                Cancel
+                {{ _('Cancel') }}
               </button>
             </div>
           </form>
@@ -157,7 +157,7 @@
 </div>
 {% else %}
 <p class="text-sm text-smudge border-2 border-ink/30 px-4 py-6 text-center">
-  Keine Events zur Freigabe.
+  {{ _('No events awaiting approval.') }}
 </p>
 {% endif %}
 {% endblock %}
