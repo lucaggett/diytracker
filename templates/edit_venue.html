@@ -1,0 +1,73 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}{{ _('Edit Venue') }} · diytracker.ch{% endblock %}
+
+{% block content %}
+<header class="mb-6 flex items-end justify-between">
+  <div>
+    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Venue') }} #{{ venue.id }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('EDIT VENUE') }}</h1>
+  </div>
+  <a href="{{ url_for('admin.venues') }}" class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">← {{ _('back to venues') }}</a>
+</header>
+
+{% if form.errors %}
+  <div class="border-2 border-bleed bg-paper p-4 mb-6">
+    <p class="text-xs uppercase tracking-widest text-bleed mb-2">{{ _('Validation') }}</p>
+    <ul class="list-disc pl-5 text-sm">
+      {% for field, errors in form.errors.items() %}
+        {% for error in errors %}
+          <li><strong>{{ form[field].label.text }}:</strong> {{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<form method="POST" class="border-2 border-ink bg-paper p-6">
+  {{ form.hidden_tag() }}
+
+  {% set lbl = "block text-xs uppercase tracking-widest text-smudge mb-1" %}
+  {% set inp = "border-2 border-ink bg-paper px-3 py-2 w-full text-sm focus:outline-none focus:border-bleed" %}
+
+  <div class="mb-4">
+    {{ form.name.label(class=lbl) }}
+    {{ form.name(class=inp) }}
+  </div>
+
+  <div class="mb-4">
+    {{ form.address.label(class=lbl) }}
+    {{ form.address(class=inp) }}
+  </div>
+
+  <div class="flex mb-4 space-x-4">
+    <div class="w-1/2">
+      {{ form.city.label(class=lbl) }}
+      {{ form.city(class=inp) }}
+    </div>
+    <div class="w-1/2">
+      {{ form.plz.label(class=lbl) }}
+      {{ form.plz(class=inp) }}
+    </div>
+  </div>
+
+  <div class="mb-4">
+    {{ form.canton.label(class=lbl) }}
+    {{ form.canton(class=inp) }}
+  </div>
+
+  <div class="mb-4">
+    {{ form.coords.label(class=lbl) }}
+    {{ form.coords(class=inp) }}
+  </div>
+
+  <div class="flex items-center gap-4 mt-6">
+    <button type="submit"
+            class="bg-ink text-paper text-xs uppercase tracking-widest px-6 py-3 hover:bg-bleed transition-colors">
+      {{ _('Update Venue') }} →
+    </button>
+    <a href="{{ url_for('admin.venues') }}"
+       class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('Cancel') }}</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}{{ _('Venues') }} · diytracker.ch{% endblock %}
+
+{% block content %}
+<header class="mb-6 flex items-end justify-between">
+  <div>
+    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Admin console') }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('MANAGE VENUES') }}</h1>
+  </div>
+  <p class="text-xs text-smudge">{{ venues|length }} {{ _('venues') }}</p>
+</header>
+
+<div class="overflow-x-auto border-2 border-ink">
+  <table class="min-w-full text-sm">
+    <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
+      <tr>
+        <th class="px-3 py-2 text-left">{{ _('ID') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Name') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('City') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Canton') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('ZIP Code') }}</th>
+        <th class="px-3 py-2 text-right">{{ _('Events') }}</th>
+        <th class="px-3 py-2 text-right">{{ _('Actions') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for venue, event_count in venues %}
+      <tr class="border-t border-ink/30 hover:bg-ink/5">
+        <td class="px-3 py-2 text-smudge">{{ venue.id }}</td>
+        <td class="px-3 py-2 font-semibold">{{ venue.name }}</td>
+        <td class="px-3 py-2">{{ venue.city }}</td>
+        <td class="px-3 py-2">{{ venue.canton or '—' }}</td>
+        <td class="px-3 py-2">{{ venue.plz }}</td>
+        <td class="px-3 py-2 text-right">{{ event_count }}</td>
+        <td class="px-3 py-2 text-right whitespace-nowrap">
+          <a href="{{ url_for('admin.edit_venue', venue_id=venue.id) }}"
+             class="text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Edit') }}</a>
+          <span class="text-smudge mx-1">·</span>
+          <form action="{{ url_for('admin.delete_venue', venue_id=venue.id) }}" method="POST" class="inline">
+            {{ delete_form.hidden_tag() }}
+            {% if event_count > 0 %}
+              <button type="button" disabled
+                      title="{{ _('Delete events first') }}"
+                      class="text-bleed uppercase text-xs tracking-widest opacity-40 cursor-not-allowed">
+                {{ _('Delete') }}
+              </button>
+            {% else %}
+              <button type="submit"
+                      class="text-bleed hover:underline uppercase text-xs tracking-widest"
+                      onclick="return confirm({{ _('Delete venue permanently?')|tojson }})">
+                {{ _('Delete') }}
+              </button>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
