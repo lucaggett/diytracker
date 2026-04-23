@@ -97,6 +97,13 @@
                              class="text-bleed underline break-all">{{ event.ticket_link }}</a>
                         </p>
                       {% endif %}
+                      {% if event.venue.accessibility %}
+                        <p>
+                          <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Accessibility') }}</span>
+                          <a href="{{ url_for('public.venue_accessibility', venue_id=event.venue.id) }}"
+                             class="text-bleed underline">{{ _('View accessibility info') }}</a>
+                        </p>
+                      {% endif %}
                     </div>
                   </div>
                 {% endfor %}
