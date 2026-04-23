@@ -195,6 +195,128 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Scraping…': 'Scrape…',
         'left': 'verbleibend',
 
+        # Venues admin
+        'MANAGE VENUES': 'VENUES VERWALTEN',
+        'Venues': 'Venues',
+        'venues': 'Venues',
+        'Access.': 'Barr.',
+        'View accessibility info': 'Barrierefreiheitsinfos ansehen',
+        'No accessibility info yet': 'Noch keine Barrierefreiheitsinfos',
+        'Link': 'Link',
+        'Delete venue permanently?': 'Venue dauerhaft löschen?',
+        'Venue updated successfully!': 'Venue erfolgreich aktualisiert!',
+        'Venue deleted.': 'Venue gelöscht.',
+        'and %(k)d more': 'und %(k)d weitere',
+        'Accessibility form link — share this with the venue':
+            'Barrierefreiheits-Formularlink — mit dem Venue teilen',
+        'Copy': 'Kopieren',
+
+        # Accessibility form & display
+        'Accessibility': 'Barrierefreiheit',
+        'Accessibility information': 'Informationen zur Barrierefreiheit',
+        'Last updated': 'Zuletzt aktualisiert',
+        'Please fill in as much as you know. Leave fields blank if you are unsure — partial information is still helpful.':
+            'Bitte so viel ausfüllen wie bekannt. Felder offen lassen wenn unsicher — auch teilweise Angaben sind hilfreich.',
+        'Save accessibility info': 'Informationen zur Barrierefreiheit speichern',
+        'No accessibility information available yet for this venue.':
+            'Noch keine Angaben zur Barrierefreiheit für dieses Venue vorhanden.',
+
+        # Accessibility form — section headings
+        'Mobility & Wheelchair': 'Mobilität & Rollstuhl',
+        'Sensory, Epilepsy & Autism': 'Sensorik, Epilepsie & Autismus',
+        'Hearing': 'Hören',
+        'Medical': 'Medizinisches',
+        'General & Social': 'Allgemein & Soziales',
+        'Additional notes': 'Weitere Hinweise',
+
+        # Accessibility form — field labels
+        'Step-free entrance': 'Stufenfreier Eingang',
+        'Entrance notes': 'Hinweise zum Eingang',
+        'Step-free throughout interior': 'Stufenfrei im gesamten Innenbereich',
+        'Accessible toilet': 'Behindertengerechte Toilette',
+        'Toilet notes': 'Hinweise zur Toilette',
+        'Dedicated wheelchair spaces': 'Rollstuhlplätze vorhanden',
+        'Number of wheelchair spaces': 'Anzahl Rollstuhlplätze',
+        'Floor surface': 'Bodenbelag',
+        'Strobe / flashing lights': 'Stroboskop / Blitzlichter',
+        'Warning given before strobes': 'Vorwarnung vor Stroboskop',
+        'Smoke / haze machines': 'Nebel- / Hazermaschinen',
+        'Typical sound level': 'Typischer Geräuschpegel',
+        'Quiet / low-stimulation room available': 'Ruhe- / Entspannungsraum vorhanden',
+        'Free earplugs provided': 'Gratis Ohrstöpsel vorhanden',
+        'Sensory-friendly events / nights': 'Sinnesfreundliche Veranstaltungen / Abende',
+        'Hearing loop (induction loop)': 'Hörschleife (Induktionsschleife)',
+        'Sign language interpretation at events': 'Gebärdensprachdolmetschen bei Veranstaltungen',
+        'Refrigerator for medication': 'Kühlschrank für Medikamente',
+        'First aid kit on site': 'Erste-Hilfe-Kasten vor Ort',
+        'AED (defibrillator) on site': 'AED (Defibrillator) vor Ort',
+        'Accessible parking': 'Behindertengerechter Parkplatz',
+        'Public transport access': 'Öffentliche Verkehrsanbindung',
+        'Gender-neutral toilets': 'Geschlechtsneutrale Toiletten',
+        'Rest / seating areas inside': 'Ruhebereiche / Sitzgelegenheiten innen',
+        'Guide dogs & assistance animals welcome': 'Blindenhunde & Assistenztiere willkommen',
+        'Quiet / alternative entrance option': 'Ruhiger / alternativer Eingang',
+        'Additional accessibility notes': 'Weitere Hinweise zur Barrierefreiheit',
+
+        # Accessibility form — helper text
+        'e.g. ramp at side entrance, ask staff': 'z.B. Rampe am Seiteneingang, beim Personal nachfragen',
+        'e.g. located near main bar, key required from staff':
+            'z.B. neben der Hauptbar, Schlüssel beim Personal erhältlich',
+        'Is a verbal or visual warning given before strobes are used?':
+            'Gibt es eine mündliche oder visuelle Vorwarnung vor dem Einsatz von Stroboskop?',
+        'A calm room away from the main space where people can decompress':
+            'Ein ruhiger Raum abseits des Hauptbereichs, wo man sich erholen kann',
+        'Events with reduced lights, lower volume, and a relaxed atmosphere':
+            'Veranstaltungen mit gedämpftem Licht, niedrigerer Lautstärke und entspannter Atmosphäre',
+        'An induction loop that transmits sound directly to hearing aids':
+            'Eine Induktionsschleife, die den Ton direkt an Hörgeräte überträgt',
+        'For insulin, EpiPens, or other temperature-sensitive medication':
+            'Für Insulin, EpiPens oder andere temperatursensible Medikamente',
+        'Automated External Defibrillator': 'Automatischer Externer Defibrillator',
+        'e.g. 50 m to tram stop, level access from platform':
+            'z.B. 50 m zur Tramhaltestelle, ebener Zugang vom Bahnsteig',
+        'Seating available for people who cannot stand for long periods':
+            'Sitzgelegenheiten für Personen, die nicht lange stehen können',
+        'An alternative entrance that avoids crowded queues or loud lobby areas':
+            'Ein alternativer Eingang, der überfüllte Warteschlangen oder laute Eingangsbereiche umgeht',
+        'Anything else visitors with disabilities should know':
+            'Alles weitere, das Besuchende mit Behinderungen wissen sollten',
+
+        # Accessibility display — short labels
+        'Warning before strobes': 'Vorwarnung vor Stroboskop',
+        'Quiet / low-stimulation room': 'Ruhe- / Entspannungsraum',
+        'Free earplugs': 'Gratis Ohrstöpsel',
+        'Sensory-friendly events': 'Sinnesfreundliche Veranstaltungen',
+        'Hearing loop': 'Hörschleife',
+        'Sign language interpretation': 'Gebärdensprachdolmetschen',
+        'First aid kit': 'Erste-Hilfe-Kasten',
+        'AED (defibrillator)': 'AED (Defibrillator)',
+        'Public transport': 'Öffentlicher Verkehr',
+        'Rest / seating areas': 'Ruhebereiche / Sitzgelegenheiten',
+        'Guide dogs welcome': 'Blindenhunde willkommen',
+        'Quiet / alternative entrance': 'Ruhiger / alternativer Eingang',
+
+        # Accessibility display — value labels
+        'Yes': 'Ja',
+        'No': 'Nein',
+        'Partial': 'Teilweise',
+        'Unknown': 'Unbekannt',
+        'Sometimes': 'Manchmal',
+        'Regularly': 'Regelmässig',
+        'Always': 'Immer',
+        'Rarely': 'Selten',
+        'Never': 'Nie',
+        'Moderate': 'Mittel',
+        'Varies': 'Variiert',
+        'Loud': 'Laut',
+        'Flat / smooth': 'Eben / glatt',
+        'Slight slope': 'Leichte Steigung',
+        'Uneven': 'Uneben',
+        'Cobblestones / gravel': 'Kopfsteinpflaster / Kies',
+        'Very loud (120 dB+)': 'Sehr laut (120 dB+)',
+        'Ask staff': 'Personal fragen',
+        'Nearby': 'In der Nähe',
+
         # Error pages
         '404 · Missing': '404 · Verschwunden',
         'Error 404': 'Fehler 404',
@@ -215,25 +337,26 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
 
     'fr': {
         'Invalid email or password.': 'E-mail ou mot de passe invalide.',
-        'This invite link is invalid or has expired.': 'Ce lien d’invitation est invalide ou a expiré.',
+        'This invite link is invalid or has expired.': "Ce lien d'invitation est invalide ou a expiré.",
         'Your message could not be sent — please write to us directly at kontakt@diytracker.ch.':
-            'Le message n’a pas pu être envoyé — écris-nous directement à kontakt@diytracker.ch.',
+            "Le message n'a pas pu être envoyé — écris-nous directement à kontakt@diytracker.ch.",
         'Thanks! We will get back to you as soon as possible.': 'Merci ! Nous revenons vers toi dès que possible.',
-        'Invalid event selection.': 'Sélection d’événement invalide.',
+        'Invalid event selection.': "Sélection d'événement invalide.",
         'This event already exists.': 'Cet événement existe déjà.',
         'Event approved and added to calendar!': 'Événement approuvé et ajouté au calendrier !',
-        'Please provide all required venue details for a new venue.': 'Merci de renseigner toutes les informations requises pour un nouveau lieu.',
+        'Please provide all required venue details for a new venue.':
+            'Merci de renseigner toutes les informations requises pour un nouveau lieu.',
         'Venue already exists. Using existing venue.': 'Le lieu existe déjà. Utilisation du lieu existant.',
-        'Selected venue does not exist.': 'Le lieu sélectionné n’existe pas.',
+        'Selected venue does not exist.': "Le lieu sélectionné n'existe pas.",
         'Event submitted successfully!': 'Événement soumis avec succès !',
         'Event updated successfully!': 'Événement mis à jour avec succès !',
         'Event deleted successfully!': 'Événement supprimé avec succès !',
 
-        'Event Name': 'Nom de l’événement',
-        'Event Date': 'Date de l’événement',
+        'Event Name': "Nom de l'événement",
+        'Event Date': "Date de l'événement",
         'End Date': 'Date de fin',
         'Festival': 'Festival',
-        'Doors Open Time': 'Heure d’ouverture des portes',
+        'Doors Open Time': "Heure d'ouverture des portes",
         'Genre': 'Genre',
         'Acts': 'Artistes',
         'Flyer': 'Flyer',
@@ -282,8 +405,9 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Tags': 'Tags',
         'TODAY': "AUJOURD'HUI",
 
-        'What diytracker.ch is — and how you can contribute.': 'Ce qu’est diytracker.ch — et comment y contribuer.',
-        'What this is': 'Qu’est-ce que c’est',
+        'What diytracker.ch is — and how you can contribute.':
+            "Ce qu'est diytracker.ch — et comment y contribuer.",
+        'What this is': "Qu'est-ce que c'est",
         'ABOUT': 'À PROPOS',
         'diytracker.ch is a non-commercial event calendar for DIY, rock, metal and punk concerts in Switzerland.':
             'diytracker.ch est un agenda non commercial pour les concerts DIY, rock, metal et punk en Suisse.',
@@ -292,7 +416,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
             'Le site est maintenu à la main. Les nouveaux contributeurs sont bienvenus — dis-nous brièvement qui tu es et comment tu souhaites aider.',
         'First and last name': 'Prénom et nom',
         'you@example.com': 'toi@exemple.ch',
-        'What do you do, what would you like to contribute?': 'Tu fais quoi, qu’aimerais-tu apporter ?',
+        'What do you do, what would you like to contribute?': "Tu fais quoi, qu'aimerais-tu apporter ?",
         'Send': 'Envoyer',
 
         'LOGIN': 'CONNEXION',
@@ -306,28 +430,28 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Manual submission': 'Saisie manuelle',
         'SUBMIT EVENT': 'SOUMETTRE ÉVÉNEMENT',
         'Validation': 'Validation',
-        'Event Details': 'Détails de l’événement',
+        'Event Details': "Détails de l'événement",
         '(optional)': '(optionnel)',
         '(required for festivals)': '(obligatoire pour les festivals)',
         'Festivals require an end date.': 'Les festivals nécessitent une date de fin.',
-        'Type a genre and press Enter to add it.': 'Saisis un genre et presse Entrée pour l’ajouter.',
+        'Type a genre and press Enter to add it.': "Saisis un genre et presse Entrée pour l'ajouter.",
         'Ticket Details': 'Informations billetterie',
         'Venue Details': 'Informations lieu',
         'Select Venue': 'Sélectionner un lieu',
         'New Venue': 'Nouveau lieu',
         'Optional if Acts are provided.': 'Optionnel si les artistes sont renseignés.',
-        'Optional if Event Name is provided.': 'Optionnel si le nom de l’événement est renseigné.',
+        'Optional if Event Name is provided.': "Optionnel si le nom de l'événement est renseigné.",
         'Optional.': 'Optionnel.',
         'Optional. JPG or PNG formats only.': 'Optionnel. Formats JPG ou PNG uniquement.',
-        'Enter the event name': 'Saisir le nom de l’événement',
-        'Select the event date': 'Sélectionner la date de l’événement',
+        'Enter the event name': "Saisir le nom de l'événement",
+        'Select the event date': "Sélectionner la date de l'événement",
         'Select the end date': 'Sélectionner la date de fin',
-        'Select the doors open time': 'Sélectionner l’heure d’ouverture',
+        'Select the doors open time': "Sélectionner l'heure d'ouverture",
         'List the acts performing': 'Lister les artistes',
         'Enter the ticket price': 'Saisir le prix du billet',
         'Enter the ticket purchase link': 'Saisir le lien de billetterie',
         'Enter the venue name': 'Saisir le nom du lieu',
-        'Enter the venue address': 'Saisir l’adresse du lieu',
+        'Enter the venue address': "Saisir l'adresse du lieu",
         'Enter the city': 'Saisir la ville',
         'Enter ZIP code': 'Saisir le code postal',
         'Enter coordinates': 'Saisir les coordonnées',
@@ -336,11 +460,11 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Flyer Preview': 'Aperçu du flyer',
         'Please upload a JPG or PNG image.': 'Merci de charger une image JPG ou PNG.',
         'EDIT EVENT': 'MODIFIER ÉVÉNEMENT',
-        'Edit Event': 'Modifier l’événement',
+        'Edit Event': "Modifier l'événement",
         'Event': 'Événement',
         'back': 'retour',
         'Current:': 'Actuel :',
-        'Update Event': 'Mettre à jour l’événement',
+        'Update Event': "Mettre à jour l'événement",
         'Cancel': 'Annuler',
 
         'Scraped event approval': 'Validation des événements récupérés',
@@ -364,7 +488,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Source URL': 'URL source',
         'Description': 'Description',
         'Approve with Changes': 'Approuver avec modifications',
-        'No events awaiting approval.': 'Aucun événement en attente d’approbation.',
+        "No events awaiting approval.": "Aucun événement en attente d'approbation.",
 
         'Admin console': 'Console admin',
         'MANAGE EVENTS': 'GÉRER LES ÉVÉNEMENTS',
@@ -374,7 +498,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Last:': 'Dernier :',
         'Next:': 'Prochain :',
         'No scrape recorded yet.': 'Aucune collecte enregistrée.',
-        'Drop us a line if an immediate scrape is needed.': 'Préviens-nous si une collecte immédiate est nécessaire.',
+        'Drop us a line if an immediate scrape is needed.':
+            'Préviens-nous si une collecte immédiate est nécessaire.',
         'Export Excel': 'Export Excel',
         'Week of': 'Semaine du',
         'Weekly Image': 'Image de la semaine',
@@ -386,11 +511,135 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Scraping…': 'Collecte…',
         'left': 'restant',
 
+        # Venues admin
+        'MANAGE VENUES': 'GÉRER LES LIEUX',
+        'Venues': 'Lieux',
+        'venues': 'lieux',
+        'Access.': 'Access.',
+        'View accessibility info': "Voir les infos d'accessibilité",
+        'No accessibility info yet': "Aucune info d'accessibilité",
+        'Link': 'Lien',
+        'Delete venue permanently?': 'Supprimer le lieu définitivement ?',
+        'Venue updated successfully!': 'Lieu mis à jour avec succès !',
+        'Venue deleted.': 'Lieu supprimé.',
+        'Accessibility form link — share this with the venue':
+            "Lien du formulaire d'accessibilité — à partager avec le lieu",
+        'Copy': 'Copier',
+
+        # Accessibility form & display
+        'Accessibility': 'Accessibilité',
+        'Accessibility information': "Informations d'accessibilité",
+        'Last updated': 'Dernière mise à jour',
+        'Please fill in as much as you know. Leave fields blank if you are unsure — partial information is still helpful.':
+            'Remplis ce que tu sais. Laisse les champs vides si tu es incertain·e — les informations partielles sont aussi utiles.',
+        'Save accessibility info': "Enregistrer les informations d'accessibilité",
+        'No accessibility information available yet for this venue.':
+            "Aucune information d'accessibilité disponible pour ce lieu.",
+
+        # Accessibility form — section headings
+        'Mobility & Wheelchair': 'Mobilité & fauteuil roulant',
+        'Sensory, Epilepsy & Autism': 'Sensoriel, épilepsie & autisme',
+        'Hearing': 'Audition',
+        'Medical': 'Médical',
+        'General & Social': 'Général & social',
+        'Additional notes': 'Informations supplémentaires',
+
+        # Accessibility form — field labels
+        'Step-free entrance': 'Entrée sans marches',
+        'Entrance notes': "Remarques sur l'entrée",
+        'Step-free throughout interior': 'Intérieur entièrement accessible sans marches',
+        'Accessible toilet': 'Toilettes accessibles',
+        'Toilet notes': 'Remarques sur les toilettes',
+        'Dedicated wheelchair spaces': 'Places réservées aux fauteuils roulants',
+        'Number of wheelchair spaces': 'Nombre de places fauteuil roulant',
+        'Floor surface': 'Type de sol',
+        'Strobe / flashing lights': 'Stroboscopes / lumières clignotantes',
+        'Warning given before strobes': 'Avertissement avant les stroboscopes',
+        'Smoke / haze machines': 'Machines à fumée / brume',
+        'Typical sound level': 'Niveau sonore habituel',
+        'Quiet / low-stimulation room available': 'Salle calme / peu stimulante disponible',
+        'Free earplugs provided': "Bouchons d'oreilles gratuits disponibles",
+        'Sensory-friendly events / nights': 'Événements / soirées adaptés aux personnes sensorielles',
+        'Hearing loop (induction loop)': "Boucle magnétique (boucle d'induction)",
+        'Sign language interpretation at events':
+            'Interprétation en langue des signes lors des événements',
+        'Refrigerator for medication': 'Réfrigérateur pour médicaments',
+        'First aid kit on site': 'Trousse de premiers secours sur place',
+        'AED (defibrillator) on site': 'DEA (défibrillateur) sur place',
+        'Accessible parking': 'Parking accessible',
+        'Public transport access': 'Accès aux transports en commun',
+        'Gender-neutral toilets': 'Toilettes non genrées',
+        'Rest / seating areas inside': "Zones de repos / sièges à l'intérieur",
+        'Guide dogs & assistance animals welcome': "Chiens guides & animaux d'assistance bienvenus",
+        'Quiet / alternative entrance option': 'Entrée calme / alternative disponible',
+        'Additional accessibility notes': "Informations d'accessibilité supplémentaires",
+
+        # Accessibility form — helper text
+        'e.g. ramp at side entrance, ask staff':
+            "ex. rampe à l'entrée latérale, demander au personnel",
+        'e.g. located near main bar, key required from staff':
+            'ex. près du bar principal, clé disponible auprès du personnel',
+        'Is a verbal or visual warning given before strobes are used?':
+            "Un avertissement verbal ou visuel est-il donné avant l'utilisation des stroboscopes ?",
+        'A calm room away from the main space where people can decompress':
+            "Une salle calme à l'écart de la salle principale pour se ressourcer",
+        'Events with reduced lights, lower volume, and a relaxed atmosphere':
+            'Événements avec lumières tamisées, volume réduit et atmosphère détendue',
+        'An induction loop that transmits sound directly to hearing aids':
+            "Une boucle d'induction qui transmet le son directement aux appareils auditifs",
+        'For insulin, EpiPens, or other temperature-sensitive medication':
+            "Pour l'insuline, les EpiPens ou autres médicaments sensibles à la température",
+        'Automated External Defibrillator': 'Défibrillateur automatique externe',
+        'e.g. 50 m to tram stop, level access from platform':
+            "ex. 50 m de l'arrêt de tram, accès de plain-pied depuis le quai",
+        'Seating available for people who cannot stand for long periods':
+            'Sièges disponibles pour les personnes ne pouvant pas rester debout longtemps',
+        'An alternative entrance that avoids crowded queues or loud lobby areas':
+            "Une entrée alternative évitant les files bondées ou les espaces d'accueil bruyants",
+        'Anything else visitors with disabilities should know':
+            'Toute autre information utile pour les visiteur·euses en situation de handicap',
+
+        # Accessibility display — short labels
+        'Warning before strobes': 'Avertissement avant stroboscopes',
+        'Quiet / low-stimulation room': 'Salle calme / peu stimulante',
+        'Free earplugs': "Bouchons d'oreilles gratuits",
+        'Sensory-friendly events': 'Événements adaptés sensoriel',
+        'Hearing loop': 'Boucle magnétique',
+        'Sign language interpretation': 'Interprétation en langue des signes',
+        'First aid kit': 'Trousse de premiers secours',
+        'AED (defibrillator)': 'DEA (défibrillateur)',
+        'Public transport': 'Transports en commun',
+        'Rest / seating areas': 'Zones de repos / sièges',
+        'Guide dogs welcome': 'Chiens guides bienvenus',
+        'Quiet / alternative entrance': 'Entrée calme / alternative',
+
+        # Accessibility display — value labels
+        'Yes': 'Oui',
+        'No': 'Non',
+        'Partial': 'Partiel',
+        'Unknown': 'Inconnu',
+        'Sometimes': 'Parfois',
+        'Regularly': 'Régulièrement',
+        'Always': 'Toujours',
+        'Rarely': 'Rarement',
+        'Never': 'Jamais',
+        'Moderate': 'Modéré',
+        'Varies': 'Variable',
+        'Loud': 'Fort',
+        'Flat / smooth': 'Plat / lisse',
+        'Slight slope': 'Légère pente',
+        'Uneven': 'Irrégulier',
+        'Cobblestones / gravel': 'Pavés / gravier',
+        'Very loud (120 dB+)': 'Très fort (120 dB+)',
+        'Ask staff': 'Demander au personnel',
+        'Nearby': 'À proximité',
+
+        # Error pages
         '404 · Missing': '404 · Introuvable',
         'Error 404': 'Erreur 404',
         'MISSING': 'INTROUVABLE',
         'GONE': 'DISPARU',
-        'This page does not (or no longer) exist.': 'Cette page n’existe pas (plus).',
+        'This page does not (or no longer) exist.': "Cette page n'existe pas (plus).",
         'The show was cancelled, the flyer torn down, the link is in the bin.':
             'Le concert a été annulé, le flyer arraché, le lien est à la poubelle.',
         'Back to calendar': 'Retour au calendrier',
@@ -405,15 +654,18 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
 
     'it': {
         'Invalid email or password.': 'E-mail o password non validi.',
-        'This invite link is invalid or has expired.': 'Questo link d’invito non è valido o è scaduto.',
+        'This invite link is invalid or has expired.':
+            "Questo link d'invito non è valido o è scaduto.",
         'Your message could not be sent — please write to us directly at kontakt@diytracker.ch.':
             'Il messaggio non è stato inviato — scrivici direttamente a kontakt@diytracker.ch.',
         'Thanks! We will get back to you as soon as possible.': 'Grazie! Ti risponderemo al più presto.',
         'Invalid event selection.': 'Selezione evento non valida.',
         'This event already exists.': 'Questo evento esiste già.',
         'Event approved and added to calendar!': 'Evento approvato e aggiunto al calendario!',
-        'Please provide all required venue details for a new venue.': 'Inserisci tutti i dati richiesti per un nuovo locale.',
-        'Venue already exists. Using existing venue.': 'Il locale esiste già. Verrà usato quello esistente.',
+        'Please provide all required venue details for a new venue.':
+            'Inserisci tutti i dati richiesti per un nuovo locale.',
+        'Venue already exists. Using existing venue.':
+            'Il locale esiste già. Verrà usato quello esistente.',
         'Selected venue does not exist.': 'Il locale selezionato non esiste.',
         'Event submitted successfully!': 'Evento inviato con successo!',
         'Event updated successfully!': 'Evento aggiornato con successo!',
@@ -472,7 +724,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Tags': 'Tag',
         'TODAY': 'OGGI',
 
-        'What diytracker.ch is — and how you can contribute.': 'Cos’è diytracker.ch — e come puoi contribuire.',
+        "What diytracker.ch is — and how you can contribute.":
+            "Cos'è diytracker.ch — e come puoi contribuire.",
         'What this is': 'Di cosa si tratta',
         'ABOUT': 'INFO',
         'diytracker.ch is a non-commercial event calendar for DIY, rock, metal and punk concerts in Switzerland.':
@@ -506,25 +759,25 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Select Venue': 'Seleziona locale',
         'New Venue': 'Nuovo locale',
         'Optional if Acts are provided.': 'Opzionale se sono indicati gli artisti.',
-        'Optional if Event Name is provided.': 'Opzionale se è indicato il nome dell’evento.',
+        "Optional if Event Name is provided.": "Opzionale se è indicato il nome dell'evento.",
         'Optional.': 'Opzionale.',
         'Optional. JPG or PNG formats only.': 'Opzionale. Solo formati JPG o PNG.',
-        'Enter the event name': 'Inserisci il nome dell’evento',
-        'Select the event date': 'Seleziona la data dell’evento',
+        "Enter the event name": "Inserisci il nome dell'evento",
+        "Select the event date": "Seleziona la data dell'evento",
         'Select the end date': 'Seleziona la data di fine',
-        'Select the doors open time': 'Seleziona l’ora di apertura porte',
+        "Select the doors open time": "Seleziona l'ora di apertura porte",
         'List the acts performing': 'Elenca gli artisti',
         'Enter the ticket price': 'Inserisci il prezzo del biglietto',
-        'Enter the ticket purchase link': 'Inserisci il link per l’acquisto',
+        "Enter the ticket purchase link": "Inserisci il link per l'acquisto",
         'Enter the venue name': 'Inserisci il nome del locale',
-        'Enter the venue address': 'Inserisci l’indirizzo del locale',
+        "Enter the venue address": "Inserisci l'indirizzo del locale",
         'Enter the city': 'Inserisci la città',
         'Enter ZIP code': 'Inserisci il CAP',
         'Enter coordinates': 'Inserisci le coordinate',
         'Press Enter to add': 'Premi Invio per aggiungere',
         'Search or type to add genres': 'Cerca o digita generi',
         'Flyer Preview': 'Anteprima volantino',
-        'Please upload a JPG or PNG image.': 'Carica un’immagine JPG o PNG.',
+        "Please upload a JPG or PNG image.": "Carica un'immagine JPG o PNG.",
         'EDIT EVENT': 'MODIFICA EVENTO',
         'Edit Event': 'Modifica evento',
         'Event': 'Evento',
@@ -576,6 +829,129 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         'Scraping…': 'Raccolta…',
         'left': 'rimanenti',
 
+        # Venues admin
+        'MANAGE VENUES': 'GESTISCI LOCALI',
+        'Venues': 'Locali',
+        'venues': 'locali',
+        'Access.': 'Access.',
+        'View accessibility info': 'Vedi informazioni accessibilità',
+        'No accessibility info yet': 'Nessuna info accessibilità',
+        'Link': 'Link',
+        'Delete venue permanently?': 'Eliminare il locale definitivamente?',
+        'Venue updated successfully!': 'Locale aggiornato con successo!',
+        'Venue deleted.': 'Locale eliminato.',
+        'Accessibility form link — share this with the venue':
+            'Link al modulo di accessibilità — da condividere con il locale',
+        'Copy': 'Copia',
+
+        # Accessibility form & display
+        'Accessibility': 'Accessibilità',
+        "Accessibility information": "Informazioni sull'accessibilità",
+        'Last updated': 'Ultimo aggiornamento',
+        'Please fill in as much as you know. Leave fields blank if you are unsure — partial information is still helpful.':
+            'Compila tutto ciò che sai. Lascia i campi vuoti se non sei sicuro/a — anche le informazioni parziali sono utili.',
+        "Save accessibility info": "Salva le informazioni sull'accessibilità",
+        "No accessibility information available yet for this venue.":
+            "Nessuna informazione sull'accessibilità disponibile per questo locale.",
+
+        # Accessibility form — section headings
+        'Mobility & Wheelchair': 'Mobilità & sedia a rotelle',
+        'Sensory, Epilepsy & Autism': 'Sensoriale, epilessia & autismo',
+        'Hearing': 'Udito',
+        'Medical': 'Medico',
+        'General & Social': 'Generale & sociale',
+        'Additional notes': 'Note aggiuntive',
+
+        # Accessibility form — field labels
+        'Step-free entrance': 'Ingresso senza barriere',
+        "Entrance notes": "Note sull'ingresso",
+        'Step-free throughout interior': 'Interni completamente privi di barriere',
+        'Accessible toilet': 'Bagno accessibile',
+        'Toilet notes': 'Note sul bagno',
+        'Dedicated wheelchair spaces': 'Posti riservati alle sedie a rotelle',
+        'Number of wheelchair spaces': 'Numero di posti per sedie a rotelle',
+        'Floor surface': 'Tipo di pavimento',
+        'Strobe / flashing lights': 'Stroboscopio / luci lampeggianti',
+        'Warning given before strobes': 'Avviso prima degli stroboscopi',
+        'Smoke / haze machines': 'Macchine per fumo / nebbia',
+        'Typical sound level': 'Livello sonoro tipico',
+        'Quiet / low-stimulation room available': 'Stanza silenziosa / a bassa stimolazione disponibile',
+        'Free earplugs provided': 'Tappi per le orecchie gratuiti disponibili',
+        'Sensory-friendly events / nights': 'Serate / eventi sensorialmente accessibili',
+        'Hearing loop (induction loop)': 'Anello magnetico (loop di induzione)',
+        'Sign language interpretation at events': 'Interpretazione in lingua dei segni agli eventi',
+        'Refrigerator for medication': 'Frigorifero per farmaci',
+        'First aid kit on site': 'Kit di primo soccorso in loco',
+        'AED (defibrillator) on site': 'DAE (defibrillatore) in loco',
+        'Accessible parking': 'Parcheggio accessibile',
+        'Public transport access': 'Accesso ai trasporti pubblici',
+        'Gender-neutral toilets': 'Bagni neutri',
+        "Rest / seating areas inside": "Zone di riposo / sedute all'interno",
+        'Guide dogs & assistance animals welcome': 'Cani guida e animali di assistenza benvenuti',
+        'Quiet / alternative entrance option': 'Ingresso alternativo / tranquillo disponibile',
+        "Additional accessibility notes": "Note aggiuntive sull'accessibilità",
+
+        # Accessibility form — helper text
+        "e.g. ramp at side entrance, ask staff":
+            "es. rampa all'ingresso laterale, chiedere al personale",
+        'e.g. located near main bar, key required from staff':
+            'es. vicino al bar principale, chiave disponibile presso il personale',
+        'Is a verbal or visual warning given before strobes are used?':
+            "Viene dato un avviso verbale o visivo prima dell'uso degli stroboscopi?",
+        'A calm room away from the main space where people can decompress':
+            "Una stanza tranquilla lontana dall'area principale dove le persone possono rilassarsi",
+        'Events with reduced lights, lower volume, and a relaxed atmosphere':
+            'Serate con luci ridotte, volume più basso e atmosfera rilassata',
+        'An induction loop that transmits sound directly to hearing aids':
+            'Un loop di induzione che trasmette il suono direttamente agli apparecchi acustici',
+        'For insulin, EpiPens, or other temperature-sensitive medication':
+            'Per insulina, EpiPen o altri farmaci sensibili alla temperatura',
+        'Automated External Defibrillator': 'Defibrillatore automatico esterno',
+        'e.g. 50 m to tram stop, level access from platform':
+            'es. 50 m dalla fermata del tram, accesso pianeggiante dalla banchina',
+        'Seating available for people who cannot stand for long periods':
+            'Posti a sedere per persone che non possono stare in piedi a lungo',
+        'An alternative entrance that avoids crowded queues or loud lobby areas':
+            "Un ingresso alternativo che evita code affollate o zone d'accesso rumorose",
+        'Anything else visitors with disabilities should know':
+            'Qualsiasi altra informazione utile per i visitatori con disabilità',
+
+        # Accessibility display — short labels
+        'Warning before strobes': 'Avviso prima degli stroboscopi',
+        'Quiet / low-stimulation room': 'Stanza silenziosa / a bassa stimolazione',
+        'Free earplugs': 'Tappi per le orecchie gratuiti',
+        'Sensory-friendly events': 'Serate sensorialmente accessibili',
+        'Hearing loop': 'Anello magnetico',
+        'Sign language interpretation': 'Interpretazione LIS',
+        'First aid kit': 'Kit di primo soccorso',
+        'AED (defibrillator)': 'DAE (defibrillatore)',
+        'Public transport': 'Trasporti pubblici',
+        'Rest / seating areas': 'Zone di riposo / sedute',
+        'Guide dogs welcome': 'Cani guida benvenuti',
+        'Quiet / alternative entrance': 'Ingresso alternativo / tranquillo',
+
+        # Accessibility display — value labels
+        'Yes': 'Sì',
+        'No': 'No',
+        'Partial': 'Parziale',
+        'Unknown': 'Sconosciuto',
+        'Sometimes': 'A volte',
+        'Regularly': 'Regolarmente',
+        'Always': 'Sempre',
+        'Rarely': 'Raramente',
+        'Never': 'Mai',
+        'Moderate': 'Moderato',
+        'Varies': 'Variabile',
+        'Loud': 'Forte',
+        'Flat / smooth': 'Piatto / liscio',
+        'Slight slope': 'Leggera pendenza',
+        'Uneven': 'Irregolare',
+        'Cobblestones / gravel': 'Selciato / ghiaia',
+        'Very loud (120 dB+)': 'Molto forte (120 dB+)',
+        'Ask staff': 'Chiedere al personale',
+        'Nearby': 'Nelle vicinanze',
+
+        # Error pages
         '404 · Missing': '404 · Non trovato',
         'Error 404': 'Errore 404',
         'MISSING': 'SCOMPARSA',

@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import (StringField, TextAreaField, DateField, TimeField,
                      FileField, SubmitField, SelectField, SelectMultipleField,
-                     PasswordField)
+                     PasswordField, IntegerField)
 from wtforms.fields.datetime import DateTimeField
 from wtforms.fields.simple import HiddenField, BooleanField
 from wtforms.validators import DataRequired, Optional, Email, EqualTo, Length
@@ -142,6 +142,58 @@ class VenueForm(FlaskForm):
 
 class DeleteVenueForm(FlaskForm):
     pass
+
+
+_YPN = [('', '—'), ('yes', 'Yes'), ('partial', 'Partial'), ('no', 'No')]
+_YN  = [('', '—'), ('yes', 'Yes'), ('no', 'No')]
+_YNU = [('', '—'), ('yes', 'Yes'), ('no', 'No'), ('unknown', 'Unknown')]
+_NSR = [('', '—'), ('never', 'Never'), ('sometimes', 'Sometimes'), ('regularly', 'Regularly')]
+_ASN = [('', '—'), ('always', 'Always'), ('sometimes', 'Sometimes'), ('never', 'Never')]
+_SIGN = [('', '—'), ('sometimes', 'Sometimes'), ('rarely', 'Rarely'), ('never', 'Never')]
+_SOUND   = [('', '—'), ('very_loud', 'Very loud (120 dB+)'), ('loud', 'Loud'), ('moderate', 'Moderate'), ('varies', 'Varies')]
+_SURFACE = [('', '—'), ('flat', 'Flat / smooth'), ('slight_slope', 'Slight slope'), ('uneven', 'Uneven'), ('cobblestones', 'Cobblestones / gravel')]
+_PARKING = [('', '—'), ('yes', 'Yes, on-site'), ('nearby', 'Nearby'), ('no', 'No')]
+_FRIDGE  = [('', '—'), ('yes', 'Yes'), ('no', 'No'), ('ask_staff', 'Ask staff')]
+_YSN     = [('', '—'), ('yes', 'Yes'), ('sometimes', 'Sometimes'), ('no', 'No')]
+
+
+class AccessibilityForm(FlaskForm):
+    # Mobility & Wheelchair
+    step_free_entrance       = SelectField(_l('Step-free entrance'), choices=_YPN, validators=[Optional()])
+    step_free_entrance_notes = TextAreaField(_l('Entrance notes'), validators=[Optional(), Length(max=500)])
+    step_free_interior       = SelectField(_l('Step-free throughout interior'), choices=_YPN, validators=[Optional()])
+    accessible_toilet        = SelectField(_l('Accessible toilet'), choices=_YPN, validators=[Optional()])
+    accessible_toilet_notes  = TextAreaField(_l('Toilet notes'), validators=[Optional(), Length(max=500)])
+    wheelchair_spaces        = SelectField(_l('Dedicated wheelchair spaces'), choices=_YN, validators=[Optional()])
+    wheelchair_spaces_count  = IntegerField(_l('Number of wheelchair spaces'), validators=[Optional()])
+    floor_surface            = SelectField(_l('Floor surface'), choices=_SURFACE, validators=[Optional()])
+
+    # Sensory, Epilepsy & Autism
+    strobe_lights            = SelectField(_l('Strobe / flashing lights'), choices=_NSR, validators=[Optional()])
+    strobe_warning           = SelectField(_l('Warning given before strobes'), choices=_ASN, validators=[Optional()])
+    smoke_machines           = SelectField(_l('Smoke / haze machines'), choices=_NSR, validators=[Optional()])
+    sound_level              = SelectField(_l('Typical sound level'), choices=_SOUND, validators=[Optional()])
+    quiet_space              = SelectField(_l('Quiet / low-stimulation room available'), choices=_YN, validators=[Optional()])
+    earplugs_available       = SelectField(_l('Free earplugs provided'), choices=_YN, validators=[Optional()])
+    sensory_friendly_events  = SelectField(_l('Sensory-friendly events / nights'), choices=_YSN, validators=[Optional()])
+
+    # Hearing
+    hearing_loop             = SelectField(_l('Hearing loop (induction loop)'), choices=_YNU, validators=[Optional()])
+    sign_language            = SelectField(_l('Sign language interpretation at events'), choices=_SIGN, validators=[Optional()])
+
+    # Medical
+    medication_fridge        = SelectField(_l('Refrigerator for medication'), choices=_FRIDGE, validators=[Optional()])
+    first_aid_kit            = SelectField(_l('First aid kit on site'), choices=_YN, validators=[Optional()])
+    aed_on_site              = SelectField(_l('AED (defibrillator) on site'), choices=_YNU, validators=[Optional()])
+
+    # General / Social
+    accessible_parking       = SelectField(_l('Accessible parking'), choices=_PARKING, validators=[Optional()])
+    public_transport_notes   = TextAreaField(_l('Public transport access'), validators=[Optional(), Length(max=500)])
+    gender_neutral_toilets   = SelectField(_l('Gender-neutral toilets'), choices=_YN, validators=[Optional()])
+    seating_areas            = SelectField(_l('Rest / seating areas inside'), choices=_YN, validators=[Optional()])
+    guide_dogs_welcome       = SelectField(_l('Guide dogs & assistance animals welcome'), choices=_YN, validators=[Optional()])
+    quiet_entrance           = SelectField(_l('Quiet / alternative entrance option'), choices=_YN, validators=[Optional()])
+    additional_notes         = TextAreaField(_l('Additional accessibility notes'), validators=[Optional(), Length(max=2000)])
 
 
 class CollaboratorRequestForm(FlaskForm):

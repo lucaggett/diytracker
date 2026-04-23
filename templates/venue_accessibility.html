@@ -1,0 +1,151 @@
+{% extends 'base_public.html' %}
+
+{% block title %}{{ _('Accessibility') }} · {{ venue.name }} · diytracker.ch{% endblock %}
+
+{% block content %}
+
+{% macro yn(val, yes_label=None, no_label=None) %}
+  {% if val == 'yes' %}<span class="text-green-700 font-semibold">{{ yes_label or _('Yes') }}</span>
+  {% elif val == 'partial' %}<span class="text-yellow-700 font-semibold">{{ _('Partial') }}</span>
+  {% elif val == 'no' %}<span class="text-bleed font-semibold">{{ no_label or _('No') }}</span>
+  {% elif val == 'unknown' %}<span class="text-smudge">{{ _('Unknown') }}</span>
+  {% elif val == 'never' %}<span class="text-green-700 font-semibold">{{ _('Never') }}</span>
+  {% elif val == 'sometimes' %}<span class="text-yellow-700 font-semibold">{{ _('Sometimes') }}</span>
+  {% elif val == 'regularly' %}<span class="text-bleed font-semibold">{{ _('Regularly') }}</span>
+  {% elif val == 'always' %}<span class="text-green-700 font-semibold">{{ _('Always') }}</span>
+  {% elif val == 'rarely' %}<span class="text-yellow-700 font-semibold">{{ _('Rarely') }}</span>
+  {% elif val == 'flat' %}<span>{{ _('Flat / smooth') }}</span>
+  {% elif val == 'slight_slope' %}<span>{{ _('Slight slope') }}</span>
+  {% elif val == 'uneven' %}<span class="text-yellow-700">{{ _('Uneven') }}</span>
+  {% elif val == 'cobblestones' %}<span class="text-yellow-700">{{ _('Cobblestones / gravel') }}</span>
+  {% elif val == 'very_loud' %}<span class="text-bleed font-semibold">{{ _('Very loud (120 dB+)') }}</span>
+  {% elif val == 'loud' %}<span class="text-yellow-700 font-semibold">{{ _('Loud') }}</span>
+  {% elif val == 'moderate' %}<span class="text-green-700 font-semibold">{{ _('Moderate') }}</span>
+  {% elif val == 'varies' %}<span class="text-smudge">{{ _('Varies') }}</span>
+  {% elif val == 'ask_staff' %}<span class="text-smudge">{{ _('Ask staff') }}</span>
+  {% elif val == 'nearby' %}<span class="text-yellow-700 font-semibold">{{ _('Nearby') }}</span>
+  {% else %}<span class="text-smudge">—</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro row(label, val, notes=None, extra=None) %}
+{% if val %}
+<div class="flex justify-between py-2 border-b border-ink/20 text-sm">
+  <span class="text-smudge w-1/2 pr-4">{{ label }}</span>
+  <span class="w-1/2 text-right">
+    {{ yn(val) }}
+    {% if extra %}<span class="text-smudge ml-1">({{ extra }})</span>{% endif %}
+    {% if notes %}<br><span class="text-xs text-smudge">{{ notes }}</span>{% endif %}
+  </span>
+</div>
+{% endif %}
+{% endmacro %}
+
+<div class="max-w-2xl mx-auto px-4 py-10">
+
+  <header class="mb-8">
+    <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Accessibility information') }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none mb-2">{{ venue.name }}</h1>
+    <p class="text-sm text-smudge">
+      {{ venue.city }}{% if venue.canton %} · {{ venue.canton }}{% endif %}
+      {% if venue.address %} · {{ venue.address }}{% endif %}
+    </p>
+  </header>
+
+  {% if not info %}
+  <div class="border-2 border-ink p-6 text-center">
+    <p class="text-sm text-smudge uppercase tracking-widest">{{ _('No accessibility information available yet for this venue.') }}</p>
+  </div>
+
+  {% else %}
+
+  <p class="text-xs text-smudge mb-6">{{ _('Last updated') }}: {{ info.updated_at.strftime('%d.%m.%Y') }}</p>
+
+  {# ── MOBILITY & WHEELCHAIR ─────────────────────────────────────────────── #}
+  {% set mobility_fields = [
+    info.step_free_entrance, info.step_free_interior,
+    info.accessible_toilet, info.wheelchair_spaces, info.floor_surface
+  ] %}
+  {% if mobility_fields | select | list %}
+  <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-2 mt-8">{{ _('Mobility & Wheelchair') }}</h2>
+  {{ row(_('Step-free entrance'), info.step_free_entrance, notes=info.step_free_entrance_notes) }}
+  {{ row(_('Step-free throughout interior'), info.step_free_interior) }}
+  {{ row(_('Accessible toilet'), info.accessible_toilet, notes=info.accessible_toilet_notes) }}
+  {% if info.wheelchair_spaces %}
+  <div class="flex justify-between py-2 border-b border-ink/20 text-sm">
+    <span class="text-smudge w-1/2 pr-4">{{ _('Dedicated wheelchair spaces') }}</span>
+    <span class="w-1/2 text-right">
+      {{ yn(info.wheelchair_spaces) }}
+      {% if info.wheelchair_spaces_count %}<span class="text-smudge ml-1">({{ info.wheelchair_spaces_count }})</span>{% endif %}
+    </span>
+  </div>
+  {% endif %}
+  {{ row(_('Floor surface'), info.floor_surface) }}
+  {% endif %}
+
+  {# ── SENSORY, EPILEPSY & AUTISM ────────────────────────────────────────── #}
+  {% set sensory_fields = [
+    info.strobe_lights, info.strobe_warning, info.smoke_machines,
+    info.sound_level, info.quiet_space, info.earplugs_available, info.sensory_friendly_events
+  ] %}
+  {% if sensory_fields | select | list %}
+  <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-2 mt-8">{{ _('Sensory, Epilepsy & Autism') }}</h2>
+  {{ row(_('Strobe / flashing lights'), info.strobe_lights) }}
+  {{ row(_('Warning before strobes'), info.strobe_warning) }}
+  {{ row(_('Smoke / haze machines'), info.smoke_machines) }}
+  {{ row(_('Typical sound level'), info.sound_level) }}
+  {{ row(_('Quiet / low-stimulation room'), info.quiet_space) }}
+  {{ row(_('Free earplugs'), info.earplugs_available) }}
+  {{ row(_('Sensory-friendly events'), info.sensory_friendly_events) }}
+  {% endif %}
+
+  {# ── HEARING ───────────────────────────────────────────────────────────── #}
+  {% if info.hearing_loop or info.sign_language %}
+  <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-2 mt-8">{{ _('Hearing') }}</h2>
+  {{ row(_('Hearing loop'), info.hearing_loop) }}
+  {{ row(_('Sign language interpretation'), info.sign_language) }}
+  {% endif %}
+
+  {# ── MEDICAL ───────────────────────────────────────────────────────────── #}
+  {% if info.medication_fridge or info.first_aid_kit or info.aed_on_site %}
+  <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-2 mt-8">{{ _('Medical') }}</h2>
+  {{ row(_('Refrigerator for medication'), info.medication_fridge) }}
+  {{ row(_('First aid kit'), info.first_aid_kit) }}
+  {{ row(_('AED (defibrillator)'), info.aed_on_site) }}
+  {% endif %}
+
+  {# ── GENERAL / SOCIAL ──────────────────────────────────────────────────── #}
+  {% set general_fields = [
+    info.accessible_parking, info.public_transport_notes,
+    info.gender_neutral_toilets, info.seating_areas,
+    info.guide_dogs_welcome, info.quiet_entrance
+  ] %}
+  {% if general_fields | select | list %}
+  <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-2 mt-8">{{ _('General & Social') }}</h2>
+  {{ row(_('Accessible parking'), info.accessible_parking) }}
+  {% if info.public_transport_notes %}
+  <div class="flex justify-between py-2 border-b border-ink/20 text-sm">
+    <span class="text-smudge w-1/2 pr-4">{{ _('Public transport') }}</span>
+    <span class="w-1/2 text-right text-xs">{{ info.public_transport_notes }}</span>
+  </div>
+  {% endif %}
+  {{ row(_('Gender-neutral toilets'), info.gender_neutral_toilets) }}
+  {{ row(_('Rest / seating areas'), info.seating_areas) }}
+  {{ row(_('Guide dogs welcome'), info.guide_dogs_welcome) }}
+  {{ row(_('Quiet / alternative entrance'), info.quiet_entrance) }}
+  {% endif %}
+
+  {% if info.additional_notes %}
+  <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-2 mt-8">{{ _('Additional notes') }}</h2>
+  <p class="text-sm py-2 whitespace-pre-line">{{ info.additional_notes }}</p>
+  {% endif %}
+
+  {% endif %}{# end info check #}
+
+  <div class="mt-10 pt-6 border-t-2 border-ink">
+    <a href="{{ url_for('public.calendar_view') }}"
+       class="text-xs uppercase tracking-widest text-bleed hover:underline">← {{ _('Back to calendar') }}</a>
+  </div>
+</div>
+
+{% endblock %}

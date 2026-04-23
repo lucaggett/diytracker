@@ -5,8 +5,8 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
 
-from forms import CollaboratorRequestForm
-from models import Event
+from forms import AccessibilityForm, CollaboratorRequestForm
+from models import Event, Venue, VenueAccessibility, db
 from services.contact import build_contact_logger, send_contact_email
 from services.i18n import SUPPORTED_LOCALES, gettext as _, validate_lang
 
@@ -100,6 +100,30 @@ def agb(lang):
 def datenschutz(lang):
     validate_lang(lang)
     return render_template('datenschutz.html')
+
+
+@bp.route('/accessibility/<token>', methods=['GET', 'POST'])
+def accessibility_form(token):
+    venue = Venue.query.filter_by(accessibility_token=token).first_or_404()
+    info = venue.accessibility
+    if info is None:
+        info = VenueAccessibility(venue_id=venue.id)
+    form = AccessibilityForm(obj=info)
+    if form.validate_on_submit():
+        form.populate_obj(info)
+        info.venue_id = venue.id
+        info.updated_at = datetime.utcnow()
+        db.session.add(info)
+        db.session.commit()
+        flash(_('Accessibility info saved — thank you!'))
+        return redirect(url_for('public.accessibility_form', token=token))
+    return render_template('accessibility_form.html', form=form, venue=venue, info=info)
+
+
+@bp.route('/venues/<int:venue_id>/accessibility')
+def venue_accessibility(venue_id):
+    venue = Venue.query.get_or_404(venue_id)
+    return render_template('venue_accessibility.html', venue=venue, info=venue.accessibility)
 
 
 @bp.route('/set-language/<lang>')

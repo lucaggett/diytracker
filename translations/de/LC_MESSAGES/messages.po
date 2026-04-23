@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-23 00:06+0200\n"
+"POT-Creation-Date: 2026-04-23 21:01+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: de\n"
@@ -61,36 +61,38 @@ msgstr "Ticketpreis"
 msgid "Ticket Link"
 msgstr "Ticketlink"
 
-#: forms.py:81 forms.py:108 templates/admin.html:74 templates/calendar.html:87
-#: templates/event_queue.html:49
+#: forms.py:81 forms.py:108 templates/admin.html:79 templates/calendar.html:87
+#: templates/edit_venue.html:8 templates/event_queue.html:49
 msgid "Venue"
 msgstr "Venue"
 
-#: forms.py:85 forms.py:112 templates/event_queue.html:109
+#: forms.py:85 forms.py:112 forms.py:135 templates/event_queue.html:109
 msgid "Venue Name"
 msgstr "Venuename"
 
-#: forms.py:86 forms.py:113
+#: forms.py:86 forms.py:113 forms.py:136
 msgid "Venue Address"
 msgstr "Venueadresse"
 
-#: forms.py:87 forms.py:114 templates/event_queue.html:113
+#: forms.py:87 forms.py:114 forms.py:137 templates/event_queue.html:113
+#: templates/venues.html:40
 msgid "City"
 msgstr "Stadt"
 
-#: forms.py:88 forms.py:115 templates/calendar.html:201
+#: forms.py:88 forms.py:115 forms.py:138 templates/calendar.html:201
+#: templates/venues.html:41
 msgid "Canton"
 msgstr "Kanton"
 
-#: forms.py:89 forms.py:116
+#: forms.py:89 forms.py:116 forms.py:139 templates/venues.html:42
 msgid "ZIP Code"
 msgstr "PLZ"
 
-#: forms.py:90 forms.py:117
+#: forms.py:90 forms.py:117 forms.py:140
 msgid "Coordinates"
 msgstr "Koordinaten"
 
-#: forms.py:121 forms.py:136
+#: forms.py:121 forms.py:201
 msgid "Email"
 msgstr "E-Mail"
 
@@ -102,11 +104,120 @@ msgstr "Passwort"
 msgid "Confirm Password"
 msgstr "Passwort bestätigen"
 
-#: forms.py:135 templates/admin.html:72
+#: forms.py:162 templates/venue_accessibility.html:71
+msgid "Step-free entrance"
+msgstr "Stufenfreier Eingang"
+
+#: forms.py:163
+msgid "Entrance notes"
+msgstr "Hinweise zum Eingang"
+
+#: forms.py:164 templates/venue_accessibility.html:72
+msgid "Step-free throughout interior"
+msgstr "Stufenfrei im gesamten Innenbereich"
+
+#: forms.py:165 templates/venue_accessibility.html:73
+msgid "Accessible toilet"
+msgstr "Behindertengerechte Toilette"
+
+#: forms.py:166
+msgid "Toilet notes"
+msgstr "Hinweise zur Toilette"
+
+#: forms.py:167 templates/venue_accessibility.html:76
+msgid "Dedicated wheelchair spaces"
+msgstr "Rollstuhlplätze vorhanden"
+
+#: forms.py:168
+msgid "Number of wheelchair spaces"
+msgstr "Anzahl Rollstuhlplätze"
+
+#: forms.py:169 templates/venue_accessibility.html:83
+msgid "Floor surface"
+msgstr "Bodenbelag"
+
+#: forms.py:172 templates/venue_accessibility.html:93
+msgid "Strobe / flashing lights"
+msgstr "Stroboskop / Blitzlichter"
+
+#: forms.py:173
+msgid "Warning given before strobes"
+msgstr "Vorwarnung vor Stroboskop"
+
+#: forms.py:174 templates/venue_accessibility.html:95
+msgid "Smoke / haze machines"
+msgstr "Nebel- / Hazermaschinen"
+
+#: forms.py:175 templates/venue_accessibility.html:96
+msgid "Typical sound level"
+msgstr "Typischer Geräuschpegel"
+
+#: forms.py:176
+msgid "Quiet / low-stimulation room available"
+msgstr "Ruhe- / Entspannungsraum vorhanden"
+
+#: forms.py:177
+msgid "Free earplugs provided"
+msgstr "Gratis Ohrstöpsel vorhanden"
+
+#: forms.py:178
+msgid "Sensory-friendly events / nights"
+msgstr "Sinnesfreundliche Veranstaltungen / Abende"
+
+#: forms.py:181
+msgid "Hearing loop (induction loop)"
+msgstr "Hörschleife (Induktionsschleife)"
+
+#: forms.py:182
+msgid "Sign language interpretation at events"
+msgstr "Gebärdensprachdolmetschen bei Veranstaltungen"
+
+#: forms.py:185 templates/venue_accessibility.html:112
+msgid "Refrigerator for medication"
+msgstr "Kühlschrank für Medikamente"
+
+#: forms.py:186
+#, fuzzy
+msgid "First aid kit on site"
+msgstr "Erste-Hilfe-Kasten vor Ort"
+
+#: forms.py:187
+msgid "AED (defibrillator) on site"
+msgstr "AED (Defibrillator) vor Ort"
+
+#: forms.py:190 templates/venue_accessibility.html:125
+msgid "Accessible parking"
+msgstr "Behindertengerechter Parkplatz"
+
+#: forms.py:191
+msgid "Public transport access"
+msgstr "Öffentliche Verkehrsanbindung"
+
+#: forms.py:192 templates/venue_accessibility.html:132
+msgid "Gender-neutral toilets"
+msgstr "Geschlechtsneutrale Toiletten"
+
+#: forms.py:193
+msgid "Rest / seating areas inside"
+msgstr "Ruhebereiche / Sitzgelegenheiten innen"
+
+#: forms.py:194
+msgid "Guide dogs & assistance animals welcome"
+msgstr "Blindenhunde & Assistenztiere willkommen"
+
+#: forms.py:195
+msgid "Quiet / alternative entrance option"
+msgstr "Ruhiger / alternativer Eingang"
+
+#: forms.py:196
+msgid "Additional accessibility notes"
+msgstr "Weitere Hinweise zur Barrierefreiheit"
+
+#: forms.py:200 templates/admin.html:77 templates/venues.html:39
 msgid "Name"
 msgstr "Name"
 
-#: forms.py:137
+#: forms.py:202
 msgid "Message"
 msgstr "Nachricht"
 
@@ -162,12 +273,115 @@ msgstr "Was machst du, was möchtest du beitragen?"
 msgid "Send"
 msgstr "Senden"
 
+#: templates/accessibility_form.html:3 templates/venue_accessibility.html:3
+msgid "Accessibility"
+msgstr "Barrierefreiheit"
+
+#: templates/accessibility_form.html:14 templates/venue_accessibility.html:47
+msgid "Accessibility information"
+msgstr "Informationen zur Barrierefreiheit"
+
+#: templates/accessibility_form.html:18 templates/venue_accessibility.html:62
+msgid "Last updated"
+msgstr "Zuletzt aktualisiert"
+
+#: templates/accessibility_form.html:22
+msgid ""
+"Please fill in as much as you know. Leave fields blank if you are unsure "
+"— partial information is still helpful."
+msgstr ""
+"Bitte so viel ausfüllen wie bekannt. Felder offen lassen wenn unsicher — "
+"auch teilweise Angaben sind hilfreich."
+
+#: templates/accessibility_form.html:26 templates/edit_event.html:21
+#: templates/edit_venue.html:16 templates/submit_event.html:18
+msgid "Validation"
+msgstr "Validierung"
+
+#: templates/accessibility_form.html:41 templates/venue_accessibility.html:70
+msgid "Mobility & Wheelchair"
+msgstr "Mobilität & Rollstuhl"
+
+#: templates/accessibility_form.html:50
+msgid "e.g. ramp at side entrance, ask staff"
+msgstr "z.B. Rampe am Seiteneingang, beim Personal nachfragen"
+
+#: templates/accessibility_form.html:65
+msgid "e.g. located near main bar, key required from staff"
+msgstr "z.B. neben der Hauptbar, Schlüssel beim Personal erhältlich"
+
+#: templates/accessibility_form.html:85 templates/venue_accessibility.html:92
+msgid "Sensory, Epilepsy & Autism"
+msgstr "Sensorik, Epilepsie & Autismus"
+
+#: templates/accessibility_form.html:94
+msgid "Is a verbal or visual warning given before strobes are used?"
+msgstr ""
+"Gibt es eine mündliche oder visuelle Vorwarnung vor dem Einsatz von "
+"Stroboskop?"
+
+#: templates/accessibility_form.html:110
+msgid "A calm room away from the main space where people can decompress"
+msgstr "Ein ruhiger Raum abseits des Hauptbereichs, wo man sich erholen kann"
+
+#: templates/accessibility_form.html:121
+msgid "Events with reduced lights, lower volume, and a relaxed atmosphere"
+msgstr ""
+"Veranstaltungen mit gedämpftem Licht, niedrigerer Lautstärke und "
+"entspannter Atmosphäre"
+
+#: templates/accessibility_form.html:126 templates/venue_accessibility.html:104
+msgid "Hearing"
+msgstr "Hören"
+
+#: templates/accessibility_form.html:130
+msgid "An induction loop that transmits sound directly to hearing aids"
+msgstr "Eine Induktionsschleife, die den Ton direkt an Hörgeräte überträgt"
+
+#: templates/accessibility_form.html:140 templates/venue_accessibility.html:111
+msgid "Medical"
+msgstr "Medizinisches"
+
+#: templates/accessibility_form.html:144
+msgid "For insulin, EpiPens, or other temperature-sensitive medication"
+msgstr "Für Insulin, EpiPens oder andere temperatursensible Medikamente"
+
+#: templates/accessibility_form.html:155
+msgid "Automated External Defibrillator"
+msgstr "Automatischer Externer Defibrillator"
+
+#: templates/accessibility_form.html:160 templates/venue_accessibility.html:124
+msgid "General & Social"
+msgstr "Allgemein & Soziales"
+
+#: templates/accessibility_form.html:169
+msgid "e.g. 50 m to tram stop, level access from platform"
+msgstr "z.B. 50 m zur Tramhaltestelle, ebener Zugang vom Bahnsteig"
+
+#: templates/accessibility_form.html:179
+msgid "Seating available for people who cannot stand for long periods"
+msgstr "Sitzgelegenheiten für Personen, die nicht lange stehen können"
+
+#: templates/accessibility_form.html:190
+msgid "An alternative entrance that avoids crowded queues or loud lobby areas"
+msgstr ""
+"Ein alternativer Eingang, der überfüllte Warteschlangen oder laute "
+"Eingangsbereiche umgeht"
+
+#: templates/accessibility_form.html:196
+msgid "Anything else visitors with disabilities should know"
+msgstr "Alles weitere, das Besuchende mit Behinderungen wissen sollten"
+
+#: templates/accessibility_form.html:201
+msgid "Save accessibility info"
+msgstr "Informationen zur Barrierefreiheit speichern"
+
 #: templates/_partials/header_public.html:11
 #: templates/_partials/nav_admin.html:6 templates/admin.html:3
 msgid "Admin"
 msgstr "Admin"
 
-#: templates/admin.html:8
+#: templates/admin.html:8 templates/venues.html:28
 msgid "Admin console"
 msgstr "Admin-Konsole"
 
@@ -211,52 +425,60 @@ msgstr "Noch kein Scrape erfasst."
 msgid "Drop us a line if an immediate scrape is needed."
 msgstr "Melde dich, falls sofort ein Scrape gebraucht wird."
 
-#: templates/admin.html:49
+#: templates/_partials/nav_admin.html:7 templates/admin.html:49
+#: templates/venues.html:3
+#, fuzzy
+msgid "Venues"
+msgstr "Venues"
+
+#: templates/admin.html:54
 msgid "Export Excel"
 msgstr "Excel-Export"
 
-#: templates/admin.html:54
+#: templates/admin.html:59
 msgid "Week of"
 msgstr "Woche vom"
 
-#: templates/admin.html:60
+#: templates/admin.html:65
 msgid "Weekly Image"
 msgstr "Wochenbild"
 
-#: templates/admin.html:71
+#: templates/admin.html:76 templates/venues.html:38
 msgid "ID"
 msgstr "ID"
 
-#: templates/admin.html:73 templates/calendar.html:86
+#: templates/admin.html:78 templates/calendar.html:86
 #: templates/event_queue.html:47
 msgid "Date"
 msgstr "Datum"
 
-#: templates/admin.html:75 templates/event_queue.html:51
+#: templates/admin.html:80 templates/event_queue.html:51
+#: templates/venues.html:45
 msgid "Actions"
 msgstr "Aktionen"
 
-#: templates/admin.html:87 templates/event_queue.html:78
+#: templates/admin.html:92 templates/event_queue.html:78
+#: templates/venues.html:68
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: templates/admin.html:92
+#: templates/admin.html:97
 msgid "Delete this event?"
 msgstr "Diesen Event löschen?"
 
-#: templates/admin.html:92
+#: templates/admin.html:97 templates/venues.html:79 templates/venues.html:85
 msgid "Delete"
 msgstr "Löschen"
 
-#: templates/admin.html:118
+#: templates/admin.html:123
 msgid "Scrape complete — reloading…"
 msgstr "Scrape abgeschlossen — lade neu…"
 
-#: templates/admin.html:122
+#: templates/admin.html:127
 msgid "Scraping…"
 msgstr "Scrape…"
 
-#: templates/admin.html:128
+#: templates/admin.html:133
 msgid "left"
 msgstr "verbleibend"
 
@@ -332,10 +554,6 @@ msgstr "EVENT BEARBEITEN"
 msgid "back"
 msgstr "zurück"
 
-#: templates/edit_event.html:21 templates/submit_event.html:18
-msgid "Validation"
-msgstr "Validierung"
-
 #: templates/edit_event.html:39 templates/submit_event.html:36
 msgid "Event Details"
 msgstr "Event-Details"
@@ -382,7 +600,8 @@ msgstr "Aktuell:"
 msgid "Update Event"
 msgstr "Event aktualisieren"
 
-#: templates/edit_event.html:154 templates/event_queue.html:148
+#: templates/edit_event.html:154 templates/edit_venue.html:70
+#: templates/event_queue.html:148
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -394,7 +613,27 @@ msgstr "Enter drücken, um hinzuzufügen"
 msgid "Search or type to add genres"
 msgstr "Suchen oder Genre tippen"
 
-#: templates/_partials/nav_admin.html:7 templates/event_queue.html:3
+#: templates/edit_venue.html:3
+#, fuzzy
+msgid "Edit Venue"
+msgstr "EVENT BEARBEITEN"
+
+#: templates/edit_venue.html:9
+#, fuzzy
+msgid "EDIT VENUE"
+msgstr "EVENT BEARBEITEN"
+
+#: templates/edit_venue.html:11
+#, fuzzy
+msgid "back to venues"
+msgstr "Zurück zum Kalender"
+
+#: templates/edit_venue.html:67
+#, fuzzy
+msgid "Update Venue"
+msgstr "Event aktualisieren"
+
+#: templates/_partials/nav_admin.html:8 templates/event_queue.html:3
 msgid "Queue"
 msgstr "Queue"
 
@@ -587,6 +826,199 @@ msgstr "Flyer-Vorschau"
 msgid "Please upload a JPG or PNG image."
 msgstr "Bitte ein JPG- oder PNG-Bild hochladen."
 
+#: templates/venue_accessibility.html:8
+msgid "Yes"
+msgstr "Ja"
+
+#: templates/venue_accessibility.html:9
+#, fuzzy
+msgid "Partial"
+msgstr "Teilweise"
+
+#: templates/venue_accessibility.html:10
+msgid "No"
+msgstr "Nein"
+
+#: templates/venue_accessibility.html:11
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: templates/venue_accessibility.html:12
+#, fuzzy
+msgid "Never"
+msgstr "Nie"
+
+#: templates/venue_accessibility.html:13
+msgid "Sometimes"
+msgstr "Manchmal"
+
+#: templates/venue_accessibility.html:14
+msgid "Regularly"
+msgstr "Regelmässig"
+
+#: templates/venue_accessibility.html:15
+msgid "Always"
+msgstr "Immer"
+
+#: templates/venue_accessibility.html:16
+msgid "Rarely"
+msgstr "Selten"
+
+#: templates/venue_accessibility.html:17
+msgid "Flat / smooth"
+msgstr "Eben / glatt"
+
+#: templates/venue_accessibility.html:18
+msgid "Slight slope"
+msgstr "Leichte Steigung"
+
+#: templates/venue_accessibility.html:19
+#, fuzzy
+msgid "Uneven"
+msgstr "Uneben"
+
+#: templates/venue_accessibility.html:20
+msgid "Cobblestones / gravel"
+msgstr "Kopfsteinpflaster / Kies"
+
+#: templates/venue_accessibility.html:21
+msgid "Very loud (120 dB+)"
+msgstr "Sehr laut (120 dB+)"
+
+#: templates/venue_accessibility.html:22
+#, fuzzy
+msgid "Loud"
+msgstr "Laut"
+
+#: templates/venue_accessibility.html:23
+#, fuzzy
+msgid "Moderate"
+msgstr "Mittel"
+
+#: templates/venue_accessibility.html:24
+#, fuzzy
+msgid "Varies"
+msgstr "Variiert"
+
+#: templates/venue_accessibility.html:25
+msgid "Ask staff"
+msgstr "Personal fragen"
+
+#: templates/venue_accessibility.html:26
+msgid "Nearby"
+msgstr "In der Nähe"
+
+#: templates/venue_accessibility.html:57
+msgid "No accessibility information available yet for this venue."
+msgstr "Noch keine Angaben zur Barrierefreiheit für dieses Venue vorhanden."
+
+#: templates/venue_accessibility.html:94
+msgid "Warning before strobes"
+msgstr "Vorwarnung vor Stroboskop"
+
+#: templates/venue_accessibility.html:97
+msgid "Quiet / low-stimulation room"
+msgstr "Ruhe- / Entspannungsraum"
+
+#: templates/venue_accessibility.html:98
+msgid "Free earplugs"
+msgstr "Gratis Ohrstöpsel"
+
+#: templates/venue_accessibility.html:99
+msgid "Sensory-friendly events"
+msgstr "Sinnesfreundliche Veranstaltungen"
+
+#: templates/venue_accessibility.html:105
+msgid "Hearing loop"
+msgstr "Hörschleife"
+
+#: templates/venue_accessibility.html:106
+msgid "Sign language interpretation"
+msgstr "Gebärdensprachdolmetschen"
+
+#: templates/venue_accessibility.html:113
+#, fuzzy
+msgid "First aid kit"
+msgstr "Erste-Hilfe-Kasten"
+
+#: templates/venue_accessibility.html:114
+msgid "AED (defibrillator)"
+msgstr "AED (Defibrillator)"
+
+#: templates/venue_accessibility.html:128
+msgid "Public transport"
+msgstr "Öffentlicher Verkehr"
+
+#: templates/venue_accessibility.html:133
+msgid "Rest / seating areas"
+msgstr "Ruhebereiche / Sitzgelegenheiten"
+
+#: templates/venue_accessibility.html:134
+msgid "Guide dogs welcome"
+msgstr "Blindenhunde willkommen"
+
+#: templates/venue_accessibility.html:135
+msgid "Quiet / alternative entrance"
+msgstr "Ruhiger / alternativer Eingang"
+
+#: templates/venue_accessibility.html:139
+msgid "Additional notes"
+msgstr "Weitere Hinweise"
+
+#: templates/errors/404.html:21 templates/errors/500.html:21
+#: templates/venue_accessibility.html:147
+msgid "Back to calendar"
+msgstr "Zurück zum Kalender"
+
+#: templates/venues.html:9
+msgid "Accessibility form link — share this with the venue"
+msgstr "Barrierefreiheits-Formularlink — mit dem Venue teilen"
+
+#: templates/venues.html:17 templates/venues.html:18
+msgid "Copy"
+msgstr "Kopieren"
+
+#: templates/venues.html:29
+#, fuzzy
+msgid "MANAGE VENUES"
+msgstr "VENUES VERWALTEN"
+
+#: templates/venues.html:31
+#, fuzzy
+msgid "venues"
+msgstr "Venues"
+
+#: templates/venues.html:43
+#, fuzzy
+msgid "Events"
+msgstr "Events"
+
+#: templates/venues.html:44
+msgid "Access."
+msgstr "Barr."
+
+#: templates/venues.html:60
+msgid "View accessibility info"
+msgstr "Barrierefreiheitsinfos ansehen"
+
+#: templates/venues.html:63
+msgid "No accessibility info yet"
+msgstr "Noch keine Barrierefreiheitsinfos"
+
+#: templates/venues.html:71
+#, fuzzy
+msgid "Link"
+msgstr "Link"
+
+#: templates/venues.html:77
+#, fuzzy
+msgid "Delete events first"
+msgstr "Eventdatum wählen"
+
+#: templates/venues.html:84
+msgid "Delete venue permanently?"
+msgstr "Venue dauerhaft löschen?"
+
 #: templates/_partials/footer_public.html:10
 msgid "Underground. Non-commercial. Hand-curated."
 msgstr "Underground. Nicht-kommerziell. Von Hand gepflegt."
@@ -617,11 +1049,11 @@ msgid "Calendar"
 msgstr "Kalender"
 
 #: templates/_partials/header_public.html:12
-#: templates/_partials/nav_admin.html:9
+#: templates/_partials/nav_admin.html:10
 msgid "Logout"
 msgstr "Logout"
 
-#: templates/_partials/nav_admin.html:8
+#: templates/_partials/nav_admin.html:9
 msgid "Submit"
 msgstr "Einreichen"
 
@@ -650,10 +1082,6 @@ msgid "The show was cancelled, the flyer torn down, the link is in the bin."
 msgstr ""
 "Die Show wurde abgesagt, der Flyer abgerissen, der Link liegt im "
 "Container."
-
-#: templates/errors/404.html:21 templates/errors/500.html:21
-msgid "Back to calendar"
-msgstr "Zurück zum Kalender"
 
 #: templates/errors/500.html:3
 msgid "500 · Something broke"

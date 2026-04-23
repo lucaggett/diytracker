@@ -7,7 +7,7 @@ from sqlalchemy import func
 from werkzeug.utils import secure_filename
 
 from forms import DeleteEventForm, DeleteVenueForm, EventEditForm, VenueForm, get_canton_choices
-from models import db, Event, Venue
+from models import db, Event, Venue, VenueAccessibility
 from services.auth import admin_required
 from services.calendar_image import generate_weekly_calendar_image
 from services.i18n import gettext as _
@@ -183,6 +183,17 @@ def delete_venue(venue_id):
     db.session.delete(venue)
     db.session.commit()
     flash(_('Venue deleted.'))
+    return redirect(url_for('admin.venues'))
+
+
+@bp.route('/admin/venues/<int:venue_id>/accessibility-link')
+@admin_required
+def generate_accessibility_link(venue_id):
+    venue = Venue.query.get_or_404(venue_id)
+    venue.generate_accessibility_token()
+    db.session.commit()
+    link = url_for('public.accessibility_form', token=venue.accessibility_token, _external=True)
+    flash(link, 'accessibility_link')
     return redirect(url_for('admin.venues'))
 
 

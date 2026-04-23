@@ -39,10 +39,60 @@ class Venue(db.Model):
     city = db.Column(db.String(100), nullable=False)
     canton = db.Column(db.String(100), nullable=True)
     plz = db.Column(db.String(10), nullable=False)
-    coords = db.Column(db.String(50), nullable=True)  # Storing coordinates as string
+    coords = db.Column(db.String(50), nullable=True)
+    accessibility_token = db.Column(db.String(64), nullable=True, unique=True)
+
+    def generate_accessibility_token(self):
+        self.accessibility_token = secrets.token_urlsafe(32)
+        return self.accessibility_token
 
     def __repr__(self):
         return f'<Venue {self.id}: {self.name} in {self.city}>'
+
+
+class VenueAccessibility(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False, unique=True)
+    updated_at = db.Column(db.DateTime, nullable=False)
+
+    # Mobility & Wheelchair
+    step_free_entrance = db.Column(db.String(20), nullable=True)       # yes/partial/no
+    step_free_entrance_notes = db.Column(db.Text, nullable=True)
+    step_free_interior = db.Column(db.String(20), nullable=True)       # yes/partial/no
+    accessible_toilet = db.Column(db.String(20), nullable=True)        # yes/partial/no
+    accessible_toilet_notes = db.Column(db.Text, nullable=True)
+    wheelchair_spaces = db.Column(db.String(5), nullable=True)         # yes/no
+    wheelchair_spaces_count = db.Column(db.Integer, nullable=True)
+    floor_surface = db.Column(db.String(50), nullable=True)
+
+    # Sensory, Epilepsy & Autism
+    strobe_lights = db.Column(db.String(20), nullable=True)            # never/sometimes/regularly
+    strobe_warning = db.Column(db.String(20), nullable=True)           # always/sometimes/never
+    smoke_machines = db.Column(db.String(20), nullable=True)           # never/sometimes/regularly
+    sound_level = db.Column(db.String(20), nullable=True)
+    quiet_space = db.Column(db.String(5), nullable=True)               # yes/no
+    earplugs_available = db.Column(db.String(5), nullable=True)        # yes/no
+    sensory_friendly_events = db.Column(db.String(20), nullable=True)  # yes/sometimes/no
+
+    # Hearing
+    hearing_loop = db.Column(db.String(20), nullable=True)             # yes/no/unknown
+    sign_language = db.Column(db.String(20), nullable=True)            # sometimes/rarely/never
+
+    # Medical
+    medication_fridge = db.Column(db.String(20), nullable=True)        # yes/no/ask_staff
+    first_aid_kit = db.Column(db.String(5), nullable=True)             # yes/no
+    aed_on_site = db.Column(db.String(20), nullable=True)              # yes/no/unknown
+
+    # General / Social
+    accessible_parking = db.Column(db.String(20), nullable=True)       # yes/nearby/no
+    public_transport_notes = db.Column(db.Text, nullable=True)
+    gender_neutral_toilets = db.Column(db.String(5), nullable=True)    # yes/no
+    seating_areas = db.Column(db.String(5), nullable=True)             # yes/no
+    guide_dogs_welcome = db.Column(db.String(5), nullable=True)        # yes/no
+    quiet_entrance = db.Column(db.String(5), nullable=True)            # yes/no
+    additional_notes = db.Column(db.Text, nullable=True)
+
+    venue = db.relationship('Venue', backref=db.backref('accessibility', uselist=False))
 
 class Submitter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
