@@ -131,6 +131,19 @@ class SetPasswordForm(FlaskForm):
     confirm_password = PasswordField(_l('Confirm Password'), validators=[DataRequired(), EqualTo('password')])
 
 
+class VenueForm(FlaskForm):
+    name = StringField(_l('Venue Name'), validators=[DataRequired(), Length(max=200)])
+    address = StringField(_l('Venue Address'), validators=[Optional(), Length(max=200)])
+    city = StringField(_l('City'), validators=[DataRequired(), Length(max=100)])
+    canton = SelectField(_l('Canton'), choices=[], validators=[Optional()])
+    plz = StringField(_l('ZIP Code'), validators=[DataRequired(), Length(max=10)])
+    coords = StringField(_l('Coordinates'), validators=[Optional(), Length(max=50)])
+
+
+class DeleteVenueForm(FlaskForm):
+    pass
+
+
 class CollaboratorRequestForm(FlaskForm):
     name = StringField(_l('Name'), validators=[DataRequired(), Length(max=100)])
     email = StringField(_l('Email'), validators=[DataRequired(), Email(), Length(max=200)])

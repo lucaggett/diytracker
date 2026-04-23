@@ -5,7 +5,7 @@ import time as time_module
 from datetime import datetime
 
 from models import db, Event, ScrapedEvent
-from utils import resolve_canton
+from utils import clean_genre_tokens, clean_ticket_url, resolve_canton
 
 LAST_SCRAPE_FILE = os.path.join('instance', 'last_scrape.txt')
 SCRAPE_INTERVAL_HOURS = 1
@@ -97,13 +97,22 @@ def _scrape_and_import(app):
                 url = row.get('url')
                 if url and url in known_urls_now:
                     continue
+                source = row.get('source')
+                raw_styles = row.get('styles') or ''
+                # petzi sitemap mixes concerts with theatre/workshop/club-night
+                # rows; the raw 'concert' token is the only signal, so filter
+                # on it before cleanup strips the token.
+                if source == 'petzi' and 'concert' not in raw_styles.lower():
+                    continue
                 region = resolve_canton(row.get('region') or '', row.get('city') or '')
+                cleaned_styles = ', '.join(clean_genre_tokens(raw_styles)) or None
+                cleaned_ticket_url = clean_ticket_url(row.get('ticket_url'), source)
                 scraped = ScrapedEvent(
-                    source=row.get('source'),
+                    source=source,
                     url=url,
                     title=row.get('title'),
                     performers=row.get('performers'),
-                    styles=row.get('styles'),
+                    styles=cleaned_styles,
                     description=row.get('description'),
                     start_date=parse_date(row.get('start_date') or ''),
                     end_date=parse_date(row.get('end_date') or ''),
@@ -116,7 +125,7 @@ def _scrape_and_import(app):
                     postal_code=row.get('postal_code'),
                     ticket_price=row.get('ticket_price'),
                     ticket_currency=row.get('ticket_currency'),
-                    ticket_url=row.get('ticket_url'),
+                    ticket_url=cleaned_ticket_url,
                     organizer=row.get('organizer'),
                     event_status=row.get('event_status'),
                 )

@@ -44,6 +44,11 @@
   </div>
 
   <div class="ml-auto flex items-end gap-3">
+    <a href="{{ url_for('admin.venues') }}"
+       class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
+      {{ _('Venues') }}
+    </a>
+
     <a href="{{ url_for('admin.export_excel') }}"
        class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
       {{ _('Export Excel') }}

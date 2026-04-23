@@ -37,9 +37,6 @@ def parse_scraped_events(date_from=None, date_to=None, source=None):
     candidates = q.order_by(ScrapedEvent.start_date.asc()).all()
     events = []
     for rec in candidates:
-        styles = (rec.styles or '').lower()
-        if rec.source != 'metalgigs' and 'concert' not in styles:
-            continue
         data = {
             'source': rec.source,
             'url': rec.url,

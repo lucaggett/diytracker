@@ -3,9 +3,10 @@ import os
 from datetime import datetime, timedelta
 
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
+from sqlalchemy import func
 from werkzeug.utils import secure_filename
 
-from forms import DeleteEventForm, EventEditForm
+from forms import DeleteEventForm, DeleteVenueForm, EventEditForm, VenueForm, get_canton_choices
 from models import db, Event, Venue
 from services.auth import admin_required
 from services.calendar_image import generate_weekly_calendar_image
@@ -124,6 +125,65 @@ def delete_event(event_id):
     db.session.commit()
     flash(_('Event deleted successfully!'))
     return redirect(url_for('admin.admin'))
+
+
+@bp.route('/admin/venues', methods=['GET'])
+@admin_required
+def venues():
+    rows = (
+        db.session.query(Venue, func.count(Event.id).label('event_count'))
+        .outerjoin(Event, Event.venue_id == Venue.id)
+        .group_by(Venue.id)
+        .order_by(func.lower(Venue.name).asc())
+        .all()
+    )
+    return render_template('venues.html', venues=rows, delete_form=DeleteVenueForm())
+
+
+@bp.route('/admin/venues/<int:venue_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_venue(venue_id):
+    venue = Venue.query.get_or_404(venue_id)
+    form = VenueForm(obj=venue)
+    form.canton.choices = [('', _('— none —'))] + get_canton_choices()
+    if request.method == 'POST' and form.validate_on_submit():
+        venue.name = form.name.data.strip()
+        venue.address = (form.address.data or '').strip() or None
+        venue.city = form.city.data.strip()
+        venue.canton = form.canton.data or None
+        venue.plz = form.plz.data.strip()
+        venue.coords = (form.coords.data or '').strip() or None
+        db.session.commit()
+        flash(_('Venue updated successfully!'))
+        return redirect(url_for('admin.venues'))
+    return render_template('edit_venue.html', form=form, venue=venue)
+
+
+@bp.route('/admin/venues/<int:venue_id>/delete', methods=['POST'])
+@admin_required
+def delete_venue(venue_id):
+    form = DeleteVenueForm()
+    if not form.validate_on_submit():
+        abort(400)
+    venue = Venue.query.get_or_404(venue_id)
+    event_count = Event.query.filter_by(venue_id=venue.id).count()
+    if event_count > 0:
+        sample = (
+            Event.query.filter_by(venue_id=venue.id)
+            .order_by(Event.date.asc()).limit(3).all()
+        )
+        names = ', '.join(e.name for e in sample)
+        more = _(' and %(k)d more', k=event_count - 3) if event_count > 3 else ''
+        flash(_(
+            'Cannot delete venue "%(venue)s": it still has %(n)d event(s) '
+            '(%(names)s%(more)s). Reassign or delete those events first.',
+            venue=venue.name, n=event_count, names=names, more=more,
+        ))
+        return redirect(url_for('admin.venues'))
+    db.session.delete(venue)
+    db.session.commit()
+    flash(_('Venue deleted.'))
+    return redirect(url_for('admin.venues'))
 
 
 @bp.route('/admin/scrape-status')

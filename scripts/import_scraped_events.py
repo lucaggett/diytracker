@@ -20,7 +20,7 @@ from datetime import datetime, time
 from flask import Flask
 
 from models import db, ScrapedEvent
-from utils import resolve_canton
+from utils import clean_genre_tokens, clean_ticket_url, resolve_canton
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -56,13 +56,21 @@ def import_events(csv_path: str, db_uri: str = 'sqlite:///events.db'):
                 existing = ScrapedEvent.query.filter_by(source=source, url=url).first()
                 if existing:
                     continue
+                raw_styles = row.get('styles') or ''
+                # petzi sitemap mixes concerts with theatre/workshop/club-night
+                # rows; the raw 'concert' token is the only signal, so filter
+                # on it before cleanup strips the token.
+                if source == 'petzi' and 'concert' not in raw_styles.lower():
+                    continue
                 region = resolve_canton(row.get('region') or '', row.get('city') or '')
+                cleaned_styles = ', '.join(clean_genre_tokens(raw_styles)) or None
+                cleaned_ticket_url = clean_ticket_url(row.get('ticket_url'), source)
                 event = ScrapedEvent(
                     source=source,
                     url=url,
                     title=row.get('title'),
                     performers=row.get('performers'),
-                    styles=row.get('styles'),
+                    styles=cleaned_styles,
                     description=row.get('description'),
                     start_date=parse_date(row.get('start_date') or ''),
                     end_date=parse_date(row.get('end_date') or ''),
@@ -75,7 +83,7 @@ def import_events(csv_path: str, db_uri: str = 'sqlite:///events.db'):
                     postal_code=row.get('postal_code'),
                     ticket_price=row.get('ticket_price'),
                     ticket_currency=row.get('ticket_currency'),
-                    ticket_url=row.get('ticket_url'),
+                    ticket_url=cleaned_ticket_url,
                     organizer=row.get('organizer'),
                     event_status=row.get('event_status'),
                 )

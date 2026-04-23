@@ -473,3 +473,32 @@ def parent_genres(raw):
             continue
         seen.add(_GENRE_PARENT_MAP.get(low, 'Other'))
     return [p for p in PARENT_GENRES_ORDER if p in seen]
+
+
+# ---------------------------------------------------------------------------
+# Ticket URL cleanup
+# ---------------------------------------------------------------------------
+
+# Generic "buy tickets" landing pages per source. Matched after stripping
+# query/fragment/trailing slash and lowercasing.
+_GENERIC_TICKET_URLS = {
+    'metalgigs': {'https://metalgigs.ch/tickets/kaufen'},
+}
+
+
+def clean_ticket_url(url, source):
+    """Return None when *url* is a generic landing page for *source*.
+
+    Returns None for empty input or a matched generic URL; otherwise
+    returns the stripped original.
+    """
+    if not url:
+        return None
+    trimmed = url.strip()
+    if not trimmed:
+        return None
+    normalised = trimmed.split('?', 1)[0].split('#', 1)[0].rstrip('/').lower()
+    generics = _GENERIC_TICKET_URLS.get((source or '').lower(), set())
+    if normalised in generics:
+        return None
+    return trimmed
