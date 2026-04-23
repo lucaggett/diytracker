@@ -1,0 +1,34 @@
+{% extends 'base_admin.html' %}
+{% block title %}Analytics · diytracker.ch{% endblock %}
+{% block content %}
+<h1 class="text-lg font-bold mb-6 uppercase tracking-wider">Analytics</h1>
+
+<div class="border border-ink p-6 max-w-md">
+  <h2 class="text-sm font-bold uppercase tracking-wider mb-4">Generate Report</h2>
+  <form method="post" class="flex flex-col gap-4">
+    <div>
+      <label for="timeframe" class="block text-xs uppercase tracking-wider mb-1">Time frame</label>
+      <select id="timeframe" name="timeframe" class="w-full border border-ink bg-paper text-ink font-mono text-sm px-3 py-2 focus:outline-none">
+        {% for value, label in timeframes %}
+          <option value="{{ value }}" {% if value == '7d' %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="border border-ink px-4 py-2 text-xs uppercase tracking-wider hover:bg-ink hover:text-paper transition-colors">
+      Generate
+    </button>
+  </form>
+</div>
+
+{% if report_exists %}
+<div class="mt-6 border border-ink p-4 max-w-md">
+  <p class="text-xs text-smudge mb-2">
+    Last generated: {{ report_mtime.strftime('%Y-%m-%d %H:%M') }}
+  </p>
+  <a href="{{ url_for('admin.analytics_view') }}" target="_blank"
+     class="text-sm uppercase tracking-wider hover:text-bleed underline">
+    View report →
+  </a>
+</div>
+{% endif %}
+{% endblock %}

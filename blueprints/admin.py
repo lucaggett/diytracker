@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 
 from forms import DeleteEventForm, DeleteVenueForm, EventEditForm, VenueForm, get_canton_choices
 from models import db, Event, Venue, VenueAccessibility
+from services.analytics import REPORT_PATH, TIMEFRAMES, generate_report
 from services.auth import admin_required
 from services.calendar_image import generate_weekly_calendar_image
 from services.i18n import gettext as _
@@ -284,6 +285,31 @@ def export_excel():
         as_attachment=True,
         download_name=f'events_{datetime.now().strftime("%Y%m%d")}.xlsx',
     )
+
+
+@bp.route('/admin/analytics', methods=['GET', 'POST'])
+@admin_required
+def analytics():
+    if request.method == 'POST':
+        timeframe = request.form.get('timeframe', '7d')
+        valid = {t for t, _ in TIMEFRAMES}
+        if timeframe not in valid:
+            timeframe = '7d'
+        success, message = generate_report(timeframe)
+        flash(message, 'success' if success else 'error')
+        return redirect(url_for('admin.analytics'))
+    report_exists = REPORT_PATH.exists()
+    report_mtime = datetime.fromtimestamp(REPORT_PATH.stat().st_mtime) if report_exists else None
+    return render_template('analytics.html', timeframes=TIMEFRAMES, report_exists=report_exists, report_mtime=report_mtime)
+
+
+@bp.route('/admin/analytics/view')
+@admin_required
+def analytics_view():
+    if not REPORT_PATH.exists():
+        flash(_('No report has been generated yet. Use the form to create one.'))
+        return redirect(url_for('admin.analytics'))
+    return send_file(REPORT_PATH, mimetype='text/html')
 
 
 @bp.route('/admin/weekly-image')
