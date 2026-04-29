@@ -791,10 +791,6 @@ video {
   margin-top: 0.5rem;
 }
 
-.mt-3 {
-  margin-top: 0.75rem;
-}
-
 .mt-4 {
   margin-top: 1rem;
 }
@@ -1616,6 +1612,7 @@ video {
 .options-wrap {
   display: grid;
   grid-template-rows: 0fr;
+  overflow: hidden;
 }
 
 .event-details-wrap > .event-details,
@@ -1628,6 +1625,11 @@ video {
 .event-item.is-open > .event-details-wrap,
 .category-header.is-open + .options-wrap {
   grid-template-rows: 1fr;
+}
+
+.event-item.is-open > .event-details-wrap {
+  margin-top: 0.75rem;
+  /* restore the mt-3 that was removed from .event-details */
 }
 
 .event-item.is-open > .event-details-wrap > .event-details,
