@@ -755,6 +755,14 @@ video {
   margin-bottom: 1.5rem;
 }
 
+.mb-8 {
+  margin-bottom: 2rem;
+}
+
+.ml-1 {
+  margin-left: 0.25rem;
+}
+
 .ml-auto {
   margin-left: auto;
 }
@@ -769,6 +777,10 @@ video {
 
 .mt-1 {
   margin-top: 0.25rem;
+}
+
+.mt-10 {
+  margin-top: 2.5rem;
 }
 
 .mt-16 {
@@ -916,10 +928,6 @@ video {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
-.transform {
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
 @keyframes pulse {
   50% {
     opacity: .5;
@@ -930,8 +938,16 @@ video {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
 .cursor-pointer {
   cursor: pointer;
+}
+
+.resize-y {
+  resize: vertical;
 }
 
 .list-disc {
@@ -1060,6 +1076,10 @@ video {
   white-space: nowrap;
 }
 
+.whitespace-pre-line {
+  white-space: pre-line;
+}
+
 .break-all {
   word-break: break-all;
 }
@@ -1084,8 +1104,16 @@ video {
   border-bottom-width: 1px;
 }
 
+.border-b-2 {
+  border-bottom-width: 2px;
+}
+
 .border-t {
   border-top-width: 1px;
+}
+
+.border-t-2 {
+  border-top-width: 2px;
 }
 
 .border-double {
@@ -1109,6 +1137,10 @@ video {
 .border-ink {
   --tw-border-opacity: 1;
   border-color: rgb(10 10 10 / var(--tw-border-opacity));
+}
+
+.border-ink\/20 {
+  border-color: rgb(10 10 10 / 0.2);
 }
 
 .border-ink\/30 {
@@ -1267,6 +1299,10 @@ video {
   padding-left: 1.25rem;
 }
 
+.pr-4 {
+  padding-right: 1rem;
+}
+
 .pt-3 {
   padding-top: 0.75rem;
 }
@@ -1400,6 +1436,11 @@ video {
   color: rgb(26 78 194 / var(--tw-text-opacity));
 }
 
+.text-green-700 {
+  --tw-text-opacity: 1;
+  color: rgb(21 128 61 / var(--tw-text-opacity));
+}
+
 .text-ink {
   --tw-text-opacity: 1;
   color: rgb(10 10 10 / var(--tw-text-opacity));
@@ -1427,6 +1468,11 @@ video {
   color: rgb(107 98 89 / 0.7);
 }
 
+.text-yellow-700 {
+  --tw-text-opacity: 1;
+  color: rgb(161 98 7 / var(--tw-text-opacity));
+}
+
 .underline {
   text-decoration-line: underline;
 }
@@ -1437,6 +1483,10 @@ video {
 
 .accent-bleed {
   accent-color: #c21a1a;
+}
+
+.opacity-40 {
+  opacity: 0.4;
 }
 
 .shadow-\[3px_3px_0_var\(--bleed\)\] {
@@ -1461,14 +1511,8 @@ video {
   transition-duration: 150ms;
 }
 
-.transition-transform {
-  transition-property: transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+.duration-150 {
   transition-duration: 150ms;
-}
-
-.duration-200 {
-  transition-duration: 200ms;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -1559,6 +1603,175 @@ video {
   }
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Calendar front-page micro-interactions.
+   Structural rules (wrappers, hidden states, hover targets) live outside
+   the motion guard so the page works with prefers-reduced-motion: reduce.
+   Only the easing/timing is gated.
+   ───────────────────────────────────────────────────────────────────── */
+
+/* Collapsible wrappers — animate height via grid-template-rows 0fr↔1fr. */
+
+.event-details-wrap,
+.options-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+}
+
+.event-details-wrap > .event-details,
+.options-wrap > .options-container {
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.event-item.is-open > .event-details-wrap,
+.category-header.is-open + .options-wrap {
+  grid-template-rows: 1fr;
+}
+
+.event-item.is-open > .event-details-wrap > .event-details,
+.category-header.is-open + .options-wrap > .options-container {
+  opacity: 1;
+}
+
+/* Filter modal — kept mounted; opacity + visibility gate interactions. */
+
+#filter-modal {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#filter-modal.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+#filter-modal > div {
+  transform: scale(0.94) rotate(-2deg);
+  opacity: 0;
+}
+
+#filter-modal.is-open > div {
+  transform: scale(1) rotate(0);
+  opacity: 1;
+}
+
+/* Chevron / accordion-arrow rotation when their container is open. */
+
+.event-item.is-open .event-chevron,
+.category-header.is-open .arrow-icon {
+  transform: rotate(90deg);
+}
+
+/* Hover / press states. Snap by default; smoothed in the motion layer. */
+
+.event-item:hover {
+  transform: translate(-1px, -1px) rotate(-0.2deg);
+  box-shadow: 4px 4px 0 var(--ink);
+  background-color: rgba(10, 10, 10, 0.04);
+}
+
+.event-item:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+#filter-button:hover {
+  transform: scale(1.04) rotate(-2deg);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+/* Keyframes referenced directly (not via Tailwind animate-* utilities)
+   need to be declared here so Tailwind emits them in the build. */
+
+@keyframes drift {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50%      {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes pop {
+  0%   {
+    transform: scale(1);
+  }
+
+  40%  {
+    transform: scale(0.92);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Motion layer — every transition/animation gated. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .event-item {
+    transition: transform 180ms ease-out,
+                    box-shadow 180ms ease-out,
+                    background-color 150ms ease-out;
+  }
+
+  .event-chevron,
+    .arrow-icon {
+    transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .event-details-wrap,
+    .options-wrap {
+    transition: grid-template-rows 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .event-details-wrap > .event-details,
+    .options-wrap > .options-container {
+    transition: opacity 200ms ease-out 40ms;
+  }
+
+  #filter-modal {
+    transition: opacity 200ms ease-out, visibility 0s linear 200ms;
+  }
+
+  #filter-modal.is-open {
+    transition: opacity 200ms ease-out, visibility 0s linear 0s;
+  }
+
+  #filter-modal > div {
+    transition: transform 180ms ease-out, opacity 180ms ease-out;
+  }
+
+  #filter-modal.is-open > div {
+    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+                    opacity 240ms ease-out;
+  }
+
+  #filter-button {
+    animation: drift 6s ease-in-out infinite;
+    transition: transform 180ms ease-out,
+                    box-shadow 180ms ease-out,
+                    background-color 150ms ease-out;
+  }
+
+  #filter-button:hover {
+    animation: none;
+  }
+
+  .btn-press:active {
+    animation: pop 220ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+  }
+
+  .options-container label {
+    transition: color 150ms ease-out;
+  }
+}
+
 .hover\:border-bleed:hover {
   --tw-border-opacity: 1;
   border-color: rgb(194 26 26 / var(--tw-border-opacity));
@@ -1595,12 +1808,6 @@ video {
 
 .hover\:underline:hover {
   text-decoration-line: underline;
-}
-
-.hover\:shadow-\[3px_3px_0_var\(--ink\)\]:hover {
-  --tw-shadow: 3px 3px 0 var(--ink);
-  --tw-shadow-colored: 3px 3px 0 var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
 .focus\:border-bleed:focus {

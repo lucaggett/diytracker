@@ -60,12 +60,18 @@ module.exports = {
           '0%,100%': { textShadow: '2px 0 0 var(--bleed), -2px 0 0 var(--bleed-offset)' },
           '50%': { textShadow: '3px 1px 0 var(--bleed), -3px -1px 0 var(--bleed-offset)' },
         },
+        pop: {
+          '0%': { transform: 'scale(1)' },
+          '40%': { transform: 'scale(0.92)' },
+          '100%': { transform: 'scale(1)' },
+        },
       },
       animation: {
         jitter: 'jitter 3.2s ease-in-out infinite',
         slam: 'slam 600ms cubic-bezier(0.22, 1, 0.36, 1) 1',
         drift: 'drift 6s ease-in-out infinite',
         misreg: 'misreg 4s ease-in-out infinite',
+        pop: 'pop 220ms cubic-bezier(0.22, 1, 0.36, 1) 1',
       },
     }
   },
