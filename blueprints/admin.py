@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
 from sqlalchemy import func
-from werkzeug.utils import secure_filename
+from sqlalchemy.orm import joinedload
 
 from forms import DeleteEventForm, DeleteVenueForm, EventEditForm, VenueForm, get_canton_choices
 from models import db, Event, Venue, VenueAccessibility
@@ -13,8 +13,9 @@ from services.auth import admin_required
 from services.calendar_image import generate_weekly_calendar_image
 from services.i18n import gettext as _
 from services.scraper import SCRAPE_INTERVAL_HOURS, get_last_scrape_time, get_progress, is_running
-from services.uploads import UPLOAD_FOLDER, allowed_file, validate_image_content
-from utils import PARENT_GENRES_ORDER
+from services.uploads import UPLOAD_FOLDER, save_flyer_file
+from services.venue import get_or_create_venue
+from utils import PARENT_GENRES_ORDER, clean_genre_tokens
 
 bp = Blueprint('admin', __name__)
 
@@ -77,7 +78,7 @@ def edit_event(event_id):
             event.acts = form.acts.data
             event.ticket_price = form.ticket_price.data
             event.ticket_link = form.ticket_link.data
-            event.genre = ', '.join(form.genre.data) if form.genre.data else ''
+            event.genre = ', '.join(clean_genre_tokens(', '.join(form.genre.data))) if form.genre.data else ''
 
             venue_id = form.venue_id.data
             if venue_id and venue_id != 'new':
@@ -86,29 +87,19 @@ def edit_event(event_id):
                     flash(_('Selected venue does not exist.'))
                     return redirect(url_for('admin.edit_event', event_id=event_id))
             else:
-                venue = Venue.query.filter_by(
-                    name=form.venue_name.data, city=form.venue_city.data, plz=form.venue_plz.data,
-                ).first()
-                if not venue:
-                    venue = Venue(
-                        name=form.venue_name.data,
-                        address=form.venue_address.data,
-                        city=form.venue_city.data,
-                        canton=form.venue_canton.data,
-                        plz=form.venue_plz.data,
-                        coords=form.venue_coords.data,
-                    )
-                    db.session.add(venue)
-                    db.session.flush()
+                venue, _ = get_or_create_venue(
+                    name=form.venue_name.data,
+                    address=form.venue_address.data,
+                    city=form.venue_city.data,
+                    canton=form.venue_canton.data,
+                    plz=form.venue_plz.data,
+                    coords=form.venue_coords.data,
+                )
             event.venue_id = venue.id
 
-            if form.flyer.data:
-                file = form.flyer.data
-                if file and allowed_file(file.filename) and validate_image_content(file):
-                    filename = secure_filename(file.filename)
-                    flyer = os.path.join(current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER), filename)
-                    file.save(flyer)
-                    event.flyer = flyer
+            saved = save_flyer_file(form.flyer.data, current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER))
+            if saved:
+                event.flyer = saved
 
             db.session.commit()
             flash(_('Event updated successfully!'))
@@ -230,7 +221,7 @@ def export_excel():
     import openpyxl
     from openpyxl.styles import Font
 
-    events = Event.query.order_by(Event.date.asc()).all()
+    events = Event.query.options(joinedload(Event.venue)).order_by(Event.date.asc()).all()
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Events'

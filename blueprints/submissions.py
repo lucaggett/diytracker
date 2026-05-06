@@ -1,19 +1,21 @@
-import hashlib
 import os
 from datetime import datetime, time as time_type
 
 from dateutil.relativedelta import relativedelta
 from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
-from werkzeug.utils import secure_filename
 
 from forms import EventForm
 from models import db, Event, ScrapedEvent, Submitter, Venue
 from services.auth import login_required
+from services.events import compute_event_hash
 from services.i18n import gettext as _
-from services.uploads import UPLOAD_FOLDER, allowed_file, validate_image_content
+from services.uploads import UPLOAD_FOLDER, save_flyer_file
+from services.venue import get_or_create_venue
 from utils import clean_genre_tokens, resolve_canton
 
 bp = Blueprint('submissions', __name__)
+
+_ALLOWED_QUEUE_PARAMS = {'date_from', 'date_to', 'source'}
 
 
 def _clean_genre(raw):
@@ -125,21 +127,15 @@ def event_queue():
             except ValueError:
                 doors_time = time_type(19, 0)
 
-        venue = Venue.query.filter_by(name=venue_name, city=city, plz=plz).first()
-        if not venue:
-            venue = Venue(
-                name=venue_name,
-                address=street,
-                city=city,
-                canton=resolve_canton(data.get('region') or '', city),
-                plz=plz,
-                coords=data.get('coords') or '',
-            )
-            db.session.add(venue)
-            db.session.commit()
-        event_hash = hashlib.sha256(
-            f"{name}{event_date}{doors_time}{genre}{acts}{ticket_link}{ticket_price}{venue.id}".encode()
-        ).hexdigest()
+        venue, _ = get_or_create_venue(
+            name=venue_name,
+            address=street,
+            city=city,
+            canton=resolve_canton(data.get('region') or '', city),
+            plz=plz,
+            coords=data.get('coords') or '',
+        )
+        event_hash = compute_event_hash(name, event_date, doors_time, genre, acts, ticket_link, ticket_price, venue.id)
         existing = Event.query.filter_by(event_hash=event_hash).first()
         if existing:
             flash(_('This event already exists.'))
@@ -160,7 +156,7 @@ def event_queue():
             submitter_id=submitter.id,
         )
         db.session.add(new_event)
-        db.session.commit()
+        db.session.flush()
         scraped_id = data.get('_scraped_id')
         if scraped_id:
             scraped_obj = ScrapedEvent.query.get(scraped_id)
@@ -168,9 +164,9 @@ def event_queue():
                 scraped_obj.approved = True
                 scraped_obj.approved_at = datetime.now()
                 scraped_obj.approved_event_id = new_event.id
-                db.session.commit()
+        db.session.commit()
         flash(_('Event approved and added to calendar!'))
-        redirect_args = {k: v for k, v in request.args.items()}
+        redirect_args = {k: v for k, v in request.args.items() if k in _ALLOWED_QUEUE_PARAMS}
         return redirect(url_for('submissions.event_queue', **redirect_args))
     now = datetime.now().date()
     return render_template(
@@ -199,14 +195,9 @@ def submit_event_link():
         ticket_link = form.ticket_link.data
         ticket_price = form.ticket_price.data
 
-        flyer = None
-        if form.flyer.data:
-            file = form.flyer.data
-            if file and allowed_file(file.filename) and validate_image_content(file):
-                filename = secure_filename(file.filename)
-                flyer_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER), filename)
-                file.save(flyer_path)
-                flyer = flyer_path
+        flyer = save_flyer_file(form.flyer.data, current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER))
+
+        genre_str = _clean_genre(', '.join(genres)) if genres else ''
 
         venue_id = form.venue_id.data
         if venue_id == 'new' or not venue_id:
@@ -221,24 +212,15 @@ def submit_event_link():
                 flash(_('Please provide all required venue details for a new venue.'))
                 return redirect(url_for('submissions.submit_event_link'))
 
-            venue = Venue.query.filter_by(
+            venue, created = get_or_create_venue(
                 name=venue_name,
+                address=venue_address,
                 city=venue_city,
+                canton=venue_canton,
                 plz=venue_plz,
-            ).first()
-
-            if not venue:
-                venue = Venue(
-                    name=venue_name,
-                    address=venue_address,
-                    city=venue_city,
-                    canton=venue_canton,
-                    plz=venue_plz,
-                    coords=venue_coords,
-                )
-                db.session.add(venue)
-                db.session.commit()
-            else:
+                coords=venue_coords,
+            )
+            if not created:
                 flash(_('Venue already exists. Using existing venue.'))
         else:
             venue = Venue.query.get(venue_id)
@@ -252,15 +234,13 @@ def submit_event_link():
             end_date=end_date,
             is_festival=is_festival,
             doors=doors,
-            genre=', '.join(genres) if genres else '',
+            genre=genre_str,
             acts=acts,
             flyer=flyer,
             ticket_link=ticket_link,
             ticket_price=ticket_price,
             venue_id=venue.id,
-            event_hash=hashlib.sha256(
-                f"{name}{date}{doors}{genres}{acts}{ticket_link}{ticket_price}{venue.id}".encode()
-            ).hexdigest(),
+            event_hash=compute_event_hash(name, date, doors, genre_str, acts, ticket_link, ticket_price, venue.id),
             submitter_id=submitter.id,
         )
         db.session.add(new_event)

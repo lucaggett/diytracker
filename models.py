@@ -124,7 +124,7 @@ class Submitter(db.Model):
 
     def generate_invite_token(self):
         self.invite_token = secrets.token_urlsafe(32)
-        self.invite_token_expiry = datetime.utcnow() + timedelta(days=7)
+        self.invite_token_expiry = datetime.now() + timedelta(days=7)
         return self.invite_token
 
     def clear_invite_token(self):

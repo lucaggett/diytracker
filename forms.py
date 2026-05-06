@@ -21,7 +21,7 @@ def get_genre_choices():
         'Drum & Bass', 'Dubstep', 'Techno', 'House', 'Trance', 'Electro',
         'Ambient', 'Experimental', 'Noise', 'Wave', 'NDW', 'Folk', 'Neofolk',
         'Jazz', 'Blues', 'Ska', 'Garage', 'Hyperpop', 'Emo', 'Metalcore', 'Synth',
-        'Ska', 'Beatdown', 'Doom', 'Sludge', 'Stoner', 'Crustpunk',
+        'Beatdown', 'Doom', 'Sludge', 'Stoner', 'Crustpunk',
         'Screamo', 'Powerviolence', 'Mathcore', 'Shoegaze'
     ]
     return [(genre, genre) for genre in genres]
@@ -90,32 +90,7 @@ class EventForm(FlaskForm):
     venue_plz = StringField(_l('ZIP Code'), validators=[Optional()])
     venue_coords = StringField(_l('Coordinates'), validators=[Optional()])
 
-class EventEditForm(FlaskForm):
-    # Existing event fields
-    name = StringField(_l('Event Name'), validators=[Optional()])
-    date = DateTimeField(_l('Event Date'), format='%Y-%m-%d', validators=[DataRequired()])
-    end_date = DateField(_l('End Date'), validators=[Optional()])
-    is_festival = BooleanField(_l('Festival'))
-    doors = TimeField(_l('Doors Open Time'), format='%H:%M', validators=[DataRequired()])
-    genre = SelectMultipleField(_l('Genre'), choices=[], validate_choice=False, validators=[Optional()])
-    acts = TextAreaField(_l('Acts'), validators=[Optional()])
-    flyer = FileField(_l('Flyer'), validators=[Optional()])
-
-    # Ticket Details
-    ticket_price = StringField(_l('Ticket Price'), validators=[DataRequired()])
-    ticket_link = StringField(_l('Ticket Link'), validators=[Optional()])
-
-    # Venue Selection Field
-    venue_selection = StringField(_l('Venue'), validators=[Optional()])
-    venue_id = HiddenField('Venue ID')  # To store the selected venue's ID
-
-    # Venue Details Fields (for new venues)
-    venue_name = StringField(_l('Venue Name'), validators=[Optional()])
-    venue_address = StringField(_l('Venue Address'), validators=[Optional()])
-    venue_city = StringField(_l('City'), validators=[Optional()])
-    venue_canton = StringField(_l('Canton'), validators=[Optional()])
-    venue_plz = StringField(_l('ZIP Code'), validators=[Optional()])
-    venue_coords = StringField(_l('Coordinates'), validators=[Optional()])
+EventEditForm = EventForm
 
 
 class LoginForm(FlaskForm):
