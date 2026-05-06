@@ -16,7 +16,7 @@
     {% for month in months_data %}
       {% for day in range(1, month.last_day_of_month + 1) %}
         {% set current_date = datetime(month.year, month.month, day).date() %}
-        {% if current_date >= today %}
+        {% if current_date >= today and current_date in grouped_events %}
           {% set is_today = (current_date == today) %}
 
           <article class="date-card flyer-card scroll-jitter relative {% if is_today %}border-bleed{% endif %} p-4 pt-5">
@@ -37,8 +37,7 @@
             </header>
 
             <div class="event-container space-y-2">
-              {% if current_date in grouped_events %}
-                {% for event in grouped_events[current_date] %}
+              {% for event in grouped_events[current_date] %}
                   <div class="event-item bg-paper border border-ink p-3 cursor-pointer"
                        data-event-id="{{ event.id }}"
                        data-event-name="{{ event.name|e }}"
@@ -108,10 +107,7 @@
                       </div>
                     </div>
                   </div>
-                {% endfor %}
-              {% else %}
-                <p class="font-mono text-xs text-smudge italic">— {{ _('no events') }} —</p>
-              {% endif %}
+              {% endfor %}
             </div>
           </article>
         {% endif %}
@@ -330,13 +326,6 @@
                 }
             });
         }
-
-        // Hide date cards that have no events
-        document.querySelectorAll('.date-card').forEach(function (card) {
-            if (card.querySelectorAll('.event-item').length === 0) {
-                card.hidden = true;
-            }
-        });
 
         // Toggle event details
         window.toggleEventDetails = function (element) {

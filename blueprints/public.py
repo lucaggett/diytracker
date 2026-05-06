@@ -6,6 +6,8 @@ from dateutil.relativedelta import relativedelta
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
 
 from forms import AccessibilityForm, CollaboratorRequestForm
+from sqlalchemy.orm import joinedload
+
 from models import Event, Venue, VenueAccessibility, db
 from services.contact import build_contact_logger, send_contact_email
 from services.i18n import SUPPORTED_LOCALES, gettext as _, validate_lang
@@ -36,7 +38,13 @@ def calendar_view():
     last_day = calendar.monthrange(end_month[0], end_month[1])[1]
     end_date = datetime(end_month[0], end_month[1], last_day, 23, 59, 59)
 
-    events = Event.query.filter(Event.date >= start_date, Event.date <= end_date).order_by(Event.date.asc()).all()
+    events = (
+        Event.query
+        .options(joinedload(Event.venue))
+        .filter(Event.date >= start_date, Event.date <= end_date)
+        .order_by(Event.date.asc())
+        .all()
+    )
 
     grouped_events = defaultdict(list)
     for event in events:

@@ -1,6 +1,8 @@
 import os
 from datetime import timedelta
 
+from flask_compress import Compress
+
 from dotenv import load_dotenv
 from flask import Flask, g, render_template
 
@@ -21,6 +23,7 @@ for d in ('logs', 'static/uploads', 'instance'):
     os.makedirs(d, exist_ok=True)
 
 app = Flask(__name__)
+Compress(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///events.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -29,6 +32,7 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
 
 app.config['BABEL_DEFAULT_LOCALE'] = DEFAULT_LOCALE
 app.config['BABEL_SUPPORTED_LOCALES'] = list(SUPPORTED_LOCALES)
@@ -53,6 +57,16 @@ app.jinja_env.globals['format_date'] = format_date
 
 app.jinja_env.globals['SUPPORTED_LOCALES'] = SUPPORTED_LOCALES
 app.jinja_env.globals['parent_genres'] = parent_genres
+
+
+@app.context_processor
+def _static_version():
+    css_path = os.path.join(app.static_folder, 'css', 'output.css')
+    try:
+        v = int(os.path.getmtime(css_path))
+    except OSError:
+        v = 0
+    return {'css_version': v}
 
 
 @app.before_request
