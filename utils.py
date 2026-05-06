@@ -368,6 +368,9 @@ _GENRE_PARENT_MAP = {
     'beatdown': 'Hardcore',
     'crossover': 'Hardcore',
     'emo': 'Hardcore',
+    'screamo': 'Hardcore',
+    'powerviolence': 'Hardcore',
+    'mathcore': 'Hardcore',
 
     # Punk
     'punk': 'Punk',
@@ -392,6 +395,7 @@ _GENRE_PARENT_MAP = {
     'garage': 'Rock',
     'psychedelic': 'Rock',
     'experimental': 'Rock',
+    'shoegaze': 'Rock',
 
     # Goth / Industrial
     'goth': 'Goth/Industrial',
