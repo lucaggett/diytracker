@@ -2,8 +2,11 @@ import secrets
 from datetime import datetime, timedelta
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import event as sa_event
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
+
+from utils import parent_genres as _compute_parent_genres
 
 db = SQLAlchemy()
 
@@ -19,6 +22,10 @@ class Event(db.Model):
     ticket_link = db.Column(db.String(200), nullable=True)
     doors = db.Column(db.Time, nullable=False)  # Storing door time as 24-hour format
     genre = db.Column(db.String(100), nullable=True)
+    # Comma-joined parent genres derived from `genre`, with leading and
+    # trailing commas as sentinels (e.g. ',Metal,Hardcore,'). Auto-synced via
+    # the before_insert/before_update hook below; never set this column directly.
+    parent_genres = db.Column(db.String(200), nullable=True, index=True)
     end_date = db.Column(db.Date, nullable=True)
     is_festival = db.Column(db.Boolean, nullable=False, default=False)
     acts = db.Column(db.Text, nullable=True)
@@ -165,3 +172,14 @@ class ScrapedEvent(db.Model):
 
     def __repr__(self):
         return f"<ScrapedEvent {self.id}: {self.title} on {self.start_date}>"
+
+
+def _format_parent_genres(genre):
+    parents = _compute_parent_genres(genre)
+    return ',' + ','.join(parents) + ',' if parents else None
+
+
+@sa_event.listens_for(Event, 'before_insert')
+@sa_event.listens_for(Event, 'before_update')
+def _sync_event_parent_genres(mapper, connection, target):
+    target.parent_genres = _format_parent_genres(target.genre)

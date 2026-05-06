@@ -14,6 +14,7 @@ from services.calendar_image import generate_weekly_calendar_image
 from services.i18n import gettext as _
 from services.scraper import SCRAPE_INTERVAL_HOURS, get_last_scrape_time, get_progress, is_running
 from services.uploads import UPLOAD_FOLDER, allowed_file, validate_image_content
+from utils import PARENT_GENRES_ORDER
 
 bp = Blueprint('admin', __name__)
 
@@ -46,6 +47,7 @@ def admin():
         last_scrape=last_scrape, next_scrape=next_scrape,
         time_since_last=time_since_last, time_until_next=time_until_next,
         scrape_running=is_running(), current_monday=current_monday,
+        parent_genres_order=PARENT_GENRES_ORDER,
     )
 
 
@@ -322,13 +324,18 @@ def weekly_calendar_image():
         ref = datetime.now().date()
     monday = ref - timedelta(days=ref.weekday())
 
-    img = generate_weekly_calendar_image(monday)
+    genre_param = (request.args.get('genre') or '').strip() or None
+    if genre_param not in PARENT_GENRES_ORDER:
+        genre_param = None
+
+    img = generate_weekly_calendar_image(monday, parent_genre=genre_param)
     buf = io.BytesIO()
     img.save(buf, format='PNG', optimize=True)
     buf.seek(0)
+    suffix = f"_{genre_param.lower().replace('/', '-')}" if genre_param else ''
     return send_file(
         buf,
         mimetype='image/png',
         as_attachment=True,
-        download_name=f'events_week_{monday.strftime("%Y-%m-%d")}.png',
+        download_name=f'events_week_{monday.strftime("%Y-%m-%d")}{suffix}.png',
     )

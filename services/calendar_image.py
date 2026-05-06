@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime, time as time_type, timedelta
 
 from models import Event
-from utils import parent_genres
+from utils import clean_genre_tokens, parent_for_token, parent_genres
 
 _GENRE_PALETTE = [
     (239,  68,  68),
@@ -49,7 +49,7 @@ def _load_font(size, bold=False):
     return ImageFont.load_default()
 
 
-def generate_weekly_calendar_image(monday_date):
+def generate_weekly_calendar_image(monday_date, parent_genre=None):
     from PIL import Image, ImageDraw
 
     GERMAN_MONTHS = ['JANUAR', 'FEBRUAR', 'MÄRZ', 'APRIL', 'MAI', 'JUNI',
@@ -58,34 +58,54 @@ def generate_weekly_calendar_image(monday_date):
 
     sunday_date = monday_date + timedelta(days=6)
 
-    events = (Event.query
-              .filter(Event.date >= datetime.combine(monday_date, time_type.min),
-                      Event.date <= datetime.combine(sunday_date, time_type.max))
-              .order_by(Event.date.asc())
-              .all())
+    query = (Event.query
+             .filter(Event.date >= datetime.combine(monday_date, time_type.min),
+                     Event.date <= datetime.combine(sunday_date, time_type.max)))
+    if parent_genre:
+        query = query.filter(Event.parent_genres.like(f'%,{parent_genre},%'))
+    events = query.order_by(Event.date.asc()).all()
 
     by_day = defaultdict(list)
     for e in events:
         by_day[e.date.weekday()].append(e)
 
-    genre_color = {}
-    for e in events:
-        for p in parent_genres(e.genre):
-            if p not in genre_color:
-                genre_color[p] = _GENRE_PALETTE[len(genre_color) % len(_GENRE_PALETTE)]
+    if parent_genre:
+        # When filtered, the legend shows sub-genre tokens within the chosen
+        # parent (e.g. 'Metalcore', 'Beatdown' for Hardcore) so unrelated
+        # parents (Metal on a Hardcore-filtered image) don't get a chip.
+        legend_genres = {}
+        for e in events:
+            for tok in clean_genre_tokens(e.genre):
+                if (parent_for_token(tok) == parent_genre
+                        and tok not in legend_genres):
+                    legend_genres[tok] = _GENRE_PALETTE[
+                        len(legend_genres) % len(_GENRE_PALETTE)
+                    ]
 
-    def event_primary_color(evt):
-        for p in parent_genres(evt.genre):
-            if p in genre_color:
-                return genre_color[p]
-        return (100, 100, 110)
+        def event_primary_color(evt):
+            for tok in clean_genre_tokens(evt.genre):
+                if tok in legend_genres:
+                    return legend_genres[tok]
+            return (100, 100, 110)
+    else:
+        genre_color = {}
+        for e in events:
+            for p in parent_genres(e.genre):
+                if p not in genre_color:
+                    genre_color[p] = _GENRE_PALETTE[len(genre_color) % len(_GENRE_PALETTE)]
 
-    legend_genres = {}
-    for e in events:
-        for p in parent_genres(e.genre):
-            if p in genre_color and p not in legend_genres:
-                legend_genres[p] = genre_color[p]
-                break
+        def event_primary_color(evt):
+            for p in parent_genres(evt.genre):
+                if p in genre_color:
+                    return genre_color[p]
+            return (100, 100, 110)
+
+        legend_genres = {}
+        for e in events:
+            for p in parent_genres(e.genre):
+                if p in genre_color and p not in legend_genres:
+                    legend_genres[p] = genre_color[p]
+                    break
 
     W, H = 1080, 1350
     BG = (12, 12, 13)
@@ -177,7 +197,8 @@ def generate_weekly_calendar_image(monday_date):
     rough_hrule(0, RED, thickness=7)
 
     ev_y = 14
-    draw.text((MARGIN, ev_y), 'EVENTS', font=f_hero, fill=WHITE)
+    hero_text = parent_genre.upper().replace('/', ' ') if parent_genre else 'EVENTS'
+    draw.text((MARGIN, ev_y), hero_text, font=f_hero, fill=WHITE)
 
     dr = f"{monday_date.day}.-{sunday_date.day}."
     dr_w = draw.textlength(dr, font=f_datenum)

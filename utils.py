@@ -475,6 +475,11 @@ def parent_genres(raw):
     return [p for p in PARENT_GENRES_ORDER if p in seen]
 
 
+def parent_for_token(token):
+    """Return the parent genre for a single sub-genre token (or 'Other')."""
+    return _GENRE_PARENT_MAP.get((token or '').lower(), 'Other')
+
+
 # ---------------------------------------------------------------------------
 # Ticket URL cleanup
 # ---------------------------------------------------------------------------
