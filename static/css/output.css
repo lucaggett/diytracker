@@ -588,13 +588,16 @@ video {
   }
 }
 
+/* Body grain sits behind content (z-index: -1) so opaque panels cover it
+       cleanly; the panels then layer their own finer grain on top via
+       .flyer-card::before. */
+
 .grain-overlay {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  mix-blend-mode: multiply;
-  opacity: 0.35;
-  z-index: 50;
+  z-index: -1;
+  opacity: 0.55;
 }
 
 .mis-reg {
@@ -608,6 +611,25 @@ video {
   background: var(--paper);
   border: 1px solid var(--ink);
   box-shadow: 3px 3px 0 var(--ink);
+  isolation: isolate;
+}
+
+/* Panel-scoped finer grain — different "paper stock" than the body.
+       Self-contained data-URL SVG (external filter refs don't resolve from
+       CSS background-image). higher baseFrequency + different seed than the
+       body's #xerox-grain so the two patterns read as distinct materials. */
+
+.flyer-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='2.4' numOctaves='1' stitchTiles='stitch' seed='3'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.35 0'/></filter><rect width='100%25' height='100%25' filter='url(%23f)'/></svg>");
+  background-size: 220px 220px;
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+  opacity: 0.5;
 }
 
 .torn-divider {
