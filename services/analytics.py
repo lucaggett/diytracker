@@ -109,6 +109,7 @@ def generate_report(timeframe: str = '7d') -> tuple[bool, str]:
          '--date-format=%d/%b/%Y',
          '--time-format=%H:%M:%S',
          f'--output={REPORT_PATH}',
+         '--ignore-crawlers',
          '--no-progress'],
         input=content,
         capture_output=True,
