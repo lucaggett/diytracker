@@ -23,7 +23,6 @@ for d in ('logs', 'static/uploads', 'instance'):
     os.makedirs(d, exist_ok=True)
 
 app = Flask(__name__)
-Compress(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///events.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -33,6 +32,8 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
+app.config['COMPRESS_ALGORITHM'] = ['gzip']
+Compress(app)
 
 app.config['BABEL_DEFAULT_LOCALE'] = DEFAULT_LOCALE
 app.config['BABEL_SUPPORTED_LOCALES'] = list(SUPPORTED_LOCALES)
