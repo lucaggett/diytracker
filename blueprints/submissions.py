@@ -7,6 +7,7 @@ from flask import Blueprint, current_app, flash, redirect, render_template, requ
 from forms import EventForm
 from models import db, Event, ScrapedEvent, Submitter, Venue
 from services.auth import login_required
+from services.cache import bust_cache
 from services.events import compute_event_hash
 from services.i18n import gettext as _
 from services.uploads import UPLOAD_FOLDER, save_flyer_file
@@ -165,6 +166,7 @@ def event_queue():
                 scraped_obj.approved_at = datetime.now()
                 scraped_obj.approved_event_id = new_event.id
         db.session.commit()
+        bust_cache()
         flash(_('Event approved and added to calendar!'))
         redirect_args = {k: v for k, v in request.args.items() if k in _ALLOWED_QUEUE_PARAMS}
         return redirect(url_for('submissions.event_queue', **redirect_args))
@@ -245,6 +247,7 @@ def submit_event_link():
         )
         db.session.add(new_event)
         db.session.commit()
+        bust_cache()
 
         flash(_('Event submitted successfully!'))
         return redirect(url_for('public.calendar_view'))

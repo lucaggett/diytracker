@@ -2,11 +2,13 @@ from flask import Blueprint, jsonify
 
 from forms import get_genre_choices
 from models import Event, Venue
+from services.cache import cache
 
 bp = Blueprint('api', __name__)
 
 
 @bp.route('/get_genres')
+@cache.cached()
 def get_genres():
     seed = [g for g, _ in get_genre_choices()]
     db_genres = []
@@ -20,6 +22,7 @@ def get_genres():
 
 
 @bp.route('/get_venues')
+@cache.cached()
 def get_venues():
     venues = Venue.query.order_by(Venue.name.asc()).all()
     venue_list = []

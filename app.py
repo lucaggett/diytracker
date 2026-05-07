@@ -13,13 +13,14 @@ from services.i18n import (
     gettext,
     select_locale,
 )
+from services.cache import cache
 from services.scraper import start_auto_scheduler
 from services.uploads import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from utils import parent_genres
 
 load_dotenv()
 
-for d in ('logs', 'static/uploads', 'instance'):
+for d in ('logs', 'static/uploads', 'instance', 'instance/cache'):
     os.makedirs(d, exist_ok=True)
 
 app = Flask(__name__)
@@ -40,6 +41,7 @@ app.config['BABEL_SUPPORTED_LOCALES'] = list(SUPPORTED_LOCALES)
 app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 
 db.init_app(app)
+cache.init_app(app)
 
 with app.app_context():
     db.create_all()

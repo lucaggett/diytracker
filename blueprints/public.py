@@ -3,14 +3,15 @@ from collections import defaultdict
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, session, url_for
 
 from forms import AccessibilityForm, CollaboratorRequestForm
 from sqlalchemy.orm import joinedload
 
 from models import Event, Venue, VenueAccessibility, db
+from services.cache import cache
 from services.contact import build_contact_logger, send_contact_email
-from services.i18n import SUPPORTED_LOCALES, gettext as _, validate_lang
+from services.i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES, gettext as _, validate_lang
 
 bp = Blueprint('public', __name__)
 
@@ -24,7 +25,12 @@ def _get_contact_logger():
     return _contact_logger
 
 
+def _calendar_cache_key():
+    return f"calendar_view:{getattr(g, 'locale', DEFAULT_LOCALE)}"
+
+
 @bp.route('/')
+@cache.cached(make_cache_key=_calendar_cache_key)
 def calendar_view():
     now = datetime.now()
 

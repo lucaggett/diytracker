@@ -10,6 +10,7 @@ from forms import DeleteEventForm, DeleteVenueForm, EventEditForm, VenueForm, ge
 from models import db, Event, Venue, VenueAccessibility
 from services.analytics import REPORT_PATH, TIMEFRAMES, generate_report
 from services.auth import admin_required
+from services.cache import bust_cache
 from services.calendar_image import generate_weekly_calendar_image
 from services.i18n import gettext as _
 from services.scraper import SCRAPE_INTERVAL_HOURS, get_last_scrape_time, get_progress, is_running
@@ -102,6 +103,7 @@ def edit_event(event_id):
                 event.flyer = saved
 
             db.session.commit()
+            bust_cache()
             flash(_('Event updated successfully!'))
             return redirect(url_for('admin.admin'))
 
@@ -117,6 +119,7 @@ def delete_event(event_id):
     event = Event.query.get_or_404(event_id)
     db.session.delete(event)
     db.session.commit()
+    bust_cache()
     flash(_('Event deleted successfully!'))
     return redirect(url_for('admin.admin'))
 
