@@ -29,6 +29,18 @@ def _calendar_cache_key():
     return f"calendar_view:{getattr(g, 'locale', DEFAULT_LOCALE)}"
 
 
+@bp.after_request
+def _public_cache_headers(response):
+    if request.endpoint != 'public.calendar_view' or response.status_code != 200:
+        return response
+    if 'user_id' in session:
+        return response
+    response.headers['Vary'] = 'Accept-Encoding'
+    response.headers['Cache-Control'] = 'public, max-age=300'
+    response.add_etag()
+    return response.make_conditional(request)
+
+
 @bp.route('/')
 @cache.cached(make_cache_key=_calendar_cache_key)
 def calendar_view():

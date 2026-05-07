@@ -9,8 +9,7 @@
    ───────────────────────────────────────────────────────────────────── */
 @font-face {
     font-family: 'RichEatinAllCaps';
-    src: url('../fonts/MISPROJECT.woff2') format('woff2'),
-         url('../fonts/MISPROJECT.TTF') format('truetype');
+    src: url('../fonts/MISPROJECT.woff2') format('woff2');
     font-display: swap;
 }
 
