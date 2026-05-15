@@ -1,6 +1,7 @@
 import io
 import os
 from datetime import datetime, timedelta
+from xmlrpc.client import DateTime
 
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
 from sqlalchemy import func
@@ -35,10 +36,11 @@ def _fmt_duration(td):
 @bp.route('/admin', methods=['GET'])
 @admin_required
 def admin():
-    events = Event.query.order_by(Event.date.asc()).all()
+    now = datetime.now()
+    today_start = datetime.combine(now.date(), datetime.min.time())
+    events = Event.query.filter(Event.date >= today_start).order_by(Event.date.asc()).all()
     delete_form = DeleteEventForm()
     last_scrape = get_last_scrape_time()
-    now = datetime.now()
     next_scrape = (last_scrape + timedelta(hours=SCRAPE_INTERVAL_HOURS)) if last_scrape else None
     time_since_last = _fmt_duration(now - last_scrape) + " ago" if last_scrape else "never"
     time_until_next = _fmt_duration(next_scrape - now) if next_scrape and next_scrape > now else "soon"

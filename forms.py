@@ -102,6 +102,10 @@ class DeleteEventForm(FlaskForm):
     pass
 
 
+class DeleteScrapedEventForm(FlaskForm):
+    pass
+
+
 class SetPasswordForm(FlaskForm):
     password = PasswordField(_l('Password'), validators=[DataRequired(), Length(min=8)])
     confirm_password = PasswordField(_l('Confirm Password'), validators=[DataRequired(), EqualTo('password')])

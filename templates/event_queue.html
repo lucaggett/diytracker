@@ -76,6 +76,14 @@
           <span class="text-smudge mx-1">·</span>
           <button type="button" onclick="toggleEdit('edit-{{ loop.index0 }}')"
                   class="text-ink hover:text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Edit') }}</button>
+          <span class="text-smudge mx-1">·</span>
+          <form action="{{ url_for('submissions.delete_scraped_event', scraped_id=event._scraped_id) }}"
+                method="POST" class="inline">
+            {{ delete_form.hidden_tag() }}
+            <button type="submit"
+                    class="text-bleed hover:underline uppercase text-xs tracking-widest"
+                    onclick="return confirm({{ _('Remove this event from the queue?')|tojson }})">{{ _('Delete') }}</button>
+          </form>
         </td>
       </tr>
       <tr id="edit-{{ loop.index0 }}" style="display:none" class="border-t border-ink/30">

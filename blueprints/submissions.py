@@ -2,9 +2,9 @@ import os
 from datetime import datetime, time as time_type
 
 from dateutil.relativedelta import relativedelta
-from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
 
-from forms import EventForm
+from forms import DeleteScrapedEventForm, EventForm
 from models import db, Event, ScrapedEvent, Submitter, Venue
 from services.auth import login_required
 from services.cache import bust_cache
@@ -177,7 +177,23 @@ def event_queue():
         filter_date_from=(filter_date_from or now).isoformat(),
         filter_date_to=(filter_date_to or (now + relativedelta(months=2))).isoformat(),
         filter_source=filter_source or '',
+        delete_form=DeleteScrapedEventForm(),
     )
+
+
+@bp.route('/queue/<int:scraped_id>/delete', methods=['POST'])
+@login_required
+def delete_scraped_event(scraped_id):
+    form = DeleteScrapedEventForm()
+    if not form.validate_on_submit():
+        abort(400)
+    scraped = ScrapedEvent.query.get_or_404(scraped_id)
+    scraped.approved = True
+    scraped.approved_at = datetime.now()
+    db.session.commit()
+    flash(_('Event removed from queue.'))
+    redirect_args = {k: v for k, v in request.args.items() if k in _ALLOWED_QUEUE_PARAMS}
+    return redirect(url_for('submissions.event_queue', **redirect_args))
 
 
 @bp.route('/submit', methods=['GET', 'POST'])
