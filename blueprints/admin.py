@@ -90,7 +90,7 @@ def edit_event(event_id):
                     flash(_('Selected venue does not exist.'))
                     return redirect(url_for('admin.edit_event', event_id=event_id))
             else:
-                venue, _ = get_or_create_venue(
+                venue, _created = get_or_create_venue(
                     name=form.venue_name.data,
                     address=form.venue_address.data,
                     city=form.venue_city.data,
