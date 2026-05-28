@@ -128,7 +128,7 @@ def event_queue():
             except ValueError:
                 doors_time = time_type(19, 0)
 
-        venue, _ = get_or_create_venue(
+        venue, _discarded = get_or_create_venue(
             name=venue_name,
             address=street,
             city=city,
