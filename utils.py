@@ -423,6 +423,7 @@ _GENRE_PARENT_MAP = {
     'ambient': 'Electronic',
     'noise': 'Electronic',
     'hyperpop': 'Electronic',
+    'gabber': 'Electronic',
 
     # Hip-Hop
     'hip-hop': 'Hip-Hop',

@@ -22,7 +22,7 @@ def get_genre_choices():
         'Ambient', 'Experimental', 'Noise', 'Wave', 'NDW', 'Folk', 'Neofolk',
         'Jazz', 'Blues', 'Ska', 'Garage', 'Hyperpop', 'Emo', 'Metalcore', 'Synth',
         'Beatdown', 'Doom', 'Sludge', 'Stoner', 'Crustpunk',
-        'Screamo', 'Powerviolence', 'Mathcore', 'Shoegaze'
+        'Screamo', 'Powerviolence', 'Mathcore', 'Shoegaze', 'Gabber'
     ]
     return [(genre, genre) for genre in genres]
 
