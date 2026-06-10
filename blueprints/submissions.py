@@ -274,4 +274,4 @@ def submit_event_link():
 @bp.route('/events/<int:event_id>/')
 def event_page(event_id):
     event = Event.query.get_or_404(event_id)
-    return render_template('')
+    return render_template("event_page.html", event=event)
