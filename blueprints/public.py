@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
-from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, abort, current_app, flash, g, redirect, render_template, request, session, url_for
 
 from forms import AccessibilityForm, CollaboratorRequestForm
 from sqlalchemy.orm import joinedload
@@ -150,6 +150,31 @@ def accessibility_form(token):
 def venue_accessibility(venue_id):
     venue = Venue.query.get_or_404(venue_id)
     return render_template('venue_accessibility.html', venue=venue, info=venue.accessibility)
+
+
+@bp.route('/sitemap.xml')
+def sitemap():
+    pages = [
+        (url_for('public.calendar_view', _external=True), 'daily'),
+        (url_for('public.about', _external=True), 'monthly'),
+    ]
+    for lang in SUPPORTED_LOCALES:
+        pages.append((url_for('public.impressum', lang=lang, _external=True), 'yearly'))
+        pages.append((url_for('public.agb', lang=lang, _external=True), 'yearly'))
+        pages.append((url_for('public.datenschutz', lang=lang, _external=True), 'yearly'))
+
+    events = Event.query.order_by(Event.date.asc()).all()
+    for event in events:
+        pages.append((url_for('submissions.event_page', event_id=event.id, _external=True), 'weekly'))
+
+    venues = Venue.query.filter(Venue.id.in_(
+        db.session.query(VenueAccessibility.venue_id)
+    )).order_by(Venue.id.asc()).all()
+    for venue in venues:
+        pages.append((url_for('public.venue_accessibility', venue_id=venue.id, _external=True), 'monthly'))
+
+    xml = render_template('sitemap.xml', pages=pages)
+    return Response(xml, mimetype='application/xml')
 
 
 @bp.route('/set-language/<lang>')
