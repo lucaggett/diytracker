@@ -17,7 +17,7 @@ and is fully translated (DE / EN / FR / IT) via Flask-Babel.
 
 ### Prerequisites
 
-- Python 3.10+
+- [uv](https://docs.astral.sh/uv/) (manages Python + dependencies)
 - Node.js (only to rebuild Tailwind CSS; not needed if you keep the
   prebuilt `static/css/output.css`)
 
@@ -27,14 +27,19 @@ and is fully translated (DE / EN / FR / IT) via Flask-Babel.
 git clone <this-repo> diytracker
 cd diytracker
 
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+# Creates .venv and installs the locked dependencies from uv.lock.
+# uv will fetch the pinned Python version automatically if needed.
+uv sync
 
 # Tailwind (optional — only if you edit templates or `tailwind.config.js`)
 npm install
 npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css --watch
 ```
+
+> uv does not activate the venv. Run project commands through `uv run`
+> (e.g. `uv run python app.py`), which uses `.venv` without you having
+> to `source` it. A bare `gunicorn`/`python` will not resolve to the
+> project's dependencies.
 
 ### Environment
 
@@ -60,22 +65,47 @@ first run via `db.create_all()` in `app.py`.
 Dev server:
 
 ```bash
-python app.py            # http://127.0.0.1:5001
+uv run python app.py            # http://127.0.0.1:5001
 ```
 
 Production (matches `gunicorn_conf.py`):
 
 ```bash
-gunicorn -c gunicorn_conf.py app:app
+uv run gunicorn -c gunicorn_conf.py app:app
 ```
 
-### Creating an admin
+### Managing the server
 
-There is no signup. Use the helper script:
+`manage.py` is a small CLI for running the production server, inspecting
+it, tailing logs, and managing users. Run everything through uv:
 
 ```bash
-python scripts/admin_tools.py            # see its --help for subcommands
+uv run python manage.py start          # start gunicorn (daemonized; --foreground to block)
+uv run python manage.py status         # running? master PID, workers, CPU/MEM/uptime
+uv run python manage.py logs -f        # tail the access log (--error for the error log)
+uv run python manage.py stop           # graceful stop (SIGTERM, then SIGKILL after --timeout)
+uv run python manage.py restart
 ```
+
+`start` writes a pidfile to `instance/gunicorn.pid`; the other commands use
+it to find the running process. (The process table in `status` relies on
+Linux `ps`.)
+
+### Managing users
+
+There is no signup. Use the `user` subcommands of `manage.py`:
+
+```bash
+uv run python manage.py user list
+uv run python manage.py user add alice@example.com        # creates + emails an invite (--no-email to print the link)
+uv run python manage.py user passwd alice@example.com     # prompts for a password
+uv run python manage.py user admin alice@example.com --grant   # or --revoke
+uv run python manage.py user invite alice@example.com     # resend the invite email
+uv run python manage.py user delete alice@example.com     # --yes to skip confirmation
+```
+
+(`scripts/admin_tools.py` is the older interactive menu that these commands
+supersede.)
 
 ## Scrapers
 
@@ -85,7 +115,7 @@ The scraping pipeline has three pieces:
 
 | File | Role |
 | --- | --- |
-| `utils/scrape_events.py` | Pure scraping logic. One function per source that takes a URL and returns a dict. Also has helpers to discover URLs from each source's sitemap. Can be run standalone (`python utils/scrape_events.py`) to dump everything to `instance/events.csv`. |
+| `utils/scrape_events.py` | Pure scraping logic. One function per source that takes a URL and returns a dict. Also has helpers to discover URLs from each source's sitemap. Can be run standalone (`uv run python utils/scrape_events.py`) to dump everything to `instance/events.csv`. |
 | `services/scraper.py` | The runtime glue. Loads `scrape_events.py` dynamically, discovers new URLs, calls the per-source parsers, deduplicates against existing `Event.source_url` and `ScrapedEvent.url`, then writes new `ScrapedEvent` rows. Also owns the background scheduler thread (`start_auto_scheduler`, called from `app.py`) which re-runs the scrape every `SCRAPE_INTERVAL_HOURS`. |
 | `scripts/import_scraped_events.py` | One-shot CSV importer, used when you've run the standalone scraper and want to bulk-load its output. Also exposes the `parse_date` / `parse_time` helpers that `services/scraper.py` reuses. |
 
@@ -169,7 +199,7 @@ utils/
 
 scripts/                 Operational one-shots: cleanup, dummy data, i18n
                          extraction, image conversion, the CSV importer, etc.
-                         Run with `python scripts/<name>.py`.
+                         Run with `uv run python scripts/<name>.py`.
 
 migrations/              Hand-written one-shot migration scripts. There's no
                          Alembic env wired up; the table itself is created
