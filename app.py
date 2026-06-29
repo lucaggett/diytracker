@@ -25,7 +25,7 @@ for d in ('logs', 'static/uploads', 'instance', 'instance/cache'):
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///events.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI', 'sqlite:///events.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024

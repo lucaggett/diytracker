@@ -22,3 +22,18 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = [
+    # Library + app-code deprecations (utcnow, legacy Query.get) — out of scope
+    # for the test suite; silence so real warnings stay visible.
+    "ignore::DeprecationWarning",
+    "ignore::sqlalchemy.exc.LegacyAPIWarning",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
