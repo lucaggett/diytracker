@@ -45,18 +45,22 @@ import logging
 # includes the most detail.  Each message includes a timestamp and
 # severity level.
 logger = logging.getLogger("scrape_events")
-logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+# services/scraper.py re-execs this module on every scrape run; the logger is
+# a process-wide singleton, so only attach handlers once or every run adds a
+# duplicate (and a mode="w" FileHandler would truncate the log each time).
+if not logger.handlers:
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 
-os.makedirs("logs", exist_ok=True)
-file_handler = logging.FileHandler("logs/scrape_events.log", mode="w", encoding="utf-8")
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
+    os.makedirs("logs", exist_ok=True)
+    file_handler = logging.FileHandler("logs/scrape_events.log", mode="a", encoding="utf-8")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
 
-# Stream handler outputs logs to stderr
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+    # Stream handler outputs logs to stderr
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
 
 # Random delay (in seconds) between requests to reduce the likelihood

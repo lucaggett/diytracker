@@ -2,6 +2,8 @@ import os
 from datetime import timedelta
 
 from flask_compress import Compress
+from flask_wtf import CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from dotenv import load_dotenv
 from flask import Flask, g, render_template
@@ -14,6 +16,7 @@ from services.i18n import (
     select_locale,
 )
 from services.cache import cache
+from services.limits import limiter
 from services.scraper import start_auto_scheduler
 from services.uploads import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from utils import parent_genres
@@ -30,11 +33,17 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+# Secure works over http://localhost in modern browsers, so dev logins are fine.
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
 app.config['COMPRESS_ALGORITHM'] = ['br', 'gzip']
 Compress(app)
+CSRFProtect(app)
+# nginx terminates TLS and proxies to gunicorn on localhost.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
 app.config['BABEL_DEFAULT_LOCALE'] = DEFAULT_LOCALE
 app.config['BABEL_SUPPORTED_LOCALES'] = list(SUPPORTED_LOCALES)
@@ -42,6 +51,7 @@ app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 
 db.init_app(app)
 cache.init_app(app)
+limiter.init_app(app)
 
 with app.app_context():
     db.create_all()
@@ -107,7 +117,11 @@ app.register_blueprint(submissions_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(api_bp)
 
-start_auto_scheduler(app)
+# Only one process may run the scrape scheduler. Under gunicorn the
+# post_fork hook in gunicorn_conf.py sets this for the first worker only;
+# for the dev server or a standalone run, set ENABLE_SCRAPER=1 yourself.
+if os.environ.get('ENABLE_SCRAPER') == '1':
+    start_auto_scheduler(app)
 
 
 if __name__ == '__main__':

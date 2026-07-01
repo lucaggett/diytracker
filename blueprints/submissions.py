@@ -23,6 +23,34 @@ def _clean_genre(raw):
     return ', '.join(clean_genre_tokens(raw))
 
 
+def _scraped_event_to_dict(rec):
+    data = {
+        'source': rec.source,
+        'url': rec.url,
+        'title': rec.title,
+        'performers': rec.performers if rec.performers else rec.title,
+        'styles': rec.styles,
+        'description': rec.description,
+        'start_date': rec.start_date.isoformat() if rec.start_date else None,
+        'end_date': rec.end_date.isoformat() if rec.end_date else None,
+        'doors_open': rec.doors_open.strftime('%H:%M') if rec.doors_open else None,
+        'start_time': rec.start_time.strftime('%H:%M') if rec.start_time else None,
+        'venue_name': rec.venue_name,
+        'street_address': rec.street_address,
+        'city': rec.city,
+        'region': rec.region,
+        'postal_code': rec.postal_code,
+        'ticket_price': rec.ticket_price,
+        'ticket_currency': rec.ticket_currency,
+        'ticket_url': rec.ticket_url,
+        'organizer': rec.organizer,
+        'event_status': rec.event_status,
+    }
+    data['_event_date'] = datetime.combine(rec.start_date, datetime.min.time()) if rec.start_date else None
+    data['_scraped_id'] = rec.id
+    return data
+
+
 def parse_scraped_events(date_from=None, date_to=None, source=None):
     """Query the ScrapedEvent table and filter events."""
     now = datetime.now().date()
@@ -38,34 +66,7 @@ def parse_scraped_events(date_from=None, date_to=None, source=None):
     if source:
         q = q.filter(ScrapedEvent.source == source)
     candidates = q.order_by(ScrapedEvent.start_date.asc()).all()
-    events = []
-    for rec in candidates:
-        data = {
-            'source': rec.source,
-            'url': rec.url,
-            'title': rec.title,
-            'performers': rec.performers if rec.performers else rec.title,
-            'styles': rec.styles,
-            'description': rec.description,
-            'start_date': rec.start_date.isoformat() if rec.start_date else None,
-            'end_date': rec.end_date.isoformat() if rec.end_date else None,
-            'doors_open': rec.doors_open.strftime('%H:%M') if rec.doors_open else None,
-            'start_time': rec.start_time.strftime('%H:%M') if rec.start_time else None,
-            'venue_name': rec.venue_name,
-            'street_address': rec.street_address,
-            'city': rec.city,
-            'region': rec.region,
-            'postal_code': rec.postal_code,
-            'ticket_price': rec.ticket_price,
-            'ticket_currency': rec.ticket_currency,
-            'ticket_url': rec.ticket_url,
-            'organizer': rec.organizer,
-            'event_status': rec.event_status,
-        }
-        data['_event_date'] = datetime.combine(rec.start_date, datetime.min.time()) if rec.start_date else None
-        data['_scraped_id'] = rec.id
-        events.append(data)
-    return events
+    return [_scraped_event_to_dict(rec) for rec in candidates]
 
 
 @bp.route('/queue', methods=['GET', 'POST'])
@@ -90,11 +91,14 @@ def event_queue():
     )
     if request.method == 'POST':
         try:
-            idx = int(request.form.get('index'))
-            data = events[idx]
-        except (ValueError, IndexError):
+            scraped_id = int(request.form.get('scraped_id'))
+        except (TypeError, ValueError):
+            scraped_id = None
+        rec = db.session.get(ScrapedEvent, scraped_id) if scraped_id else None
+        if rec is None or rec.approved:
             flash(_('Invalid event selection.'))
             return redirect(url_for('submissions.event_queue'))
+        data = _scraped_event_to_dict(rec)
 
         def _ov(key, fallback):
             val = request.form.get(key, '').strip()
@@ -158,13 +162,9 @@ def event_queue():
         )
         db.session.add(new_event)
         db.session.flush()
-        scraped_id = data.get('_scraped_id')
-        if scraped_id:
-            scraped_obj = ScrapedEvent.query.get(scraped_id)
-            if scraped_obj:
-                scraped_obj.approved = True
-                scraped_obj.approved_at = datetime.now()
-                scraped_obj.approved_event_id = new_event.id
+        rec.approved = True
+        rec.approved_at = datetime.now()
+        rec.approved_event_id = new_event.id
         db.session.commit()
         bust_cache()
         flash(_('Event approved and added to calendar!'))
@@ -269,9 +269,3 @@ def submit_event_link():
         return redirect(url_for('public.calendar_view'))
 
     return render_template('submit_event.html', form=form)
-
-
-@bp.route('/events/<int:event_id>/')
-def event_page(event_id):
-    event = Event.query.get_or_404(event_id)
-    return render_template('')

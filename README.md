@@ -3,8 +3,8 @@
 A Flask web app that aggregates DIY / underground concert listings in
 Switzerland. Events come in two ways:
 
-1. **User submissions** — visitors fill out a form, an admin reviews
-   them, and approved ones become public.
+1. **User submissions** — invited users (there is no public signup)
+   fill out a form and the event goes live immediately.
 2. **Scrapers** — a background thread periodically pulls event pages
    from external sites (currently `metalgigs.ch` and `petzi.ch`),
    parses them, and stores them as `ScrapedEvent` rows so an admin can
@@ -56,6 +56,12 @@ EMAIL_PASSWORD=...
 # Optional: where analytics reads nginx logs from
 NGINX_LOG_PATTERN=access.log
 ```
+
+The background scraper only runs when `ENABLE_SCRAPER=1` is set for the
+process. Under gunicorn you don't set it yourself — `gunicorn_conf.py`'s
+`post_fork` hook enables it for exactly one worker. For the dev server use
+`ENABLE_SCRAPER=1 uv run python app.py` (don't put it in `.env`, or every
+gunicorn worker would start its own scheduler).
 
 The SQLite database (`instance/events.db`) is created automatically on
 first run via `db.create_all()` in `app.py`.
@@ -230,8 +236,9 @@ also through `flask-caching` keyed on locale.
 
 ### Background work
 
-`start_auto_scheduler(app)` is called once at import time and spawns a
-daemon thread that loops forever, waking every `SCRAPE_INTERVAL_HOURS`
+`start_auto_scheduler(app)` is called at import time — only when
+`ENABLE_SCRAPER=1` is set (see "Environment") — and spawns a daemon
+thread that loops forever, waking every `SCRAPE_INTERVAL_HOURS`
 to run `_scrape_and_import`. State is persisted in
 `instance/last_scrape.txt` so restarts don't trigger immediate
 re-scrapes. Progress is exposed via `services.scraper.get_progress()`

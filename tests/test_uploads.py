@@ -28,7 +28,16 @@ class TestSaveFlyer:
         fs = _filestorage(_png(), 'flyer.png')
         path = save_flyer_file(fs, str(tmp_path))
         assert path is not None
-        assert (tmp_path / 'flyer.png').exists()
+        # Filenames are randomised server-side; only the extension survives.
+        saved = list(tmp_path.iterdir())
+        assert len(saved) == 1
+        assert saved[0].suffix == '.png'
+
+    def test_same_filename_does_not_overwrite(self, tmp_path):
+        path_a = save_flyer_file(_filestorage(_png(), 'flyer.png'), str(tmp_path))
+        path_b = save_flyer_file(_filestorage(_png(color=(0, 255, 0)), 'flyer.png'), str(tmp_path))
+        assert path_a != path_b
+        assert len(list(tmp_path.iterdir())) == 2
 
     def test_rejects_disallowed_extension(self, tmp_path):
         fs = _filestorage(_png(), 'flyer.txt')
@@ -60,7 +69,7 @@ class TestSaveFlyer:
     def test_filename_is_sanitised(self, tmp_path):
         fs = _filestorage(_png(), '../../etc/passwd.png')
         path = save_flyer_file(fs, str(tmp_path))
-        # secure_filename strips the traversal; file lands inside the folder.
+        # The stored name is generated server-side; traversal input is inert.
         assert path is not None
         assert str(tmp_path) in path
         assert '..' not in path.split(str(tmp_path), 1)[1]

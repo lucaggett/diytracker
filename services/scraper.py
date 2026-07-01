@@ -130,6 +130,10 @@ def _scrape_and_import(app):
                     event_status=row.get('event_status'),
                 )
                 db.session.add(scraped)
+                if url:
+                    # url is unique in the DB; guard against dupes within
+                    # this batch so the commit can't raise IntegrityError.
+                    known_urls_now.add(url)
                 count += 1
             db.session.commit()
             app.logger.info(f"Scrape complete: imported {count} new events")

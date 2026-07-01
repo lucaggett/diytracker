@@ -32,11 +32,17 @@ _scraper_module.start_auto_scheduler = lambda app: None
 
 import app as app_module  # noqa: E402
 from models import db, Submitter, Venue, Event, VenueAccessibility, ScrapedEvent  # noqa: E402
+from services.limits import limiter as _limiter  # noqa: E402
 
 app_module.app.config.update(
     TESTING=True,
     WTF_CSRF_ENABLED=False,
+    # The test client speaks plain http; Secure cookies would never be sent.
+    SESSION_COOKIE_SECURE=False,
 )
+# Tests hammer /login far past the brute-force limit. RATELIMIT_ENABLED in
+# config is only read during init_app, so flip the live attribute instead.
+_limiter.enabled = False
 
 
 def pytest_unconfigure(config):

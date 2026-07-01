@@ -1,7 +1,6 @@
 import io
 import os
 from datetime import datetime, timedelta
-from xmlrpc.client import DateTime
 
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
 from sqlalchemy import func
@@ -20,6 +19,14 @@ from services.venue import get_or_create_venue
 from utils import PARENT_GENRES_ORDER, clean_genre_tokens
 
 bp = Blueprint('admin', __name__)
+
+
+def _excel_safe(value):
+    """Neutralise spreadsheet formula injection: user/scraper strings starting
+    with a formula trigger character would otherwise execute when opened."""
+    if isinstance(value, str) and value[:1] in ('=', '+', '-', '@'):
+        return "'" + value
+    return value
 
 
 def _fmt_duration(td):
@@ -254,16 +261,16 @@ def export_excel():
 
         venue = event.venue
         ws.cell(row=row_num, column=1, value=event_date.strftime('%Y-%m-%d') if event_date else '')
-        ws.cell(row=row_num, column=2, value=event.name)
-        ws.cell(row=row_num, column=3, value=event.acts)
-        ws.cell(row=row_num, column=4, value=event.genre)
-        ws.cell(row=row_num, column=5, value=venue.name if venue else '')
-        ws.cell(row=row_num, column=6, value=venue.city if venue else '')
-        ws.cell(row=row_num, column=7, value=venue.canton if venue else '')
+        ws.cell(row=row_num, column=2, value=_excel_safe(event.name))
+        ws.cell(row=row_num, column=3, value=_excel_safe(event.acts))
+        ws.cell(row=row_num, column=4, value=_excel_safe(event.genre))
+        ws.cell(row=row_num, column=5, value=_excel_safe(venue.name) if venue else '')
+        ws.cell(row=row_num, column=6, value=_excel_safe(venue.city) if venue else '')
+        ws.cell(row=row_num, column=7, value=_excel_safe(venue.canton) if venue else '')
         ws.cell(row=row_num, column=8, value=event.doors.strftime('%H:%M') if event.doors else '')
-        ws.cell(row=row_num, column=9, value=event.ticket_price)
-        ws.cell(row=row_num, column=10, value=event.ticket_link)
-        ws.cell(row=row_num, column=11, value=event.source_url)
+        ws.cell(row=row_num, column=9, value=_excel_safe(event.ticket_price))
+        ws.cell(row=row_num, column=10, value=_excel_safe(event.ticket_link))
+        ws.cell(row=row_num, column=11, value=_excel_safe(event.source_url))
         row_num += 1
 
     for col in ws.columns:

@@ -6,6 +6,7 @@
 <div class="border border-ink p-6 max-w-md">
   <h2 class="text-sm font-bold uppercase tracking-wider mb-4">Generate Report</h2>
   <form method="post" class="flex flex-col gap-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div>
       <label for="timeframe" class="block text-xs uppercase tracking-wider mb-1">Time frame</label>
       <select id="timeframe" name="timeframe" class="w-full border border-ink bg-paper text-ink font-mono text-sm px-3 py-2 focus:outline-none">

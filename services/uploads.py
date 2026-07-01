@@ -1,7 +1,7 @@
 import os
+import secrets
 
 from PIL import Image
-from werkzeug.utils import secure_filename
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 UPLOAD_FOLDER = 'static/uploads'
@@ -40,7 +40,10 @@ def save_flyer_file(file_storage, upload_folder):
     if not file_storage or not file_storage.filename:
         return None
     if allowed_file(file_storage.filename) and validate_image_content(file_storage):
-        filename = secure_filename(file_storage.filename)
+        # Random server-side name: avoids collisions between uploads and any
+        # filename-derived path issues; only the validated extension is kept.
+        ext = file_storage.filename.rsplit('.', 1)[1].lower()
+        filename = f"{secrets.token_hex(8)}.{ext}"
         path = os.path.join(upload_folder, filename)
         file_storage.save(path)
         _resize_flyer(path)

@@ -90,7 +90,7 @@ class TestEventQueue:
     def test_approving_creates_event_and_marks_scraped(self, client, admin, login):
         login(admin)
         rec = self._make_scraped()
-        resp = client.post('/queue', data={'index': '0'})
+        resp = client.post('/queue', data={'scraped_id': str(rec.id)})
         assert resp.status_code == 302
 
         ev = Event.query.one()
@@ -109,30 +109,36 @@ class TestEventQueue:
                       city='Aarau', postal_code='5000', region='AG',
                       start_date=date.today() + timedelta(days=20),
                       doors_open=time(19, 0), performers='Headliner')
-        self._make_scraped(url='https://metalgigs.ch/konzerte/a', **common)
-        self._make_scraped(url='https://metalgigs.ch/konzerte/b', **common)
+        rec_a = self._make_scraped(url='https://metalgigs.ch/konzerte/a', **common)
+        rec_b = self._make_scraped(url='https://metalgigs.ch/konzerte/b', **common)
 
         # Approve the first -> creates the event, marks that record approved.
-        client.post('/queue', data={'index': '0'})
+        client.post('/queue', data={'scraped_id': str(rec_a.id)})
         assert Event.query.count() == 1
 
-        # The approved record drops out of the pending queue, so the second
-        # row is now index 0; approving it hits the duplicate-hash guard.
-        resp = client.post('/queue', data={'index': '0'}, follow_redirects=True)
+        # Approving the second hits the duplicate-hash guard.
+        resp = client.post('/queue', data={'scraped_id': str(rec_b.id)}, follow_redirects=True)
         assert b'already exists' in resp.data
         assert Event.query.count() == 1
 
-    def test_invalid_index_flashes_error(self, client, admin, login):
+    def test_invalid_scraped_id_flashes_error(self, client, admin, login):
         login(admin)
-        resp = client.post('/queue', data={'index': '99'}, follow_redirects=True)
+        resp = client.post('/queue', data={'scraped_id': '99'}, follow_redirects=True)
+        assert b'Invalid event selection' in resp.data
+        assert Event.query.count() == 0
+
+    def test_already_approved_id_rejected(self, client, admin, login):
+        login(admin)
+        rec = self._make_scraped(approved=True)
+        resp = client.post('/queue', data={'scraped_id': str(rec.id)}, follow_redirects=True)
         assert b'Invalid event selection' in resp.data
         assert Event.query.count() == 0
 
     def test_override_fields_take_precedence(self, client, admin, login):
         login(admin)
-        self._make_scraped(title='Original Name')
+        rec = self._make_scraped(title='Original Name')
         client.post('/queue', data={
-            'index': '0',
+            'scraped_id': str(rec.id),
             'override_name': 'Edited Name',
             'override_genre': 'Techno',
         })

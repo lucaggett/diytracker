@@ -24,6 +24,17 @@ class TestCalendar:
         # Logged-in users bypass the public cache headers entirely.
         assert 'public' not in resp.headers.get('Cache-Control', '')
 
+    def test_flash_messages_are_not_cached(self, client, app):
+        """A rendered flash must never be stored in the shared page cache."""
+        with client.session_transaction() as sess:
+            sess['_flashes'] = [('message', 'UNIQUE-FLASH-XYZ')]
+        resp = client.get('/')
+        assert b'UNIQUE-FLASH-XYZ' in resp.data
+        fresh = app.test_client()
+        resp2 = fresh.get('/')
+        assert resp2.status_code == 200
+        assert b'UNIQUE-FLASH-XYZ' not in resp2.data
+
 
 class TestContactForm:
     def test_successful_submission_sends_email(self, client, monkeypatch):

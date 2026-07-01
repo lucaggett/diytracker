@@ -1,14 +1,33 @@
 import secrets
-from datetime import datetime, timedelta
+import sqlite3
+from datetime import datetime, timedelta, timezone
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import event as sa_event
+from sqlalchemy.engine import Engine
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 
 from utils import parent_genres as _compute_parent_genres
 
 db = SQLAlchemy()
+
+
+def utcnow():
+    """Naive UTC now — DateTime columns store naive values, so all stored
+    timestamps and comparisons must use this instead of datetime.now()."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+@sa_event.listens_for(Engine, 'connect')
+def _sqlite_pragmas(dbapi_connection, _connection_record):
+    # WAL + busy timeout so concurrent gunicorn workers don't hit
+    # "database is locked" on simultaneous writes.
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute('PRAGMA journal_mode=WAL')
+        cursor.execute('PRAGMA busy_timeout=15000')
+        cursor.close()
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -103,7 +122,7 @@ class VenueAccessibility(db.Model):
 
 class Submitter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True)
     submission_code = db.Column(db.String(100), unique=True, nullable=True)
     password_hash = db.Column(db.String(256), nullable=True)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
@@ -124,7 +143,7 @@ class Submitter(db.Model):
 
     def generate_invite_token(self):
         self.invite_token = secrets.token_urlsafe(32)
-        self.invite_token_expiry = datetime.now() + timedelta(days=7)
+        self.invite_token_expiry = utcnow() + timedelta(days=7)
         return self.invite_token
 
     def clear_invite_token(self):
@@ -142,7 +161,7 @@ class ScrapedEvent(db.Model):
 
     # Scraped metadata
     source = db.Column(db.String(20), nullable=True)
-    url = db.Column(db.String(300), nullable=True)
+    url = db.Column(db.String(300), nullable=True, unique=True)
     title = db.Column(db.String(200), nullable=True)
     performers = db.Column(db.Text, nullable=True)
     styles = db.Column(db.String(200), nullable=True)

@@ -9,6 +9,7 @@ from forms import AccessibilityForm, CollaboratorRequestForm
 from sqlalchemy.orm import joinedload
 
 from models import Event, Venue, VenueAccessibility, db
+from services.auth import safe_redirect_target
 from services.cache import cache
 from services.contact import build_contact_logger, send_contact_email
 from services.i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES, gettext as _, validate_lang
@@ -29,20 +30,29 @@ def _calendar_cache_key():
     return f"calendar_view:{getattr(g, 'locale', DEFAULT_LOCALE)}"
 
 
+def _skip_calendar_cache():
+    # Logged-in users and requests with pending flash messages must not be
+    # cached: the cache is keyed only on locale, so their rendered flashes
+    # would be served to every visitor until the entry expires.
+    return 'user_id' in session or bool(session.get('_flashes'))
+
+
 @bp.after_request
 def _public_cache_headers(response):
     if request.endpoint != 'public.calendar_view' or response.status_code != 200:
         return response
     if 'user_id' in session:
         return response
-    response.headers['Vary'] = 'Accept-Encoding'
+    # Content varies by locale (session cookie + Accept-Language), so shared
+    # caches need more than Accept-Encoding to key on.
+    response.vary.update(('Cookie', 'Accept-Language', 'Accept-Encoding'))
     response.headers['Cache-Control'] = 'public, max-age=300'
     response.add_etag()
     return response.make_conditional(request)
 
 
 @bp.route('/')
-@cache.cached(make_cache_key=_calendar_cache_key)
+@cache.cached(make_cache_key=_calendar_cache_key, unless=_skip_calendar_cache)
 def calendar_view():
     now = datetime.now()
 
@@ -157,7 +167,7 @@ def set_language(lang):
     if lang not in SUPPORTED_LOCALES:
         abort(404)
     session['lang'] = lang
-    next_url = request.args.get('next', '')
-    if next_url.startswith('/') and not next_url.startswith('//'):
+    next_url = safe_redirect_target(request.args.get('next', ''))
+    if next_url:
         return redirect(next_url)
     return redirect(url_for('public.calendar_view'))

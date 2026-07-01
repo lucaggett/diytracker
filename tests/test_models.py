@@ -5,7 +5,10 @@ hook, password hashing, and token generation.
 """
 from datetime import datetime
 
-from models import db, Event, Submitter, Venue
+import pytest
+from sqlalchemy.exc import IntegrityError
+
+from models import db, Event, ScrapedEvent, Submitter, Venue
 
 
 class TestParentGenresHook:
@@ -71,6 +74,16 @@ class TestSubmitter:
         assert u.invite_token_expiry > datetime.now()
         u.clear_invite_token()
         assert u.invite_token is None and u.invite_token_expiry is None
+
+
+class TestScrapedEvent:
+    def test_url_unique_constraint(self, app):
+        db.session.add(ScrapedEvent(url='https://example.com/gig'))
+        db.session.commit()
+        db.session.add(ScrapedEvent(url='https://example.com/gig'))
+        with pytest.raises(IntegrityError):
+            db.session.commit()
+        db.session.rollback()
 
 
 class TestVenue:

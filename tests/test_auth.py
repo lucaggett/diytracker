@@ -37,6 +37,25 @@ class TestLogin:
                            data={'email': 'u@example.com', 'password': 'secret123'})
         assert 'evil.example.com' not in resp.headers['Location']
 
+    def test_login_ignores_protocol_relative_next(self, client, make_user):
+        """`//evil.com` starts with '/' but is a cross-origin redirect."""
+        make_user(email='u@example.com', password='secret123')
+        resp = client.post('/login?next=//evil.example.com',
+                           data={'email': 'u@example.com', 'password': 'secret123'})
+        assert 'evil.example.com' not in resp.headers['Location']
+
+    def test_login_post_is_rate_limited(self, client):
+        from services.limits import limiter
+        limiter.enabled = True  # conftest disables it globally
+        try:
+            responses = [
+                client.post('/login', data={'email': 'x@example.com', 'password': 'bad'})
+                for _ in range(11)
+            ]
+            assert responses[-1].status_code == 429
+        finally:
+            limiter.enabled = False
+
 
 class TestLogout:
     def test_logout_clears_session(self, client, make_user, login):
@@ -96,3 +115,12 @@ class TestAccessControl:
         login(admin)
         resp = client.get('/admin')
         assert resp.status_code == 200
+
+    def test_stale_session_for_deleted_user_redirects(self, client, make_user, login):
+        user = make_user()
+        login(user)
+        db.session.delete(user)
+        db.session.commit()
+        resp = client.get('/submit')
+        assert resp.status_code == 302
+        assert '/login' in resp.headers['Location']
