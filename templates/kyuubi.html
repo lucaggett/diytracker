@@ -1,0 +1,30 @@
+<!-- Kyuubi.html, a single page for a silly picture of kyuubi-->
+
+<!-- 427 It's Kyuubi Error -->
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>She Arrives</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Display "427 It's kyuubi" error-->
+    <h1>427 It's Kyuubi</h1>
+    <img src="{{ url_for('static', filename='img/kyuubi.png') }}" alt="Kyuubi">
+</body>
+</html>
