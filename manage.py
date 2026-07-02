@@ -9,6 +9,7 @@ dependencies are available:
 Commands:
     logs     Tail the access or error log
     user     Manage users (list / add / passwd / admin / invite / delete)
+    venue    Manage venues (dedup)
 
 The gunicorn server itself runs under systemd — see deploy/README.md.
 """
@@ -198,6 +199,141 @@ def cmd_user_delete(args):
     return 0
 
 
+# ── venue management ──────────────────────────────────────────────────────────
+
+
+def _venue_summary(venue, n_events):
+    plz = venue.plz.strip() if venue.plz else ""
+    parts = [
+        f'#{venue.id} "{venue.name}"',
+        venue.city.strip() if venue.city and venue.city.strip() else "(no city)",
+        plz or "(no plz)",
+    ]
+    if venue.address and venue.address.strip():
+        parts.append(venue.address.strip())
+    if venue.coords and venue.coords.strip():
+        parts.append("coords")
+    if venue.accessibility_token:
+        parts.append("token")
+    parts.append(f"{n_events} event{'' if n_events == 1 else 's'}")
+    return " · ".join(parts)
+
+
+def _print_merge_stats(stats, totals, warnings):
+    for field, value, source_id in stats["backfilled"]:
+        print(f"         backfill {field}={value!r} (from #{source_id})")
+    for note in stats["accessibility"]:
+        print(f"         {note}")
+    print(f"         {green('merged')}, {stats['events_repointed']} event(s) repointed")
+    totals["merges"] += 1
+    totals["deleted"] += stats["venues_deleted"]
+    totals["events"] += stats["events_repointed"]
+    warnings.extend(stats["warnings"])
+
+
+def cmd_venue_dedup(args):
+    if args.db_path:
+        db_path = Path(args.db_path).resolve()
+        if not db_path.is_file():
+            sys.exit(f"No database file at {db_path}")
+        # Must be set before _load_app(): the app reads DATABASE_URI at import
+        # time and would silently create_all() an empty DB at a bad path.
+        os.environ["DATABASE_URI"] = f"sqlite:///{db_path}"
+    # A maintenance run must never start the scrape scheduler, even if .env
+    # sets ENABLE_SCRAPER=1.
+    os.environ.setdefault("ENABLE_SCRAPER", "0")
+    app, db, _submitter = _load_app()
+    with app.app_context():
+        from sqlalchemy import func
+
+        from diytracker.models import Event, Venue
+        from diytracker.services.venue import (
+            find_dedup_candidates,
+            merge_group,
+            select_survivor,
+        )
+
+        def event_counts():
+            return dict(
+                db.session.query(Event.venue_id, func.count(Event.id))
+                .group_by(Event.venue_id)
+                .all()
+            )
+
+        mode = "APPLY" if args.apply else "DRY RUN (rerun with --apply to merge)"
+        print(f"\n  Database: {db.engine.url.database}")
+        print(f"  {Venue.query.count()} venues · {mode}\n")
+
+        totals = {"merges": 0, "deleted": 0, "events": 0, "declined": 0}
+        warnings = []
+        n_auto = 0
+
+        # Auto phase. A merge can backfill a missing city and reveal a new
+        # exact match, so under --apply recompute until no auto groups remain.
+        while True:
+            counts = event_counts()
+            auto_groups, pairs = find_dedup_candidates(Venue.query.all())
+            n_auto += len(auto_groups)
+            for group in auto_groups:
+                survivor, losers = select_survivor(group, counts)
+                verb = "keep" if args.apply else "would keep"
+                print(
+                    f"  [auto] {verb} {_venue_summary(survivor, counts.get(survivor.id, 0))}"
+                )
+                for loser in losers:
+                    print(
+                        f"         drop {_venue_summary(loser, counts.get(loser.id, 0))}"
+                    )
+                if args.apply:
+                    stats = merge_group(survivor, losers)
+                    db.session.commit()
+                    _print_merge_stats(stats, totals, warnings)
+                print()
+            if not args.apply or not auto_groups:
+                break
+
+        # Interactive phase: same-name/different-city and similar-name pairs.
+        if pairs:
+            print(f"  {len(pairs)} pair(s) need confirmation:")
+        for pair_a, pair_b, reason in pairs:
+            counts = event_counts()
+            venue_a = db.session.get(Venue, pair_a.id)
+            venue_b = db.session.get(Venue, pair_b.id)
+            if venue_a is None or venue_b is None:
+                continue  # already merged away earlier in this run
+            print(f"\n  [{reason}]")
+            print(f"    {_venue_summary(venue_a, counts.get(venue_a.id, 0))}")
+            print(f"    {_venue_summary(venue_b, counts.get(venue_b.id, 0))}")
+            if not args.apply:
+                continue
+            survivor, losers = select_survivor([venue_a, venue_b], counts)
+            answer = input(f"    Merge into #{survivor.id}? [y/N]: ").strip().lower()
+            if answer not in ("y", "yes"):
+                totals["declined"] += 1
+                print("    skipped")
+                continue
+            stats = merge_group(survivor, losers)
+            db.session.commit()
+            _print_merge_stats(stats, totals, warnings)
+
+        print()
+        if args.apply:
+            print(
+                f"  {green('Done.')} {totals['merges']} merge(s), "
+                f"{totals['deleted']} venue(s) removed, "
+                f"{totals['events']} event(s) repointed, "
+                f"{totals['declined']} pair(s) declined."
+            )
+            for warning in warnings:
+                print(f"  WARNING: {warning}")
+        else:
+            print(
+                f"  Dry run: {n_auto} auto group(s), {len(pairs)} pair(s) "
+                f"needing confirmation. Rerun with --apply to merge."
+            )
+    return 0
+
+
 # ── argument parsing ──────────────────────────────────────────────────────────
 
 
@@ -264,6 +400,21 @@ def build_parser():
     sp.add_argument("email")
     sp.add_argument("--yes", action="store_true", help="Skip the confirmation prompt")
     sp.set_defaults(func=cmd_user_delete)
+
+    vp = sub.add_parser("venue", help="Venue management")
+    vsub = vp.add_subparsers(dest="venue_command", required=True)
+
+    sp = vsub.add_parser(
+        "dedup", help="Find and merge duplicate venues (dry-run by default)"
+    )
+    sp.add_argument(
+        "--apply", action="store_true", help="Actually merge (default: dry run)"
+    )
+    sp.add_argument(
+        "--db-path",
+        help="Operate on an alternate SQLite database file instead of the app DB",
+    )
+    sp.set_defaults(func=cmd_venue_dedup)
 
     return p
 

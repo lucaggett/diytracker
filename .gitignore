@@ -12,3 +12,4 @@ venv/
 static/uploads/
 CLAUDE.md
 .claude
+scripts/venue_cleanup/

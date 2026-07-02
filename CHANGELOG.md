@@ -7,6 +7,9 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.15.0] - 2026-07-02
+- Added `manage.py venue dedup` to merge duplicate venues. Exact name matches (case/whitespace variants) in the same city merge automatically; same-name/different-city and similar-name candidates are confirmed interactively. The most complete row survives, its missing fields are backfilled from the duplicates, and events plus accessibility data are repointed before deletion. Dry-run by default; `--apply` writes, `--db-path` targets an alternate database copy.
+
 ## [0.14.1] - 2026-07-02
 - Added a share button to event cards.
 - Public pages now carry OpenGraph/Twitter meta tags, so shared links render a preview card in WhatsApp and other messengers. Event pages use the flyer as the preview image where available, falling back to the site banner.

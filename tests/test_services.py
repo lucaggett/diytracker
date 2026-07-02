@@ -1,10 +1,17 @@
-"""Service-layer tests: event hashing, venue get-or-create, scrape import."""
+"""Service-layer tests: event hashing, venue get-or-create/dedup, scrape import."""
 
 from datetime import date, time
 
-from diytracker.models import db, ScrapedEvent, Venue
+from diytracker.models import db, Event, ScrapedEvent, Venue, VenueAccessibility, utcnow
 from diytracker.services.events import compute_event_hash
-from diytracker.services.venue import get_or_create_venue
+from diytracker.services.venue import (
+    find_dedup_candidates,
+    get_or_create_venue,
+    merge_group,
+    normalize_city,
+    normalize_name,
+    select_survivor,
+)
 
 
 class TestComputeEventHash:
@@ -124,3 +131,171 @@ class TestScrapeImport:
         ]
         self._run_import(app, monkeypatch, rows)
         assert ScrapedEvent.query.count() == 0
+
+
+# ── venue deduplication ───────────────────────────────────────────────────────
+
+
+def _venue(vid, name, city, plz="", address="", coords="", canton="", token=None):
+    """Unsaved Venue with an explicit id, for the pure matching functions."""
+    venue = Venue(
+        name=name,
+        city=city,
+        plz=plz,
+        address=address,
+        coords=coords,
+        canton=canton,
+        accessibility_token=token,
+    )
+    venue.id = vid
+    return venue
+
+
+class TestVenueNormalization:
+    def test_normalize_name(self):
+        assert normalize_name("  KiFF ") == "kiff"
+        assert normalize_name("Case  à\tChocs") == "case à chocs"
+        assert normalize_name(None) == ""
+
+    def test_normalize_city_strips_leading_plz(self):
+        assert normalize_city("8005 Zürich") == "zürich"
+        assert normalize_city(" Baden ") == "baden"
+        # Only a *leading* PLZ is stripped — a trailing district number stays.
+        assert normalize_city("Luzern 6") == "luzern 6"
+
+
+class TestFindDedupCandidates:
+    def test_exact_name_same_city_is_auto(self):
+        a, b = _venue(1, "Kiff", "Aarau"), _venue(2, "KiFF", "Aarau")
+        auto, pairs = find_dedup_candidates([a, b])
+        assert auto == [[a, b]]
+        assert pairs == []
+
+    def test_empty_city_joins_auto_group(self):
+        a, b = _venue(1, "Fri-Son", "Fribourg"), _venue(2, "Fri-Son", "")
+        auto, pairs = find_dedup_candidates([a, b])
+        assert auto == [[a, b]]
+        assert pairs == []
+
+    def test_exact_name_different_city_is_interactive(self):
+        a, b = _venue(1, "Sedel", "Emmenbrücke"), _venue(2, "Sedel", "Luzern 6")
+        auto, pairs = find_dedup_candidates([a, b])
+        assert auto == []
+        assert [(p[0], p[1]) for p in pairs] == [(a, b)]
+
+    def test_mixed_cities_yield_auto_subgroup_and_pairs(self):
+        a = _venue(1, "Pont Rouge", "Montey")
+        b = _venue(2, "Pont Rouge", "Monthey")
+        c = _venue(3, "Pont Rouge", "Monthey")
+        auto, pairs = find_dedup_candidates([a, b, c])
+        assert auto == [[b, c]]
+        assert {(p[0].id, p[1].id) for p in pairs} == {(1, 2), (1, 3)}
+
+    def test_containment_same_city_is_interactive(self):
+        a = _venue(1, "Royal", "Baden")
+        b = _venue(2, "Kulturhaus Royal", " Baden")
+        auto, pairs = find_dedup_candidates([a, b])
+        assert auto == []
+        assert [(p[0], p[1]) for p in pairs] == [(a, b)]
+
+    def test_containment_different_city_ignored(self):
+        a = _venue(1, "Gaswerk", "Winterthur")
+        b = _venue(2, "Gaswerk Eventbar", "Seewen")
+        assert find_dedup_candidates([a, b]) == ([], [])
+
+    def test_similar_name_different_city_ignored(self):
+        a = _venue(1, "Hirsche", "Basel")
+        b = _venue(2, "Hirschen", "Sarnen")
+        assert find_dedup_candidates([a, b]) == ([], [])
+
+    def test_short_containment_ignored(self):
+        a = _venue(1, "Rex", "Bern")
+        b = _venue(2, "Rex Konzertlokal und Bar", "Bern")
+        assert find_dedup_candidates([a, b]) == ([], [])
+
+    def test_unrelated_same_city_names_ignored(self):
+        a = _venue(1, "Dachstock", "Bern")
+        b = _venue(2, "Rössli", "Bern")
+        assert find_dedup_candidates([a, b]) == ([], [])
+
+
+class TestSelectSurvivor:
+    def test_most_complete_wins_despite_fewer_events(self):
+        bare = _venue(1, "Kiff", "Aarau")
+        full = _venue(2, "Kiff", "Aarau", plz="5001", address="Tellistrasse 118")
+        survivor, losers = select_survivor([bare, full], {1: 10, 2: 1})
+        assert survivor is full
+        assert losers == [bare]
+
+    def test_tie_broken_by_event_count_then_id(self):
+        a = _venue(1, "X", "Bern", plz="3000")
+        b = _venue(2, "X", "Bern", plz="3000")
+        survivor, _ = select_survivor([a, b], {1: 1, 2: 5})
+        assert survivor is b
+        survivor, _ = select_survivor([a, b], {})
+        assert survivor is a
+
+
+class TestMergeGroup:
+    def test_repoints_events_backfills_and_deletes(self, app, make_venue, make_event):
+        survivor = make_venue(
+            name="Kiff",
+            city="Aarau",
+            plz="5001",
+            canton="AG",
+            address="Tellistrasse 118",
+        )
+        loser = make_venue(name="KiFF", city="Aarau", plz="", canton="", coords="47,8")
+        ev = make_event(venue=loser)
+        stats = merge_group(survivor, [loser])
+        db.session.commit()
+        assert stats["events_repointed"] == 1
+        assert db.session.get(Event, ev.id).venue_id == survivor.id
+        assert Venue.query.count() == 1
+        assert survivor.coords == "47,8"  # backfilled from the loser
+        assert survivor.address == "Tellistrasse 118"  # not overwritten
+
+    def test_token_moves_when_survivor_has_none(self, app, make_venue):
+        survivor = make_venue(name="Hall", city="Bern")
+        loser = make_venue(name="Hall 2", city="Bern")
+        token = loser.generate_accessibility_token()
+        db.session.commit()
+        merge_group(survivor, [loser])
+        db.session.commit()
+        assert survivor.accessibility_token == token
+        assert Venue.query.count() == 1
+
+    def test_survivor_token_kept_when_both_have_one(self, app, make_venue):
+        survivor = make_venue(name="Hall", city="Bern")
+        loser = make_venue(name="Hall 2", city="Bern")
+        kept = survivor.generate_accessibility_token()
+        loser.generate_accessibility_token()
+        db.session.commit()
+        stats = merge_group(survivor, [loser])
+        db.session.commit()
+        assert survivor.accessibility_token == kept
+        assert any(f"#{loser.id}" in w for w in stats["warnings"])
+
+    def test_accessibility_row_moves_to_survivor(self, app, make_venue):
+        survivor = make_venue(name="Hall", city="Bern")
+        loser = make_venue(name="Hall 2", city="Bern")
+        acc = VenueAccessibility(venue_id=loser.id, updated_at=utcnow())
+        db.session.add(acc)
+        db.session.commit()
+        merge_group(survivor, [loser])
+        db.session.commit()
+        assert acc.venue_id == survivor.id
+        assert VenueAccessibility.query.count() == 1
+
+    def test_accessibility_conflict_keeps_survivor_row(self, app, make_venue):
+        survivor = make_venue(name="Hall", city="Bern")
+        loser = make_venue(name="Hall 2", city="Bern")
+        keep = VenueAccessibility(venue_id=survivor.id, updated_at=utcnow())
+        drop = VenueAccessibility(venue_id=loser.id, updated_at=utcnow())
+        db.session.add_all([keep, drop])
+        db.session.commit()
+        stats = merge_group(survivor, [loser])
+        db.session.commit()
+        rows = VenueAccessibility.query.all()
+        assert [r.id for r in rows] == [keep.id]
+        assert any("accessibility data" in w for w in stats["warnings"])
