@@ -196,7 +196,9 @@ class ScrapedEvent(db.Model):
     submitter = db.Column(db.String(200), nullable=True)  # Who posted it at the source
 
     __table_args__ = (
-        db.UniqueConstraint('source', 'source_id', name='ux_scraped_event_source_source_id'),
+        db.UniqueConstraint(
+            "source", "source_id", name="ux_scraped_event_source_source_id"
+        ),
     )
 
     # Approval tracking

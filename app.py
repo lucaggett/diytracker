@@ -125,7 +125,7 @@ app.register_blueprint(api_bp)
 
 # /api/ingest authenticates with a bearer token, not a session cookie, so
 # browser CSRF doesn't apply (and external pushers can't obtain a CSRF token).
-csrf.exempt(app.view_functions['api.ingest'])
+csrf.exempt(app.view_functions["api.ingest"])
 
 # Only one process may run the scrape scheduler. Under gunicorn the
 # post_fork hook in gunicorn_conf.py sets this for the first worker only;

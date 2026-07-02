@@ -26,6 +26,7 @@ A flyer image may accompany the payload, either as a werkzeug FileStorage
 or as a (bytes, filename) tuple; it is validated/resized/stored via
 services.uploads and the resulting path lands on ScrapedEvent.flyer.
 """
+
 import io
 from collections import namedtuple
 from datetime import date as date_type, datetime, time as time_type
@@ -36,16 +37,28 @@ from models import db, Event, ScrapedEvent
 from utils import clean_genre_tokens, clean_ticket_url, resolve_canton
 from services.uploads import UPLOAD_FOLDER, save_flyer_file
 
-IngestResult = namedtuple('IngestResult', ['status', 'reason', 'record'])
+IngestResult = namedtuple("IngestResult", ["status", "reason", "record"])
 # status: 'created' | 'duplicate' | 'invalid'
 
 # Column length caps (SQLite doesn't enforce VARCHAR sizes; trim on the way
 # in so payloads from external pushers can't bloat rows).
 _MAX_LEN = {
-    'source': 20, 'url': 300, 'title': 200, 'styles': 200, 'venue_name': 200,
-    'street_address': 200, 'city': 100, 'region': 100, 'postal_code': 20,
-    'ticket_price': 50, 'ticket_currency': 10, 'ticket_url': 300,
-    'organizer': 200, 'event_status': 100, 'source_id': 64, 'submitter': 200,
+    "source": 20,
+    "url": 300,
+    "title": 200,
+    "styles": 200,
+    "venue_name": 200,
+    "street_address": 200,
+    "city": 100,
+    "region": 100,
+    "postal_code": 20,
+    "ticket_price": 50,
+    "ticket_currency": 10,
+    "ticket_url": 300,
+    "organizer": 200,
+    "event_status": 100,
+    "source_id": 64,
+    "submitter": 200,
 }
 
 
@@ -54,7 +67,7 @@ def parse_date(value):
     if isinstance(value, date_type):
         return value
     try:
-        return datetime.strptime(str(value).strip(), '%Y-%m-%d').date()
+        return datetime.strptime(str(value).strip(), "%Y-%m-%d").date()
     except (TypeError, ValueError):
         return None
 
@@ -64,7 +77,7 @@ def parse_time(value):
     if isinstance(value, time_type):
         return value
     try:
-        return datetime.strptime(str(value).strip(), '%H:%M').time()
+        return datetime.strptime(str(value).strip(), "%H:%M").time()
     except (TypeError, ValueError):
         return None
 
@@ -96,59 +109,72 @@ def ingest_event(payload, flyer=None, upload_folder=None, commit=True):
     but not committed — batch callers commit once at the end; in-batch
     duplicates are still caught because the dedup queries autoflush.
     """
-    source = _clean(payload, 'source')
-    title = _clean(payload, 'title')
-    start_date = parse_date(payload.get('start_date'))
+    source = _clean(payload, "source")
+    title = _clean(payload, "title")
+    start_date = parse_date(payload.get("start_date"))
     if not source:
-        return IngestResult('invalid', 'missing source', None)
+        return IngestResult("invalid", "missing source", None)
     if not title:
-        return IngestResult('invalid', 'missing title', None)
+        return IngestResult("invalid", "missing title", None)
     if not start_date:
-        return IngestResult('invalid', 'missing or malformed start_date (want YYYY-MM-DD)', None)
+        return IngestResult(
+            "invalid", "missing or malformed start_date (want YYYY-MM-DD)", None
+        )
 
-    url = _clean(payload, 'url')
+    url = _clean(payload, "url")
     if url:
-        if (ScrapedEvent.query.filter_by(url=url).first()
-                or Event.query.filter_by(source_url=url).first()):
-            return IngestResult('duplicate', f'url already known: {url}', None)
-    source_id = _clean(payload, 'source_id')
+        if (
+            ScrapedEvent.query.filter_by(url=url).first()
+            or Event.query.filter_by(source_url=url).first()
+        ):
+            return IngestResult("duplicate", f"url already known: {url}", None)
+    source_id = _clean(payload, "source_id")
     if source_id:
         if ScrapedEvent.query.filter_by(source=source, source_id=source_id).first():
-            return IngestResult('duplicate', f'source_id already known: {source}/{source_id}', None)
+            return IngestResult(
+                "duplicate", f"source_id already known: {source}/{source_id}", None
+            )
 
     flyer_path = None
     fs = _as_filestorage(flyer)
     if fs is not None:
         flyer_path = save_flyer_file(fs, upload_folder or UPLOAD_FOLDER)
         if flyer_path is None:
-            return IngestResult('invalid', 'flyer rejected (not a png/jpg/gif image)', None)
+            return IngestResult(
+                "invalid", "flyer rejected (not a png/jpg/gif image)", None
+            )
 
     record = ScrapedEvent(
         source=source,
         source_id=source_id,
         url=url,
         title=title,
-        performers=_clean(payload, 'performers'),
-        styles=', '.join(clean_genre_tokens(_clean(payload, 'styles') or ''))[:_MAX_LEN['styles']] or None,
-        description=_clean(payload, 'description'),
+        performers=_clean(payload, "performers"),
+        styles=", ".join(clean_genre_tokens(_clean(payload, "styles") or ""))[
+            : _MAX_LEN["styles"]
+        ]
+        or None,
+        description=_clean(payload, "description"),
         start_date=start_date,
-        end_date=parse_date(payload.get('end_date')),
-        doors_open=parse_time(payload.get('doors_open')),
-        start_time=parse_time(payload.get('start_time')),
-        venue_name=_clean(payload, 'venue_name'),
-        street_address=_clean(payload, 'street_address'),
-        city=_clean(payload, 'city'),
-        region=resolve_canton(_clean(payload, 'region') or '', _clean(payload, 'city') or ''),
-        postal_code=_clean(payload, 'postal_code'),
-        ticket_price=_clean(payload, 'ticket_price'),
-        ticket_currency=_clean(payload, 'ticket_currency'),
-        ticket_url=clean_ticket_url(_clean(payload, 'ticket_url'), source),
-        organizer=_clean(payload, 'organizer'),
-        event_status=_clean(payload, 'event_status'),
-        submitter=_clean(payload, 'submitter'),
+        end_date=parse_date(payload.get("end_date")),
+        doors_open=parse_time(payload.get("doors_open")),
+        start_time=parse_time(payload.get("start_time")),
+        venue_name=_clean(payload, "venue_name"),
+        street_address=_clean(payload, "street_address"),
+        city=_clean(payload, "city"),
+        region=resolve_canton(
+            _clean(payload, "region") or "", _clean(payload, "city") or ""
+        ),
+        postal_code=_clean(payload, "postal_code"),
+        ticket_price=_clean(payload, "ticket_price"),
+        ticket_currency=_clean(payload, "ticket_currency"),
+        ticket_url=clean_ticket_url(_clean(payload, "ticket_url"), source),
+        organizer=_clean(payload, "organizer"),
+        event_status=_clean(payload, "event_status"),
+        submitter=_clean(payload, "submitter"),
         flyer=flyer_path,
     )
     db.session.add(record)
     if commit:
         db.session.commit()
-    return IngestResult('created', None, record)
+    return IngestResult("created", None, record)

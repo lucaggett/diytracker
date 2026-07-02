@@ -114,24 +114,27 @@ def _scrape_and_import(app):
 
         _scrape_progress["phase"] = "Importing to database"
         with app.app_context():
-            counts = {'created': 0, 'duplicate': 0, 'invalid': 0}
+            counts = {"created": 0, "duplicate": 0, "invalid": 0}
             for row in events:
-                raw_styles = row.get('styles') or ''
+                raw_styles = row.get("styles") or ""
                 # petzi sitemap mixes concerts with theatre/workshop/club-night
                 # rows; the raw 'concert' token is the only signal, so filter
                 # on it before ingest's genre cleanup strips the token.
-                if row.get('source') == 'petzi' and 'concert' not in raw_styles.lower():
+                if row.get("source") == "petzi" and "concert" not in raw_styles.lower():
                     continue
                 # commit=False: batch commit below; in-batch url dupes are
                 # still caught because ingest's dedup queries autoflush.
                 result = ingest_event(row, commit=False)
                 counts[result.status] += 1
-                if result.status == 'invalid':
-                    app.logger.warning(f"Scrape: dropped invalid row {row.get('url')}: {result.reason}")
+                if result.status == "invalid":
+                    app.logger.warning(
+                        f"Scrape: dropped invalid row {row.get('url')}: {result.reason}"
+                    )
             db.session.commit()
             app.logger.info(
                 f"Scrape complete: {counts['created']} new, "
-                f"{counts['duplicate']} duplicate, {counts['invalid']} invalid")
+                f"{counts['duplicate']} duplicate, {counts['invalid']} invalid"
+            )
         set_last_scrape_time(datetime.now())
     except Exception:
         app.logger.exception("Scrape failed")
