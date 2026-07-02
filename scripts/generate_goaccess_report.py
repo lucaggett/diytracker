@@ -14,7 +14,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from services.analytics import TIMEFRAMES, find_log_files, generate_report
+from diytracker.services.analytics import TIMEFRAMES, find_log_files, generate_report
 
 
 def main():
@@ -45,7 +45,7 @@ def main():
         print(f"Error: {message}", file=sys.stderr)
         sys.exit(1)
 
-    from services.analytics import REPORT_PATH
+    from diytracker.services.analytics import REPORT_PATH
 
     print(f"Report saved to: {REPORT_PATH}")
 

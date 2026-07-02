@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, time, timedelta
 
-from models import db, Event, ScrapedEvent, Venue
+from diytracker.models import db, Event, ScrapedEvent, Venue
 
 
 def _future(days=14):

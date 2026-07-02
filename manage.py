@@ -66,8 +66,8 @@ def _load_app():
     os.chdir(PROJECT_ROOT)
     sys.path.insert(0, str(PROJECT_ROOT))
     try:
-        from app import app, db
-        from models import Submitter
+        from diytracker.app import app, db
+        from diytracker.models import Submitter
     except KeyError as exc:
         sys.exit(f"Missing environment variable {exc}. Is your .env present?")
     return app, db, Submitter

@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from models import db
+from diytracker.models import db
 
 
 class TestLogin:
@@ -63,7 +63,7 @@ class TestLogin:
         assert "evil.example.com" not in resp.headers["Location"]
 
     def test_login_post_is_rate_limited(self, client):
-        from services.limits import limiter
+        from diytracker.services.limits import limiter
 
         limiter.enabled = True  # conftest disables it globally
         try:

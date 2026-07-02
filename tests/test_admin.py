@@ -1,6 +1,6 @@
 """Admin dashboard, event/venue management, and exports."""
 
-from models import db, Event, Venue
+from diytracker.models import db, Event, Venue
 
 
 class TestEventManagement:

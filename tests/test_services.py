@@ -2,9 +2,9 @@
 
 from datetime import date, time
 
-from models import db, ScrapedEvent, Venue
-from services.events import compute_event_hash
-from services.venue import get_or_create_venue
+from diytracker.models import db, ScrapedEvent, Venue
+from diytracker.services.events import compute_event_hash
+from diytracker.services.venue import get_or_create_venue
 
 
 class TestComputeEventHash:
@@ -50,8 +50,8 @@ class TestScrapeImport:
     so the real cleanup/dedup/filtering logic runs without any network."""
 
     def _run_import(self, app, monkeypatch, scraped_rows):
-        import services.scrape_events as scrape_events
-        import services.scraper as scraper
+        import diytracker.services.scrape_events as scrape_events
+        import diytracker.services.scraper as scraper
 
         # The real scraper calls this once per source with a URL fragment;
         # return only the rows whose URL matches that fragment.

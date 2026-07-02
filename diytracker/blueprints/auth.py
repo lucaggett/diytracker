@@ -9,11 +9,11 @@ from flask import (
     url_for,
 )
 
-from forms import LoginForm, SetPasswordForm
-from models import db, Submitter, utcnow
-from services.auth import safe_redirect_target
-from services.i18n import gettext as _
-from services.limits import limiter
+from diytracker.forms import LoginForm, SetPasswordForm
+from diytracker.models import db, Submitter, utcnow
+from diytracker.services.auth import safe_redirect_target
+from diytracker.services.i18n import gettext as _
+from diytracker.services.limits import limiter
 
 bp = Blueprint("auth", __name__)
 

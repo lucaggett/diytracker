@@ -16,28 +16,28 @@ from flask import (
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
-from forms import (
+from diytracker.forms import (
     DeleteEventForm,
     DeleteVenueForm,
     EventEditForm,
     VenueForm,
     get_canton_choices,
 )
-from models import db, Event, Venue
-from services.analytics import REPORT_PATH, TIMEFRAMES, generate_report
-from services.auth import admin_required
-from services.cache import bust_cache
-from services.calendar_image import generate_weekly_calendar_image
-from services.i18n import gettext as _
-from services.scraper import (
+from diytracker.models import db, Event, Venue
+from diytracker.services.analytics import REPORT_PATH, TIMEFRAMES, generate_report
+from diytracker.services.auth import admin_required
+from diytracker.services.cache import bust_cache
+from diytracker.services.calendar_image import generate_weekly_calendar_image
+from diytracker.services.i18n import gettext as _
+from diytracker.services.scraper import (
     SCRAPE_INTERVAL_HOURS,
     get_last_scrape_time,
     get_progress,
     is_running,
 )
-from services.uploads import UPLOAD_FOLDER, save_flyer_file
-from services.venue import get_or_create_venue
-from utils import PARENT_GENRES_ORDER, clean_genre_tokens
+from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
+from diytracker.services.venue import get_or_create_venue
+from diytracker.utils import PARENT_GENRES_ORDER, clean_genre_tokens
 
 bp = Blueprint("admin", __name__)
 

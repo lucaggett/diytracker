@@ -2,7 +2,7 @@ import functools
 
 from flask import session, request, url_for, redirect, abort
 
-from models import db, Submitter
+from diytracker.models import db, Submitter
 
 
 def safe_redirect_target(target):

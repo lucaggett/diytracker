@@ -8,9 +8,9 @@ from datetime import datetime, timedelta, time
 import random
 import uuid
 
-from app import app, db
-from models import Event, Submitter
-from services.venue import get_or_create_venue
+from diytracker.app import app, db
+from diytracker.models import Event, Submitter
+from diytracker.services.venue import get_or_create_venue
 
 
 def get_or_create_submitter(email):

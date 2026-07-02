@@ -8,8 +8,8 @@ from datetime import date, datetime, timedelta
 import pytest
 from PIL import Image
 
-from models import db, Event, ScrapedEvent
-from services.ingest import ingest_event, parse_date, parse_time
+from diytracker.models import db, Event, ScrapedEvent
+from diytracker.services.ingest import ingest_event, parse_date, parse_time
 
 
 def _future(days=14):

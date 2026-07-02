@@ -1,4 +1,4 @@
-from models import db, Venue
+from diytracker.models import db, Venue
 
 
 def get_or_create_venue(name, address, city, canton, plz, coords=""):

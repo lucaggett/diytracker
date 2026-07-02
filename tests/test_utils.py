@@ -4,7 +4,7 @@ These cover the project's own business rules — Swiss canton resolution, the
 genre taxonomy, and ticket-URL cleanup — not library behaviour.
 """
 
-from utils import (
+from diytracker.utils import (
     clean_genre_tokens,
     clean_ticket_url,
     infer_canton_from_city,

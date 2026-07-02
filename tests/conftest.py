@@ -27,13 +27,13 @@ os.environ["DATABASE_URI"] = f"sqlite:///{_DB_PATH}"
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Neutralise the auto-scrape scheduler before app import so no thread/network.
-import services.scraper as _scraper_module  # noqa: E402
+import diytracker.services.scraper as _scraper_module  # noqa: E402
 
 _scraper_module.start_auto_scheduler = lambda app: None
 
-import app as app_module  # noqa: E402
-from models import db, Submitter, Venue, Event  # noqa: E402
-from services.limits import limiter as _limiter  # noqa: E402
+import diytracker.app as app_module  # noqa: E402
+from diytracker.models import db, Submitter, Venue, Event  # noqa: E402
+from diytracker.services.limits import limiter as _limiter  # noqa: E402
 
 app_module.app.config.update(
     TESTING=True,
@@ -70,7 +70,7 @@ def app(tmp_path):
             db.session.remove()
             db.drop_all()
             # Caching is process-global; clear it between tests.
-            from services.cache import cache
+            from diytracker.services.cache import cache
 
             cache.clear()
 
@@ -120,7 +120,7 @@ def make_venue(app):
 @pytest.fixture
 def make_event(app, make_venue):
     from datetime import datetime, time, timedelta
-    from services.events import compute_event_hash
+    from diytracker.services.events import compute_event_hash
 
     def _make(
         name="Test Show",

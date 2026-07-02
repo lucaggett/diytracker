@@ -8,7 +8,7 @@ from sqlalchemy.engine import Engine
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 
-from utils import parent_genres as _compute_parent_genres
+from diytracker.utils import parent_genres as _compute_parent_genres
 
 db = SQLAlchemy()
 

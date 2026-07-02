@@ -17,14 +17,19 @@ from flask import (
     url_for,
 )
 
-from forms import AccessibilityForm, CollaboratorRequestForm
+from diytracker.forms import AccessibilityForm, CollaboratorRequestForm
 from sqlalchemy.orm import joinedload
 
-from models import Event, Venue, VenueAccessibility, db, utcnow
-from services.auth import safe_redirect_target
-from services.cache import cache
-from services.contact import build_contact_logger, send_contact_email
-from services.i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES, gettext as _, validate_lang
+from diytracker.models import Event, Venue, VenueAccessibility, db, utcnow
+from diytracker.services.auth import safe_redirect_target
+from diytracker.services.cache import cache
+from diytracker.services.contact import build_contact_logger, send_contact_email
+from diytracker.services.i18n import (
+    DEFAULT_LOCALE,
+    SUPPORTED_LOCALES,
+    gettext as _,
+    validate_lang,
+)
 
 bp = Blueprint("public", __name__)
 

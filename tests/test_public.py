@@ -2,7 +2,7 @@
 
 import pytest
 
-from models import db, VenueAccessibility
+from diytracker.models import db, VenueAccessibility
 
 
 class TestCalendar:
@@ -42,7 +42,9 @@ class TestContactForm:
         def fake_send(name, email, message):
             sent["args"] = (name, email, message)
 
-        monkeypatch.setattr("blueprints.public.send_contact_email", fake_send)
+        monkeypatch.setattr(
+            "diytracker.blueprints.public.send_contact_email", fake_send
+        )
         resp = client.post(
             "/about",
             data={
@@ -58,7 +60,7 @@ class TestContactForm:
     def test_honeypot_blocks_send(self, client, monkeypatch):
         called = {"sent": False}
         monkeypatch.setattr(
-            "blueprints.public.send_contact_email",
+            "diytracker.blueprints.public.send_contact_email",
             lambda *a: called.__setitem__("sent", True),
         )
         client.post(
@@ -77,7 +79,7 @@ class TestContactForm:
         def boom(*a):
             raise RuntimeError("SMTP down")
 
-        monkeypatch.setattr("blueprints.public.send_contact_email", boom)
+        monkeypatch.setattr("diytracker.blueprints.public.send_contact_email", boom)
         resp = client.post(
             "/about",
             data={

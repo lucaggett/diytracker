@@ -3,8 +3,8 @@ import random as _r
 from collections import defaultdict
 from datetime import datetime, time as time_type, timedelta
 
-from models import Event
-from utils import clean_genre_tokens, parent_for_token, parent_genres
+from diytracker.models import Event
+from diytracker.utils import clean_genre_tokens, parent_for_token, parent_genres
 
 _GENRE_PALETTE = [
     (239, 68, 68),

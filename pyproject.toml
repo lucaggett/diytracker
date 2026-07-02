@@ -46,4 +46,4 @@ target-version = "py310"
 [tool.ruff.lint.per-file-ignores]
 # Blueprints are imported after `app`/extensions are created (avoids
 # circular imports) — intentional.
-"app.py" = ["E402"]
+"diytracker/app.py" = ["E402"]

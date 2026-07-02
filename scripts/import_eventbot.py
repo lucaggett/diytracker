@@ -26,9 +26,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app
-from models import db
-from services.ingest import ingest_event
+from diytracker.app import app
+from diytracker.models import db
+from diytracker.services.ingest import ingest_event
 
 
 def eventbot_to_payload(rec):

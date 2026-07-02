@@ -9,7 +9,7 @@ import io
 from PIL import Image
 from werkzeug.datastructures import FileStorage
 
-from services.uploads import save_flyer_file
+from diytracker.services.uploads import save_flyer_file
 
 
 def _png(size=(100, 100), color=(255, 0, 0)):

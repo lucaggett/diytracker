@@ -33,9 +33,9 @@ from datetime import date as date_type, datetime, time as time_type
 
 from werkzeug.datastructures import FileStorage
 
-from models import db, Event, ScrapedEvent
-from utils import clean_genre_tokens, clean_ticket_url, resolve_canton
-from services.uploads import UPLOAD_FOLDER, save_flyer_file
+from diytracker.models import db, Event, ScrapedEvent
+from diytracker.utils import clean_genre_tokens, clean_ticket_url, resolve_canton
+from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 
 IngestResult = namedtuple("IngestResult", ["status", "reason", "record"])
 # status: 'created' | 'duplicate' | 'invalid'

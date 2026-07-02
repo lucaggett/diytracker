@@ -9,7 +9,7 @@ from datetime import datetime
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from models import db, Event, ScrapedEvent, Submitter
+from diytracker.models import db, Event, ScrapedEvent, Submitter
 
 
 class TestParentGenresHook:
@@ -17,7 +17,7 @@ class TestParentGenresHook:
 
     def _make_event(self, make_venue, genre):
         from datetime import time, timedelta
-        from services.events import compute_event_hash
+        from diytracker.services.events import compute_event_hash
 
         venue = make_venue()
         date = datetime.now() + timedelta(days=5)

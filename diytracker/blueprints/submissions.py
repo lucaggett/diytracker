@@ -13,15 +13,15 @@ from flask import (
     url_for,
 )
 
-from forms import DeleteScrapedEventForm, EventForm
-from models import db, Event, ScrapedEvent, Submitter, Venue
-from services.auth import login_required
-from services.cache import bust_cache
-from services.events import compute_event_hash
-from services.i18n import gettext as _
-from services.uploads import UPLOAD_FOLDER, save_flyer_file
-from services.venue import get_or_create_venue
-from utils import clean_genre_tokens, resolve_canton
+from diytracker.forms import DeleteScrapedEventForm, EventForm
+from diytracker.models import db, Event, ScrapedEvent, Submitter, Venue
+from diytracker.services.auth import login_required
+from diytracker.services.cache import bust_cache
+from diytracker.services.events import compute_event_hash
+from diytracker.services.i18n import gettext as _
+from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
+from diytracker.services.venue import get_or_create_venue
+from diytracker.utils import clean_genre_tokens, resolve_canton
 
 bp = Blueprint("submissions", __name__)
 

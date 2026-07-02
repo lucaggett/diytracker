@@ -31,11 +31,13 @@ from bs4 import BeautifulSoup
 import time
 import random
 
-# Allow running standalone (`python services/scrape_events.py`), where the
-# project root isn't on sys.path.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Allow running standalone (`python diytracker/services/scrape_events.py`),
+# where the project root isn't on sys.path.
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 from diytracker.paths import INSTANCE_DIR, LOGS_DIR
-from utils import resolve_canton
+from diytracker.utils import resolve_canton
 
 # Configure verbose logging
 import logging

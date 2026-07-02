@@ -4,8 +4,8 @@ import time as time_module
 from datetime import datetime
 
 from diytracker.paths import INSTANCE_DIR
-from models import db, Event, ScrapedEvent
-from services.ingest import ingest_event
+from diytracker.models import db, Event, ScrapedEvent
+from diytracker.services.ingest import ingest_event
 
 LAST_SCRAPE_FILE = str(INSTANCE_DIR / "last_scrape.txt")
 SCRAPE_INTERVAL_HOURS = 1
@@ -53,7 +53,7 @@ def _get_known_urls():
 def _scrape_and_import(app):
     global _scrape_running, _scrape_progress
     try:
-        from services.scrape_events import (
+        from diytracker.services.scrape_events import (
             get_petzi_event_urls,
             get_sitemap_event_urls,
             parse_metalgigs_event,
