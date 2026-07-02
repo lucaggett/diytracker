@@ -8,7 +8,8 @@ and `submitter` (who posted it at the source), plus a unique index on
 Safe to re-run: existing columns/indexes are skipped.
 """
 
-import os, sys
+import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
