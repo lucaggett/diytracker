@@ -55,6 +55,10 @@ EMAIL_PASSWORD=...
 
 # Optional: where analytics reads nginx logs from
 NGINX_LOG_PATTERN=access.log
+
+# Only required to accept pushes on POST /api/ingest (see "Ingest");
+# unset disables the endpoint.
+INGEST_TOKEN=<any long random string>
 ```
 
 The background scraper only runs when `ENABLE_SCRAPER=1` is set for the
@@ -119,6 +123,63 @@ uv run python manage.py user delete alice@example.com     # --yes to skip confir
 (`scripts/admin_tools.py` is the older interactive menu that these commands
 supersede.)
 
+## Ingest
+
+Events reach the site from three kinds of sources, and they all funnel
+through one place — `services/ingest.py` — into the `ScrapedEvent`
+staging queue, where an admin approves them into real `Event` rows:
+
+1. **User submissions** (`/submit`) — the only path that creates
+   `Event` rows directly, no queue.
+2. **Built-in scrapers** (metalgigs, petzi — see "Scrapers" below).
+3. **External pushers** via `POST /api/ingest` — e.g. the Signal
+   flyer bot ("eventbot") running on another machine.
+
+`ingest_event()` owns validation (title + `YYYY-MM-DD` start date
+required), normalisation (canton, genre tokens, ticket URLs), dedup
+(by canonical `url`, or by `(source, source_id)` for sources without
+URLs) and **flyer storage** — a pushed image is validated, resized and
+stored exactly like a user-uploaded flyer, shows up as a thumbnail in
+the approval queue, and is carried onto the `Event` when approved.
+
+### Push API
+
+`POST /api/ingest` authenticates with `Authorization: Bearer
+<INGEST_TOKEN>` (set `INGEST_TOKEN` in `.env`; unset = endpoint
+disabled, returns 503). Two body shapes:
+
+```bash
+# JSON only
+curl -X POST https://diytracker.ch/api/ingest \
+  -H "Authorization: Bearer $INGEST_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"source":"eventbot","source_id":"abc123","title":"Grind Night",
+       "start_date":"2026-08-01","venue_name":"Ebrietas","city":"Zürich"}'
+
+# multipart: event JSON + flyer image (png/jpg/gif)
+curl -X POST https://diytracker.ch/api/ingest \
+  -H "Authorization: Bearer $INGEST_TOKEN" \
+  -F 'event={"source":"eventbot","source_id":"abc123","title":"Grind Night","start_date":"2026-08-01"}' \
+  -F 'flyer=@flyer.jpg'
+```
+
+The full payload key list is documented in `services/ingest.py`.
+Responses: `201` created, `200` duplicate (idempotent — safe to mark
+delivered), `422` invalid, `401` bad token. Pushers should treat 200
+and 201 as success and 422 as a permanent rejection.
+
+### The Signal eventbot
+
+The eventbot (Crowdkill Report, on riggi-lab at `~/.hermes/eventbot/`)
+watches a Signal flyer group and keeps a source-agnostic store of
+parsed events plus the original flyer images. Two scripts connect it:
+
+- `scripts/eventbot_forwarder.py` — runs **on the eventbot box** via
+  cron; POSTs each new record (content + flyer) to `/api/ingest` once,
+  tracking delivery in a state file. Stdlib-only, just copy it over.
+- `scripts/import_eventbot.py` — one-shot local backfill from an
+  rsync'd copy of the store (see its docstring).
+
 ## Scrapers
 
 ### How they're organised
@@ -129,7 +190,7 @@ The scraping pipeline has three pieces:
 | --- | --- |
 | `utils/scrape_events.py` | Pure scraping logic. One function per source that takes a URL and returns a dict. Also has helpers to discover URLs from each source's sitemap. Can be run standalone (`uv run python utils/scrape_events.py`) to dump everything to `instance/events.csv`. |
 | `services/scraper.py` | The runtime glue. Loads `scrape_events.py` dynamically, discovers new URLs, calls the per-source parsers, deduplicates against existing `Event.source_url` and `ScrapedEvent.url`, then writes new `ScrapedEvent` rows. Also owns the background scheduler thread (`start_auto_scheduler`, called from `app.py`) which re-runs the scrape every `SCRAPE_INTERVAL_HOURS`. |
-| `scripts/import_scraped_events.py` | One-shot CSV importer, used when you've run the standalone scraper and want to bulk-load its output. Also exposes the `parse_date` / `parse_time` helpers that `services/scraper.py` reuses. |
+| `scripts/import_scraped_events.py` | One-shot CSV importer, used when you've run the standalone scraper and want to bulk-load its output. |
 
 Scraped events live in their own table (`ScrapedEvent`). They aren't
 shown to the public until an admin approves one in the event queue,

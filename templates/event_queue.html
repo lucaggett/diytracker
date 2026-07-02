@@ -26,6 +26,7 @@
       <option value="" {% if not filter_source %}selected{% endif %}>{{ _('All') }}</option>
       <option value="metalgigs" {% if filter_source == 'metalgigs' %}selected{% endif %}>MetalGigs</option>
       <option value="petzi" {% if filter_source == 'petzi' %}selected{% endif %}>Petzi</option>
+      <option value="eventbot" {% if filter_source == 'eventbot' %}selected{% endif %}>Eventbot (Signal)</option>
     </select>
   </div>
   <button type="submit"
@@ -56,14 +57,27 @@
       <tr class="border-t border-ink/30 align-top">
         <td class="px-3 py-2 whitespace-nowrap">{{ event.start_date }}</td>
         <td class="px-3 py-2">
-          <div class="font-semibold">{{ event.title or event.performers }}</div>
-          {% if event.description %}
-            <div class="text-xs text-smudge mt-1">{{ event.description[:140] }}{% if event.description|length > 140 %}…{% endif %}</div>
-          {% endif %}
-          {% if event.url %}
-            <a href="{{ event.url }}" target="_blank" rel="noopener"
-               class="text-xs text-bleed hover:underline uppercase tracking-widest">source ↗</a>
-          {% endif %}
+          <div class="flex gap-3">
+            {% if event.flyer %}
+              <a href="/{{ event.flyer }}" target="_blank" rel="noopener" class="shrink-0">
+                <img src="/{{ event.flyer }}" loading="lazy" alt="{{ _('Flyer') }}"
+                     class="w-16 h-20 object-cover border-2 border-ink">
+              </a>
+            {% endif %}
+            <div>
+              <div class="font-semibold">{{ event.title or event.performers }}</div>
+              {% if event.description %}
+                <div class="text-xs text-smudge mt-1">{{ event.description[:140] }}{% if event.description|length > 140 %}…{% endif %}</div>
+              {% endif %}
+              {% if event.submitter %}
+                <div class="text-xs text-smudge mt-1">{{ _('via') }} {{ event.submitter }}</div>
+              {% endif %}
+              {% if event.url %}
+                <a href="{{ event.url }}" target="_blank" rel="noopener"
+                   class="text-xs text-bleed hover:underline uppercase tracking-widest">source ↗</a>
+              {% endif %}
+            </div>
+          </div>
         </td>
         <td class="px-3 py-2">{{ event.venue_name }}, {{ event.city }}</td>
         <td class="px-3 py-2 text-xs text-smudge">{{ event.styles or '' }}</td>
