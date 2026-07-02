@@ -45,6 +45,8 @@ def _scraped_event_to_dict(rec):
         'ticket_url': rec.ticket_url,
         'organizer': rec.organizer,
         'event_status': rec.event_status,
+        'flyer': rec.flyer,
+        'submitter': rec.submitter,
     }
     data['_event_date'] = datetime.combine(rec.start_date, datetime.min.time()) if rec.start_date else None
     data['_scraped_id'] = rec.id
@@ -153,7 +155,7 @@ def event_queue():
             acts=acts,
             description=description or None,
             source_url=source_url or None,
-            flyer=None,
+            flyer=data.get('flyer'),
             ticket_link=ticket_link,
             ticket_price=ticket_price,
             venue_id=venue.id,
