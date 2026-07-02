@@ -9,7 +9,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div>
       <label for="timeframe" class="block text-xs uppercase tracking-wider mb-1">Time frame</label>
-      <select id="timeframe" name="timeframe" class="w-full border border-ink bg-paper text-ink font-mono text-sm px-3 py-2 focus:outline-none">
+      <select id="timeframe" name="timeframe" class="w-full border border-ink bg-paper text-ink font-mono text-sm px-3 py-2 focus:outline-hidden">
         {% for value, label in timeframes %}
           <option value="{{ value }}" {% if value == '7d' %}selected{% endif %}>{{ label }}</option>
         {% endfor %}

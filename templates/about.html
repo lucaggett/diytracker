@@ -37,7 +37,7 @@
 
       <div>
         {{ form.name.label(class="block font-mono text-xs uppercase tracking-widest text-smudge mb-1") }}
-        {{ form.name(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", placeholder=_('First and last name')) }}
+        {{ form.name(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-hidden focus:border-bleed", placeholder=_('First and last name')) }}
         {% if form.name.errors %}
           <p class="text-bleed text-xs font-mono mt-1">{{ form.name.errors[0] }}</p>
         {% endif %}
@@ -45,7 +45,7 @@
 
       <div>
         {{ form.email.label(class="block font-mono text-xs uppercase tracking-widest text-smudge mb-1") }}
-        {{ form.email(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", placeholder=_('you@example.com'), type="email") }}
+        {{ form.email(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-hidden focus:border-bleed", placeholder=_('you@example.com'), type="email") }}
         {% if form.email.errors %}
           <p class="text-bleed text-xs font-mono mt-1">{{ form.email.errors[0] }}</p>
         {% endif %}
@@ -53,7 +53,7 @@
 
       <div>
         {{ form.message.label(class="block font-mono text-xs uppercase tracking-widest text-smudge mb-1") }}
-        {{ form.message(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-none focus:border-bleed", rows="5", placeholder=_('What do you do, what would you like to contribute?')) }}
+        {{ form.message(class="border-2 border-ink bg-paper px-3 py-2 w-full font-mono text-sm focus:outline-hidden focus:border-bleed", rows="5", placeholder=_('What do you do, what would you like to contribute?')) }}
         {% if form.message.errors %}
           <p class="text-bleed text-xs font-mono mt-1">{{ form.message.errors[0] }}</p>
         {% endif %}

@@ -33,7 +33,7 @@ uv sync
 
 # Tailwind (optional — only if you edit templates or `tailwind.config.js`)
 npm install
-npx tailwindcss -i ./static/css/styles.css -o ./static/css/output.css --watch
+npx @tailwindcss/cli -i ./static/css/styles.css -o ./static/css/output.css --minify --watch
 ```
 
 > uv does not activate the venv. Run project commands through `uv run`

@@ -13,16 +13,16 @@
   <div>
     <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('From') }}</label>
     <input type="date" name="date_from" value="{{ filter_date_from }}"
-           class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
+           class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-hidden focus:border-bleed">
   </div>
   <div>
     <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('To') }}</label>
     <input type="date" name="date_to" value="{{ filter_date_to }}"
-           class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
+           class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-hidden focus:border-bleed">
   </div>
   <div>
     <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Source') }}</label>
-    <select name="source" class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
+    <select name="source" class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-hidden focus:border-bleed">
       <option value="" {% if not filter_source %}selected{% endif %}>{{ _('All') }}</option>
       <option value="metalgigs" {% if filter_source == 'metalgigs' %}selected{% endif %}>MetalGigs</option>
       <option value="petzi" {% if filter_source == 'petzi' %}selected{% endif %}>Petzi</option>
@@ -108,7 +108,7 @@
             <input type="hidden" name="scraped_id" value="{{ event._scraped_id }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               {% set lbl = "block text-xs uppercase tracking-widest text-smudge mb-1" %}
-              {% set inp = "border-2 border-ink bg-paper px-2 py-1 w-full text-sm focus:outline-none focus:border-bleed" %}
+              {% set inp = "border-2 border-ink bg-paper px-2 py-1 w-full text-sm focus:outline-hidden focus:border-bleed" %}
               <div>
                 <label class="{{ lbl }}">{{ _('Event Name') }}</label>
                 <input type="text" name="override_name" value="{{ event.title or event.performers or '' }}" class="{{ inp }}">

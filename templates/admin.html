@@ -58,12 +58,12 @@
       <div>
         <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Week of') }}</label>
         <input type="date" name="week" value="{{ current_monday }}"
-               class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
+               class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-hidden focus:border-bleed">
       </div>
       <div>
         <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Genre') }}</label>
         <select name="genre"
-                class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-none focus:border-bleed">
+                class="border-2 border-ink bg-paper px-2 py-1 text-sm focus:outline-hidden focus:border-bleed">
           <option value="">{{ _('All') }}</option>
           {% for g in parent_genres_order %}
           <option value="{{ g }}">{{ g }}</option>
