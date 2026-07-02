@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Forward new eventbot records to diytracker's ingest API.
 
-Runs ON the eventbot box (riggi-lab), not on the diytracker server. Reads
+Runs ON the eventbot box, not on the diytracker server. Reads
 the source-agnostic store (`events.jsonl` + `flyers/`), POSTs each not-yet-
 forwarded record — content AND flyer image — to POST /api/ingest, and
 tracks delivered ids in a small state file so every record is sent once.
@@ -9,12 +9,12 @@ Stdlib only; no dependencies to install.
 
     export INGEST_TOKEN=...   # same value as in diytracker's .env
     python3 eventbot_forwarder.py \
-        --store ~/.hermes/eventbot/events \
+        --store /path/to/eventbot/events \
         --url https://diytracker.ch/api/ingest
 
 Cron (every 30 min):
 
-    */30 * * * * INGEST_TOKEN=... /usr/bin/python3 /path/to/eventbot_forwarder.py
+    */30 * * * * INGEST_TOKEN=... /usr/bin/python3 /path/to/eventbot_forwarder.py --store /path/to/eventbot/events
 
 Delivery semantics: 201 (created) and 200 (duplicate) mark the record
 forwarded; 422 (invalid) marks it forwarded too — retrying won't fix the
@@ -107,7 +107,7 @@ def deliver(url, token, payload, flyer_bytes, flyer_name, timeout=30):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--store", default=os.path.expanduser("~/.hermes/eventbot/events"))
+    ap.add_argument("--store", required=True, help="path to the eventbot events store")
     ap.add_argument("--url", default="https://diytracker.ch/api/ingest")
     ap.add_argument(
         "--dry-run", action="store_true", help="list what would be sent, send nothing"

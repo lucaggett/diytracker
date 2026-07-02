@@ -156,7 +156,7 @@ and 201 as success and 422 as a permanent rejection.
 
 ### The Signal eventbot
 
-The eventbot (Crowdkill Report, on riggi-lab at `~/.hermes/eventbot/`)
+The eventbot runs on a separate machine, where it
 watches a Signal flyer group and keeps a source-agnostic store of
 parsed events plus the original flyer images. Two scripts connect it:
 

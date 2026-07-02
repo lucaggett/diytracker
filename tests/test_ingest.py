@@ -326,10 +326,10 @@ class TestEventbotMapping:
         import scripts.import_eventbot as imp
 
         rec = {
-            "source": "signal:f91vQzWTTm",
-            "submitter": "Jonathan Schenker",
+            "source": "signal:abc123group",
+            "submitter": "Maxine Muster",
             "id": "e229ea0c5de4",
-            "flyer_image": "/home/riggi/.hermes/eventbot/events/flyers/x.jpg",
+            "flyer_image": "/home/user/eventbot/events/flyers/x.jpg",
             "event": {
                 "title": "1-a-Grind",
                 "artists": ["Archagathus", "Skunk"],

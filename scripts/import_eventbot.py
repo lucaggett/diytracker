@@ -1,4 +1,4 @@
-"""One-shot importer for the Signal eventbot store (Crowdkill Report).
+"""One-shot importer for the Signal eventbot store.
 
 Reads a local copy of the eventbot's source-agnostic store — an
 `events.jsonl` plus its `flyers/` directory — and stages every record
@@ -8,7 +8,7 @@ a fresh sync only imports what's new.
 
 Get a local copy of the store first, e.g.:
 
-    rsync -a riggi-lab:.hermes/eventbot/events/ instance/eventbot/
+    rsync -a <eventbot-host>:path/to/eventbot/events/ instance/eventbot/
 
 Then:
 
