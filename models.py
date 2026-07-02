@@ -181,6 +181,15 @@ class ScrapedEvent(db.Model):
     organizer = db.Column(db.String(200), nullable=True)
     event_status = db.Column(db.String(100), nullable=True)
 
+    # Multi-source ingest: flyer image + identity for sources without URLs
+    flyer = db.Column(db.String(200), nullable=True)  # File path to the stored flyer
+    source_id = db.Column(db.String(64), nullable=True)  # Stable per-source record id
+    submitter = db.Column(db.String(200), nullable=True)  # Who posted it at the source
+
+    __table_args__ = (
+        db.UniqueConstraint('source', 'source_id', name='ux_scraped_event_source_source_id'),
+    )
+
     # Approval tracking
     approved = db.Column(db.Boolean, nullable=False, default=False)
     approved_at = db.Column(db.DateTime, nullable=True)
