@@ -4,14 +4,16 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 
+from diytracker.paths import LOGS_DIR
+
 CONTACT_RECIPIENT = "luc@aggett.com"
 
 
 def build_contact_logger():
     logger = logging.getLogger("diytracker.contact")
     if not logger.handlers:
-        os.makedirs("logs", exist_ok=True)
-        handler = logging.FileHandler(os.path.join("logs", "contact_form.log"))
+        LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        handler = logging.FileHandler(LOGS_DIR / "contact_form.log")
         handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)

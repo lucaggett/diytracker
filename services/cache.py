@@ -1,15 +1,13 @@
-import os
-
 from flask_caching import Cache
+
+from diytracker.paths import CACHE_DIR
 
 CACHE_TIMEOUT_SECONDS = 60 * 60
 
 # Filesystem-backed so all gunicorn workers share one cache and bust_cache()
 # takes effect everywhere (SimpleCache was per-process: a write handled by one
 # worker left the other workers serving stale pages for up to an hour).
-_CACHE_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "instance", "cache"
-)
+_CACHE_DIR = str(CACHE_DIR)
 
 cache = Cache(
     config={

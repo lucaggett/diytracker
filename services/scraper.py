@@ -3,10 +3,11 @@ import threading
 import time as time_module
 from datetime import datetime
 
+from diytracker.paths import INSTANCE_DIR
 from models import db, Event, ScrapedEvent
 from services.ingest import ingest_event
 
-LAST_SCRAPE_FILE = os.path.join("instance", "last_scrape.txt")
+LAST_SCRAPE_FILE = str(INSTANCE_DIR / "last_scrape.txt")
 SCRAPE_INTERVAL_HOURS = 1
 
 _scrape_lock = threading.Lock()

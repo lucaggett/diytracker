@@ -3,7 +3,13 @@ import secrets
 
 from PIL import Image
 
+from diytracker.paths import ROOT
+
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+# Deliberately a ROOT-relative string: save_flyer_file() returns it joined with
+# the filename, and that value is stored in the DB and rendered as the flyer
+# URL (templates/calendar.html). Only the filesystem write resolves against
+# ROOT below.
 UPLOAD_FOLDER = "static/uploads"
 MAGIC_BYTES = [b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n", b"GIF87a", b"GIF89a"]
 
@@ -45,7 +51,8 @@ def save_flyer_file(file_storage, upload_folder):
         ext = file_storage.filename.rsplit(".", 1)[1].lower()
         filename = f"{secrets.token_hex(8)}.{ext}"
         path = os.path.join(upload_folder, filename)
-        file_storage.save(path)
-        _resize_flyer(path)
+        fs_path = path if os.path.isabs(path) else os.path.join(str(ROOT), path)
+        file_storage.save(fs_path)
+        _resize_flyer(fs_path)
         return path
     return None

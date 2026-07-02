@@ -34,6 +34,7 @@ import random
 # Allow running standalone (`python services/scrape_events.py`), where the
 # project root isn't on sys.path.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from diytracker.paths import INSTANCE_DIR, LOGS_DIR
 from utils import resolve_canton
 
 # Configure verbose logging
@@ -51,9 +52,9 @@ if not logger.handlers:
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 
-    os.makedirs("logs", exist_ok=True)
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
     file_handler = logging.FileHandler(
-        "logs/scrape_events.log", mode="a", encoding="utf-8"
+        LOGS_DIR / "scrape_events.log", mode="a", encoding="utf-8"
     )
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
@@ -754,8 +755,8 @@ def main() -> None:
             logger.warning(f"Skipped PETZI event due to parse failure: {url}")
         if idx % 50 == 0:
             print(f"Processed {idx}/{len(petzi_urls)} PETZI events", file=sys.stderr)
-    os.makedirs("instance", exist_ok=True)
-    out_path = "instance/events.csv"
+    INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = str(INSTANCE_DIR / "events.csv")
     print(f"Writing {len(events)} events to {out_path}", file=sys.stderr)
     write_csv(events, out_path)
     print("Done", file=sys.stderr)

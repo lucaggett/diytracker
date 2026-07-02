@@ -7,7 +7,9 @@ import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 
-BASE_DIR = Path(__file__).parent.parent
+from diytracker.paths import ROOT
+
+BASE_DIR = ROOT
 REPORT_PATH = BASE_DIR / "instance" / "nginx_report.html"
 
 TIMEFRAMES = [

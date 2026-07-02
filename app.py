@@ -8,6 +8,14 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 from flask import Flask, g, render_template
 
+from diytracker.paths import (
+    INSTANCE_DIR,
+    ROOT,
+    STATIC_DIR,
+    TEMPLATES_DIR,
+    TRANSLATIONS_DIR,
+    ensure_runtime_dirs,
+)
 from models import db
 from services.i18n import (
     DEFAULT_LOCALE,
@@ -21,12 +29,19 @@ from services.scraper import start_auto_scheduler
 from services.uploads import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from utils import parent_genres
 
-load_dotenv()
+load_dotenv(ROOT / ".env")
 
-for d in ("logs", "static/uploads", "instance", "instance/cache"):
-    os.makedirs(d, exist_ok=True)
+ensure_runtime_dirs()
 
-app = Flask(__name__)
+# Explicit repo-anchored paths: the package module's location must not decide
+# where Flask looks for templates/static/instance (the SQLite DB lives under
+# instance_path, so a silent shift would boot against a fresh empty DB).
+app = Flask(
+    __name__,
+    template_folder=str(TEMPLATES_DIR),
+    static_folder=str(STATIC_DIR),
+    instance_path=str(INSTANCE_DIR),
+)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URI", "sqlite:///events.db"
@@ -51,7 +66,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
 app.config["BABEL_DEFAULT_LOCALE"] = DEFAULT_LOCALE
 app.config["BABEL_SUPPORTED_LOCALES"] = list(SUPPORTED_LOCALES)
-app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
+app.config["BABEL_TRANSLATION_DIRECTORIES"] = str(TRANSLATIONS_DIR)
 
 db.init_app(app)
 cache.init_app(app)
