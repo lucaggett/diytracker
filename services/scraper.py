@@ -5,7 +5,7 @@ import time as time_module
 from datetime import datetime
 
 from models import db, Event, ScrapedEvent
-from utils import clean_genre_tokens, clean_ticket_url, resolve_canton
+from services.ingest import ingest_event
 
 LAST_SCRAPE_FILE = os.path.join('instance', 'last_scrape.txt')
 SCRAPE_INTERVAL_HOURS = 1
@@ -61,7 +61,6 @@ def _scrape_and_import(app):
         get_petzi_event_urls = scraper.get_petzi_event_urls
         parse_metalgigs_event = scraper.parse_metalgigs_event
         parse_petzi_event = scraper.parse_petzi_event
-        from scripts.import_scraped_events import parse_date, parse_time
 
         _scrape_progress = {'total': 0, 'processed': 0, 'started_at': datetime.now().isoformat(), 'phase': 'Fetching sitemaps'}
 
@@ -91,52 +90,24 @@ def _scrape_and_import(app):
 
         _scrape_progress['phase'] = 'Importing to database'
         with app.app_context():
-            known_urls_now = _get_known_urls()
-            count = 0
+            counts = {'created': 0, 'duplicate': 0, 'invalid': 0}
             for row in events:
-                url = row.get('url')
-                if url and url in known_urls_now:
-                    continue
-                source = row.get('source')
                 raw_styles = row.get('styles') or ''
                 # petzi sitemap mixes concerts with theatre/workshop/club-night
                 # rows; the raw 'concert' token is the only signal, so filter
-                # on it before cleanup strips the token.
-                if source == 'petzi' and 'concert' not in raw_styles.lower():
+                # on it before ingest's genre cleanup strips the token.
+                if row.get('source') == 'petzi' and 'concert' not in raw_styles.lower():
                     continue
-                region = resolve_canton(row.get('region') or '', row.get('city') or '')
-                cleaned_styles = ', '.join(clean_genre_tokens(raw_styles)) or None
-                cleaned_ticket_url = clean_ticket_url(row.get('ticket_url'), source)
-                scraped = ScrapedEvent(
-                    source=source,
-                    url=url,
-                    title=row.get('title'),
-                    performers=row.get('performers'),
-                    styles=cleaned_styles,
-                    description=row.get('description'),
-                    start_date=parse_date(row.get('start_date') or ''),
-                    end_date=parse_date(row.get('end_date') or ''),
-                    doors_open=parse_time(row.get('doors_open') or ''),
-                    start_time=parse_time(row.get('start_time') or ''),
-                    venue_name=row.get('venue_name'),
-                    street_address=row.get('street_address'),
-                    city=row.get('city'),
-                    region=region,
-                    postal_code=row.get('postal_code'),
-                    ticket_price=row.get('ticket_price'),
-                    ticket_currency=row.get('ticket_currency'),
-                    ticket_url=cleaned_ticket_url,
-                    organizer=row.get('organizer'),
-                    event_status=row.get('event_status'),
-                )
-                db.session.add(scraped)
-                if url:
-                    # url is unique in the DB; guard against dupes within
-                    # this batch so the commit can't raise IntegrityError.
-                    known_urls_now.add(url)
-                count += 1
+                # commit=False: batch commit below; in-batch url dupes are
+                # still caught because ingest's dedup queries autoflush.
+                result = ingest_event(row, commit=False)
+                counts[result.status] += 1
+                if result.status == 'invalid':
+                    app.logger.warning(f"Scrape: dropped invalid row {row.get('url')}: {result.reason}")
             db.session.commit()
-            app.logger.info(f"Scrape complete: imported {count} new events")
+            app.logger.info(
+                f"Scrape complete: {counts['created']} new, "
+                f"{counts['duplicate']} duplicate, {counts['invalid']} invalid")
         set_last_scrape_time(datetime.now())
     except Exception:
         app.logger.exception("Scrape failed")
