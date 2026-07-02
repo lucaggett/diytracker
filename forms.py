@@ -5,7 +5,6 @@ from wtforms import (
     DateField,
     TimeField,
     FileField,
-    SubmitField,
     SelectField,
     SelectMultipleField,
     PasswordField,

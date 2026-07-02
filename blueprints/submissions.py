@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, time as time_type
 
 from dateutil.relativedelta import relativedelta

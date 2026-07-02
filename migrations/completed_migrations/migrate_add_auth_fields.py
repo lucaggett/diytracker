@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 # add the parent diytracker directory to the path (fixes weird import errors)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -4,8 +4,6 @@ These cover the project's own business rules — Swiss canton resolution, the
 genre taxonomy, and ticket-URL cleanup — not library behaviour.
 """
 
-import pytest
-
 from utils import (
     clean_genre_tokens,
     clean_ticket_url,

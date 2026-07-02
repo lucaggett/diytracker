@@ -9,7 +9,7 @@ from datetime import datetime
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from models import db, Event, ScrapedEvent, Submitter, Venue
+from models import db, Event, ScrapedEvent, Submitter
 
 
 class TestParentGenresHook:

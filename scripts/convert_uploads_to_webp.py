@@ -141,7 +141,7 @@ prefix = "Dry run — " if dry_run else ""
 tail = ""
 if not dry_run:
     if keep_originals:
-        tail = f", originals kept"
+        tail = ", originals kept"
     else:
         tail = f", {deleted} originals deleted"
 print(

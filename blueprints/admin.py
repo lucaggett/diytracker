@@ -1,5 +1,4 @@
 import io
-import os
 from datetime import datetime, timedelta
 
 from flask import (
@@ -24,7 +23,7 @@ from forms import (
     VenueForm,
     get_canton_choices,
 )
-from models import db, Event, Venue, VenueAccessibility
+from models import db, Event, Venue
 from services.analytics import REPORT_PATH, TIMEFRAMES, generate_report
 from services.auth import admin_required
 from services.cache import bust_cache

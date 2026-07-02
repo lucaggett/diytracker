@@ -32,7 +32,7 @@ import services.scraper as _scraper_module  # noqa: E402
 _scraper_module.start_auto_scheduler = lambda app: None
 
 import app as app_module  # noqa: E402
-from models import db, Submitter, Venue, Event, VenueAccessibility, ScrapedEvent  # noqa: E402
+from models import db, Submitter, Venue, Event  # noqa: E402
 from services.limits import limiter as _limiter  # noqa: E402
 
 app_module.app.config.update(

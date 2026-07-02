@@ -13,12 +13,13 @@ Usage::
 If no path is provided, it defaults to `events.csv` in the project root.
 """
 
-import os, sys
+import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import csv
-from datetime import datetime, time
+from datetime import datetime
 from flask import Flask
 
 from models import db, ScrapedEvent

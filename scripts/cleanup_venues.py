@@ -20,7 +20,8 @@ Before running with --apply, back up ``instance/events.db`` — the script
 commits a single transaction at the end and does not track what it deleted.
 """
 
-import os, sys
+import os
+import sys
 from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

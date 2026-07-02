@@ -6,7 +6,6 @@ mocking it, since the resize/format handling is the point of the module.
 
 import io
 
-import pytest
 from PIL import Image
 from werkzeug.datastructures import FileStorage
 

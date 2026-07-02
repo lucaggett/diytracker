@@ -472,12 +472,12 @@ dependencies = [
     { name = "python-dateutil" },
     { name = "python-dotenv" },
     { name = "requests" },
-    { name = "ruff" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -498,11 +498,13 @@ requires-dist = [
     { name = "python-dateutil", specifier = ">=2.9" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "requests", specifier = ">=2.28" },
-    { name = "ruff", specifier = ">=0.15.20" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=9.1.1" }]
+dev = [
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "ruff", specifier = ">=0.15.20" },
+]
 
 [[package]]
 name = "dnspython"

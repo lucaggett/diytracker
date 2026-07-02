@@ -5,7 +5,8 @@ deduplicated first, keeping the oldest row per URL. Duplicate submitter emails
 are not auto-deleted — the migration aborts and lists them for manual cleanup.
 """
 
-import os, sys
+import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

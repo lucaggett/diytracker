@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -127,7 +128,7 @@ def add_user():
 
     with app.app_context():
         if Submitter.query.filter_by(email=email).first():
-            print(f"  A user with that email already exists.")
+            print("  A user with that email already exists.")
             return
         new_user = Submitter(email=email)
         token = new_user.generate_invite_token()

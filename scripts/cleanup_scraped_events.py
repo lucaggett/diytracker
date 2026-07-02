@@ -12,7 +12,8 @@ Preview-by-default is intentional — the script touches thousands of rows and
 a dry run gives a line-by-line diff before anything is committed.
 """
 
-import os, sys
+import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

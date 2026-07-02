@@ -10,7 +10,8 @@ Usage::
 Pass --dry-run to print what would change without writing anything.
 """
 
-import os, sys
+import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

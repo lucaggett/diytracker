@@ -2,7 +2,7 @@
 
 from datetime import date, time
 
-from models import db, Event, ScrapedEvent, Venue
+from models import db, ScrapedEvent, Venue
 from services.events import compute_event_hash
 from services.venue import get_or_create_venue
 

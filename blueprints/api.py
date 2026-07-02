@@ -13,7 +13,7 @@ def get_genres():
     seed = [g for g, _ in get_genre_choices()]
     db_genres = []
     for event in (
-        Event.query.with_entities(Event.genre).filter(Event.genre != None).all()
+        Event.query.with_entities(Event.genre).filter(Event.genre != None).all()  # noqa: E711 (SQLAlchemy needs `!= None` for IS NOT NULL, not `is not None`)
     ):
         for g in (event.genre or "").split(","):
             g = g.strip()
