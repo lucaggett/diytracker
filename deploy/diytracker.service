@@ -1,0 +1,49 @@
+# diytracker gunicorn service.
+#
+# Install:
+#   sudo cp deploy/diytracker.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now diytracker
+#
+# Notes:
+# - systemd runs gunicorn in the foreground and tracks the master PID itself,
+#   so there is no --daemon and no pidfile (manage.py start/stop/status are
+#   superseded by systemctl; manage.py logs / user subcommands still apply).
+# - No ExecReload on purpose: a HUP reload respawns workers, but the scrape
+#   scheduler only starts in the very first worker the master ever forks
+#   (gunicorn_conf.py post_fork, worker.age == 1), so a reload would silently
+#   kill the scraper. Use `systemctl restart diytracker` instead.
+# - .env is loaded by the app itself (python-dotenv) from the working
+#   directory; nothing to configure here.
+
+[Unit]
+Description=diytracker gunicorn server
+After=network.target
+
+[Service]
+Type=notify
+User=diytrackeruser
+Group=diytrackeruser
+# WorkingDirectory matters: gunicorn_conf.py logs to the relative logs/ dir,
+# and the app resolves instance/ and .env from the cwd.
+WorkingDirectory=/home/diytrackeruser/diytracker
+ExecStart=/home/diytrackeruser/diytracker/.venv/bin/gunicorn -c gunicorn_conf.py app:app
+Restart=on-failure
+RestartSec=5
+# SIGTERM to the master triggers gunicorn's graceful shutdown; mixed makes the
+# final SIGKILL (if the timeout expires) hit the whole cgroup, not just the master.
+KillMode=mixed
+TimeoutStopSec=35
+
+# Sandboxing. ProtectHome is deliberately absent: the app lives (and writes
+# its SQLite DB, logs, and uploads) under /home/diytrackeruser.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

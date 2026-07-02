@@ -1,0 +1,55 @@
+#!/bin/sh
+# diytracker MOTD — shown at SSH login via pam_motd.
+#
+# Install (Debian/Ubuntu):
+#   sudo install -m 755 deploy/update-motd.d/50-diytracker /etc/update-motd.d/50-diytracker
+#
+# Runs as root when the MOTD is regenerated, so keep it fast and read-only.
+
+APP_DIR=/home/diytrackeruser/diytracker
+SERVICE=diytracker
+
+GREEN='\033[32m'; RED='\033[31m'; YELLOW='\033[33m'; DIM='\033[2m'; BOLD='\033[1m'; RESET='\033[0m'
+
+state=$(systemctl is-active "$SERVICE" 2>/dev/null || echo unknown)
+case "$state" in
+    active)  state_col="${GREEN}running${RESET}" ;;
+    failed)  state_col="${RED}FAILED${RESET}" ;;
+    *)       state_col="${YELLOW}${state}${RESET}" ;;
+esac
+
+printf '\n'
+printf "${BOLD}diytracker${RESET} — https://diytracker.ch\n"
+printf '  %-20b %b\n' "${DIM}service${RESET}" "$state_col"
+
+if [ "$state" = active ]; then
+    since=$(systemctl show "$SERVICE" -p ActiveEnterTimestamp --value 2>/dev/null)
+    [ -n "$since" ] && printf '  %-20b %s\n' "${DIM}since${RESET}" "$since"
+    tasks=$(systemctl show "$SERVICE" -p TasksCurrent --value 2>/dev/null)
+    mem=$(systemctl show "$SERVICE" -p MemoryCurrent --value 2>/dev/null)
+    if [ -n "$mem" ] && [ "$mem" != "[not set]" ]; then
+        mem_h=$(numfmt --to=iec "$mem" 2>/dev/null || echo "$mem")
+        printf '  %-20b %s tasks, %s\n' "${DIM}usage${RESET}" "${tasks:-?}" "$mem_h"
+    fi
+fi
+
+bind=$(sed -n "s/^bind *= *['\"]\(.*\)['\"].*/\1/p" "$APP_DIR/gunicorn_conf.py" 2>/dev/null)
+[ -n "$bind" ] && printf '  %-20b %s (behind nginx)\n' "${DIM}bind${RESET}" "$bind"
+
+if [ -f "$APP_DIR/instance/last_scrape.txt" ]; then
+    last_scrape=$(cut -c1-16 "$APP_DIR/instance/last_scrape.txt" | tr T ' ')
+    printf '  %-20b %s\n' "${DIM}last scrape${RESET}" "$last_scrape"
+fi
+
+if [ -f "$APP_DIR/instance/events.db" ]; then
+    db_size=$(du -h "$APP_DIR/instance/events.db" | cut -f1 | tr -d ' ')
+    printf '  %-20b %s\n' "${DIM}database${RESET}" "instance/events.db (${db_size})"
+fi
+
+disk=$(df -h --output=pcent,avail /home 2>/dev/null | awk 'NR==2 {print $1" used, "$2" free"}')
+[ -n "$disk" ] && printf '  %-20b %s\n' "${DIM}disk /home${RESET}" "$disk"
+
+printf '\n'
+printf "  ${DIM}manage:${RESET}  systemctl {status|restart} ${SERVICE}   journalctl -u ${SERVICE} -e\n"
+printf "  ${DIM}app:${RESET}     cd ${APP_DIR} && uv run python manage.py {logs -f|user list|...}\n"
+printf '\n'

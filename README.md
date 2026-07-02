@@ -82,6 +82,12 @@ uv run gunicorn -c gunicorn_conf.py app:app
 
 ### Managing the server
 
+On the production server the app runs under systemd — see
+[`deploy/README.md`](deploy/README.md) for the unit file, the login MOTD,
+and install steps. Use `systemctl {status,restart} diytracker` there;
+`manage.py start/stop/restart/status` below are for machines without the
+unit installed.
+
 `manage.py` is a small CLI for running the production server, inspecting
 it, tailing logs, and managing users. Run everything through uv:
 
