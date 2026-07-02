@@ -3,23 +3,23 @@
 A Flask web app that aggregates DIY / underground concert listings in
 Switzerland. Events come in two ways:
 
-1. **User submissions** — invited users (there is no public signup)
-   fill out a form and the event goes live immediately.
-2. **Scrapers** — a background thread periodically pulls event pages
-   from external sites (currently `metalgigs.ch` and `petzi.ch`),
-   parses them, and stores them as `ScrapedEvent` rows so an admin can
+1. User submissions: invited users (there is no public signup) fill
+   out a form and the event goes live immediately.
+2. Scrapers: a background thread periodically pulls event pages from
+   external sites (currently `metalgigs.ch` and `petzi.ch`), parses
+   them, and stores them as `ScrapedEvent` rows so an admin can
    convert them into real `Event` rows.
 
-It also tracks per-venue accessibility info and is fully translated
-(DE / EN / FR / IT) via Flask-Babel.
+It also tracks per-venue accessibility info and is translated into
+DE / EN / FR / IT via Flask-Babel.
 
 ## Running it yourself
 
 ### Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) (manages Python + dependencies)
-- Node.js (only to rebuild Tailwind CSS; not needed if you keep the
-  prebuilt `static/css/output.css`)
+- Node.js, only to rebuild Tailwind CSS. Not needed if you keep the
+  prebuilt `static/css/output.css`.
 
 ### Setup
 
@@ -31,15 +31,14 @@ cd diytracker
 # uv will fetch the pinned Python version automatically if needed.
 uv sync
 
-# Tailwind (optional — only if you edit templates or `tailwind.config.js`)
+# Tailwind (only needed if you edit templates or tailwind.config.js)
 npm install
 npx @tailwindcss/cli -i ./static/css/styles.css -o ./static/css/output.css --minify --watch
 ```
 
 > uv does not activate the venv. Run project commands through `uv run`
-> (e.g. `uv run python app.py`), which uses `.venv` without you having
-> to `source` it. A bare `gunicorn`/`python` will not resolve to the
-> project's dependencies.
+> (e.g. `uv run python app.py`). A bare `gunicorn` or `python` will not
+> see the project's dependencies.
 
 ### Environment
 
@@ -62,7 +61,7 @@ INGEST_TOKEN=<any long random string>
 ```
 
 The background scraper only runs when `ENABLE_SCRAPER=1` is set for the
-process. Under gunicorn you don't set it yourself — `gunicorn_conf.py`'s
+process. Under gunicorn you don't set it yourself: `gunicorn_conf.py`'s
 `post_fork` hook enables it for exactly one worker. For the dev server use
 `ENABLE_SCRAPER=1 uv run python app.py` (don't put it in `.env`, or every
 gunicorn worker would start its own scheduler).
@@ -86,7 +85,7 @@ uv run gunicorn -c gunicorn_conf.py app:app
 
 ### Managing the server
 
-On the production server the app runs under systemd — see
+On the production server the app runs under systemd; see
 [`deploy/README.md`](deploy/README.md) for the unit file, the login MOTD,
 and install steps. Use `systemctl {status,restart} diytracker` there.
 
@@ -112,28 +111,28 @@ uv run python manage.py user delete alice@example.com     # --yes to skip confir
 
 ## Ingest
 
-Events reach the site from three kinds of sources, and they all funnel
-through one place — `services/ingest.py` — into the `ScrapedEvent`
-staging queue, where an admin approves them into real `Event` rows:
+Events reach the site from three kinds of sources, all funnelling
+through `services/ingest.py` into the `ScrapedEvent` staging queue,
+where an admin approves them into real `Event` rows:
 
-1. **User submissions** (`/submit`) — the only path that creates
-   `Event` rows directly, no queue.
-2. **Built-in scrapers** (metalgigs, petzi — see "Scrapers" below).
-3. **External pushers** via `POST /api/ingest` — e.g. the Signal
-   flyer bot ("eventbot") running on another machine.
+1. User submissions (`/submit`), the only path that creates `Event`
+   rows directly without going through the queue.
+2. Built-in scrapers (metalgigs, petzi; see "Scrapers" below).
+3. External pushers via `POST /api/ingest`, e.g. the Signal flyer bot
+   ("eventbot") running on another machine.
 
-`ingest_event()` owns validation (title + `YYYY-MM-DD` start date
-required), normalisation (canton, genre tokens, ticket URLs), dedup
-(by canonical `url`, or by `(source, source_id)` for sources without
-URLs) and **flyer storage** — a pushed image is validated, resized and
-stored exactly like a user-uploaded flyer, shows up as a thumbnail in
-the approval queue, and is carried onto the `Event` when approved.
+`ingest_event()` owns validation (title and a `YYYY-MM-DD` start date
+are required), normalisation (canton, genre tokens, ticket URLs),
+dedup (by canonical `url`, or by `(source, source_id)` for sources
+without URLs) and flyer storage: a pushed image is validated, resized
+and stored exactly like a user-uploaded flyer, shows up as a thumbnail
+in the approval queue, and is carried onto the `Event` when approved.
 
 ### Push API
 
 `POST /api/ingest` authenticates with `Authorization: Bearer
-<INGEST_TOKEN>` (set `INGEST_TOKEN` in `.env`; unset = endpoint
-disabled, returns 503). Two body shapes:
+<INGEST_TOKEN>` (set `INGEST_TOKEN` in `.env`; if unset, the endpoint
+is disabled and returns 503). Two body shapes:
 
 ```bash
 # JSON only
@@ -151,7 +150,7 @@ curl -X POST https://diytracker.ch/api/ingest \
 ```
 
 The full payload key list is documented in `services/ingest.py`.
-Responses: `201` created, `200` duplicate (idempotent — safe to mark
+Responses: `201` created, `200` duplicate (idempotent, so safe to mark
 delivered), `422` invalid, `401` bad token. Pushers should treat 200
 and 201 as success and 422 as a permanent rejection.
 
@@ -161,17 +160,18 @@ The eventbot (Crowdkill Report, on riggi-lab at `~/.hermes/eventbot/`)
 watches a Signal flyer group and keeps a source-agnostic store of
 parsed events plus the original flyer images. Two scripts connect it:
 
-- `scripts/eventbot_forwarder.py` — runs **on the eventbot box** via
-  cron; POSTs each new record (content + flyer) to `/api/ingest` once,
-  tracking delivery in a state file. Stdlib-only, just copy it over.
-- `scripts/import_eventbot.py` — one-shot local backfill from an
+- `scripts/eventbot_forwarder.py` runs on the eventbot box via cron
+  and POSTs each new record (content + flyer) to `/api/ingest` once,
+  tracking delivery in a state file. It uses only the stdlib, so you
+  can just copy it over.
+- `scripts/import_eventbot.py` is a one-shot local backfill from an
   rsync'd copy of the store (see its docstring).
 
 ## Scrapers
 
 ### How they're organised
 
-The scraping pipeline has three pieces:
+The scraping pipeline has two pieces:
 
 | File | Role |
 | --- | --- |
@@ -192,7 +192,7 @@ which copies its fields into a real `Event` row and sets
    `start_time`, `venue_name`, `street_address`, `city`, `region`,
    `postal_code`, `ticket_price`, `ticket_currency`, `ticket_url`,
    `organizer`, `event_status`). Dates as `YYYY-MM-DD`, times as
-   `HH:MM`. Use `fetch_url()` for HTTP — it handles user-agent
+   `HH:MM`. Use `fetch_url()` for HTTP; it handles user-agent
    rotation, jittered delays, and 403/429 backoff. Use
    `resolve_canton(region, city)` to normalise the Swiss canton.
 
@@ -218,8 +218,8 @@ which copies its fields into a real `Event` row and sets
    `services/scrape_events.py` if you want `python services/scrape_events.py`
    to also include the new source.
 
-That's it — no schema changes, no admin-side changes. New rows show up
-in the admin event queue on the next scrape tick.
+No schema or admin-side changes are needed; new rows show up in the
+admin event queue on the next scrape tick.
 
 ## Architecture
 
@@ -281,17 +281,17 @@ instance/                SQLite DB, scrape state (`last_scrape.txt`),
 ### Request lifecycle
 
 A request hits Flask, `_bind_locale_to_g` picks a locale (from
-`?lang=`, session, `Accept-Language`, in that order — see
+`?lang=`, session, `Accept-Language`, in that order; see
 `services/i18n.py`), and the matching blueprint handles it. Public
 calendar responses are cached for 5 minutes via `Cache-Control` and
 also through `flask-caching` keyed on locale.
 
 ### Background work
 
-`start_auto_scheduler(app)` is called at import time — only when
-`ENABLE_SCRAPER=1` is set (see "Environment") — and spawns a daemon
+`start_auto_scheduler(app)` is called at import time, but only when
+`ENABLE_SCRAPER=1` is set (see "Environment"). It spawns a daemon
 thread that loops forever, waking every `SCRAPE_INTERVAL_HOURS`
-to run `_scrape_and_import`. State is persisted in
+to run `_scrape_and_import`. The scraper persists its state in
 `instance/last_scrape.txt` so restarts don't trigger immediate
-re-scrapes. Progress is exposed via `services.scraper.get_progress()`
+re-scrapes, and exposes progress via `services.scraper.get_progress()`
 for the admin UI.
