@@ -7,6 +7,12 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.14.0] - 2026-07-02
+- Restructured the repo: application code (`app.py`, `models.py`, `forms.py`, `utils.py`, `blueprints/`, `services/`) now lives in a `diytracker/` package. A thin root `app.py` shim keeps the `app:app` entry point working, so no gunicorn/systemd changes are needed.
+- Added `diytracker/paths.py` as the single source of truth for repo-anchored paths; runtime behaviour (DB, logs, uploads, cache, translations) no longer depends on the process CWD.
+- Removed the eight already-applied migration scripts (`migrations/completed_migrations/`); git history keeps them.
+- Removed dead content globs from `tailwind.config.js`.
+
 ## [0.13.1] - 2026-07-02
 `0a075f4..4e0f461`
 - Synced `uv.lock` after the cleanup refactor.

@@ -67,7 +67,7 @@ process. Under gunicorn you don't set it yourself: `gunicorn_conf.py`'s
 gunicorn worker would start its own scheduler).
 
 The SQLite database (`instance/events.db`) is created automatically on
-first run via `db.create_all()` in `app.py`.
+first run via `db.create_all()` in `diytracker/app.py`.
 
 ### Run
 
@@ -112,7 +112,7 @@ uv run python manage.py user delete alice@example.com     # --yes to skip confir
 ## Ingest
 
 Events reach the site from three kinds of sources, all funnelling
-through `services/ingest.py` into the `ScrapedEvent` staging queue,
+through `diytracker/services/ingest.py` into the `ScrapedEvent` staging queue,
 where an admin approves them into real `Event` rows:
 
 1. User submissions (`/submit`), the only path that creates `Event`
@@ -149,7 +149,7 @@ curl -X POST https://diytracker.ch/api/ingest \
   -F 'flyer=@flyer.jpg'
 ```
 
-The full payload key list is documented in `services/ingest.py`.
+The full payload key list is documented in `diytracker/services/ingest.py`.
 Responses: `201` created, `200` duplicate (idempotent, so safe to mark
 delivered), `422` invalid, `401` bad token. Pushers should treat 200
 and 201 as success and 422 as a permanent rejection.
@@ -175,8 +175,8 @@ The scraping pipeline has two pieces:
 
 | File | Role |
 | --- | --- |
-| `services/scrape_events.py` | Pure scraping logic. One function per source that takes a URL and returns a dict. Also has helpers to discover URLs from each source's sitemap. Can be run standalone (`uv run python services/scrape_events.py`) to dump everything to `instance/events.csv`. |
-| `services/scraper.py` | The runtime glue. Discovers new URLs, calls the per-source parsers, deduplicates against existing `Event.source_url` and `ScrapedEvent.url`, then writes new `ScrapedEvent` rows. Also owns the background scheduler thread (`start_auto_scheduler`, called from `app.py`) which re-runs the scrape every `SCRAPE_INTERVAL_HOURS`. |
+| `diytracker/services/scrape_events.py` | Pure scraping logic. One function per source that takes a URL and returns a dict. Also has helpers to discover URLs from each source's sitemap. Can be run standalone (`uv run python diytracker/services/scrape_events.py`) to dump everything to `instance/events.csv`. |
+| `diytracker/services/scraper.py` | The runtime glue. Discovers new URLs, calls the per-source parsers, deduplicates against existing `Event.source_url` and `ScrapedEvent.url`, then writes new `ScrapedEvent` rows. Also owns the background scheduler thread (`start_auto_scheduler`, called from `diytracker/app.py`) which re-runs the scrape every `SCRAPE_INTERVAL_HOURS`. |
 
 Scraped events live in their own table (`ScrapedEvent`). They aren't
 shown to the public until an admin approves one in the event queue,
@@ -185,7 +185,7 @@ which copies its fields into a real `Event` row and sets
 
 ### Adding a new scraper
 
-1. **Write a parser in `services/scrape_events.py`.** It should take an
+1. **Write a parser in `diytracker/services/scrape_events.py`.** It should take an
    event URL and return a dict using the same keys as the existing
    parsers (`source`, `url`, `title`, `performers`, `styles`,
    `description`, `start_date`, `end_date`, `doors_open`,
@@ -201,7 +201,7 @@ which copies its fields into a real `Event` row and sets
    otherwise write a one-off helper (see `get_petzi_event_urls` for
    the pattern).
 
-3. **Wire it into `services/scraper._scrape_and_import`.** Import
+3. **Wire it into `diytracker/services/scraper.py`'s `_scrape_and_import`.** Import
    your new functions where the existing ones are imported, collect
    the URLs, and add a tuple to the `all_urls` list:
 
@@ -215,8 +215,9 @@ which copies its fields into a real `Event` row and sets
    existing one.
 
 4. **(Optional) extend the standalone runner** in `main()` of
-   `services/scrape_events.py` if you want `python services/scrape_events.py`
-   to also include the new source.
+   `diytracker/services/scrape_events.py` if you want
+   `python diytracker/services/scrape_events.py` to also include the
+   new source.
 
 No schema or admin-side changes are needed; new rows show up in the
 admin event queue on the next scrape tick.
@@ -224,36 +225,43 @@ admin event queue on the next scrape tick.
 ## Architecture
 
 ```
-app.py                   Flask app factory-ish: config, blueprint registration,
+app.py                   Entry-point shim so gunicorn/systemd keep using
+                         `app:app`; the real app lives in diytracker/app.py.
+
+diytracker/              The application package.
+  app.py                 Flask app factory-ish: config, blueprint registration,
                          starts the scraper scheduler thread.
-models.py                SQLAlchemy models: Event, Venue, VenueAccessibility,
+  paths.py               Single source of truth for repo-anchored paths
+                         (instance/, logs/, static/, templates/, translations/)
+                         so nothing depends on the process CWD.
+  models.py              SQLAlchemy models: Event, Venue, VenueAccessibility,
                          Submitter, ScrapedEvent. Includes a before_insert/update
                          hook that auto-derives Event.parent_genres from .genre.
-forms.py                 Flask-WTF form definitions.
-utils.py                 Shared helpers (genre tokenising, canton resolution,
+  forms.py               Flask-WTF form definitions.
+  utils.py               Shared helpers (genre tokenising, canton resolution,
                          ticket URL cleanup, etc.).
 
-blueprints/
-  public.py              Public-facing pages: calendar, venues, accessibility,
+  blueprints/
+    public.py            Public-facing pages: calendar, venues, accessibility,
                          contact form, sitemap.
-  submissions.py         The "submit an event" flow for non-admins, plus the
+    submissions.py       The "submit an event" flow for non-admins, plus the
                          scraped-event approval queue.
-  auth.py                Login, logout, invite-token password setup.
-  admin.py               Admin dashboard: event/venue editing, Excel export,
+    auth.py              Login, logout, invite-token password setup.
+    admin.py             Admin dashboard: event/venue editing, Excel export,
                          analytics, weekly calendar image.
-  api.py                 JSON endpoints: genre/venue lookups, POST /api/ingest.
+    api.py               JSON endpoints: genre/venue lookups, POST /api/ingest.
 
-services/
-  scraper.py             Background scheduler + import pipeline (see above).
-  i18n.py                Locale selection + a tiny gettext fallback for when
+  services/
+    scraper.py           Background scheduler + import pipeline (see above).
+    i18n.py              Locale selection + a tiny gettext fallback for when
                          flask-babel isn't installed.
-  cache.py               Flask-Caching wrapper.
-  contact.py             SMTP for the contact form.
-  events.py / venue.py   Shared business logic used by multiple blueprints.
-  uploads.py             Flyer upload handling.
-  analytics.py           goaccess-style log report glue.
-  calendar_image.py      OG-image generation for calendar pages.
-  scrape_events.py       Source-specific scraping (see "Scrapers" above).
+    cache.py             Flask-Caching wrapper.
+    contact.py           SMTP for the contact form.
+    events.py / venue.py Shared business logic used by multiple blueprints.
+    uploads.py           Flyer upload handling.
+    analytics.py         goaccess-style log report glue.
+    calendar_image.py    OG-image generation for calendar pages.
+    scrape_events.py     Source-specific scraping (see "Scrapers" above).
 
 scripts/                 Operational tools: eventbot forwarder/importer, i18n
                          extraction, email config checks, dummy data, etc.
@@ -282,7 +290,7 @@ instance/                SQLite DB, scrape state (`last_scrape.txt`),
 
 A request hits Flask, `_bind_locale_to_g` picks a locale (from
 `?lang=`, session, `Accept-Language`, in that order; see
-`services/i18n.py`), and the matching blueprint handles it. Public
+`diytracker/services/i18n.py`), and the matching blueprint handles it. Public
 calendar responses are cached for 5 minutes via `Cache-Control` and
 also through `flask-caching` keyed on locale.
 
