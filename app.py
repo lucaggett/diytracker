@@ -31,6 +31,8 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI', 'sqlite:///events.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+# Shared token for POST /api/ingest (external event sources). Unset = endpoint disabled.
+app.config['INGEST_TOKEN'] = os.environ.get('INGEST_TOKEN')
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 # Secure works over http://localhost in modern browsers, so dev logins are fine.
@@ -41,7 +43,7 @@ app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
 app.config['COMPRESS_ALGORITHM'] = ['br', 'gzip']
 Compress(app)
-CSRFProtect(app)
+csrf = CSRFProtect(app)
 # nginx terminates TLS and proxies to gunicorn on localhost.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
@@ -116,6 +118,10 @@ app.register_blueprint(public_bp)
 app.register_blueprint(submissions_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(api_bp)
+
+# /api/ingest authenticates with a bearer token, not a session cookie, so
+# browser CSRF doesn't apply (and external pushers can't obtain a CSRF token).
+csrf.exempt(app.view_functions['api.ingest'])
 
 # Only one process may run the scrape scheduler. Under gunicorn the
 # post_fork hook in gunicorn_conf.py sets this for the first worker only;
