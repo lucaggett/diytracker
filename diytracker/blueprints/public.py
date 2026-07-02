@@ -262,3 +262,9 @@ def set_language(lang):
     if next_url:
         return redirect(next_url)
     return redirect(url_for("public.calendar_view"))
+
+
+
+@bp.route("/kyuubi")
+def kyuubi():
+    return render_template("kyuubi.html")
