@@ -15,6 +15,7 @@ Commands:
     logs     Tail the access or error log
     user     Manage users (list / add / passwd / admin / invite / delete)
 """
+
 import argparse
 import getpass
 import os
@@ -25,35 +26,47 @@ import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-PIDFILE = PROJECT_ROOT / 'instance' / 'gunicorn.pid'
-GUNICORN_CONF = PROJECT_ROOT / 'gunicorn_conf.py'
-APP_MODULE = 'app:app'
-ACCESS_LOG = PROJECT_ROOT / 'logs' / 'access_log_diytracker'
-ERROR_LOG = PROJECT_ROOT / 'logs' / 'error_log_diytracker'
+PIDFILE = PROJECT_ROOT / "instance" / "gunicorn.pid"
+GUNICORN_CONF = PROJECT_ROOT / "gunicorn_conf.py"
+APP_MODULE = "app:app"
+ACCESS_LOG = PROJECT_ROOT / "logs" / "access_log_diytracker"
+ERROR_LOG = PROJECT_ROOT / "logs" / "error_log_diytracker"
 
 
 # ── output helpers ────────────────────────────────────────────────────────────
 
+
 def _use_color():
-    return sys.stdout.isatty() and os.environ.get('NO_COLOR') is None
+    return sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
 
 
 def _c(text, code):
     return f"\033[{code}m{text}\033[0m" if _use_color() else text
 
 
-def green(t): return _c(t, '32')
-def red(t):   return _c(t, '31')
-def bold(t):  return _c(t, '1')
-def dim(t):   return _c(t, '2')
+def green(t):
+    return _c(t, "32")
+
+
+def red(t):
+    return _c(t, "31")
+
+
+def bold(t):
+    return _c(t, "1")
+
+
+def dim(t):
+    return _c(t, "2")
 
 
 # ── process helpers ───────────────────────────────────────────────────────────
 
+
 def _gunicorn_bin():
     """Path to gunicorn inside the active venv, falling back to PATH."""
-    candidate = Path(sys.executable).with_name('gunicorn')
-    return str(candidate) if candidate.exists() else 'gunicorn'
+    candidate = Path(sys.executable).with_name("gunicorn")
+    return str(candidate) if candidate.exists() else "gunicorn"
 
 
 def _read_pid():
@@ -83,19 +96,21 @@ def _bind_addr():
     """Read the `bind` setting from gunicorn_conf.py without importing the app."""
     ns = {}
     try:
-        exec(compile(GUNICORN_CONF.read_text(), str(GUNICORN_CONF), 'exec'), ns)
+        exec(compile(GUNICORN_CONF.read_text(), str(GUNICORN_CONF), "exec"), ns)
     except Exception:
         return None
-    return ns.get('bind')
+    return ns.get("bind")
 
 
 def _ps_processes(master_pid):
     """Return [{pid, ppid, cpu, mem, rss, etime}] for the master and its workers."""
-    fmt = 'pid=,ppid=,pcpu=,pmem=,rss=,etime='
+    fmt = "pid=,ppid=,pcpu=,pmem=,rss=,etime="
     try:
         out = subprocess.run(
-            ['ps', '-o', fmt, '--pid', str(master_pid), '--ppid', str(master_pid)],
-            capture_output=True, text=True, check=False,
+            ["ps", "-o", fmt, "--pid", str(master_pid), "--ppid", str(master_pid)],
+            capture_output=True,
+            text=True,
+            check=False,
         ).stdout
     except FileNotFoundError:
         return []
@@ -105,14 +120,21 @@ def _ps_processes(master_pid):
         if len(parts) < 6:
             continue
         pid, ppid, cpu, mem, rss, etime = parts[:6]
-        rows.append({
-            'pid': int(pid), 'ppid': int(ppid), 'cpu': cpu,
-            'mem': mem, 'rss': int(rss), 'etime': etime,
-        })
+        rows.append(
+            {
+                "pid": int(pid),
+                "ppid": int(ppid),
+                "cpu": cpu,
+                "mem": mem,
+                "rss": int(rss),
+                "etime": etime,
+            }
+        )
     return rows
 
 
 # ── server lifecycle ──────────────────────────────────────────────────────────
+
 
 def cmd_start(args):
     pid = _running_pid()
@@ -121,17 +143,23 @@ def cmd_start(args):
         return 1
 
     PIDFILE.parent.mkdir(parents=True, exist_ok=True)
-    (PROJECT_ROOT / 'logs').mkdir(exist_ok=True)
+    (PROJECT_ROOT / "logs").mkdir(exist_ok=True)
 
     cmd = [
-        _gunicorn_bin(), '-c', str(GUNICORN_CONF), APP_MODULE,
-        '--chdir', str(PROJECT_ROOT), '--pid', str(PIDFILE),
+        _gunicorn_bin(),
+        "-c",
+        str(GUNICORN_CONF),
+        APP_MODULE,
+        "--chdir",
+        str(PROJECT_ROOT),
+        "--pid",
+        str(PIDFILE),
     ]
 
     if args.foreground:
         return subprocess.run(cmd, cwd=PROJECT_ROOT).returncode
 
-    cmd.append('--daemon')
+    cmd.append("--daemon")
     subprocess.run(cmd, cwd=PROJECT_ROOT, check=True)
 
     # Daemonized gunicorn detaches immediately; wait for the pidfile to appear.
@@ -188,20 +216,26 @@ def cmd_status(args):
     print(f"  {dim('master')}   PID {pid}")
 
     procs = _ps_processes(pid)
-    workers = [p for p in procs if p['pid'] != pid]
+    workers = [p for p in procs if p["pid"] != pid]
     print(f"  {dim('workers')}  {len(workers)}")
 
-    master = next((p for p in procs if p['pid'] == pid), None)
+    master = next((p for p in procs if p["pid"] == pid), None)
     if master:
         print(f"  {dim('uptime')}   {master['etime']}")
 
     if procs:
         print()
-        print(bold(f"  {'PID':>7}  {'ROLE':<7}  {'CPU%':>5}  {'MEM%':>5}  {'RSS':>8}  UPTIME"))
-        for p in sorted(procs, key=lambda x: (x['pid'] != pid, x['pid'])):
-            role = 'master' if p['pid'] == pid else 'worker'
+        print(
+            bold(
+                f"  {'PID':>7}  {'ROLE':<7}  {'CPU%':>5}  {'MEM%':>5}  {'RSS':>8}  UPTIME"
+            )
+        )
+        for p in sorted(procs, key=lambda x: (x["pid"] != pid, x["pid"])):
+            role = "master" if p["pid"] == pid else "worker"
             rss = f"{p['rss'] / 1024:.0f}M"
-            print(f"  {p['pid']:>7}  {role:<7}  {p['cpu']:>5}  {p['mem']:>5}  {rss:>8}  {p['etime']}")
+            print(
+                f"  {p['pid']:>7}  {role:<7}  {p['cpu']:>5}  {p['mem']:>5}  {rss:>8}  {p['etime']}"
+            )
     return 0
 
 
@@ -210,10 +244,10 @@ def cmd_logs(args):
     if not log.exists():
         print(f"No log file at {log}")
         return 1
-    cmd = ['tail']
+    cmd = ["tail"]
     if args.follow:
-        cmd.append('-f')
-    cmd += ['-n', str(args.lines), str(log)]
+        cmd.append("-f")
+    cmd += ["-n", str(args.lines), str(log)]
     try:
         return subprocess.run(cmd).returncode
     except KeyboardInterrupt:
@@ -221,6 +255,7 @@ def cmd_logs(args):
 
 
 # ── user management ───────────────────────────────────────────────────────────
+
 
 def _load_app():
     """Import the Flask app lazily (it requires .env and starts a scraper thread)."""
@@ -241,13 +276,13 @@ def _send_email(to_address, subject, body):
 
     message = EmailMessage()
     message.set_content(body)
-    message['Subject'] = subject
-    message['From'] = 'info@diytracker.ch'
-    message['To'] = to_address
+    message["Subject"] = subject
+    message["From"] = "info@diytracker.ch"
+    message["To"] = to_address
 
     context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(os.environ['EMAIL_SERVER'], 465, context=context) as server:
-        server.login(os.environ['EMAIL_USERNAME'], os.environ['EMAIL_PASSWORD'])
+    with smtplib.SMTP_SSL(os.environ["EMAIL_SERVER"], 465, context=context) as server:
+        server.login(os.environ["EMAIL_USERNAME"], os.environ["EMAIL_PASSWORD"])
         server.send_message(message)
     print(f"  Invite email sent to {to_address}")
 
@@ -255,7 +290,7 @@ def _send_email(to_address, subject, body):
 def _send_invite_email(email, token):
     _send_email(
         email,
-        'Set your diytracker.ch password',
+        "Set your diytracker.ch password",
         f"You've been invited to diytracker.ch!\n\n"
         f"Set your password using this link (valid for 7 days):\n"
         f"https://diytracker.ch/set-password/{token}\n\n"
@@ -281,8 +316,8 @@ def cmd_user_list(args):
         print(f"  {'':>3}  {'ADMIN':<6}  {'PW':<6}  email")
         print(f"  {'-' * 50}")
         for i, user in enumerate(users, 1):
-            admin_flag = 'admin' if user.is_admin else ''
-            pw_flag = 'set' if user.password_hash else 'NO PW'
+            admin_flag = "admin" if user.is_admin else ""
+            pw_flag = "set" if user.password_hash else "NO PW"
             print(f"  {i:>3}  {admin_flag:<6}  {pw_flag:<6}  {user.email}")
         print()
     return 0
@@ -324,7 +359,7 @@ def cmd_user_admin(args):
         user = _find_user(Submitter, args.email)
         user.is_admin = args.grant
         db.session.commit()
-        status = 'granted' if args.grant else 'revoked'
+        status = "granted" if args.grant else "revoked"
         print(f"{green('Admin ' + status)} for {user.email}.")
     return 0
 
@@ -345,8 +380,12 @@ def cmd_user_delete(args):
     with app.app_context():
         user = _find_user(Submitter, args.email)
         if not args.yes:
-            confirm = input(f"  Delete {user.email}? This cannot be undone. (yes/no): ").strip().lower()
-            if confirm != 'yes':
+            confirm = (
+                input(f"  Delete {user.email}? This cannot be undone. (yes/no): ")
+                .strip()
+                .lower()
+            )
+            if confirm != "yes":
                 print("  Cancelled.")
                 return 0
         db.session.delete(user)
@@ -357,66 +396,100 @@ def cmd_user_delete(args):
 
 # ── argument parsing ──────────────────────────────────────────────────────────
 
+
 def build_parser():
     p = argparse.ArgumentParser(
-        prog='manage.py',
-        description='diytracker management CLI',
+        prog="manage.py",
+        description="diytracker management CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    sub = p.add_subparsers(dest='command', required=True)
+    sub = p.add_subparsers(dest="command", required=True)
 
-    sp = sub.add_parser('start', help='Start the gunicorn server')
-    sp.add_argument('-f', '--foreground', action='store_true',
-                    help='Run in the foreground instead of daemonizing')
+    sp = sub.add_parser("start", help="Start the gunicorn server")
+    sp.add_argument(
+        "-f",
+        "--foreground",
+        action="store_true",
+        help="Run in the foreground instead of daemonizing",
+    )
     sp.set_defaults(func=cmd_start)
 
-    sp = sub.add_parser('stop', help='Stop the running server')
-    sp.add_argument('--timeout', type=int, default=10,
-                    help='Seconds to wait for graceful shutdown before SIGKILL (default: 10)')
+    sp = sub.add_parser("stop", help="Stop the running server")
+    sp.add_argument(
+        "--timeout",
+        type=int,
+        default=10,
+        help="Seconds to wait for graceful shutdown before SIGKILL (default: 10)",
+    )
     sp.set_defaults(func=cmd_stop)
 
-    sp = sub.add_parser('restart', help='Restart the server')
-    sp.add_argument('--timeout', type=int, default=10,
-                    help='Seconds to wait for graceful shutdown before SIGKILL (default: 10)')
+    sp = sub.add_parser("restart", help="Restart the server")
+    sp.add_argument(
+        "--timeout",
+        type=int,
+        default=10,
+        help="Seconds to wait for graceful shutdown before SIGKILL (default: 10)",
+    )
     sp.set_defaults(func=cmd_restart)
 
-    sub.add_parser('status', help='Show server status and process info').set_defaults(func=cmd_status)
+    sub.add_parser("status", help="Show server status and process info").set_defaults(
+        func=cmd_status
+    )
 
-    sp = sub.add_parser('logs', help='Tail the access (default) or error log')
-    sp.add_argument('-e', '--error', action='store_true', help='Show the error log instead of the access log')
-    sp.add_argument('-f', '--follow', action='store_true', help='Follow the log (like tail -f)')
-    sp.add_argument('-n', '--lines', type=int, default=40, help='Number of lines to show (default: 40)')
+    sp = sub.add_parser("logs", help="Tail the access (default) or error log")
+    sp.add_argument(
+        "-e",
+        "--error",
+        action="store_true",
+        help="Show the error log instead of the access log",
+    )
+    sp.add_argument(
+        "-f", "--follow", action="store_true", help="Follow the log (like tail -f)"
+    )
+    sp.add_argument(
+        "-n",
+        "--lines",
+        type=int,
+        default=40,
+        help="Number of lines to show (default: 40)",
+    )
     sp.set_defaults(func=cmd_logs)
 
-    up = sub.add_parser('user', help='User management')
-    usub = up.add_subparsers(dest='user_command', required=True)
+    up = sub.add_parser("user", help="User management")
+    usub = up.add_subparsers(dest="user_command", required=True)
 
-    usub.add_parser('list', help='List all users').set_defaults(func=cmd_user_list)
+    usub.add_parser("list", help="List all users").set_defaults(func=cmd_user_list)
 
-    sp = usub.add_parser('add', help='Create a user and send an invite')
-    sp.add_argument('email')
-    sp.add_argument('--no-email', action='store_true', help='Print the invite link instead of emailing it')
+    sp = usub.add_parser("add", help="Create a user and send an invite")
+    sp.add_argument("email")
+    sp.add_argument(
+        "--no-email",
+        action="store_true",
+        help="Print the invite link instead of emailing it",
+    )
     sp.set_defaults(func=cmd_user_add)
 
-    sp = usub.add_parser('passwd', help="Set a user's password")
-    sp.add_argument('email')
-    sp.add_argument('--password', help='Password (prompted securely if omitted)')
+    sp = usub.add_parser("passwd", help="Set a user's password")
+    sp.add_argument("email")
+    sp.add_argument("--password", help="Password (prompted securely if omitted)")
     sp.set_defaults(func=cmd_user_passwd)
 
-    sp = usub.add_parser('admin', help="Grant or revoke a user's admin status")
-    sp.add_argument('email')
+    sp = usub.add_parser("admin", help="Grant or revoke a user's admin status")
+    sp.add_argument("email")
     group = sp.add_mutually_exclusive_group(required=True)
-    group.add_argument('--grant', dest='grant', action='store_true', help='Grant admin')
-    group.add_argument('--revoke', dest='grant', action='store_false', help='Revoke admin')
+    group.add_argument("--grant", dest="grant", action="store_true", help="Grant admin")
+    group.add_argument(
+        "--revoke", dest="grant", action="store_false", help="Revoke admin"
+    )
     sp.set_defaults(func=cmd_user_admin)
 
-    sp = usub.add_parser('invite', help='Resend an invite email to a user')
-    sp.add_argument('email')
+    sp = usub.add_parser("invite", help="Resend an invite email to a user")
+    sp.add_argument("email")
     sp.set_defaults(func=cmd_user_invite)
 
-    sp = usub.add_parser('delete', help='Delete a user')
-    sp.add_argument('email')
-    sp.add_argument('--yes', action='store_true', help='Skip the confirmation prompt')
+    sp = usub.add_parser("delete", help="Delete a user")
+    sp.add_argument("email")
+    sp.add_argument("--yes", action="store_true", help="Skip the confirmation prompt")
     sp.set_defaults(func=cmd_user_delete)
 
     return p
@@ -427,5 +500,5 @@ def main():
     sys.exit(args.func(args) or 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

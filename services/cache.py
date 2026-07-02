@@ -8,14 +8,17 @@ CACHE_TIMEOUT_SECONDS = 60 * 60
 # takes effect everywhere (SimpleCache was per-process: a write handled by one
 # worker left the other workers serving stale pages for up to an hour).
 _CACHE_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'instance', 'cache')
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "instance", "cache"
+)
 
-cache = Cache(config={
-    'CACHE_TYPE': 'FileSystemCache',
-    'CACHE_DIR': _CACHE_DIR,
-    'CACHE_DEFAULT_TIMEOUT': CACHE_TIMEOUT_SECONDS,
-    'CACHE_THRESHOLD': 1000,
-})
+cache = Cache(
+    config={
+        "CACHE_TYPE": "FileSystemCache",
+        "CACHE_DIR": _CACHE_DIR,
+        "CACHE_DEFAULT_TIMEOUT": CACHE_TIMEOUT_SECONDS,
+        "CACHE_THRESHOLD": 1000,
+    }
+)
 
 
 def bust_cache():

@@ -9,24 +9,26 @@ from services.cache import cache
 from services.ingest import ingest_event
 from services.limits import limiter
 
-bp = Blueprint('api', __name__)
+bp = Blueprint("api", __name__)
 
 
-@bp.route('/get_genres')
+@bp.route("/get_genres")
 @cache.cached()
 def get_genres():
     seed = [g for g, _ in get_genre_choices()]
     db_genres = []
-    for event in Event.query.with_entities(Event.genre).filter(Event.genre != None).all():
-        for g in (event.genre or '').split(','):
+    for event in (
+        Event.query.with_entities(Event.genre).filter(Event.genre != None).all()  # noqa: E711 (SQLAlchemy needs `!= None` for IS NOT NULL, not `is not None`)
+    ):
+        for g in (event.genre or "").split(","):
             g = g.strip()
             if g:
                 db_genres.append(g)
     combined = sorted(set(seed + db_genres), key=str.lower)
-    return jsonify({'genres': combined})
+    return jsonify({"genres": combined})
 
 
-@bp.route('/get_venues')
+@bp.route("/get_venues")
 @cache.cached()
 def get_venues():
     venues = Venue.query.order_by(Venue.name.asc()).all()

@@ -1,7 +1,7 @@
 from models import db, Venue
 
 
-def get_or_create_venue(name, address, city, canton, plz, coords=''):
+def get_or_create_venue(name, address, city, canton, plz, coords=""):
     """Find venue by (name, city, plz) or create it. Returns (venue, created).
     Does not commit — caller is responsible for the transaction."""
     venue = Venue.query.filter_by(name=name, city=city, plz=plz).first()
@@ -13,7 +13,7 @@ def get_or_create_venue(name, address, city, canton, plz, coords=''):
         city=city,
         canton=canton,
         plz=plz,
-        coords=coords or '',
+        coords=coords or "",
     )
     db.session.add(venue)
     db.session.flush()

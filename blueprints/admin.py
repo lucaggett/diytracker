@@ -1,30 +1,51 @@
 import io
-import os
 from datetime import datetime, timedelta
 
-from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    url_for,
+)
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
-from forms import DeleteEventForm, DeleteVenueForm, EventEditForm, VenueForm, get_canton_choices
-from models import db, Event, Venue, VenueAccessibility
+from forms import (
+    DeleteEventForm,
+    DeleteVenueForm,
+    EventEditForm,
+    VenueForm,
+    get_canton_choices,
+)
+from models import db, Event, Venue
 from services.analytics import REPORT_PATH, TIMEFRAMES, generate_report
 from services.auth import admin_required
 from services.cache import bust_cache
 from services.calendar_image import generate_weekly_calendar_image
 from services.i18n import gettext as _
-from services.scraper import SCRAPE_INTERVAL_HOURS, get_last_scrape_time, get_progress, is_running
+from services.scraper import (
+    SCRAPE_INTERVAL_HOURS,
+    get_last_scrape_time,
+    get_progress,
+    is_running,
+)
 from services.uploads import UPLOAD_FOLDER, save_flyer_file
 from services.venue import get_or_create_venue
 from utils import PARENT_GENRES_ORDER, clean_genre_tokens
 
-bp = Blueprint('admin', __name__)
+bp = Blueprint("admin", __name__)
 
 
 def _excel_safe(value):
     """Neutralise spreadsheet formula injection: user/scraper strings starting
     with a formula trigger character would otherwise execute when opened."""
-    if isinstance(value, str) and value[:1] in ('=', '+', '-', '@'):
+    if isinstance(value, str) and value[:1] in ("=", "+", "-", "@"):
         return "'" + value
     return value
 
@@ -40,45 +61,62 @@ def _fmt_duration(td):
     return f"{hours}h {minutes}m" if minutes else f"{hours}h"
 
 
-@bp.route('/admin', methods=['GET'])
+@bp.route("/admin", methods=["GET"])
 @admin_required
 def admin():
     now = datetime.now()
     today_start = datetime.combine(now.date(), datetime.min.time())
-    events = Event.query.filter(Event.date >= today_start).order_by(Event.date.asc()).all()
+    events = (
+        Event.query.filter(Event.date >= today_start).order_by(Event.date.asc()).all()
+    )
     delete_form = DeleteEventForm()
     last_scrape = get_last_scrape_time()
-    next_scrape = (last_scrape + timedelta(hours=SCRAPE_INTERVAL_HOURS)) if last_scrape else None
-    time_since_last = _fmt_duration(now - last_scrape) + " ago" if last_scrape else "never"
-    time_until_next = _fmt_duration(next_scrape - now) if next_scrape and next_scrape > now else "soon"
+    next_scrape = (
+        (last_scrape + timedelta(hours=SCRAPE_INTERVAL_HOURS)) if last_scrape else None
+    )
+    time_since_last = (
+        _fmt_duration(now - last_scrape) + " ago" if last_scrape else "never"
+    )
+    time_until_next = (
+        _fmt_duration(next_scrape - now)
+        if next_scrape and next_scrape > now
+        else "soon"
+    )
     today = now.date()
     current_monday = (today - timedelta(days=today.weekday())).isoformat()
     return render_template(
-        'admin.html', events=events, delete_form=delete_form,
-        last_scrape=last_scrape, next_scrape=next_scrape,
-        time_since_last=time_since_last, time_until_next=time_until_next,
-        scrape_running=is_running(), current_monday=current_monday,
+        "admin.html",
+        events=events,
+        delete_form=delete_form,
+        last_scrape=last_scrape,
+        next_scrape=next_scrape,
+        time_since_last=time_since_last,
+        time_until_next=time_until_next,
+        scrape_running=is_running(),
+        current_monday=current_monday,
         parent_genres_order=PARENT_GENRES_ORDER,
     )
 
 
-@bp.route('/edit_event/<int:event_id>', methods=['GET', 'POST'])
+@bp.route("/edit_event/<int:event_id>", methods=["GET", "POST"])
 @admin_required
 def edit_event(event_id):
     event = Event.query.get_or_404(event_id)
     form = EventEditForm(obj=event)
-    if request.method == 'GET':
+    if request.method == "GET":
         form.venue_id.data = str(event.venue_id)
         form.venue_name.data = event.venue.name
         form.venue_address.data = event.venue.address
         form.venue_city.data = event.venue.city
         form.venue_canton.data = event.venue.canton
         form.venue_plz.data = event.venue.plz
-        form.venue_coords.data = event.venue.coords or ''
-        form.genre.data = [g.strip() for g in (event.genre or '').split(',') if g.strip()]
+        form.venue_coords.data = event.venue.coords or ""
+        form.genre.data = [
+            g.strip() for g in (event.genre or "").split(",") if g.strip()
+        ]
         form.end_date.data = event.end_date
         form.is_festival.data = event.is_festival
-    if request.method == 'POST':
+    if request.method == "POST":
         if form.validate_on_submit():
             event.name = form.name.data
             event.date = form.date.data
@@ -88,14 +126,18 @@ def edit_event(event_id):
             event.acts = form.acts.data
             event.ticket_price = form.ticket_price.data
             event.ticket_link = form.ticket_link.data
-            event.genre = ', '.join(clean_genre_tokens(', '.join(form.genre.data))) if form.genre.data else ''
+            event.genre = (
+                ", ".join(clean_genre_tokens(", ".join(form.genre.data)))
+                if form.genre.data
+                else ""
+            )
 
             venue_id = form.venue_id.data
-            if venue_id and venue_id != 'new':
+            if venue_id and venue_id != "new":
                 venue = Venue.query.get(venue_id)
                 if not venue:
-                    flash(_('Selected venue does not exist.'))
-                    return redirect(url_for('admin.edit_event', event_id=event_id))
+                    flash(_("Selected venue does not exist."))
+                    return redirect(url_for("admin.edit_event", event_id=event_id))
             else:
                 venue, _created = get_or_create_venue(
                     name=form.venue_name.data,
@@ -107,19 +149,21 @@ def edit_event(event_id):
                 )
             event.venue_id = venue.id
 
-            saved = save_flyer_file(form.flyer.data, current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER))
+            saved = save_flyer_file(
+                form.flyer.data, current_app.config.get("UPLOAD_FOLDER", UPLOAD_FOLDER)
+            )
             if saved:
                 event.flyer = saved
 
             db.session.commit()
             bust_cache()
-            flash(_('Event updated successfully!'))
-            return redirect(url_for('admin.admin'))
+            flash(_("Event updated successfully!"))
+            return redirect(url_for("admin.admin"))
 
-    return render_template('edit_event.html', form=form, event=event)
+    return render_template("edit_event.html", form=form, event=event)
 
 
-@bp.route('/delete_event/<int:event_id>', methods=['POST'])
+@bp.route("/delete_event/<int:event_id>", methods=["POST"])
 @admin_required
 def delete_event(event_id):
     form = DeleteEventForm()
@@ -129,43 +173,43 @@ def delete_event(event_id):
     db.session.delete(event)
     db.session.commit()
     bust_cache()
-    flash(_('Event deleted successfully!'))
-    return redirect(url_for('admin.admin'))
+    flash(_("Event deleted successfully!"))
+    return redirect(url_for("admin.admin"))
 
 
-@bp.route('/admin/venues', methods=['GET'])
+@bp.route("/admin/venues", methods=["GET"])
 @admin_required
 def venues():
     rows = (
-        db.session.query(Venue, func.count(Event.id).label('event_count'))
+        db.session.query(Venue, func.count(Event.id).label("event_count"))
         .outerjoin(Event, Event.venue_id == Venue.id)
         .group_by(Venue.id)
         .order_by(func.lower(Venue.name).asc())
         .all()
     )
-    return render_template('venues.html', venues=rows, delete_form=DeleteVenueForm())
+    return render_template("venues.html", venues=rows, delete_form=DeleteVenueForm())
 
 
-@bp.route('/admin/venues/<int:venue_id>/edit', methods=['GET', 'POST'])
+@bp.route("/admin/venues/<int:venue_id>/edit", methods=["GET", "POST"])
 @admin_required
 def edit_venue(venue_id):
     venue = Venue.query.get_or_404(venue_id)
     form = VenueForm(obj=venue)
-    form.canton.choices = [('', _('— none —'))] + get_canton_choices()
-    if request.method == 'POST' and form.validate_on_submit():
+    form.canton.choices = [("", _("— none —"))] + get_canton_choices()
+    if request.method == "POST" and form.validate_on_submit():
         venue.name = form.name.data.strip()
-        venue.address = (form.address.data or '').strip() or None
+        venue.address = (form.address.data or "").strip() or None
         venue.city = form.city.data.strip()
         venue.canton = form.canton.data or None
         venue.plz = form.plz.data.strip()
-        venue.coords = (form.coords.data or '').strip() or None
+        venue.coords = (form.coords.data or "").strip() or None
         db.session.commit()
-        flash(_('Venue updated successfully!'))
-        return redirect(url_for('admin.venues'))
-    return render_template('edit_venue.html', form=form, venue=venue)
+        flash(_("Venue updated successfully!"))
+        return redirect(url_for("admin.venues"))
+    return render_template("edit_venue.html", form=form, venue=venue)
 
 
-@bp.route('/admin/venues/<int:venue_id>/delete', methods=['POST'])
+@bp.route("/admin/venues/<int:venue_id>/delete", methods=["POST"])
 @admin_required
 def delete_venue(venue_id):
     form = DeleteVenueForm()
@@ -176,70 +220,94 @@ def delete_venue(venue_id):
     if event_count > 0:
         sample = (
             Event.query.filter_by(venue_id=venue.id)
-            .order_by(Event.date.asc()).limit(3).all()
+            .order_by(Event.date.asc())
+            .limit(3)
+            .all()
         )
-        names = ', '.join(e.name for e in sample)
-        more = _(' and %(k)d more', k=event_count - 3) if event_count > 3 else ''
-        flash(_(
-            'Cannot delete venue "%(venue)s": it still has %(n)d event(s) '
-            '(%(names)s%(more)s). Reassign or delete those events first.',
-            venue=venue.name, n=event_count, names=names, more=more,
-        ))
-        return redirect(url_for('admin.venues'))
+        names = ", ".join(e.name for e in sample)
+        more = _(" and %(k)d more", k=event_count - 3) if event_count > 3 else ""
+        flash(
+            _(
+                'Cannot delete venue "%(venue)s": it still has %(n)d event(s) '
+                "(%(names)s%(more)s). Reassign or delete those events first.",
+                venue=venue.name,
+                n=event_count,
+                names=names,
+                more=more,
+            )
+        )
+        return redirect(url_for("admin.venues"))
     db.session.delete(venue)
     db.session.commit()
-    flash(_('Venue deleted.'))
-    return redirect(url_for('admin.venues'))
+    flash(_("Venue deleted."))
+    return redirect(url_for("admin.venues"))
 
 
-@bp.route('/admin/venues/<int:venue_id>/accessibility-link')
+@bp.route("/admin/venues/<int:venue_id>/accessibility-link")
 @admin_required
 def generate_accessibility_link(venue_id):
     venue = Venue.query.get_or_404(venue_id)
     venue.generate_accessibility_token()
     db.session.commit()
-    link = url_for('public.accessibility_form', token=venue.accessibility_token, _external=True)
-    flash(link, 'accessibility_link')
-    return redirect(url_for('admin.venues'))
+    link = url_for(
+        "public.accessibility_form", token=venue.accessibility_token, _external=True
+    )
+    flash(link, "accessibility_link")
+    return redirect(url_for("admin.venues"))
 
 
-@bp.route('/admin/scrape-status')
+@bp.route("/admin/scrape-status")
 @admin_required
 def scrape_status():
     if not is_running():
-        return jsonify({'running': False})
+        return jsonify({"running": False})
     progress = get_progress()
-    total = progress.get('total', 0)
-    processed = progress.get('processed', 0)
-    started_at = progress.get('started_at')
+    total = progress.get("total", 0)
+    processed = progress.get("processed", 0)
+    started_at = progress.get("started_at")
     eta_seconds = None
     if started_at and processed > 0 and total > 0:
         elapsed = (datetime.now() - datetime.fromisoformat(started_at)).total_seconds()
         rate = elapsed / processed
         remaining = total - processed
         eta_seconds = int(rate * remaining)
-    return jsonify({
-        'running': True,
-        'phase': progress.get('phase', ''),
-        'total': total,
-        'processed': processed,
-        'eta_seconds': eta_seconds,
-    })
+    return jsonify(
+        {
+            "running": True,
+            "phase": progress.get("phase", ""),
+            "total": total,
+            "processed": processed,
+            "eta_seconds": eta_seconds,
+        }
+    )
 
 
-@bp.route('/admin/export-excel')
+@bp.route("/admin/export-excel")
 @admin_required
 def export_excel():
     import openpyxl
     from openpyxl.styles import Font
 
-    events = Event.query.options(joinedload(Event.venue)).order_by(Event.date.asc()).all()
+    events = (
+        Event.query.options(joinedload(Event.venue)).order_by(Event.date.asc()).all()
+    )
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = 'Events'
+    ws.title = "Events"
 
-    headers = ['Date', 'Name', 'Acts', 'Genre', 'Venue', 'City', 'Canton',
-               'Doors', 'Ticket Price', 'Ticket Link', 'Source URL']
+    headers = [
+        "Date",
+        "Name",
+        "Acts",
+        "Genre",
+        "Venue",
+        "City",
+        "Canton",
+        "Doors",
+        "Ticket Price",
+        "Ticket Link",
+        "Source URL",
+    ]
     bold = Font(bold=True)
 
     current_date = None
@@ -250,7 +318,11 @@ def export_excel():
         if event_date != current_date:
             if current_date is not None:
                 row_num += 1
-            cell = ws.cell(row=row_num, column=1, value=event_date.strftime('%A, %d %B %Y') if event_date else 'Unknown')
+            cell = ws.cell(
+                row=row_num,
+                column=1,
+                value=event_date.strftime("%A, %d %B %Y") if event_date else "Unknown",
+            )
             cell.font = bold
             row_num += 1
             for col, h in enumerate(headers, 1):
@@ -260,14 +332,22 @@ def export_excel():
             current_date = event_date
 
         venue = event.venue
-        ws.cell(row=row_num, column=1, value=event_date.strftime('%Y-%m-%d') if event_date else '')
+        ws.cell(
+            row=row_num,
+            column=1,
+            value=event_date.strftime("%Y-%m-%d") if event_date else "",
+        )
         ws.cell(row=row_num, column=2, value=_excel_safe(event.name))
         ws.cell(row=row_num, column=3, value=_excel_safe(event.acts))
         ws.cell(row=row_num, column=4, value=_excel_safe(event.genre))
-        ws.cell(row=row_num, column=5, value=_excel_safe(venue.name) if venue else '')
-        ws.cell(row=row_num, column=6, value=_excel_safe(venue.city) if venue else '')
-        ws.cell(row=row_num, column=7, value=_excel_safe(venue.canton) if venue else '')
-        ws.cell(row=row_num, column=8, value=event.doors.strftime('%H:%M') if event.doors else '')
+        ws.cell(row=row_num, column=5, value=_excel_safe(venue.name) if venue else "")
+        ws.cell(row=row_num, column=6, value=_excel_safe(venue.city) if venue else "")
+        ws.cell(row=row_num, column=7, value=_excel_safe(venue.canton) if venue else "")
+        ws.cell(
+            row=row_num,
+            column=8,
+            value=event.doors.strftime("%H:%M") if event.doors else "",
+        )
         ws.cell(row=row_num, column=9, value=_excel_safe(event.ticket_price))
         ws.cell(row=row_num, column=10, value=_excel_safe(event.ticket_link))
         ws.cell(row=row_num, column=11, value=_excel_safe(event.source_url))
@@ -286,59 +366,66 @@ def export_excel():
     buf.seek(0)
     return send_file(
         buf,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         as_attachment=True,
-        download_name=f'events_{datetime.now().strftime("%Y%m%d")}.xlsx',
+        download_name=f"events_{datetime.now().strftime('%Y%m%d')}.xlsx",
     )
 
 
-@bp.route('/admin/analytics', methods=['GET', 'POST'])
+@bp.route("/admin/analytics", methods=["GET", "POST"])
 @admin_required
 def analytics():
-    if request.method == 'POST':
-        timeframe = request.form.get('timeframe', '7d')
+    if request.method == "POST":
+        timeframe = request.form.get("timeframe", "7d")
         valid = {t for t, _ in TIMEFRAMES}
         if timeframe not in valid:
-            timeframe = '7d'
+            timeframe = "7d"
         success, message = generate_report(timeframe)
-        flash(message, 'success' if success else 'error')
-        return redirect(url_for('admin.analytics'))
+        flash(message, "success" if success else "error")
+        return redirect(url_for("admin.analytics"))
     report_exists = REPORT_PATH.exists()
-    report_mtime = datetime.fromtimestamp(REPORT_PATH.stat().st_mtime) if report_exists else None
-    return render_template('analytics.html', timeframes=TIMEFRAMES, report_exists=report_exists, report_mtime=report_mtime)
+    report_mtime = (
+        datetime.fromtimestamp(REPORT_PATH.stat().st_mtime) if report_exists else None
+    )
+    return render_template(
+        "analytics.html",
+        timeframes=TIMEFRAMES,
+        report_exists=report_exists,
+        report_mtime=report_mtime,
+    )
 
 
-@bp.route('/admin/analytics/view')
+@bp.route("/admin/analytics/view")
 @admin_required
 def analytics_view():
     if not REPORT_PATH.exists():
-        flash(_('No report has been generated yet. Use the form to create one.'))
-        return redirect(url_for('admin.analytics'))
-    return send_file(REPORT_PATH, mimetype='text/html')
+        flash(_("No report has been generated yet. Use the form to create one."))
+        return redirect(url_for("admin.analytics"))
+    return send_file(REPORT_PATH, mimetype="text/html")
 
 
-@bp.route('/admin/weekly-image')
+@bp.route("/admin/weekly-image")
 @admin_required
 def weekly_calendar_image():
-    week_param = request.args.get('week', '')
+    week_param = request.args.get("week", "")
     try:
-        ref = datetime.strptime(week_param, '%Y-%m-%d').date()
+        ref = datetime.strptime(week_param, "%Y-%m-%d").date()
     except ValueError:
         ref = datetime.now().date()
     monday = ref - timedelta(days=ref.weekday())
 
-    genre_param = (request.args.get('genre') or '').strip() or None
+    genre_param = (request.args.get("genre") or "").strip() or None
     if genre_param not in PARENT_GENRES_ORDER:
         genre_param = None
 
     img = generate_weekly_calendar_image(monday, parent_genre=genre_param)
     buf = io.BytesIO()
-    img.save(buf, format='PNG', optimize=True)
+    img.save(buf, format="PNG", optimize=True)
     buf.seek(0)
-    suffix = f"_{genre_param.lower().replace('/', '-')}" if genre_param else ''
+    suffix = f"_{genre_param.lower().replace('/', '-')}" if genre_param else ""
     return send_file(
         buf,
-        mimetype='image/png',
+        mimetype="image/png",
         as_attachment=True,
-        download_name=f'events_week_{monday.strftime("%Y-%m-%d")}{suffix}.png',
+        download_name=f"events_week_{monday.strftime('%Y-%m-%d')}{suffix}.png",
     )

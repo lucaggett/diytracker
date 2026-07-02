@@ -7,33 +7,38 @@ from models import Event
 from utils import clean_genre_tokens, parent_for_token, parent_genres
 
 _GENRE_PALETTE = [
-    (239,  68,  68),
-    (249, 115,  22),
-    (234, 179,   8),
-    ( 34, 197,  94),
-    ( 20, 184, 166),
-    (  6, 182, 212),
-    ( 59, 130, 246),
-    (139,  92, 246),
-    (236,  72, 153),
-    (132, 204,  22),
-    (245, 158,  11),
-    ( 16, 185, 129),
+    (239, 68, 68),
+    (249, 115, 22),
+    (234, 179, 8),
+    (34, 197, 94),
+    (20, 184, 166),
+    (6, 182, 212),
+    (59, 130, 246),
+    (139, 92, 246),
+    (236, 72, 153),
+    (132, 204, 22),
+    (245, 158, 11),
+    (16, 185, 129),
 ]
 
 
 def _load_font(size, bold=False):
     from PIL import ImageFont
+
     candidates = (
-        ['/Library/Fonts/Arial Bold.ttf',
-         '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
-         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
-         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf']
-        if bold else
-        ['/Library/Fonts/Arial.ttf',
-         '/System/Library/Fonts/Supplemental/Arial.ttf',
-         '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-         '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf']
+        [
+            "/Library/Fonts/Arial Bold.ttf",
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        ]
+        if bold
+        else [
+            "/Library/Fonts/Arial.ttf",
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+        ]
     )
     for path in candidates:
         if os.path.exists(path):
@@ -41,9 +46,11 @@ def _load_font(size, bold=False):
                 return ImageFont.truetype(path, size)
             except Exception:
                 continue
-    if os.path.exists('/System/Library/Fonts/Helvetica.ttc'):
+    if os.path.exists("/System/Library/Fonts/Helvetica.ttc"):
         try:
-            return ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', size, index=0)
+            return ImageFont.truetype(
+                "/System/Library/Fonts/Helvetica.ttc", size, index=0
+            )
         except Exception:
             pass
     return ImageFont.load_default()
@@ -52,17 +59,30 @@ def _load_font(size, bold=False):
 def generate_weekly_calendar_image(monday_date, parent_genre=None):
     from PIL import Image, ImageDraw
 
-    GERMAN_MONTHS = ['JANUAR', 'FEBRUAR', 'MÄRZ', 'APRIL', 'MAI', 'JUNI',
-                     'JULI', 'AUGUST', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DEZEMBER']
-    GERMAN_DAYS = ['Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.', 'So.']
+    GERMAN_MONTHS = [
+        "JANUAR",
+        "FEBRUAR",
+        "MÄRZ",
+        "APRIL",
+        "MAI",
+        "JUNI",
+        "JULI",
+        "AUGUST",
+        "SEPTEMBER",
+        "OKTOBER",
+        "NOVEMBER",
+        "DEZEMBER",
+    ]
+    GERMAN_DAYS = ["Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa.", "So."]
 
     sunday_date = monday_date + timedelta(days=6)
 
-    query = (Event.query
-             .filter(Event.date >= datetime.combine(monday_date, time_type.min),
-                     Event.date <= datetime.combine(sunday_date, time_type.max)))
+    query = Event.query.filter(
+        Event.date >= datetime.combine(monday_date, time_type.min),
+        Event.date <= datetime.combine(sunday_date, time_type.max),
+    )
     if parent_genre:
-        query = query.filter(Event.parent_genres.like(f'%,{parent_genre},%'))
+        query = query.filter(Event.parent_genres.like(f"%,{parent_genre},%"))
     events = query.order_by(Event.date.asc()).all()
 
     by_day = defaultdict(list)
@@ -76,8 +96,7 @@ def generate_weekly_calendar_image(monday_date, parent_genre=None):
         legend_genres = {}
         for e in events:
             for tok in clean_genre_tokens(e.genre):
-                if (parent_for_token(tok) == parent_genre
-                        and tok not in legend_genres):
+                if parent_for_token(tok) == parent_genre and tok not in legend_genres:
                     legend_genres[tok] = _GENRE_PALETTE[
                         len(legend_genres) % len(_GENRE_PALETTE)
                     ]
@@ -92,7 +111,9 @@ def generate_weekly_calendar_image(monday_date, parent_genre=None):
         for e in events:
             for p in parent_genres(e.genre):
                 if p not in genre_color:
-                    genre_color[p] = _GENRE_PALETTE[len(genre_color) % len(_GENRE_PALETTE)]
+                    genre_color[p] = _GENRE_PALETTE[
+                        len(genre_color) % len(_GENRE_PALETTE)
+                    ]
 
         def event_primary_color(evt):
             for p in parent_genres(evt.genre):
@@ -119,13 +140,16 @@ def generate_weekly_calendar_image(monday_date, parent_genre=None):
     USABLE_W = W - 2 * MARGIN
 
     def load_black(size):
-        for path in ['/Library/Fonts/Arial Black.ttf',
-                     '/Library/Fonts/Arial Bold.ttf',
-                     '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
-                     '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf']:
+        for path in [
+            "/Library/Fonts/Arial Black.ttf",
+            "/Library/Fonts/Arial Bold.ttf",
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        ]:
             if os.path.exists(path):
                 try:
                     from PIL import ImageFont
+
                     return ImageFont.truetype(path, size)
                 except Exception:
                     pass
@@ -140,16 +164,16 @@ def generate_weekly_calendar_image(monday_date, parent_genre=None):
     f_genre = _load_font(17)
     f_footer = _load_font(18, bold=True)
 
-    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
     def wrap_text(text, font, max_w):
         if draw.textlength(text, font=font) <= max_w:
             return [text]
         words = text.split()
-        lines, current = [], ''
+        lines, current = [], ""
         for word in words:
-            test = (current + ' ' + word).strip()
+            test = (current + " " + word).strip()
             if draw.textlength(test, font=font) <= max_w:
                 current = test
             else:
@@ -197,7 +221,7 @@ def generate_weekly_calendar_image(monday_date, parent_genre=None):
     rough_hrule(0, RED, thickness=7)
 
     ev_y = 14
-    hero_text = parent_genre.upper().replace('/', ' ') if parent_genre else 'EVENTS'
+    hero_text = parent_genre.upper().replace("/", " ") if parent_genre else "EVENTS"
     draw.text((MARGIN, ev_y), hero_text, font=f_hero, fill=WHITE)
 
     dr = f"{monday_date.day}.-{sunday_date.day}."
@@ -239,10 +263,14 @@ def generate_weekly_calendar_image(monday_date, parent_genre=None):
     col_groups = [g for g in ALL_GROUPS if any(by_day.get(d) for d in g)]
 
     if not col_groups:
-        msg = 'Keine Events diese Woche'
+        msg = "Keine Events diese Woche"
         mw = draw.textlength(msg, font=f_act)
-        draw.text(((W - mw) / 2, GRID_TOP + (GRID_BOT - GRID_TOP) // 2),
-                  msg, font=f_act, fill=MGRAY)
+        draw.text(
+            ((W - mw) / 2, GRID_TOP + (GRID_BOT - GRID_TOP) // 2),
+            msg,
+            font=f_act,
+            fill=MGRAY,
+        )
     else:
         n_cols = len(col_groups)
         SEP_W = 4
@@ -270,29 +298,35 @@ def generate_weekly_calendar_image(monday_date, parent_genre=None):
                 pill_label = f"{GERMAN_DAYS[weekday]} {day_date.strftime('%d.%m.')}"
                 pill_h = 34
                 pill_pad = 12
-                pill_w = min(int(draw.textlength(pill_label, font=f_pill)) + pill_pad * 2,
-                             col_w - 4)
+                pill_w = min(
+                    int(draw.textlength(pill_label, font=f_pill)) + pill_pad * 2,
+                    col_w - 4,
+                )
                 rough_pill(cx + 2, cy, cx + 2 + pill_w, cy + pill_h, RED)
-                draw.text((cx + 2 + pill_pad, cy + 6), pill_label,
-                          font=f_pill, fill=WHITE)
+                draw.text(
+                    (cx + 2 + pill_pad, cy + 6), pill_label, font=f_pill, fill=WHITE
+                )
                 cy += pill_h + 10
 
                 for evt in day_events:
                     if cy > GRID_BOT - 28:
-                        draw.text((cx + 20, cy), '…', font=f_venue, fill=MGRAY)
+                        draw.text((cx + 20, cy), "…", font=f_venue, fill=MGRAY)
                         break
 
                     color = event_primary_color(evt)
                     DOT_D_EV = 14
-                    draw.ellipse([cx + 4, cy + 4,
-                                  cx + 4 + DOT_D_EV, cy + 4 + DOT_D_EV],
-                                 fill=color)
+                    draw.ellipse(
+                        [cx + 4, cy + 4, cx + 4 + DOT_D_EV, cy + 4 + DOT_D_EV],
+                        fill=color,
+                    )
 
                     tx = cx + DOT_D_EV + 12
-                    acts_raw = (evt.acts or evt.name or '').strip()
-                    act_lines = [a.strip()
-                                 for a in acts_raw.replace('\n', ',').split(',')
-                                 if a.strip()] or [evt.name or '?']
+                    acts_raw = (evt.acts or evt.name or "").strip()
+                    act_lines = [
+                        a.strip()
+                        for a in acts_raw.replace("\n", ",").split(",")
+                        if a.strip()
+                    ] or [evt.name or "?"]
 
                     for act in act_lines:
                         for line in wrap_text(act, f_act, tw):
@@ -304,7 +338,7 @@ def generate_weekly_calendar_image(monday_date, parent_genre=None):
                     if evt.venue and cy <= GRID_BOT - 20:
                         vstr = evt.venue.name
                         if evt.venue.city:
-                            vstr += f', {evt.venue.city}'
+                            vstr += f", {evt.venue.city}"
                         for line in wrap_text(vstr, f_venue, tw)[:1]:
                             draw.text((tx, cy), line, font=f_venue, fill=MGRAY)
                         cy += 20
@@ -313,8 +347,7 @@ def generate_weekly_calendar_image(monday_date, parent_genre=None):
 
     year_str = str(monday_date.year)
     yw = draw.textlength(year_str, font=f_footer)
-    draw.text(((W - yw) / 2, H - FOOTER_H + 12), year_str,
-              font=f_footer, fill=MGRAY)
+    draw.text(((W - yw) / 2, H - FOOTER_H + 12), year_str, font=f_footer, fill=MGRAY)
 
     light_dots = [(_r.randint(0, W - 1), _r.randint(0, H - 1)) for _ in range(16000)]
     draw.point(light_dots, fill=(32, 30, 35))

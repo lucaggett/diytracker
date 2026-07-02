@@ -1,0 +1,118 @@
+{% extends 'base_public.html' %}
+
+{% set display_name = event.name or event.acts or _('Event') %}
+{% set ticket_is_safe = event.ticket_link and (event.ticket_link.startswith('http://') or event.ticket_link.startswith('https://')) %}
+{# Flyer paths are stored root-relative without a leading slash (e.g.
+   'static/uploads/x.png'); resolved as-is they would break under /events/<id>/. #}
+{% set flyer_src = ('/' ~ event.flyer.lstrip('/') if '://' not in event.flyer else event.flyer) if event.flyer else None %}
+
+{% block title %}{{ display_name }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ display_name }} — {{ event.venue.name }}, {{ event.venue.city }} · {{ event.date.strftime('%d.%m.%Y') }}{% endblock %}
+
+{% block head_extra %}
+  {% set ld = {
+    "@context": "https://schema.org",
+    "@type": "MusicEvent",
+    "name": display_name,
+    "startDate": event.date.strftime('%Y-%m-%d') ~ 'T' ~ event.doors.strftime('%H:%M'),
+    "eventStatus": "https://schema.org/EventScheduled",
+    "url": url_for('public.event_page', event_id=event.id, _external=True),
+    "location": {
+      "@type": "Place",
+      "name": event.venue.name,
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": event.venue.address or "",
+        "addressLocality": event.venue.city or "",
+        "addressRegion": event.venue.canton or "",
+        "postalCode": event.venue.plz or "",
+        "addressCountry": "CH"
+      }
+    }
+  } %}
+  {% if event.end_date %}{% set ld = dict(ld, endDate=event.end_date.strftime('%Y-%m-%d')) %}{% endif %}
+  {% if flyer_src %}{% set ld = dict(ld, image=flyer_src if '://' in flyer_src else request.host_url.rstrip('/') ~ flyer_src) %}{% endif %}
+  {% if event.ticket_link or event.ticket_price %}
+    {% set ld = dict(ld, offers={"@type": "Offer", "url": event.ticket_link if ticket_is_safe else "", "price": event.ticket_price or "", "priceCurrency": "CHF"}) %}
+  {% endif %}
+  <script type="application/ld+json">{{ ld|tojson }}</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-10">
+
+  <header class="mb-8">
+    <p class="text-xs uppercase tracking-widest text-smudge mb-1">
+      {% if event.is_festival %}{{ _('Festival') }}{% else %}{{ _('Event') }}{% endif %}
+    </p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none mb-2">{{ display_name }}</h1>
+    {% if event.name and event.acts %}
+    <p class="text-sm text-smudge">{{ event.acts }}</p>
+    {% endif %}
+  </header>
+
+  {% if flyer_src %}
+  <img src="{{ flyer_src }}" alt="{{ display_name }}"
+       class="w-full max-w-md mb-8 border-2 border-ink" loading="lazy">
+  {% endif %}
+
+  <div class="space-y-2 text-sm">
+    <p>
+      <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Date') }}</span>
+      {{ format_date(event.date) }}
+      {% if event.end_date %}– {{ format_date(event.end_date) }}{% endif %}
+      <span class="text-ink/40">·</span> {{ event.doors.strftime('%H:%M') }}
+    </p>
+    <p>
+      <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Venue') }}</span>
+      {{ event.venue.name }}
+    </p>
+    {% if event.venue.address %}
+    <p>
+      <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Address') }}</span>
+      {{ event.venue.address }}
+    </p>
+    {% endif %}
+    <p>
+      <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Location') }}</span>
+      {{ event.venue.plz }} {{ event.venue.city }}{% if event.venue.canton %}, {{ event.venue.canton }}{% endif %}
+    </p>
+    {% if event.genre %}
+    <p>
+      <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Genre') }}</span>
+      {{ event.genre }}
+    </p>
+    {% endif %}
+    {% if event.ticket_price %}
+    <p>
+      <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Price') }}</span>
+      {{ event.ticket_price }}
+    </p>
+    {% endif %}
+    {% if ticket_is_safe %}
+    <p>
+      <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Tickets') }}</span>
+      <a href="{{ event.ticket_link }}" target="_blank" rel="noopener"
+         class="text-bleed underline break-all">{{ event.ticket_link }}</a>
+    </p>
+    {% endif %}
+  </div>
+
+  {% if event.description %}
+  <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-2 mt-8">{{ _('Description') }}</h2>
+  <p class="text-sm whitespace-pre-line">{{ event.description }}</p>
+  {% endif %}
+
+  {% if event.venue.accessibility %}
+  <div class="mt-8">
+    <a href="{{ url_for('public.venue_accessibility', venue_id=event.venue.id) }}"
+       class="text-xs uppercase tracking-widest text-bleed hover:underline">{{ _('Accessibility information') }} →</a>
+  </div>
+  {% endif %}
+
+  <div class="mt-10 pt-6 border-t-2 border-ink">
+    <a href="{{ url_for('public.calendar_view') }}"
+       class="text-xs uppercase tracking-widest text-bleed hover:underline">← {{ _('Back to calendar') }}</a>
+  </div>
+</div>
+{% endblock %}

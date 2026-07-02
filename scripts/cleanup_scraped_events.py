@@ -11,7 +11,10 @@ Usage::
 Preview-by-default is intentional — the script touches thousands of rows and
 a dry run gives a line-by-line diff before anything is committed.
 """
-import os, sys
+
+import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import or_
@@ -20,16 +23,25 @@ from app import app, db
 from models import ScrapedEvent
 from utils import clean_genre_tokens, clean_ticket_url
 
-apply_changes = '--apply' in sys.argv
+apply_changes = "--apply" in sys.argv
 
-_WS_FIELDS = ('title', 'performers', 'venue_name', 'city', 'street_address', 'organizer')
+_WS_FIELDS = (
+    "title",
+    "performers",
+    "venue_name",
+    "city",
+    "street_address",
+    "organizer",
+)
 
 # Non-event-specific URLs that aren't the known generic placeholder. Reported
 # for manual review but never auto-nulled — too diverse to pattern-match safely.
-_EDGE_URL_MARKERS = ('/artist/', 'rockthelakes.ch', 'manoirpub.ch')
+_EDGE_URL_MARKERS = ("/artist/", "rockthelakes.ch", "manoirpub.ch")
 _EDGE_URL_EXACT = {
-    'https://www.oeticket.com', 'http://www.oeticket.com',
-    'https://oeticket.com', 'http://oeticket.com',
+    "https://www.oeticket.com",
+    "http://www.oeticket.com",
+    "https://oeticket.com",
+    "http://oeticket.com",
 }
 
 
@@ -38,7 +50,7 @@ def _is_edge_url(url):
         return False
     if any(m in url for m in _EDGE_URL_MARKERS):
         return True
-    normalised = url.split('?', 1)[0].split('#', 1)[0].rstrip('/').lower()
+    normalised = url.split("?", 1)[0].split("#", 1)[0].rstrip("/").lower()
     return normalised in _EDGE_URL_EXACT
 
 
@@ -55,7 +67,7 @@ def main():
         # --- 1. styles normalisation ---
         print("=== styles ===")
         for s in rows:
-            new = ', '.join(clean_genre_tokens(s.styles or '')) or None
+            new = ", ".join(clean_genre_tokens(s.styles or "")) or None
             if new != s.styles:
                 print(f"#{s.id} '{s.title}': styles {s.styles!r} → {new!r}")
                 if apply_changes:
@@ -65,7 +77,7 @@ def main():
         # --- 2. generic metalgigs ticket_url → NULL ---
         print("\n=== ticket_url (metalgigs generics) ===")
         for s in rows:
-            if s.source != 'metalgigs' or not s.ticket_url:
+            if s.source != "metalgigs" or not s.ticket_url:
                 continue
             new = clean_ticket_url(s.ticket_url, s.source)
             if new != s.ticket_url:
@@ -78,7 +90,7 @@ def main():
         # Check from the in-memory rows — after pass 2, generics are already
         # NULL in apply-mode so they correctly drop out here.
         for s in rows:
-            if s.source == 'metalgigs' and _is_edge_url(s.ticket_url):
+            if s.source == "metalgigs" and _is_edge_url(s.ticket_url):
                 edge_cases.append((s.id, s.ticket_url))
 
         # --- 4. whitespace strip ---
@@ -95,7 +107,7 @@ def main():
 
         # --- 5. event_status '' → NULL ---
         print("\n=== event_status ('' → NULL) ===")
-        blank_status = ScrapedEvent.query.filter(ScrapedEvent.event_status == '').all()
+        blank_status = ScrapedEvent.query.filter(ScrapedEvent.event_status == "").all()
         status_cleared = len(blank_status)
         if blank_status:
             print(f"{status_cleared} rows with empty event_status will be set to NULL")
@@ -112,7 +124,7 @@ def main():
         # --- 7. report-only data-quality counts ---
         null_titles = ScrapedEvent.query.filter(ScrapedEvent.title.is_(None)).count()
         empty_venues = ScrapedEvent.query.filter(
-            or_(ScrapedEvent.venue_name.is_(None), ScrapedEvent.venue_name == '')
+            or_(ScrapedEvent.venue_name.is_(None), ScrapedEvent.venue_name == "")
         ).count()
         print("\nDATA-QUALITY REPORT (not auto-fixed):")
         print(f"  NULL titles:       {null_titles}")
@@ -132,5 +144,5 @@ def main():
             print("Re-run with --apply to write.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
