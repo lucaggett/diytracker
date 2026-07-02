@@ -1,4 +1,5 @@
 import os, sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import smtplib
@@ -15,22 +16,23 @@ from app import app, db
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+
 def _send_email(to_address, subject, body):
-    email_server = os.environ['EMAIL_SERVER']
-    username = os.environ['EMAIL_USERNAME']
-    password = os.environ['EMAIL_PASSWORD']
+    email_server = os.environ["EMAIL_SERVER"]
+    username = os.environ["EMAIL_USERNAME"]
+    password = os.environ["EMAIL_PASSWORD"]
 
     message = EmailMessage()
     message.set_content(body)
-    message['Subject'] = subject
-    message['From'] = "info@diytracker.ch"
-    message['To'] = to_address
+    message["Subject"] = subject
+    message["From"] = "info@diytracker.ch"
+    message["To"] = to_address
 
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL(email_server, 465, context=context) as server:
         server.login(username, password)
         server.send_message(message)
-    print(f'  Email sent to {to_address}')
+    print(f"  Email sent to {to_address}")
 
 
 def _get_all_users():
@@ -39,15 +41,15 @@ def _get_all_users():
 
 
 def _print_user_row(i, user):
-    admin_flag = ' [ADMIN]' if user.is_admin else '       '
-    pw_flag    = ' [pw]' if user.password_hash else ' [NO PW]'
+    admin_flag = " [ADMIN]" if user.is_admin else "       "
+    pw_flag = " [pw]" if user.password_hash else " [NO PW]"
     print(f"  {i:>2}.  {admin_flag}{pw_flag}  {user.email}")
 
 
 def _print_user_list(users):
     print()
     print(f"  {'':>4}  {'':7}  {'':5}  email")
-    print(f"  {'-'*50}")
+    print(f"  {'-' * 50}")
     for i, user in enumerate(users, 1):
         _print_user_row(i, user)
     print()
@@ -74,12 +76,13 @@ def _pick_user(prompt="Select a user by number: "):
 
 # ── actions ───────────────────────────────────────────────────────────────────
 
+
 def set_password(user_id, password):
     with app.app_context():
         user = db.session.get(Submitter, user_id)
         user.set_password(password)
         db.session.commit()
-        print(f'  Password updated for {user.email}')
+        print(f"  Password updated for {user.email}")
 
 
 def set_admin(user_id, is_admin):
@@ -87,30 +90,32 @@ def set_admin(user_id, is_admin):
         user = db.session.get(Submitter, user_id)
         user.is_admin = is_admin
         db.session.commit()
-        status = 'granted' if is_admin else 'revoked'
-        print(f'  Admin status {status} for {user.email}')
+        status = "granted" if is_admin else "revoked"
+        print(f"  Admin status {status} for {user.email}")
 
 
 def remove_user(user_id, email):
-    confirm = input(f"  Delete {email}? This cannot be undone. (yes/no): ").strip().lower()
-    if confirm != 'yes':
+    confirm = (
+        input(f"  Delete {email}? This cannot be undone. (yes/no): ").strip().lower()
+    )
+    if confirm != "yes":
         print("  Cancelled.")
         return
     with app.app_context():
         user = db.session.get(Submitter, user_id)
         db.session.delete(user)
         db.session.commit()
-    print(f'  {email} removed.')
+    print(f"  {email} removed.")
 
 
 def _send_invite_email(email, token):
     _send_email(
         email,
-        'Set your diytracker.ch password',
+        "Set your diytracker.ch password",
         f"You've been invited to diytracker.ch!\n\n"
         f"Set your password using this link (valid for 7 days):\n"
         f"https://diytracker.ch/set-password/{token}\n\n"
-        f"If you have any questions, contact Luc at luc@aggett.com"
+        f"If you have any questions, contact Luc at luc@aggett.com",
     )
 
 
@@ -128,7 +133,7 @@ def add_user():
         token = new_user.generate_invite_token()
         db.session.add(new_user)
         db.session.commit()
-        print(f'  User {email} created.')
+        print(f"  User {email} created.")
 
     _send_invite_email(email, token)
 
@@ -148,35 +153,38 @@ def edit_user():
     print("    q.  Cancel")
     action = input("  Action: ").strip().lower()
 
-    if action == 'a':
+    if action == "a":
         password = input("  New password: ").strip()
         if password:
             set_password(user_id, password)
         else:
             print("  Cancelled.")
-    elif action == 'd':
+    elif action == "d":
         with app.app_context():
             user = db.session.get(Submitter, user_id)
             token = user.generate_invite_token()
             db.session.commit()
         _send_invite_email(email, token)
-        print(f'  Invite resent to {email}.')
-    elif action == 'b':
+        print(f"  Invite resent to {email}.")
+    elif action == "b":
         with app.app_context():
             user = db.session.get(Submitter, user_id)
             current = user.is_admin
         new_state = not current
         label = "grant" if new_state else "revoke"
-        confirm = input(f"  {label.capitalize()} admin for {email}? (y/n): ").strip().lower()
-        if confirm == 'y':
+        confirm = (
+            input(f"  {label.capitalize()} admin for {email}? (y/n): ").strip().lower()
+        )
+        if confirm == "y":
             set_admin(user_id, new_state)
-    elif action == 'c':
+    elif action == "c":
         remove_user(user_id, email)
     else:
         print("  Cancelled.")
 
 
 # ── main loop ─────────────────────────────────────────────────────────────────
+
 
 def main():
     while True:
@@ -187,21 +195,21 @@ def main():
         print("  q.  Quit")
         choice = input("Choice: ").strip().lower()
 
-        if choice == '1':
+        if choice == "1":
             users = _get_all_users()
             if users:
                 _print_user_list(users)
             else:
                 print("  No users.")
-        elif choice == '2':
+        elif choice == "2":
             add_user()
-        elif choice == '3':
+        elif choice == "3":
             edit_user()
-        elif choice == 'q':
+        elif choice == "q":
             break
         else:
             print("  Unknown option.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

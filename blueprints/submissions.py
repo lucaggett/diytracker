@@ -2,7 +2,17 @@ import os
 from datetime import datetime, time as time_type
 
 from dateutil.relativedelta import relativedelta
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from forms import DeleteScrapedEventForm, EventForm
 from models import db, Event, ScrapedEvent, Submitter, Venue
@@ -14,40 +24,44 @@ from services.uploads import UPLOAD_FOLDER, save_flyer_file
 from services.venue import get_or_create_venue
 from utils import clean_genre_tokens, resolve_canton
 
-bp = Blueprint('submissions', __name__)
+bp = Blueprint("submissions", __name__)
 
-_ALLOWED_QUEUE_PARAMS = {'date_from', 'date_to', 'source'}
+_ALLOWED_QUEUE_PARAMS = {"date_from", "date_to", "source"}
 
 
 def _clean_genre(raw):
-    return ', '.join(clean_genre_tokens(raw))
+    return ", ".join(clean_genre_tokens(raw))
 
 
 def _scraped_event_to_dict(rec):
     data = {
-        'source': rec.source,
-        'url': rec.url,
-        'title': rec.title,
-        'performers': rec.performers if rec.performers else rec.title,
-        'styles': rec.styles,
-        'description': rec.description,
-        'start_date': rec.start_date.isoformat() if rec.start_date else None,
-        'end_date': rec.end_date.isoformat() if rec.end_date else None,
-        'doors_open': rec.doors_open.strftime('%H:%M') if rec.doors_open else None,
-        'start_time': rec.start_time.strftime('%H:%M') if rec.start_time else None,
-        'venue_name': rec.venue_name,
-        'street_address': rec.street_address,
-        'city': rec.city,
-        'region': rec.region,
-        'postal_code': rec.postal_code,
-        'ticket_price': rec.ticket_price,
-        'ticket_currency': rec.ticket_currency,
-        'ticket_url': rec.ticket_url,
-        'organizer': rec.organizer,
-        'event_status': rec.event_status,
+        "source": rec.source,
+        "url": rec.url,
+        "title": rec.title,
+        "performers": rec.performers if rec.performers else rec.title,
+        "styles": rec.styles,
+        "description": rec.description,
+        "start_date": rec.start_date.isoformat() if rec.start_date else None,
+        "end_date": rec.end_date.isoformat() if rec.end_date else None,
+        "doors_open": rec.doors_open.strftime("%H:%M") if rec.doors_open else None,
+        "start_time": rec.start_time.strftime("%H:%M") if rec.start_time else None,
+        "venue_name": rec.venue_name,
+        "street_address": rec.street_address,
+        "city": rec.city,
+        "region": rec.region,
+        "postal_code": rec.postal_code,
+        "ticket_price": rec.ticket_price,
+        "ticket_currency": rec.ticket_currency,
+        "ticket_url": rec.ticket_url,
+        "organizer": rec.organizer,
+        "event_status": rec.event_status,
     }
-    data['_event_date'] = datetime.combine(rec.start_date, datetime.min.time()) if rec.start_date else None
-    data['_scraped_id'] = rec.id
+    data["_event_date"] = (
+        datetime.combine(rec.start_date, datetime.min.time())
+        if rec.start_date
+        else None
+    )
+    data["_scraped_id"] = rec.id
     return data
 
 
@@ -69,66 +83,79 @@ def parse_scraped_events(date_from=None, date_to=None, source=None):
     return [_scraped_event_to_dict(rec) for rec in candidates]
 
 
-@bp.route('/queue', methods=['GET', 'POST'])
+@bp.route("/queue", methods=["GET", "POST"])
 @login_required
 def event_queue():
-    submitter = db.session.get(Submitter, session['user_id'])
+    submitter = db.session.get(Submitter, session["user_id"])
 
     def _parse_date(key):
-        raw = request.args.get(key, '').strip()
+        raw = request.args.get(key, "").strip()
         try:
-            return datetime.strptime(raw, '%Y-%m-%d').date() if raw else None
+            return datetime.strptime(raw, "%Y-%m-%d").date() if raw else None
         except ValueError:
             return None
 
-    filter_date_from = _parse_date('date_from')
-    filter_date_to = _parse_date('date_to')
-    filter_source = request.args.get('source', '').strip() or None
+    filter_date_from = _parse_date("date_from")
+    filter_date_to = _parse_date("date_to")
+    filter_source = request.args.get("source", "").strip() or None
     events = parse_scraped_events(
         date_from=filter_date_from,
         date_to=filter_date_to,
         source=filter_source,
     )
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
-            scraped_id = int(request.form.get('scraped_id'))
+            scraped_id = int(request.form.get("scraped_id"))
         except (TypeError, ValueError):
             scraped_id = None
         rec = db.session.get(ScrapedEvent, scraped_id) if scraped_id else None
         if rec is None or rec.approved:
-            flash(_('Invalid event selection.'))
-            return redirect(url_for('submissions.event_queue'))
+            flash(_("Invalid event selection."))
+            return redirect(url_for("submissions.event_queue"))
         data = _scraped_event_to_dict(rec)
 
         def _ov(key, fallback):
-            val = request.form.get(key, '').strip()
+            val = request.form.get(key, "").strip()
             return val if val else fallback
 
-        name = _ov('override_name', data.get('title') or data.get('performers') or 'Concert')
-        venue_name = _ov('override_venue_name', data.get('venue_name') or 'Unknown venue')
-        city = _ov('override_city', data.get('city') or '')
-        plz = _ov('override_postal_code', data.get('postal_code') or '')
-        street = _ov('override_street_address', data.get('street_address'))
-        raw_genre = _ov('override_genre', data.get('styles') or '')
+        name = _ov(
+            "override_name", data.get("title") or data.get("performers") or "Concert"
+        )
+        venue_name = _ov(
+            "override_venue_name", data.get("venue_name") or "Unknown venue"
+        )
+        city = _ov("override_city", data.get("city") or "")
+        plz = _ov("override_postal_code", data.get("postal_code") or "")
+        street = _ov("override_street_address", data.get("street_address"))
+        raw_genre = _ov("override_genre", data.get("styles") or "")
         genre = _clean_genre(raw_genre)
-        acts = _ov('override_acts', data.get('performers') or '')
-        ticket_price = _ov('override_ticket_price', data.get('ticket_price') or '')
-        ticket_link = _ov('override_ticket_url', data.get('ticket_url') or data.get('ticket_link') or '')
-        description = _ov('override_description', data.get('description') or '')
-        source_url = _ov('override_source_url', data.get('url') or '')
+        acts = _ov("override_acts", data.get("performers") or "")
+        ticket_price = _ov("override_ticket_price", data.get("ticket_price") or "")
+        ticket_link = _ov(
+            "override_ticket_url",
+            data.get("ticket_url") or data.get("ticket_link") or "",
+        )
+        description = _ov("override_description", data.get("description") or "")
+        source_url = _ov("override_source_url", data.get("url") or "")
 
-        override_date = request.form.get('override_date', '').strip()
-        event_date = datetime.strptime(override_date, '%Y-%m-%d') if override_date else data.get('_event_date')
+        override_date = request.form.get("override_date", "").strip()
+        event_date = (
+            datetime.strptime(override_date, "%Y-%m-%d")
+            if override_date
+            else data.get("_event_date")
+        )
 
-        override_doors = request.form.get('override_doors', '').strip()
+        override_doors = request.form.get("override_doors", "").strip()
         if override_doors:
             try:
-                doors_time = datetime.strptime(override_doors, '%H:%M').time()
+                doors_time = datetime.strptime(override_doors, "%H:%M").time()
             except ValueError:
                 doors_time = time_type(19, 0)
         else:
             try:
-                doors_time = datetime.strptime(data.get('doors_open') or '19:00', '%H:%M').time()
+                doors_time = datetime.strptime(
+                    data.get("doors_open") or "19:00", "%H:%M"
+                ).time()
             except ValueError:
                 doors_time = time_type(19, 0)
 
@@ -136,15 +163,24 @@ def event_queue():
             name=venue_name,
             address=street,
             city=city,
-            canton=resolve_canton(data.get('region') or '', city),
+            canton=resolve_canton(data.get("region") or "", city),
             plz=plz,
-            coords=data.get('coords') or '',
+            coords=data.get("coords") or "",
         )
-        event_hash = compute_event_hash(name, event_date, doors_time, genre, acts, ticket_link, ticket_price, venue.id)
+        event_hash = compute_event_hash(
+            name,
+            event_date,
+            doors_time,
+            genre,
+            acts,
+            ticket_link,
+            ticket_price,
+            venue.id,
+        )
         existing = Event.query.filter_by(event_hash=event_hash).first()
         if existing:
-            flash(_('This event already exists.'))
-            return redirect(url_for('submissions.event_queue'))
+            flash(_("This event already exists."))
+            return redirect(url_for("submissions.event_queue"))
         new_event = Event(
             name=name,
             date=event_date,
@@ -167,21 +203,23 @@ def event_queue():
         rec.approved_event_id = new_event.id
         db.session.commit()
         bust_cache()
-        flash(_('Event approved and added to calendar!'))
-        redirect_args = {k: v for k, v in request.args.items() if k in _ALLOWED_QUEUE_PARAMS}
-        return redirect(url_for('submissions.event_queue', **redirect_args))
+        flash(_("Event approved and added to calendar!"))
+        redirect_args = {
+            k: v for k, v in request.args.items() if k in _ALLOWED_QUEUE_PARAMS
+        }
+        return redirect(url_for("submissions.event_queue", **redirect_args))
     now = datetime.now().date()
     return render_template(
-        'event_queue.html',
+        "event_queue.html",
         events=events,
         filter_date_from=(filter_date_from or now).isoformat(),
         filter_date_to=(filter_date_to or (now + relativedelta(months=2))).isoformat(),
-        filter_source=filter_source or '',
+        filter_source=filter_source or "",
         delete_form=DeleteScrapedEventForm(),
     )
 
 
-@bp.route('/queue/<int:scraped_id>/delete', methods=['POST'])
+@bp.route("/queue/<int:scraped_id>/delete", methods=["POST"])
 @login_required
 def delete_scraped_event(scraped_id):
     form = DeleteScrapedEventForm()
@@ -191,16 +229,18 @@ def delete_scraped_event(scraped_id):
     scraped.approved = True
     scraped.approved_at = datetime.now()
     db.session.commit()
-    flash(_('Event removed from queue.'))
-    redirect_args = {k: v for k, v in request.args.items() if k in _ALLOWED_QUEUE_PARAMS}
-    return redirect(url_for('submissions.event_queue', **redirect_args))
+    flash(_("Event removed from queue."))
+    redirect_args = {
+        k: v for k, v in request.args.items() if k in _ALLOWED_QUEUE_PARAMS
+    }
+    return redirect(url_for("submissions.event_queue", **redirect_args))
 
 
-@bp.route('/submit', methods=['GET', 'POST'])
+@bp.route("/submit", methods=["GET", "POST"])
 @login_required
 def submit_event_link():
     form = EventForm()
-    submitter = db.session.get(Submitter, session['user_id'])
+    submitter = db.session.get(Submitter, session["user_id"])
 
     if form.validate_on_submit():
         name = form.name.data
@@ -213,12 +253,14 @@ def submit_event_link():
         ticket_link = form.ticket_link.data
         ticket_price = form.ticket_price.data
 
-        flyer = save_flyer_file(form.flyer.data, current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER))
+        flyer = save_flyer_file(
+            form.flyer.data, current_app.config.get("UPLOAD_FOLDER", UPLOAD_FOLDER)
+        )
 
-        genre_str = _clean_genre(', '.join(genres)) if genres else ''
+        genre_str = _clean_genre(", ".join(genres)) if genres else ""
 
         venue_id = form.venue_id.data
-        if venue_id == 'new' or not venue_id:
+        if venue_id == "new" or not venue_id:
             venue_name = form.venue_name.data
             venue_address = form.venue_address.data
             venue_city = form.venue_city.data
@@ -227,8 +269,8 @@ def submit_event_link():
             venue_coords = form.venue_coords.data
 
             if not venue_name or not venue_city or not venue_plz:
-                flash(_('Please provide all required venue details for a new venue.'))
-                return redirect(url_for('submissions.submit_event_link'))
+                flash(_("Please provide all required venue details for a new venue."))
+                return redirect(url_for("submissions.submit_event_link"))
 
             venue, created = get_or_create_venue(
                 name=venue_name,
@@ -239,12 +281,12 @@ def submit_event_link():
                 coords=venue_coords,
             )
             if not created:
-                flash(_('Venue already exists. Using existing venue.'))
+                flash(_("Venue already exists. Using existing venue."))
         else:
             venue = Venue.query.get(venue_id)
             if not venue:
-                flash(_('Selected venue does not exist.'))
-                return redirect(url_for('submissions.submit_event_link'))
+                flash(_("Selected venue does not exist."))
+                return redirect(url_for("submissions.submit_event_link"))
 
         new_event = Event(
             name=name,
@@ -258,14 +300,16 @@ def submit_event_link():
             ticket_link=ticket_link,
             ticket_price=ticket_price,
             venue_id=venue.id,
-            event_hash=compute_event_hash(name, date, doors, genre_str, acts, ticket_link, ticket_price, venue.id),
+            event_hash=compute_event_hash(
+                name, date, doors, genre_str, acts, ticket_link, ticket_price, venue.id
+            ),
             submitter_id=submitter.id,
         )
         db.session.add(new_event)
         db.session.commit()
         bust_cache()
 
-        flash(_('Event submitted successfully!'))
-        return redirect(url_for('public.calendar_view'))
+        flash(_("Event submitted successfully!"))
+        return redirect(url_for("public.calendar_view"))
 
-    return render_template('submit_event.html', form=form)
+    return render_template("submit_event.html", form=form)

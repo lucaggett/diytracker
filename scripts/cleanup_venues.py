@@ -19,6 +19,7 @@ every row let you veto cross-city merges before running --apply.
 Before running with --apply, back up ``instance/events.db`` — the script
 commits a single transaction at the end and does not track what it deleted.
 """
+
 import os, sys
 from collections import defaultdict
 
@@ -27,14 +28,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app import app, db
 from models import Event, Venue
 
-apply_changes = '--apply' in sys.argv
+apply_changes = "--apply" in sys.argv
 
-_FILL_FIELDS = ('address', 'canton', 'coords')
-_CONFLICT_FIELDS = ('address', 'city', 'canton', 'plz', 'coords')
+_FILL_FIELDS = ("address", "canton", "coords")
+_CONFLICT_FIELDS = ("address", "city", "canton", "plz", "coords")
 
 
 def _norm_name(name):
-    return ' '.join((name or '').split()).casefold()
+    return " ".join((name or "").split()).casefold()
 
 
 def _is_blank(val):
@@ -88,7 +89,9 @@ def main():
                 for d in dups:
                     dup_val = getattr(d, field)
                     if not _is_blank(dup_val) and dup_val != keeper_val:
-                        print(f"  CONFLICT {field}: keeper={keeper_val!r}  dup#{d.id}={dup_val!r}")
+                        print(
+                            f"  CONFLICT {field}: keeper={keeper_val!r}  dup#{d.id}={dup_val!r}"
+                        )
 
             for field in _FILL_FIELDS:
                 if not _is_blank(getattr(keeper, field)):
@@ -107,7 +110,7 @@ def main():
             print(f"  reassign {event_count} event(s) to #{keeper.id}")
             if apply_changes and event_count:
                 Event.query.filter(Event.venue_id.in_(dup_ids)).update(
-                    {'venue_id': keeper.id}, synchronize_session=False
+                    {"venue_id": keeper.id}, synchronize_session=False
                 )
             events_reassigned += event_count
 
@@ -140,5 +143,5 @@ def main():
             print("Re-run with --apply to write.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

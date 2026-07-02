@@ -1,13 +1,21 @@
 import os, sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import app, db
 
 with app.app_context():
     with db.engine.connect() as conn:
-        conn.execute(db.text('ALTER TABLE venue ADD COLUMN accessibility_token VARCHAR(64)'))
-        conn.execute(db.text('CREATE UNIQUE INDEX IF NOT EXISTS ix_venue_accessibility_token ON venue (accessibility_token)'))
-        conn.execute(db.text('''
+        conn.execute(
+            db.text("ALTER TABLE venue ADD COLUMN accessibility_token VARCHAR(64)")
+        )
+        conn.execute(
+            db.text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ix_venue_accessibility_token ON venue (accessibility_token)"
+            )
+        )
+        conn.execute(
+            db.text("""
             CREATE TABLE IF NOT EXISTS venue_accessibility (
                 id INTEGER PRIMARY KEY,
                 venue_id INTEGER NOT NULL UNIQUE REFERENCES venue(id),
@@ -40,6 +48,7 @@ with app.app_context():
                 quiet_entrance VARCHAR(5),
                 additional_notes TEXT
             )
-        '''))
+        """)
+        )
         conn.commit()
-print('Migration complete')
+print("Migration complete")

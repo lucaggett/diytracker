@@ -3,7 +3,18 @@ from collections import defaultdict
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
-from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, session, url_for
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from forms import AccessibilityForm, CollaboratorRequestForm
 from sqlalchemy.orm import joinedload
@@ -14,7 +25,7 @@ from services.cache import cache
 from services.contact import build_contact_logger, send_contact_email
 from services.i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES, gettext as _, validate_lang
 
-bp = Blueprint('public', __name__)
+bp = Blueprint("public", __name__)
 
 _contact_logger = None
 
@@ -34,24 +45,24 @@ def _skip_calendar_cache():
     # Logged-in users and requests with pending flash messages must not be
     # cached: the cache is keyed only on locale, so their rendered flashes
     # would be served to every visitor until the entry expires.
-    return 'user_id' in session or bool(session.get('_flashes'))
+    return "user_id" in session or bool(session.get("_flashes"))
 
 
 @bp.after_request
 def _public_cache_headers(response):
-    if request.endpoint != 'public.calendar_view' or response.status_code != 200:
+    if request.endpoint != "public.calendar_view" or response.status_code != 200:
         return response
-    if 'user_id' in session:
+    if "user_id" in session:
         return response
     # Content varies by locale (session cookie + Accept-Language), so shared
     # caches need more than Accept-Encoding to key on.
-    response.vary.update(('Cookie', 'Accept-Language', 'Accept-Encoding'))
-    response.headers['Cache-Control'] = 'public, max-age=300'
+    response.vary.update(("Cookie", "Accept-Language", "Accept-Encoding"))
+    response.headers["Cache-Control"] = "public, max-age=300"
     response.add_etag()
     return response.make_conditional(request)
 
 
-@bp.route('/')
+@bp.route("/")
 @cache.cached(make_cache_key=_calendar_cache_key, unless=_skip_calendar_cache)
 def calendar_view():
     now = datetime.now()
@@ -67,8 +78,7 @@ def calendar_view():
     end_date = datetime(end_month[0], end_month[1], last_day, 23, 59, 59)
 
     events = (
-        Event.query
-        .options(joinedload(Event.venue))
+        Event.query.options(joinedload(Event.venue))
         .filter(Event.date >= start_date, Event.date <= end_date)
         .order_by(Event.date.asc())
         .all()
@@ -82,63 +92,87 @@ def calendar_view():
     months_data = []
     for year, month in months:
         last_day_of_month = calendar.monthrange(year, month)[1]
-        months_data.append({
-            'year': year,
-            'month': month,
-            'last_day_of_month': last_day_of_month,
-        })
+        months_data.append(
+            {
+                "year": year,
+                "month": month,
+                "last_day_of_month": last_day_of_month,
+            }
+        )
 
-    return render_template('calendar.html', grouped_events=grouped_events, months_data=months_data, datetime=datetime)
+    return render_template(
+        "calendar.html",
+        grouped_events=grouped_events,
+        months_data=months_data,
+        datetime=datetime,
+    )
 
 
-@bp.route('/about', methods=['GET', 'POST'])
+@bp.route("/about", methods=["GET", "POST"])
 def about():
     form = CollaboratorRequestForm()
     if form.validate_on_submit():
         name = form.name.data.strip()
         sender_email = form.email.data.strip()
         message = form.message.data.strip()
-        honeypot_filled = bool((form.website.data or '').strip())
-        single_line_message = message.replace('\n', ' \\n ')
+        honeypot_filled = bool((form.website.data or "").strip())
+        single_line_message = message.replace("\n", " \\n ")
         logger = _get_contact_logger()
         if honeypot_filled:
-            logger.info('honeypot name=%r email=%r message=%r',
-                        name, sender_email, single_line_message)
+            logger.info(
+                "honeypot name=%r email=%r message=%r",
+                name,
+                sender_email,
+                single_line_message,
+            )
         else:
             try:
                 send_contact_email(name, sender_email, message)
             except Exception as exc:
-                logger.exception('send_failed name=%r email=%r message=%r error=%s',
-                                 name, sender_email, single_line_message, exc)
-                current_app.logger.exception('Failed to send collaborator email')
-                flash(_('Your message could not be sent — please write to us directly at kontakt@diytracker.ch.'))
-                return redirect(url_for('public.about'))
-            logger.info('sent name=%r email=%r message=%r',
-                        name, sender_email, single_line_message)
-        flash(_('Thanks! We will get back to you as soon as possible.'))
-        return redirect(url_for('public.about'))
-    return render_template('about.html', form=form)
+                logger.exception(
+                    "send_failed name=%r email=%r message=%r error=%s",
+                    name,
+                    sender_email,
+                    single_line_message,
+                    exc,
+                )
+                current_app.logger.exception("Failed to send collaborator email")
+                flash(
+                    _(
+                        "Your message could not be sent — please write to us directly at kontakt@diytracker.ch."
+                    )
+                )
+                return redirect(url_for("public.about"))
+            logger.info(
+                "sent name=%r email=%r message=%r",
+                name,
+                sender_email,
+                single_line_message,
+            )
+        flash(_("Thanks! We will get back to you as soon as possible."))
+        return redirect(url_for("public.about"))
+    return render_template("about.html", form=form)
 
 
-@bp.route('/<lang>/impressum')
+@bp.route("/<lang>/impressum")
 def impressum(lang):
     validate_lang(lang)
-    return render_template('impressum.html')
+    return render_template("impressum.html")
 
 
-@bp.route('/<lang>/agb')
+@bp.route("/<lang>/agb")
 def agb(lang):
     validate_lang(lang)
-    return render_template('agb.html')
+    return render_template("agb.html")
 
 
-@bp.route('/<lang>/datenschutz')
+@bp.route("/<lang>/datenschutz")
 def datenschutz(lang):
     validate_lang(lang)
-    return render_template('datenschutz.html')
+    return render_template("datenschutz.html")
 
 
-@bp.route('/accessibility/<token>', methods=['GET', 'POST'])
+@bp.route("/accessibility/<token>", methods=["GET", "POST"])
 def accessibility_form(token):
     venue = Venue.query.filter_by(accessibility_token=token).first_or_404()
     info = venue.accessibility
@@ -151,23 +185,25 @@ def accessibility_form(token):
         info.updated_at = datetime.utcnow()
         db.session.add(info)
         db.session.commit()
-        flash(_('Accessibility info saved — thank you!'))
-        return redirect(url_for('public.accessibility_form', token=token))
-    return render_template('accessibility_form.html', form=form, venue=venue, info=info)
+        flash(_("Accessibility info saved — thank you!"))
+        return redirect(url_for("public.accessibility_form", token=token))
+    return render_template("accessibility_form.html", form=form, venue=venue, info=info)
 
 
-@bp.route('/venues/<int:venue_id>/accessibility')
+@bp.route("/venues/<int:venue_id>/accessibility")
 def venue_accessibility(venue_id):
     venue = Venue.query.get_or_404(venue_id)
-    return render_template('venue_accessibility.html', venue=venue, info=venue.accessibility)
+    return render_template(
+        "venue_accessibility.html", venue=venue, info=venue.accessibility
+    )
 
 
-@bp.route('/set-language/<lang>')
+@bp.route("/set-language/<lang>")
 def set_language(lang):
     if lang not in SUPPORTED_LOCALES:
         abort(404)
-    session['lang'] = lang
-    next_url = safe_redirect_target(request.args.get('next', ''))
+    session["lang"] = lang
+    next_url = safe_redirect_target(request.args.get("next", ""))
     if next_url:
         return redirect(next_url)
-    return redirect(url_for('public.calendar_view'))
+    return redirect(url_for("public.calendar_view"))

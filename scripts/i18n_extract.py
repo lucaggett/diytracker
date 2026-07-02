@@ -4,6 +4,7 @@
 Wraps pybabel so that underscore-prefixed directories (e.g. templates/_partials)
 are scanned. Babel's default directory filter skips them.
 """
+
 import os
 import sys
 
@@ -16,25 +17,34 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def keep_dir(path: str) -> bool:
     base = os.path.basename(path)
-    if base.startswith('.'):
+    if base.startswith("."):
         return False
-    if base in ('__pycache__', 'node_modules', 'venv', 'instance', 'static',
-                'migrations', 'logs', 'uploads'):
+    if base in (
+        "__pycache__",
+        "node_modules",
+        "venv",
+        "instance",
+        "static",
+        "migrations",
+        "logs",
+        "uploads",
+    ):
         return False
     return True
 
 
 def main() -> int:
-    with open(os.path.join(ROOT, 'babel.cfg')) as f:
+    with open(os.path.join(ROOT, "babel.cfg")) as f:
         method_map, options_map = parse_mapping_cfg(f)
     keywords = dict(DEFAULT_KEYWORDS)
-    keywords['_l'] = None
+    keywords["_l"] = None
     catalog_kwargs = {
-        'project': 'diytracker',
-        'version': '0.1',
-        'charset': 'utf-8',
+        "project": "diytracker",
+        "version": "0.1",
+        "charset": "utf-8",
     }
     from babel.messages.catalog import Catalog
+
     catalog = Catalog(**catalog_kwargs)
     for filename, lineno, message, comments, context in extract_from_dir(
         ROOT,
@@ -43,15 +53,16 @@ def main() -> int:
         keywords=keywords,
         directory_filter=keep_dir,
     ):
-        rel = os.path.relpath(filename, ROOT).replace(os.sep, '/')
-        catalog.add(message, None, [(rel, lineno)],
-                    auto_comments=comments, context=context)
-    out = os.path.join(ROOT, 'translations', 'messages.pot')
-    with open(out, 'wb') as f:
+        rel = os.path.relpath(filename, ROOT).replace(os.sep, "/")
+        catalog.add(
+            message, None, [(rel, lineno)], auto_comments=comments, context=context
+        )
+    out = os.path.join(ROOT, "translations", "messages.pot")
+    with open(out, "wb") as f:
         write_po(f, catalog)
-    print(f'wrote {out} with {len(catalog)} messages')
+    print(f"wrote {out} with {len(catalog)} messages")
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

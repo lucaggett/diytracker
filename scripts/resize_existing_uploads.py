@@ -8,6 +8,7 @@ Usage::
     python scripts/resize_existing_uploads.py           # apply
     python scripts/resize_existing_uploads.py --dry-run # preview only
 """
+
 import os
 import sys
 
@@ -15,11 +16,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from PIL import Image
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static', 'uploads')
+UPLOAD_FOLDER = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "uploads"
+)
 MAX_SIDE = 800
-SUPPORTED = {'.jpg', '.jpeg', '.png'}
+SUPPORTED = {".jpg", ".jpeg", ".png"}
 
-dry_run = '--dry-run' in sys.argv
+dry_run = "--dry-run" in sys.argv
 
 processed = skipped = resized = errors = 0
 
@@ -36,7 +39,7 @@ for filename in sorted(os.listdir(UPLOAD_FOLDER)):
         with Image.open(path) as img:
             w, h = img.width, img.height
             if w <= MAX_SIDE and h <= MAX_SIDE:
-                print(f'  ok      {filename} ({w}x{h})')
+                print(f"  ok      {filename} ({w}x{h})")
                 continue
 
             fmt = img.format
@@ -44,21 +47,25 @@ for filename in sorted(os.listdir(UPLOAD_FOLDER)):
             new_w, new_h = img.width, img.height
 
             if dry_run:
-                print(f'  would resize  {filename}  {w}x{h} → {new_w}x{new_h}')
+                print(f"  would resize  {filename}  {w}x{h} → {new_w}x{new_h}")
             else:
-                save_kw = {'format': fmt, 'optimize': True}
-                if fmt == 'JPEG':
-                    save_kw.update({'quality': 85, 'progressive': True})
+                save_kw = {"format": fmt, "optimize": True}
+                if fmt == "JPEG":
+                    save_kw.update({"quality": 85, "progressive": True})
                 img.save(path, **save_kw)
 
                 before_kb = os.path.getsize(path) // 1024
-                print(f'  resized {filename}  {w}x{h} → {new_w}x{new_h}  ({before_kb} KB after)')
+                print(
+                    f"  resized {filename}  {w}x{h} → {new_w}x{new_h}  ({before_kb} KB after)"
+                )
 
             resized += 1
 
     except Exception as exc:
-        print(f'  ERROR   {filename}: {exc}')
+        print(f"  ERROR   {filename}: {exc}")
         errors += 1
 
 print()
-print(f'{"Dry run — " if dry_run else ""}Done: {processed} images checked, {resized} {"would be " if dry_run else ""}resized, {skipped} skipped (non-image), {errors} errors.')
+print(
+    f"{'Dry run — ' if dry_run else ''}Done: {processed} images checked, {resized} {'would be ' if dry_run else ''}resized, {skipped} skipped (non-image), {errors} errors."
+)

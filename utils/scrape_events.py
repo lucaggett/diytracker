@@ -53,7 +53,9 @@ if not logger.handlers:
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 
     os.makedirs("logs", exist_ok=True)
-    file_handler = logging.FileHandler("logs/scrape_events.log", mode="a", encoding="utf-8")
+    file_handler = logging.FileHandler(
+        "logs/scrape_events.log", mode="a", encoding="utf-8"
+    )
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
@@ -100,7 +102,9 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
         # access patterns.  This can help with sites that rate-limit or
         # detect scraping.
         delay = random.uniform(*REQUEST_DELAY_RANGE)
-        logger.debug(f"Sleeping for {delay:.2f} seconds before fetching {url} (attempt {attempt+1}/{max_retries})")
+        logger.debug(
+            f"Sleeping for {delay:.2f} seconds before fetching {url} (attempt {attempt + 1}/{max_retries})"
+        )
         time.sleep(delay)
         # Log the request attempt
         logger.debug(f"Fetching URL: {url}")
@@ -122,7 +126,9 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
             else:
                 # Exponential backoff: double the base delay each retry
                 wait_time = (attempt + 1) * 2.0
-            logger.warning(f"Got HTTP {resp.status_code} for {url}, waiting {wait_time} seconds before retry")
+            logger.warning(
+                f"Got HTTP {resp.status_code} for {url}, waiting {wait_time} seconds before retry"
+            )
             time.sleep(wait_time)
             continue
         # Other non-200 responses are logged and not retried
@@ -154,7 +160,9 @@ def get_sitemap_event_urls(sitemap_url: str, pattern: str) -> List[str]:
     # Detect sitemap index: contains <sitemap> elements (not <url> elements)
     sub_sitemap_urls = re.findall(r"<sitemap>\s*<loc>(.*?)</loc>", sitemap_text)
     if sub_sitemap_urls:
-        logger.debug(f"Detected sitemap index at {sitemap_url} with {len(sub_sitemap_urls)} sub-sitemaps")
+        logger.debug(
+            f"Detected sitemap index at {sitemap_url} with {len(sub_sitemap_urls)} sub-sitemaps"
+        )
         all_urls: List[str] = []
         seen: set = set()
         for sub_url in sub_sitemap_urls:
@@ -261,8 +269,11 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
         if not text:
             continue
         # Look for the MusicEvent or Festival object inside the script text
-        if ("\"@type\":\"MusicEvent\"" in text or "\"MusicEvent\"" in text
-                or "\"@type\":\"Festival\"" in text):
+        if (
+            '"@type":"MusicEvent"' in text
+            or '"MusicEvent"' in text
+            or '"@type":"Festival"' in text
+        ):
             start_idx = text.find("{")
             if start_idx >= 0:
                 brace_count = 0
@@ -299,15 +310,25 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
             # Doors open time may be present as ``doorTime``; convert to HH:MM
             event["doors_open"] = data.get("doorTime", "")
             # Location information
-            location = data.get("location", {}) if isinstance(data.get("location"), dict) else {}
+            location = (
+                data.get("location", {})
+                if isinstance(data.get("location"), dict)
+                else {}
+            )
             event["venue_name"] = location.get("name", "")
-            address = location.get("address", {}) if isinstance(location.get("address"), dict) else {}
+            address = (
+                location.get("address", {})
+                if isinstance(location.get("address"), dict)
+                else {}
+            )
             event["street_address"] = address.get("streetAddress", "")
             event["city"] = address.get("addressLocality", "")
             event["region"] = address.get("addressRegion", "")
             event["postal_code"] = address.get("postalCode", "")
             # Offer (ticket) information
-            offers = data.get("offers", {}) if isinstance(data.get("offers"), dict) else {}
+            offers = (
+                data.get("offers", {}) if isinstance(data.get("offers"), dict) else {}
+            )
             # Price may be missing; ensure conversion to string
             price = offers.get("price")
             if price is not None:
@@ -331,9 +352,9 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
             if not event.get("styles"):
                 genre_set: List[str] = []
                 seen_genres: set = set()
-                for p in (performers if isinstance(performers, list) else []):
+                for p in performers if isinstance(performers, list) else []:
                     if isinstance(p, dict):
-                        for g in (p.get("genre") or []):
+                        for g in p.get("genre") or []:
                             if g and g not in seen_genres:
                                 genre_set.append(g)
                                 seen_genres.add(g)
@@ -412,12 +433,16 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
         times = extract_info_fragment("Einlass · Beginn")
         if times:
             # Could be like '19:00 · 19:30' or '19:00 · 19:30'
-            time_parts = [t.strip() for t in re.split(r"[·|\u00b7]", times) if t.strip()]
+            time_parts = [
+                t.strip() for t in re.split(r"[·|\u00b7]", times) if t.strip()
+            ]
             if time_parts:
                 event["doors_open"] = time_parts[0]
                 if len(time_parts) > 1:
                     event["start_time"] = time_parts[1]
-                    logger.debug(f"MetalGigs times — doors open: {event.get('doors_open')}, start: {event.get('start_time')}")
+                    logger.debug(
+                        f"MetalGigs times — doors open: {event.get('doors_open')}, start: {event.get('start_time')}"
+                    )
 
     # Location if missing
     if not event.get("venue_name"):
@@ -432,14 +457,16 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
             if len(parts) > 2:
                 raw_city = parts[2]
                 # Strip leading PLZ (e.g. "8005 Zürich" → city="Zürich", postal_code="8005")
-                plz_match = re.match(r'^(\d{4})\s+(.+)$', raw_city)
+                plz_match = re.match(r"^(\d{4})\s+(.+)$", raw_city)
                 if plz_match:
                     if not event.get("postal_code"):
                         event["postal_code"] = plz_match.group(1)
                     event["city"] = plz_match.group(2)
                 else:
                     event["city"] = raw_city
-            logger.debug(f"MetalGigs location: {event.get('venue_name')}, {event.get('street_address')}, {event.get('city')}")
+            logger.debug(
+                f"MetalGigs location: {event.get('venue_name')}, {event.get('street_address')}, {event.get('city')}"
+            )
 
     # Ticket price if missing
     if not event.get("ticket_price"):
@@ -450,7 +477,9 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
             if price_match:
                 event["ticket_price"] = price_match.group(1).replace(",", ".")
             event["ticket_url"] = ticket_link.get("href", "")
-            logger.debug(f"MetalGigs ticket: {event.get('ticket_price')} CHF, URL: {event.get('ticket_url')}")
+            logger.debug(
+                f"MetalGigs ticket: {event.get('ticket_price')} CHF, URL: {event.get('ticket_url')}"
+            )
 
     # Resolve canton from region + city (handles full names, case variants, PLZ prefixes)
     event["region"] = resolve_canton(event.get("region", ""), event.get("city", ""))
@@ -688,8 +717,13 @@ def main() -> None:
     # Fetch and parse metalgigs concerts and festivals
     print("Fetching metalgigs event URLs…", file=sys.stderr)
     mg_urls = get_sitemap_event_urls("https://metalgigs.ch/sitemap.xml", "/konzerte/")
-    mg_festival_urls = get_sitemap_event_urls("https://metalgigs.ch/sitemap.xml", "/festivals/")
-    print(f"Found {len(mg_urls)} metalgigs concerts, {len(mg_festival_urls)} festivals", file=sys.stderr)
+    mg_festival_urls = get_sitemap_event_urls(
+        "https://metalgigs.ch/sitemap.xml", "/festivals/"
+    )
+    print(
+        f"Found {len(mg_urls)} metalgigs concerts, {len(mg_festival_urls)} festivals",
+        file=sys.stderr,
+    )
     all_mg_urls = mg_urls + mg_festival_urls
     for idx, url in enumerate(all_mg_urls, 1):
         parsed = parse_metalgigs_event(url)
@@ -700,11 +734,15 @@ def main() -> None:
             logger.warning(f"Skipped MetalGigs event due to parse failure: {url}")
         # Print progress occasionally
         if idx % 50 == 0:
-            print(f"Processed {idx}/{len(all_mg_urls)} metalgigs events", file=sys.stderr)
+            print(
+                f"Processed {idx}/{len(all_mg_urls)} metalgigs events", file=sys.stderr
+            )
     # Fetch and parse PETZI events
     print("Fetching PETZI event URLs…", file=sys.stderr)
     # Try sitemap first; if empty, fall back to scraping the agenda page
-    petzi_urls = get_sitemap_event_urls("https://www.petzi.ch/en/sitemap.xml", "/en/events/")
+    petzi_urls = get_sitemap_event_urls(
+        "https://www.petzi.ch/en/sitemap.xml", "/en/events/"
+    )
     if not petzi_urls:
         petzi_urls = get_petzi_event_urls()
     print(f"Found {len(petzi_urls)} PETZI events", file=sys.stderr)

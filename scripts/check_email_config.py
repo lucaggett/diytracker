@@ -2,7 +2,9 @@
 Email deliverability checker for diytracker.ch
 Checks SPF, DKIM, DMARC, and reverse DNS (PTR) records.
 """
+
 import os, sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import socket
@@ -16,7 +18,9 @@ except ImportError:
 
 from dotenv import load_dotenv
 
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
+load_dotenv(
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+)
 
 DOMAIN = "diytracker.ch"
 DKIM_SELECTORS = ["default", "mail", "google", "k1", "s1", "s2", "dkim"]
@@ -77,7 +81,9 @@ def check_dkim():
                 found.append((selector, name, r))
 
     if not found:
-        print(f"{FAIL} No DKIM records found (checked selectors: {', '.join(DKIM_SELECTORS)})")
+        print(
+            f"{FAIL} No DKIM records found (checked selectors: {', '.join(DKIM_SELECTORS)})"
+        )
         print("     Enable DKIM signing in your mail provider's dashboard.")
         return False
 
@@ -87,13 +93,15 @@ def check_dkim():
         # Check key length hint from public key size — p= field
         p_start = record.find("p=")
         if p_start != -1:
-            p_value = record[p_start + 2:].split(";")[0].strip()
+            p_value = record[p_start + 2 :].split(";")[0].strip()
             key_len = len(p_value) * 6 // 8 * 8  # rough bit estimate from base64 length
             if key_len >= 256:  # 2048-bit key base64 is ~344 chars
                 bits = "~2048-bit" if key_len >= 300 else "~1024-bit"
                 ok = key_len >= 300
                 flag = PASS if ok else WARN
-                print(f"{flag} Key appears to be {bits} (base64 length: {len(p_value)})")
+                print(
+                    f"{flag} Key appears to be {bits} (base64 length: {len(p_value)})"
+                )
             print(f"     p={p_value[:40]}{'...' if len(p_value) > 40 else ''}")
 
     return True
@@ -114,11 +122,7 @@ def check_dmarc():
     print(f"{PASS} DMARC record found:")
     print(f"     {record}")
 
-    tags = dict(
-        part.strip().split("=", 1)
-        for part in record.split(";")
-        if "=" in part
-    )
+    tags = dict(part.strip().split("=", 1) for part in record.split(";") if "=" in part)
 
     policy = tags.get("p", "none")
     if policy == "reject":
@@ -126,7 +130,9 @@ def check_dmarc():
     elif policy == "quarantine":
         print(f"{PASS} Policy: quarantine — good")
     elif policy == "none":
-        print(f"{WARN} Policy: none — monitoring only, consider quarantine or reject later")
+        print(
+            f"{WARN} Policy: none — monitoring only, consider quarantine or reject later"
+        )
 
     if "rua" in tags:
         print(f"{PASS} Aggregate reports (rua): {tags['rua']}")

@@ -1,5 +1,6 @@
 # insert_dummy_events.py
 import os, sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datetime import datetime, timedelta, time
@@ -8,6 +9,7 @@ import uuid
 
 from app import app, db
 from models import Event, Venue, Submitter
+
 
 def get_or_create_venue(name, address, city, canton, plz, coords):
     v = Venue.query.filter_by(name=name, city=city).first()
@@ -26,6 +28,7 @@ def get_or_create_venue(name, address, city, canton, plz, coords):
     db.session.flush()  # ensures v.id is available without full commit
     return v
 
+
 def get_or_create_submitter(email):
     s = Submitter.query.filter_by(email=email).first()
     if s:
@@ -34,6 +37,7 @@ def get_or_create_submitter(email):
     db.session.add(s)
     db.session.flush()
     return s
+
 
 with app.app_context():
     # Optional: Clear existing events for a clean slate
@@ -44,24 +48,44 @@ with app.app_context():
     # Feel free to extend or swap these with your real venues
     venue_seeds = [
         {
-            "name": "Hall A", "address": "10 Main Street", "city": "Zurich",
-            "canton": "Zurich", "plz": "8001", "coords": "47.3769° N, 8.5417° E"
+            "name": "Hall A",
+            "address": "10 Main Street",
+            "city": "Zurich",
+            "canton": "Zurich",
+            "plz": "8001",
+            "coords": "47.3769° N, 8.5417° E",
         },
         {
-            "name": "Club B", "address": "22 River Road", "city": "Bern",
-            "canton": "Bern", "plz": "3001", "coords": "46.9480° N, 7.4474° E"
+            "name": "Club B",
+            "address": "22 River Road",
+            "city": "Bern",
+            "canton": "Bern",
+            "plz": "3001",
+            "coords": "46.9480° N, 7.4474° E",
         },
         {
-            "name": "Theater C", "address": "3 Grand Ave", "city": "Geneva",
-            "canton": "Geneva", "plz": "1201", "coords": "46.2044° N, 6.1432° E"
+            "name": "Theater C",
+            "address": "3 Grand Ave",
+            "city": "Geneva",
+            "canton": "Geneva",
+            "plz": "1201",
+            "coords": "46.2044° N, 6.1432° E",
         },
         {
-            "name": "Arena D", "address": "50 Lake Blvd", "city": "Basel",
-            "canton": "Basel", "plz": "4001", "coords": "47.5596° N, 7.5886° E"
+            "name": "Arena D",
+            "address": "50 Lake Blvd",
+            "city": "Basel",
+            "canton": "Basel",
+            "plz": "4001",
+            "coords": "47.5596° N, 7.5886° E",
         },
         {
-            "name": "Stadium E", "address": "77 Hill St", "city": "Lucerne",
-            "canton": "Lucerne", "plz": "6003", "coords": "47.0502° N, 8.3093° E"
+            "name": "Stadium E",
+            "address": "77 Hill St",
+            "city": "Lucerne",
+            "canton": "Lucerne",
+            "plz": "6003",
+            "coords": "47.0502° N, 8.3093° E",
         },
     ]
 
@@ -76,10 +100,23 @@ with app.app_context():
     submitters = [get_or_create_submitter(email) for email in submitter_emails]
 
     # Sample data for genres and acts
-    genres = ['Rock', 'Jazz', 'Classical', 'Pop', 'Hip-Hop', 'Electronic', 'Folk', 'Blues']
+    genres = [
+        "Rock",
+        "Jazz",
+        "Classical",
+        "Pop",
+        "Hip-Hop",
+        "Electronic",
+        "Folk",
+        "Blues",
+    ]
     acts_list = [
-        'Band Alpha', 'Artist Beta', 'Ensemble Gamma',
-        'DJ Delta', 'Group Epsilon', 'Performer Zeta'
+        "Band Alpha",
+        "Artist Beta",
+        "Ensemble Gamma",
+        "DJ Delta",
+        "Group Epsilon",
+        "Performer Zeta",
     ]
 
     flyer_path = "uploads/flyer.jpeg"
@@ -91,22 +128,26 @@ with app.app_context():
     num_events = 100
 
     for i in range(num_events):
-        event_date = start_date + timedelta(days=random.randint(0, 60))  # within next 60 days
+        event_date = start_date + timedelta(
+            days=random.randint(0, 60)
+        )  # within next 60 days
         event_time = time(hour=random.randint(18, 22), minute=0)  # 18:00–22:00
-        doors_time = (datetime.combine(event_date, event_time) - timedelta(hours=1)).time()  # 1h before
+        doors_time = (
+            datetime.combine(event_date, event_time) - timedelta(hours=1)
+        ).time()  # 1h before
 
         venue = random.choice(venues)
         submitter = random.choice(submitters)
-        acts = ', '.join(random.sample(acts_list, k=random.randint(1, 3)))  # 1–3 acts
+        acts = ", ".join(random.sample(acts_list, k=random.randint(1, 3)))  # 1–3 acts
         ticket_price = f"{random.randint(10, 100)} CHF"
 
         event = Event(
             event_hash=uuid.uuid4().hex,  # required + unique
-            name=f'Dummy Event {i+1}',
+            name=f"Dummy Event {i + 1}",
             date=datetime.combine(event_date, event_time),
             venue_id=venue.id,
             ticket_price=ticket_price,
-            ticket_link='http://example.com/tickets',
+            ticket_link="http://example.com/tickets",
             doors=doors_time,
             genre=random.choice(genres),
             acts=acts,

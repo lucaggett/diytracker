@@ -19,15 +19,16 @@ def utcnow():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-@sa_event.listens_for(Engine, 'connect')
+@sa_event.listens_for(Engine, "connect")
 def _sqlite_pragmas(dbapi_connection, _connection_record):
     # WAL + busy timeout so concurrent gunicorn workers don't hit
     # "database is locked" on simultaneous writes.
     if isinstance(dbapi_connection, sqlite3.Connection):
         cursor = dbapi_connection.cursor()
-        cursor.execute('PRAGMA journal_mode=WAL')
-        cursor.execute('PRAGMA busy_timeout=15000')
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=15000")
         cursor.close()
+
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -35,8 +36,8 @@ class Event(db.Model):
     name = db.Column(db.String(100), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     # Add a foreign key to the Venue model
-    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
-    venue = db.relationship('Venue', backref=db.backref('events', lazy=True))
+    venue_id = db.Column(db.Integer, db.ForeignKey("venue.id"), nullable=False)
+    venue = db.relationship("Venue", backref=db.backref("events", lazy=True))
     ticket_price = db.Column(db.String(50), nullable=False)
     ticket_link = db.Column(db.String(200), nullable=True)
     doors = db.Column(db.Time, nullable=False)  # Storing door time as 24-hour format
@@ -49,13 +50,13 @@ class Event(db.Model):
     is_festival = db.Column(db.Boolean, nullable=False, default=False)
     acts = db.Column(db.Text, nullable=True)
     description = db.Column(db.Text, nullable=True)
-    source_url  = db.Column(db.String(300), nullable=True)
+    source_url = db.Column(db.String(300), nullable=True)
     flyer = db.Column(db.String(200), nullable=True)  # File path to the uploaded flyer
-    submitter_id = db.Column(db.Integer, db.ForeignKey('submitter.id'), nullable=True)
-    submitter = db.relationship('Submitter', backref=db.backref('events', lazy=True))
+    submitter_id = db.Column(db.Integer, db.ForeignKey("submitter.id"), nullable=True)
+    submitter = db.relationship("Submitter", backref=db.backref("events", lazy=True))
 
     def __repr__(self):
-        return f'<Event {self.id}: {self.name} @ {self.date} added by {self.submitter}>'
+        return f"<Event {self.id}: {self.name} @ {self.date} added by {self.submitter}>"
 
 
 class Venue(db.Model):
@@ -73,52 +74,59 @@ class Venue(db.Model):
         return self.accessibility_token
 
     def __repr__(self):
-        return f'<Venue {self.id}: {self.name} in {self.city}>'
+        return f"<Venue {self.id}: {self.name} in {self.city}>"
 
 
 class VenueAccessibility(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False, unique=True)
+    venue_id = db.Column(
+        db.Integer, db.ForeignKey("venue.id"), nullable=False, unique=True
+    )
     updated_at = db.Column(db.DateTime, nullable=False)
 
     # Mobility & Wheelchair
-    step_free_entrance = db.Column(db.String(20), nullable=True)       # yes/partial/no
+    step_free_entrance = db.Column(db.String(20), nullable=True)  # yes/partial/no
     step_free_entrance_notes = db.Column(db.Text, nullable=True)
-    step_free_interior = db.Column(db.String(20), nullable=True)       # yes/partial/no
-    accessible_toilet = db.Column(db.String(20), nullable=True)        # yes/partial/no
+    step_free_interior = db.Column(db.String(20), nullable=True)  # yes/partial/no
+    accessible_toilet = db.Column(db.String(20), nullable=True)  # yes/partial/no
     accessible_toilet_notes = db.Column(db.Text, nullable=True)
-    wheelchair_spaces = db.Column(db.String(5), nullable=True)         # yes/no
+    wheelchair_spaces = db.Column(db.String(5), nullable=True)  # yes/no
     wheelchair_spaces_count = db.Column(db.Integer, nullable=True)
     floor_surface = db.Column(db.String(50), nullable=True)
 
     # Sensory, Epilepsy & Autism
-    strobe_lights = db.Column(db.String(20), nullable=True)            # never/sometimes/regularly
-    strobe_warning = db.Column(db.String(20), nullable=True)           # always/sometimes/never
-    smoke_machines = db.Column(db.String(20), nullable=True)           # never/sometimes/regularly
+    strobe_lights = db.Column(db.String(20), nullable=True)  # never/sometimes/regularly
+    strobe_warning = db.Column(db.String(20), nullable=True)  # always/sometimes/never
+    smoke_machines = db.Column(
+        db.String(20), nullable=True
+    )  # never/sometimes/regularly
     sound_level = db.Column(db.String(20), nullable=True)
-    quiet_space = db.Column(db.String(5), nullable=True)               # yes/no
-    earplugs_available = db.Column(db.String(5), nullable=True)        # yes/no
-    sensory_friendly_events = db.Column(db.String(20), nullable=True)  # yes/sometimes/no
+    quiet_space = db.Column(db.String(5), nullable=True)  # yes/no
+    earplugs_available = db.Column(db.String(5), nullable=True)  # yes/no
+    sensory_friendly_events = db.Column(
+        db.String(20), nullable=True
+    )  # yes/sometimes/no
 
     # Hearing
-    hearing_loop = db.Column(db.String(20), nullable=True)             # yes/no/unknown
-    sign_language = db.Column(db.String(20), nullable=True)            # sometimes/rarely/never
+    hearing_loop = db.Column(db.String(20), nullable=True)  # yes/no/unknown
+    sign_language = db.Column(db.String(20), nullable=True)  # sometimes/rarely/never
 
     # Medical
-    medication_fridge = db.Column(db.String(20), nullable=True)        # yes/no/ask_staff
-    first_aid_kit = db.Column(db.String(5), nullable=True)             # yes/no
-    aed_on_site = db.Column(db.String(20), nullable=True)              # yes/no/unknown
+    medication_fridge = db.Column(db.String(20), nullable=True)  # yes/no/ask_staff
+    first_aid_kit = db.Column(db.String(5), nullable=True)  # yes/no
+    aed_on_site = db.Column(db.String(20), nullable=True)  # yes/no/unknown
 
     # General / Social
-    accessible_parking = db.Column(db.String(20), nullable=True)       # yes/nearby/no
+    accessible_parking = db.Column(db.String(20), nullable=True)  # yes/nearby/no
     public_transport_notes = db.Column(db.Text, nullable=True)
-    gender_neutral_toilets = db.Column(db.String(5), nullable=True)    # yes/no
-    seating_areas = db.Column(db.String(5), nullable=True)             # yes/no
-    guide_dogs_welcome = db.Column(db.String(5), nullable=True)        # yes/no
-    quiet_entrance = db.Column(db.String(5), nullable=True)            # yes/no
+    gender_neutral_toilets = db.Column(db.String(5), nullable=True)  # yes/no
+    seating_areas = db.Column(db.String(5), nullable=True)  # yes/no
+    guide_dogs_welcome = db.Column(db.String(5), nullable=True)  # yes/no
+    quiet_entrance = db.Column(db.String(5), nullable=True)  # yes/no
     additional_notes = db.Column(db.Text, nullable=True)
 
-    venue = db.relationship('Venue', backref=db.backref('accessibility', uselist=False))
+    venue = db.relationship("Venue", backref=db.backref("accessibility", uselist=False))
+
 
 class Submitter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -156,6 +164,7 @@ class Submitter(db.Model):
 
 class ScrapedEvent(db.Model):
     """Database model storing events scraped from external sources."""
+
     # Primary key
     id = db.Column(db.Integer, primary_key=True)
 
@@ -184,7 +193,7 @@ class ScrapedEvent(db.Model):
     # Approval tracking
     approved = db.Column(db.Boolean, nullable=False, default=False)
     approved_at = db.Column(db.DateTime, nullable=True)
-    approved_event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=True)
+    approved_event_id = db.Column(db.Integer, db.ForeignKey("event.id"), nullable=True)
 
     # Metadata
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
@@ -195,10 +204,10 @@ class ScrapedEvent(db.Model):
 
 def _format_parent_genres(genre):
     parents = _compute_parent_genres(genre)
-    return ',' + ','.join(parents) + ',' if parents else None
+    return "," + ",".join(parents) + "," if parents else None
 
 
-@sa_event.listens_for(Event, 'before_insert')
-@sa_event.listens_for(Event, 'before_update')
+@sa_event.listens_for(Event, "before_insert")
+@sa_event.listens_for(Event, "before_update")
 def _sync_event_parent_genres(mapper, connection, target):
     target.parent_genres = _format_parent_genres(target.genre)
