@@ -1,10 +1,6 @@
 module.exports = {
   content: [
     './templates/**/*.html',
-    './templates/_partials/**/*.html',
-    './templates/legal/**/*.html',
-    './templates/errors/**/*.html',
-    './static/js/**/*.js'
   ],
   safelist: [
     'bg-paper',
