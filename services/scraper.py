@@ -128,47 +128,6 @@ def _scrape_and_import(app):
                 counts[result.status] += 1
                 if result.status == 'invalid':
                     app.logger.warning(f"Scrape: dropped invalid row {row.get('url')}: {result.reason}")
-                url = row.get("url")
-                if url and url in known_urls_now:
-                    continue
-                source = row.get("source")
-                raw_styles = row.get("styles") or ""
-                # petzi sitemap mixes concerts with theatre/workshop/club-night
-                # rows; the raw 'concert' token is the only signal, so filter
-                # on it before cleanup strips the token.
-                if source == "petzi" and "concert" not in raw_styles.lower():
-                    continue
-                region = resolve_canton(row.get("region") or "", row.get("city") or "")
-                cleaned_styles = ", ".join(clean_genre_tokens(raw_styles)) or None
-                cleaned_ticket_url = clean_ticket_url(row.get("ticket_url"), source)
-                scraped = ScrapedEvent(
-                    source=source,
-                    url=url,
-                    title=row.get("title"),
-                    performers=row.get("performers"),
-                    styles=cleaned_styles,
-                    description=row.get("description"),
-                    start_date=parse_date(row.get("start_date") or ""),
-                    end_date=parse_date(row.get("end_date") or ""),
-                    doors_open=parse_time(row.get("doors_open") or ""),
-                    start_time=parse_time(row.get("start_time") or ""),
-                    venue_name=row.get("venue_name"),
-                    street_address=row.get("street_address"),
-                    city=row.get("city"),
-                    region=region,
-                    postal_code=row.get("postal_code"),
-                    ticket_price=row.get("ticket_price"),
-                    ticket_currency=row.get("ticket_currency"),
-                    ticket_url=cleaned_ticket_url,
-                    organizer=row.get("organizer"),
-                    event_status=row.get("event_status"),
-                )
-                db.session.add(scraped)
-                if url:
-                    # url is unique in the DB; guard against dupes within
-                    # this batch so the commit can't raise IntegrityError.
-                    known_urls_now.add(url)
-                count += 1
             db.session.commit()
             app.logger.info(
                 f"Scrape complete: {counts['created']} new, "

@@ -28,18 +28,13 @@ for d in ("logs", "static/uploads", "instance", "instance/cache"):
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI', 'sqlite:///events.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
-# Shared token for POST /api/ingest (external event sources). Unset = endpoint disabled.
-app.config['INGEST_TOKEN'] = os.environ.get('INGEST_TOKEN')
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URI", "sqlite:///events.db"
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+# Shared token for POST /api/ingest (external event sources). Unset = endpoint disabled.
+app.config["INGEST_TOKEN"] = os.environ.get("INGEST_TOKEN")
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)
 # Secure works over http://localhost in modern browsers, so dev logins are fine.
