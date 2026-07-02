@@ -77,7 +77,11 @@ def app(tmp_path):
 
 @pytest.fixture
 def client(app):
-    return app.test_client()
+    test_client = app.test_client()
+    # Tests assert English flash messages; without this the locale falls back
+    # to the default ('de') and the assertions would hit translated strings.
+    test_client.environ_base["HTTP_ACCEPT_LANGUAGE"] = "en"
+    return test_client
 
 
 # --- Model factories --------------------------------------------------------

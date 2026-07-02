@@ -62,12 +62,11 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          # No package-lock.json is committed (see .gitignore), so there's
-          # nothing for setup-node's built-in npm cache to key off.
+          node-version-file: ".nvmrc"
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build Tailwind CSS
         run: npx tailwindcss -i ./static/css/styles.css -o ./static/css/output.css

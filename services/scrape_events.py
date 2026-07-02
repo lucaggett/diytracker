@@ -4,8 +4,7 @@ This script downloads all event URLs from the public `sitemap.xml` files of
 metalgigs.ch and petzi.ch.  Each event page is then parsed to extract as
 much useful information as possible, such as the event title, date,
 location, ticket prices, door times, and any other structured data.  The
-combined results from both websites are written to a CSV file named
-``events.csv`` in the current working directory.
+combined results from both websites are written to ``instance/events.csv``.
 
 The script requires the ``requests`` and ``beautifulsoup4`` packages.
 If these packages are not installed, install them with ``pip install
@@ -32,7 +31,8 @@ from bs4 import BeautifulSoup
 import time
 import random
 
-# Allow importing shared utilities from the project root
+# Allow running standalone (`python services/scrape_events.py`), where the
+# project root isn't on sys.path.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import resolve_canton
 
@@ -45,9 +45,8 @@ import logging
 # includes the most detail.  Each message includes a timestamp and
 # severity level.
 logger = logging.getLogger("scrape_events")
-# services/scraper.py re-execs this module on every scrape run; the logger is
-# a process-wide singleton, so only attach handlers once or every run adds a
-# duplicate (and a mode="w" FileHandler would truncate the log each time).
+# The logger is a process-wide singleton; only attach handlers once so
+# repeated imports/runs don't add duplicates.
 if not logger.handlers:
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")

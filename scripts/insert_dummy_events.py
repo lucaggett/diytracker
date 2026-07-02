@@ -9,25 +9,8 @@ import random
 import uuid
 
 from app import app, db
-from models import Event, Venue, Submitter
-
-
-def get_or_create_venue(name, address, city, canton, plz, coords):
-    v = Venue.query.filter_by(name=name, city=city).first()
-    if v:
-        # Optionally update fields if your schema allows drift
-        return v
-    v = Venue(
-        name=name,
-        address=address,
-        city=city,
-        canton=canton,
-        plz=plz,
-        coords=coords,
-    )
-    db.session.add(v)
-    db.session.flush()  # ensures v.id is available without full commit
-    return v
+from models import Event, Submitter
+from services.venue import get_or_create_venue
 
 
 def get_or_create_submitter(email):
@@ -90,7 +73,7 @@ with app.app_context():
         },
     ]
 
-    venues = [get_or_create_venue(**v) for v in venue_seeds]
+    venues = [get_or_create_venue(**v)[0] for v in venue_seeds]
 
     # Seed a few submitters (created if missing)
     submitter_emails = [

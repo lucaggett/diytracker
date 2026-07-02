@@ -82,9 +82,16 @@ class TestLogout:
     def test_logout_clears_session(self, client, make_user, login):
         user = make_user()
         login(user)
-        client.get("/logout")
+        client.post("/logout")
         with client.session_transaction() as sess:
             assert "user_id" not in sess
+
+    def test_logout_rejects_get(self, client, make_user, login):
+        user = make_user()
+        login(user)
+        assert client.get("/logout").status_code == 405
+        with client.session_transaction() as sess:
+            assert "user_id" in sess
 
 
 class TestSetPassword:

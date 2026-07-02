@@ -140,11 +140,12 @@ def event_queue():
         source_url = _ov("override_source_url", data.get("url") or "")
 
         override_date = request.form.get("override_date", "").strip()
-        event_date = (
-            datetime.strptime(override_date, "%Y-%m-%d")
-            if override_date
-            else data.get("_event_date")
-        )
+        event_date = data.get("_event_date")
+        if override_date:
+            try:
+                event_date = datetime.strptime(override_date, "%Y-%m-%d")
+            except ValueError:
+                pass
 
         override_doors = request.form.get("override_doors", "").strip()
         if override_doors:
@@ -284,7 +285,7 @@ def submit_event_link():
             if not created:
                 flash(_("Venue already exists. Using existing venue."))
         else:
-            venue = Venue.query.get(venue_id)
+            venue = db.session.get(Venue, int(venue_id)) if venue_id.isdigit() else None
             if not venue:
                 flash(_("Selected venue does not exist."))
                 return redirect(url_for("submissions.submit_event_link"))

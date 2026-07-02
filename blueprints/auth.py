@@ -38,7 +38,9 @@ def login():
     return render_template("login.html", form=form)
 
 
-@bp.route("/logout")
+# POST-only so a cross-site <img>/link can't log the user out; the CSRF
+# token on the little logout forms is validated globally by CSRFProtect.
+@bp.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return redirect(url_for("public.calendar_view"))

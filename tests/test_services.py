@@ -50,19 +50,24 @@ class TestScrapeImport:
     so the real cleanup/dedup/filtering logic runs without any network."""
 
     def _run_import(self, app, monkeypatch, scraped_rows):
+        import services.scrape_events as scrape_events
         import services.scraper as scraper
 
-        fake = type("FakeScraper", (), {})()
         # The real scraper calls this once per source with a URL fragment;
         # return only the rows whose URL matches that fragment.
-        fake.get_sitemap_event_urls = lambda url, frag: [
-            r["url"] for r in scraped_rows if frag in r["url"]
-        ]
-        fake.get_petzi_event_urls = lambda: []
+        monkeypatch.setattr(
+            scrape_events,
+            "get_sitemap_event_urls",
+            lambda url, frag: [r["url"] for r in scraped_rows if frag in r["url"]],
+        )
+        monkeypatch.setattr(scrape_events, "get_petzi_event_urls", lambda: [])
         url_to_row = {r["url"]: r for r in scraped_rows}
-        fake.parse_metalgigs_event = lambda url: url_to_row.get(url)
-        fake.parse_petzi_event = lambda url: url_to_row.get(url)
-        monkeypatch.setattr(scraper, "_load_scraper", lambda: fake)
+        monkeypatch.setattr(
+            scrape_events, "parse_metalgigs_event", lambda url: url_to_row.get(url)
+        )
+        monkeypatch.setattr(
+            scrape_events, "parse_petzi_event", lambda url: url_to_row.get(url)
+        )
         monkeypatch.setattr(scraper, "set_last_scrape_time", lambda dt: None)
 
         scraper._scrape_and_import(app)

@@ -10,8 +10,8 @@ Switzerland. Events come in two ways:
    parses them, and stores them as `ScrapedEvent` rows so an admin can
    convert them into real `Event` rows.
 
-It also tracks per-venue accessibility info, exposes an iCal feed,
-and is fully translated (DE / EN / FR / IT) via Flask-Babel.
+It also tracks per-venue accessibility info and is fully translated
+(DE / EN / FR / IT) via Flask-Babel.
 
 ## Running it yourself
 
@@ -88,24 +88,14 @@ uv run gunicorn -c gunicorn_conf.py app:app
 
 On the production server the app runs under systemd — see
 [`deploy/README.md`](deploy/README.md) for the unit file, the login MOTD,
-and install steps. Use `systemctl {status,restart} diytracker` there;
-`manage.py start/stop/restart/status` below are for machines without the
-unit installed.
+and install steps. Use `systemctl {status,restart} diytracker` there.
 
-`manage.py` is a small CLI for running the production server, inspecting
-it, tailing logs, and managing users. Run everything through uv:
+`manage.py` is a small CLI for tailing logs and managing users. Run it
+through uv:
 
 ```bash
-uv run python manage.py start          # start gunicorn (daemonized; --foreground to block)
-uv run python manage.py status         # running? master PID, workers, CPU/MEM/uptime
 uv run python manage.py logs -f        # tail the access log (--error for the error log)
-uv run python manage.py stop           # graceful stop (SIGTERM, then SIGKILL after --timeout)
-uv run python manage.py restart
 ```
-
-`start` writes a pidfile to `instance/gunicorn.pid`; the other commands use
-it to find the running process. (The process table in `status` relies on
-Linux `ps`.)
 
 ### Managing users
 
@@ -119,9 +109,6 @@ uv run python manage.py user admin alice@example.com --grant   # or --revoke
 uv run python manage.py user invite alice@example.com     # resend the invite email
 uv run python manage.py user delete alice@example.com     # --yes to skip confirmation
 ```
-
-(`scripts/admin_tools.py` is the older interactive menu that these commands
-supersede.)
 
 ## Ingest
 
@@ -188,9 +175,8 @@ The scraping pipeline has three pieces:
 
 | File | Role |
 | --- | --- |
-| `utils/scrape_events.py` | Pure scraping logic. One function per source that takes a URL and returns a dict. Also has helpers to discover URLs from each source's sitemap. Can be run standalone (`uv run python utils/scrape_events.py`) to dump everything to `instance/events.csv`. |
-| `services/scraper.py` | The runtime glue. Loads `scrape_events.py` dynamically, discovers new URLs, calls the per-source parsers, deduplicates against existing `Event.source_url` and `ScrapedEvent.url`, then writes new `ScrapedEvent` rows. Also owns the background scheduler thread (`start_auto_scheduler`, called from `app.py`) which re-runs the scrape every `SCRAPE_INTERVAL_HOURS`. |
-| `scripts/import_scraped_events.py` | One-shot CSV importer, used when you've run the standalone scraper and want to bulk-load its output. |
+| `services/scrape_events.py` | Pure scraping logic. One function per source that takes a URL and returns a dict. Also has helpers to discover URLs from each source's sitemap. Can be run standalone (`uv run python services/scrape_events.py`) to dump everything to `instance/events.csv`. |
+| `services/scraper.py` | The runtime glue. Discovers new URLs, calls the per-source parsers, deduplicates against existing `Event.source_url` and `ScrapedEvent.url`, then writes new `ScrapedEvent` rows. Also owns the background scheduler thread (`start_auto_scheduler`, called from `app.py`) which re-runs the scrape every `SCRAPE_INTERVAL_HOURS`. |
 
 Scraped events live in their own table (`ScrapedEvent`). They aren't
 shown to the public until an admin approves one in the event queue,
@@ -199,7 +185,7 @@ which copies its fields into a real `Event` row and sets
 
 ### Adding a new scraper
 
-1. **Write a parser in `utils/scrape_events.py`.** It should take an
+1. **Write a parser in `services/scrape_events.py`.** It should take an
    event URL and return a dict using the same keys as the existing
    parsers (`source`, `url`, `title`, `performers`, `styles`,
    `description`, `start_date`, `end_date`, `doors_open`,
@@ -229,7 +215,7 @@ which copies its fields into a real `Event` row and sets
    existing one.
 
 4. **(Optional) extend the standalone runner** in `main()` of
-   `utils/scrape_events.py` if you want `python utils/scrape_events.py`
+   `services/scrape_events.py` if you want `python services/scrape_events.py`
    to also include the new source.
 
 That's it — no schema changes, no admin-side changes. New rows show up
@@ -249,12 +235,13 @@ utils.py                 Shared helpers (genre tokenising, canton resolution,
 
 blueprints/
   public.py              Public-facing pages: calendar, venues, accessibility,
-                         contact form, iCal feed.
-  submissions.py         The "submit an event" flow for non-admins.
-  auth.py                Login, password reset, invite-token signup.
-  admin.py               Admin dashboard: event queue, scraped-event approval,
-                         venue editing.
-  api.py                 JSON endpoints (iCal/calendar, status, etc.).
+                         contact form, sitemap.
+  submissions.py         The "submit an event" flow for non-admins, plus the
+                         scraped-event approval queue.
+  auth.py                Login, logout, invite-token password setup.
+  admin.py               Admin dashboard: event/venue editing, Excel export,
+                         analytics, weekly calendar image.
+  api.py                 JSON endpoints: genre/venue lookups, POST /api/ingest.
 
 services/
   scraper.py             Background scheduler + import pipeline (see above).
@@ -266,12 +253,10 @@ services/
   uploads.py             Flyer upload handling.
   analytics.py           goaccess-style log report glue.
   calendar_image.py      OG-image generation for calendar pages.
-
-utils/
   scrape_events.py       Source-specific scraping (see "Scrapers" above).
 
-scripts/                 Operational one-shots: cleanup, dummy data, i18n
-                         extraction, image conversion, the CSV importer, etc.
+scripts/                 Operational tools: eventbot forwarder/importer, i18n
+                         extraction, email config checks, dummy data, etc.
                          Run with `uv run python scripts/<name>.py`.
 
 migrations/              Hand-written one-shot migration scripts. There's no

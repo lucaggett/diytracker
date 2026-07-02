@@ -20,7 +20,7 @@ from flask import (
 from forms import AccessibilityForm, CollaboratorRequestForm
 from sqlalchemy.orm import joinedload
 
-from models import Event, Venue, VenueAccessibility, db
+from models import Event, Venue, VenueAccessibility, db, utcnow
 from services.auth import safe_redirect_target
 from services.cache import cache
 from services.contact import build_contact_logger, send_contact_email
@@ -183,7 +183,7 @@ def accessibility_form(token):
     if form.validate_on_submit():
         form.populate_obj(info)
         info.venue_id = venue.id
-        info.updated_at = datetime.utcnow()
+        info.updated_at = utcnow()
         db.session.add(info)
         db.session.commit()
         flash(_("Accessibility info saved — thank you!"))

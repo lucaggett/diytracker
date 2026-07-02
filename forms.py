@@ -114,7 +114,7 @@ def get_canton_choices():
 
 class EventForm(FlaskForm):
     # Existing event fields
-    name = StringField(_l("Event Name"), validators=[Optional()])
+    name = StringField(_l("Event Name"), validators=[DataRequired(), Length(max=100)])
     date = DateTimeField(
         _l("Event Date"), format="%Y-%m-%d", validators=[DataRequired()]
     )

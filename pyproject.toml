@@ -1,6 +1,6 @@
 [project]
 name = "diytracker"
-version = "0.11.2"
+version = "0.12.0"
 requires-python = ">=3.10"
 dependencies = [
     "flask>=3.0",
@@ -45,7 +45,5 @@ target-version = "py310"
 
 [tool.ruff.lint.per-file-ignores]
 # Blueprints are imported after `app`/extensions are created (avoids
-# circular imports), and admin_tools.py loads .env before importing
-# modules that read env vars at import time — both are intentional.
+# circular imports) — intentional.
 "app.py" = ["E402"]
-"scripts/admin_tools.py" = ["E402"]

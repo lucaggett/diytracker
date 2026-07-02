@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-23 21:01+0200\n"
+"POT-Creation-Date: 2026-07-02 18:53+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -16,212 +16,308 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: forms.py:67 forms.py:94 templates/event_queue.html:89
+#: forms.py:117 templates/event_queue.html:113
 msgid "Event Name"
 msgstr "Event Name"
 
-#: forms.py:68 forms.py:95
+#: forms.py:119
 msgid "Event Date"
 msgstr "Event Date"
 
-#: forms.py:69 forms.py:96 templates/edit_event.html:53
-#: templates/edit_event.html:238 templates/edit_event.html:240
-#: templates/submit_event.html:51 templates/submit_event.html:216
-#: templates/submit_event.html:218
+#: forms.py:121 templates/edit_event.html:53 templates/edit_event.html:238
+#: templates/edit_event.html:240 templates/submit_event.html:51
+#: templates/submit_event.html:216 templates/submit_event.html:218
 msgid "End Date"
 msgstr "End Date"
 
-#: forms.py:70 forms.py:97
+#: forms.py:122 templates/event_page.html:46
 msgid "Festival"
 msgstr "Festival"
 
-#: forms.py:71 forms.py:98
+#: forms.py:124
 msgid "Doors Open Time"
 msgstr "Doors Open Time"
 
-#: forms.py:72 forms.py:99 templates/calendar.html:90
-#: templates/calendar.html:202 templates/event_queue.html:101
+#: forms.py:127 templates/admin.html:64 templates/calendar.html:90
+#: templates/calendar.html:207 templates/event_page.html:82
+#: templates/event_queue.html:125
 msgid "Genre"
 msgstr "Genre"
 
-#: forms.py:73 forms.py:100 templates/calendar.html:91
-#: templates/event_queue.html:105
+#: forms.py:129 templates/calendar.html:91 templates/event_queue.html:129
 msgid "Acts"
 msgstr "Acts"
 
-#: forms.py:74 forms.py:101 templates/edit_event.html:137
+#: forms.py:130 templates/edit_event.html:137 templates/event_queue.html:63
 msgid "Flyer"
 msgstr "Flyer"
 
-#: forms.py:77 forms.py:104 templates/event_queue.html:125
+#: forms.py:133 templates/event_queue.html:149
 msgid "Ticket Price"
 msgstr "Ticket Price"
 
-#: forms.py:78 forms.py:105
+#: forms.py:134
 msgid "Ticket Link"
 msgstr "Ticket Link"
 
-#: forms.py:81 forms.py:108 templates/admin.html:79 templates/calendar.html:87
-#: templates/edit_venue.html:8 templates/event_queue.html:49
+#: forms.py:137 templates/admin.html:89 templates/calendar.html:87
+#: templates/edit_venue.html:8 templates/event_page.html:67
+#: templates/event_queue.html:50
 msgid "Venue"
 msgstr "Venue"
 
-#: forms.py:85 forms.py:112 forms.py:135 templates/event_queue.html:109
+#: forms.py:141 forms.py:173 templates/event_queue.html:133
 msgid "Venue Name"
 msgstr "Venue Name"
 
-#: forms.py:86 forms.py:113 forms.py:136
+#: forms.py:142 forms.py:174
 msgid "Venue Address"
 msgstr "Venue Address"
 
-#: forms.py:87 forms.py:114 forms.py:137 templates/event_queue.html:113
+#: forms.py:143 forms.py:175 templates/event_queue.html:137
 #: templates/venues.html:40
 msgid "City"
 msgstr "City"
 
-#: forms.py:88 forms.py:115 forms.py:138 templates/calendar.html:201
+#: forms.py:144 forms.py:176 templates/calendar.html:206
 #: templates/venues.html:41
 msgid "Canton"
 msgstr "Canton"
 
-#: forms.py:89 forms.py:116 forms.py:139 templates/venues.html:42
+#: forms.py:145 forms.py:177 templates/venues.html:42
 msgid "ZIP Code"
 msgstr "ZIP Code"
 
-#: forms.py:90 forms.py:117 forms.py:140
+#: forms.py:146 forms.py:178
 msgid "Coordinates"
 msgstr "Coordinates"
 
-#: forms.py:121 forms.py:201
+#: forms.py:153 forms.py:322
 msgid "Email"
 msgstr "Email"
 
-#: forms.py:122 forms.py:130
+#: forms.py:154 forms.py:166
 msgid "Password"
 msgstr "Password"
 
-#: forms.py:131
+#: forms.py:168
 msgid "Confirm Password"
 msgstr "Confirm Password"
 
-#: forms.py:162 templates/venue_accessibility.html:71
+#: forms.py:223 templates/venue_accessibility.html:71
 msgid "Step-free entrance"
 msgstr "Step-free entrance"
 
-#: forms.py:163
+#: forms.py:226
 msgid "Entrance notes"
 msgstr "Entrance notes"
 
-#: forms.py:164 templates/venue_accessibility.html:72
+#: forms.py:229 templates/venue_accessibility.html:72
 msgid "Step-free throughout interior"
 msgstr "Step-free throughout interior"
 
-#: forms.py:165 templates/venue_accessibility.html:73
+#: forms.py:232 templates/venue_accessibility.html:73
 msgid "Accessible toilet"
 msgstr "Accessible toilet"
 
-#: forms.py:166
+#: forms.py:235
 msgid "Toilet notes"
 msgstr "Toilet notes"
 
-#: forms.py:167 templates/venue_accessibility.html:76
+#: forms.py:238 templates/venue_accessibility.html:76
 msgid "Dedicated wheelchair spaces"
 msgstr "Dedicated wheelchair spaces"
 
-#: forms.py:168
+#: forms.py:241
 msgid "Number of wheelchair spaces"
 msgstr "Number of wheelchair spaces"
 
-#: forms.py:169 templates/venue_accessibility.html:83
+#: forms.py:244 templates/venue_accessibility.html:83
 msgid "Floor surface"
 msgstr "Floor surface"
 
-#: forms.py:172 templates/venue_accessibility.html:93
+#: forms.py:249 templates/venue_accessibility.html:93
 msgid "Strobe / flashing lights"
 msgstr "Strobe / flashing lights"
 
-#: forms.py:173
+#: forms.py:252
 msgid "Warning given before strobes"
 msgstr "Warning given before strobes"
 
-#: forms.py:174 templates/venue_accessibility.html:95
+#: forms.py:255 templates/venue_accessibility.html:95
 msgid "Smoke / haze machines"
 msgstr "Smoke / haze machines"
 
-#: forms.py:175 templates/venue_accessibility.html:96
+#: forms.py:258 templates/venue_accessibility.html:96
 msgid "Typical sound level"
 msgstr "Typical sound level"
 
-#: forms.py:176
+#: forms.py:261
 msgid "Quiet / low-stimulation room available"
 msgstr "Quiet / low-stimulation room available"
 
-#: forms.py:177
+#: forms.py:266
 msgid "Free earplugs provided"
 msgstr "Free earplugs provided"
 
-#: forms.py:178
+#: forms.py:269
 msgid "Sensory-friendly events / nights"
 msgstr "Sensory-friendly events / nights"
 
-#: forms.py:181
+#: forms.py:274
 msgid "Hearing loop (induction loop)"
 msgstr "Hearing loop (induction loop)"
 
-#: forms.py:182
+#: forms.py:277
 msgid "Sign language interpretation at events"
 msgstr "Sign language interpretation at events"
 
-#: forms.py:185 templates/venue_accessibility.html:112
+#: forms.py:284 templates/venue_accessibility.html:112
 msgid "Refrigerator for medication"
 msgstr "Refrigerator for medication"
 
-#: forms.py:186
+#: forms.py:287
 #, fuzzy
 msgid "First aid kit on site"
 msgstr "First and last name"
 
-#: forms.py:187
+#: forms.py:290
 msgid "AED (defibrillator) on site"
 msgstr "AED (defibrillator) on site"
 
-#: forms.py:190 templates/venue_accessibility.html:125
+#: forms.py:295 templates/venue_accessibility.html:125
 msgid "Accessible parking"
 msgstr "Accessible parking"
 
-#: forms.py:191
+#: forms.py:298
 msgid "Public transport access"
 msgstr "Public transport access"
 
-#: forms.py:192 templates/venue_accessibility.html:132
+#: forms.py:301 templates/venue_accessibility.html:132
 msgid "Gender-neutral toilets"
 msgstr "Gender-neutral toilets"
 
-#: forms.py:193
+#: forms.py:304
 msgid "Rest / seating areas inside"
 msgstr "Rest / seating areas inside"
 
-#: forms.py:194
+#: forms.py:307
 msgid "Guide dogs & assistance animals welcome"
 msgstr "Guide dogs & assistance animals welcome"
 
-#: forms.py:195
+#: forms.py:312
 msgid "Quiet / alternative entrance option"
 msgstr "Quiet / alternative entrance option"
 
-#: forms.py:196
+#: forms.py:315
 msgid "Additional accessibility notes"
 msgstr "Additional accessibility notes"
 
-#: forms.py:200 templates/admin.html:77 templates/venues.html:39
+#: forms.py:320 templates/admin.html:87 templates/venues.html:39
 msgid "Name"
 msgstr "Name"
 
-#: forms.py:202
+#: forms.py:325
 msgid "Message"
 msgstr "Message"
 
-#: templates/_partials/header_public.html:16 templates/about.html:3
+#: blueprints/admin.py:143 blueprints/submissions.py:292
+msgid "Selected venue does not exist."
+msgstr "Selected venue does not exist."
+
+#: blueprints/admin.py:164
+msgid "Event updated successfully!"
+msgstr "Event updated successfully!"
+
+#: blueprints/admin.py:180
+msgid "Event deleted successfully!"
+msgstr "Event deleted successfully!"
+
+#: blueprints/admin.py:202
+msgid "— none —"
+msgstr "— none —"
+
+#: blueprints/admin.py:211
+msgid "Venue updated successfully!"
+msgstr "Venue updated successfully!"
+
+#: blueprints/admin.py:232
+#, python-format
+msgid " and %(k)d more"
+msgstr " and %(k)d more"
+
+#: blueprints/admin.py:235
+#, python-format
+msgid ""
+"Cannot delete venue \"%(venue)s\": it still has %(n)d event(s) "
+"(%(names)s%(more)s). Reassign or delete those events first."
+msgstr ""
+"Cannot delete venue \"%(venue)s\": it still has %(n)d event(s) "
+"(%(names)s%(more)s). Reassign or delete those events first."
+
+#: blueprints/admin.py:246
+#, fuzzy
+msgid "Venue deleted."
+msgstr "Venue Details"
+
+#: blueprints/admin.py:406
+msgid "No report has been generated yet. Use the form to create one."
+msgstr "No report has been generated yet. Use the form to create one."
+
+#: blueprints/auth.py:37
+msgid "Invalid email or password."
+msgstr "Invalid email or password."
+
+#: blueprints/auth.py:53
+msgid "This invite link is invalid or has expired."
+msgstr "This invite link is invalid or has expired."
+
+#: blueprints/public.py:143
+msgid ""
+"Your message could not be sent — please write to us directly at "
+"kontakt@diytracker.ch."
+msgstr ""
+"Your message could not be sent — please write to us directly at "
+"kontakt@diytracker.ch."
+
+#: blueprints/public.py:153
+msgid "Thanks! We will get back to you as soon as possible."
+msgstr "Thanks! We will get back to you as soon as possible."
+
+#: blueprints/public.py:189
+#, fuzzy
+msgid "Accessibility info saved — thank you!"
+msgstr "Accessibility information"
+
+#: blueprints/submissions.py:114
+msgid "Invalid event selection."
+msgstr "Invalid event selection."
+
+#: blueprints/submissions.py:184
+msgid "This event already exists."
+msgstr "This event already exists."
+
+#: blueprints/submissions.py:208
+msgid "Event approved and added to calendar!"
+msgstr "Event approved and added to calendar!"
+
+#: blueprints/submissions.py:234
+msgid "Event removed from queue."
+msgstr "Event removed from queue."
+
+#: blueprints/submissions.py:274
+msgid "Please provide all required venue details for a new venue."
+msgstr "Please provide all required venue details for a new venue."
+
+#: blueprints/submissions.py:286
+msgid "Venue already exists. Using existing venue."
+msgstr "Venue already exists. Using existing venue."
+
+#: blueprints/submissions.py:316
+msgid "Event submitted successfully!"
+msgstr "Event submitted successfully!"
+
+#: templates/_partials/header_public.html:26 templates/about.html:3
 msgid "About"
 msgstr "About"
 
@@ -273,11 +369,13 @@ msgstr "What do you do, what would you like to contribute?"
 msgid "Send"
 msgstr "Send"
 
-#: templates/accessibility_form.html:3 templates/venue_accessibility.html:3
+#: templates/accessibility_form.html:3 templates/calendar.html:102
+#: templates/venue_accessibility.html:3
 msgid "Accessibility"
 msgstr "Accessibility"
 
-#: templates/accessibility_form.html:14 templates/venue_accessibility.html:47
+#: templates/accessibility_form.html:14 templates/event_page.html:109
+#: templates/venue_accessibility.html:47
 msgid "Accessibility information"
 msgstr "Accessibility information"
 
@@ -370,7 +468,7 @@ msgstr "Anything else visitors with disabilities should know"
 msgid "Save accessibility info"
 msgstr "Save accessibility info"
 
-#: templates/_partials/header_public.html:11
+#: templates/_partials/header_public.html:18
 #: templates/_partials/nav_admin.html:6 templates/admin.html:3
 msgid "Admin"
 msgstr "Admin"
@@ -383,11 +481,11 @@ msgstr "Admin console"
 msgid "MANAGE EVENTS"
 msgstr "MANAGE EVENTS"
 
-#: templates/admin.html:11 templates/event_queue.html:38
+#: templates/admin.html:11 templates/event_queue.html:39
 msgid "events"
 msgstr "events"
 
-#: templates/admin.html:11 templates/event_queue.html:38
+#: templates/admin.html:11 templates/event_queue.html:39
 msgid "event"
 msgstr "event"
 
@@ -433,46 +531,51 @@ msgstr "Export Excel"
 msgid "Week of"
 msgstr "Week of"
 
-#: templates/admin.html:65
+#: templates/admin.html:67 templates/event_queue.html:26
+msgid "All"
+msgstr "All"
+
+#: templates/admin.html:75
 msgid "Weekly Image"
 msgstr "Weekly Image"
 
-#: templates/admin.html:76 templates/venues.html:38
+#: templates/admin.html:86 templates/venues.html:38
 msgid "ID"
 msgstr "ID"
 
-#: templates/admin.html:78 templates/calendar.html:86
-#: templates/event_queue.html:47
+#: templates/admin.html:88 templates/calendar.html:86
+#: templates/event_page.html:61 templates/event_queue.html:48
 msgid "Date"
 msgstr "Date"
 
-#: templates/admin.html:80 templates/event_queue.html:51
+#: templates/admin.html:90 templates/event_queue.html:52
 #: templates/venues.html:45
 msgid "Actions"
 msgstr "Actions"
 
-#: templates/admin.html:92 templates/event_queue.html:78
+#: templates/admin.html:102 templates/event_queue.html:93
 #: templates/venues.html:68
 msgid "Edit"
 msgstr "Edit"
 
-#: templates/admin.html:97
+#: templates/admin.html:107
 msgid "Delete this event?"
 msgstr "Delete this event?"
 
-#: templates/admin.html:97 templates/venues.html:79 templates/venues.html:85
+#: templates/admin.html:107 templates/event_queue.html:100
+#: templates/venues.html:79 templates/venues.html:85
 msgid "Delete"
 msgstr "Delete"
 
-#: templates/admin.html:123
+#: templates/admin.html:133
 msgid "Scrape complete — reloading…"
 msgstr "Scrape complete — reloading…"
 
-#: templates/admin.html:127
+#: templates/admin.html:137
 msgid "Scraping…"
 msgstr "Scraping…"
 
-#: templates/admin.html:133
+#: templates/admin.html:143
 msgid "left"
 msgstr "left"
 
@@ -492,43 +595,43 @@ msgstr ""
 msgid "TODAY"
 msgstr "TODAY"
 
-#: templates/calendar.html:88
+#: templates/calendar.html:88 templates/event_page.html:72
 msgid "Address"
 msgstr "Address"
 
-#: templates/calendar.html:89
+#: templates/calendar.html:89 templates/event_page.html:77
 msgid "Location"
 msgstr "Location"
 
-#: templates/calendar.html:92
+#: templates/calendar.html:92 templates/event_page.html:88
 msgid "Price"
 msgstr "Price"
 
-#: templates/calendar.html:95
+#: templates/calendar.html:95 templates/event_page.html:94
 msgid "Tickets"
 msgstr "Tickets"
 
-#: templates/calendar.html:104
-msgid "no events"
-msgstr "no events"
+#: templates/calendar.html:104 templates/venues.html:60
+msgid "View accessibility info"
+msgstr "View accessibility info"
 
-#: templates/calendar.html:116
+#: templates/calendar.html:121
 msgid "Open filters"
 msgstr "Open filters"
 
-#: templates/calendar.html:130
+#: templates/calendar.html:135
 msgid "FILTER"
 msgstr "FILTER"
 
-#: templates/calendar.html:136
+#: templates/calendar.html:141
 msgid "Close"
 msgstr "Close"
 
-#: templates/calendar.html:139
+#: templates/calendar.html:144
 msgid "Apply"
 msgstr "Apply"
 
-#: templates/calendar.html:203
+#: templates/calendar.html:208
 msgid "Tags"
 msgstr "Tags"
 
@@ -536,7 +639,8 @@ msgstr "Tags"
 msgid "Edit Event"
 msgstr "Edit Event"
 
-#: templates/edit_event.html:13 templates/event_queue.html:48
+#: templates/edit_event.html:13 templates/event_page.html:3
+#: templates/event_page.html:46 templates/event_queue.html:49
 msgid "Event"
 msgstr "Event"
 
@@ -595,7 +699,7 @@ msgid "Update Event"
 msgstr "Update Event"
 
 #: templates/edit_event.html:154 templates/edit_venue.html:70
-#: templates/event_queue.html:148
+#: templates/event_queue.html:172
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -627,6 +731,15 @@ msgstr "Back to calendar"
 msgid "Update Venue"
 msgstr "Update Event"
 
+#: templates/event_page.html:102 templates/event_queue.html:161
+msgid "Description"
+msgstr "Description"
+
+#: templates/errors/404.html:21 templates/errors/500.html:21
+#: templates/event_page.html:115 templates/venue_accessibility.html:147
+msgid "Back to calendar"
+msgstr "Back to calendar"
+
 #: templates/_partials/nav_admin.html:8 templates/event_queue.html:3
 msgid "Queue"
 msgstr "Queue"
@@ -651,63 +764,63 @@ msgstr "To"
 msgid "Source"
 msgstr "Source"
 
-#: templates/event_queue.html:26
-msgid "All"
-msgstr "All"
-
-#: templates/event_queue.html:33
+#: templates/event_queue.html:34
 msgid "Filter"
 msgstr "Filter"
 
-#: templates/event_queue.html:36
+#: templates/event_queue.html:37
 msgid "Reset"
 msgstr "Reset"
 
-#: templates/event_queue.html:50
+#: templates/event_queue.html:51
 msgid "Genres"
 msgstr "Genres"
 
-#: templates/event_queue.html:74
+#: templates/event_queue.html:73
+msgid "via"
+msgstr "via"
+
+#: templates/event_queue.html:89
 msgid "Approve"
 msgstr "Approve"
 
-#: templates/event_queue.html:93
+#: templates/event_queue.html:100
+msgid "Remove this event from the queue?"
+msgstr "Remove this event from the queue?"
+
+#: templates/event_queue.html:117
 msgid "Date (YYYY-MM-DD)"
 msgstr "Date (YYYY-MM-DD)"
 
-#: templates/event_queue.html:97
+#: templates/event_queue.html:121
 msgid "Doors Open (HH:MM)"
 msgstr "Doors Open (HH:MM)"
 
-#: templates/event_queue.html:117
+#: templates/event_queue.html:141
 msgid "Postal Code"
 msgstr "Postal Code"
 
-#: templates/event_queue.html:121
+#: templates/event_queue.html:145
 msgid "Street Address"
 msgstr "Street Address"
 
-#: templates/event_queue.html:129
+#: templates/event_queue.html:153
 msgid "Ticket URL"
 msgstr "Ticket URL"
 
-#: templates/event_queue.html:133
+#: templates/event_queue.html:157
 msgid "Source URL"
 msgstr "Source URL"
 
-#: templates/event_queue.html:137
-msgid "Description"
-msgstr "Description"
-
-#: templates/event_queue.html:144
+#: templates/event_queue.html:168
 msgid "Approve with Changes"
 msgstr "Approve with Changes"
 
-#: templates/event_queue.html:160
+#: templates/event_queue.html:184
 msgid "No events awaiting approval."
 msgstr "No events awaiting approval."
 
-#: templates/_partials/header_public.html:14 templates/login.html:3
+#: templates/_partials/header_public.html:24 templates/login.html:3
 msgid "Login"
 msgstr "Login"
 
@@ -959,11 +1072,6 @@ msgstr "Quiet / alternative entrance"
 msgid "Additional notes"
 msgstr "Additional notes"
 
-#: templates/errors/404.html:21 templates/errors/500.html:21
-#: templates/venue_accessibility.html:147
-msgid "Back to calendar"
-msgstr "Back to calendar"
-
 #: templates/venues.html:9
 msgid "Accessibility form link — share this with the venue"
 msgstr "Accessibility form link — share this with the venue"
@@ -990,10 +1098,6 @@ msgstr "events"
 #: templates/venues.html:44
 msgid "Access."
 msgstr "Access."
-
-#: templates/venues.html:60
-msgid "View accessibility info"
-msgstr "View accessibility info"
 
 #: templates/venues.html:63
 msgid "No accessibility info yet"
@@ -1037,19 +1141,23 @@ msgstr "Privacy"
 msgid "Language"
 msgstr "Language"
 
-#: templates/_partials/header_public.html:9
+#: templates/_partials/header_public.html:16
 #: templates/_partials/nav_admin.html:4
 msgid "Calendar"
 msgstr "Calendar"
 
-#: templates/_partials/header_public.html:12
-#: templates/_partials/nav_admin.html:10
+#: templates/_partials/header_public.html:21
+#: templates/_partials/nav_admin.html:13
 msgid "Logout"
 msgstr "Logout"
 
 #: templates/_partials/nav_admin.html:9
 msgid "Submit"
 msgstr "Submit"
+
+#: templates/_partials/nav_admin.html:10
+msgid "Analytics"
+msgstr "Analytics"
 
 #: templates/errors/404.html:3
 msgid "404 · Missing"
@@ -1143,4 +1251,7 @@ msgstr "Fuse blown, cable busted, something between stage and mixing desk."
 
 #~ msgid "Event deleted successfully!"
 #~ msgstr "Event deleted successfully!"
+
+#~ msgid "no events"
+#~ msgstr "no events"
 

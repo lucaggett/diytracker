@@ -134,7 +134,9 @@ def edit_event(event_id):
 
             venue_id = form.venue_id.data
             if venue_id and venue_id != "new":
-                venue = Venue.query.get(venue_id)
+                venue = (
+                    db.session.get(Venue, int(venue_id)) if venue_id.isdigit() else None
+                )
                 if not venue:
                     flash(_("Selected venue does not exist."))
                     return redirect(url_for("admin.edit_event", event_id=event_id))

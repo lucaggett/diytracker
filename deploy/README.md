@@ -14,7 +14,8 @@ cd /home/diytrackeruser/diytracker
 uv sync                                   # make sure .venv/bin/gunicorn exists
 
 # stop the old self-daemonized gunicorn if it's still running
-uv run python manage.py stop
+# (manage.py's start/stop commands were removed when systemd took over)
+kill -TERM "$(cat instance/gunicorn.pid)" 2>/dev/null || true
 
 sudo cp deploy/diytracker.service /etc/systemd/system/
 sudo systemctl daemon-reload
@@ -35,8 +36,8 @@ HUP reload respawns the workers, and the scrape scheduler only starts in
 the first worker the master ever forks, so a reload would silently kill
 the scraper. Restart instead.
 
-`manage.py start/stop/restart/status` are superseded by systemctl once the
-unit is installed; `manage.py logs` and `manage.py user …` work as before.
+Server lifecycle is systemctl's job; `manage.py` only keeps `logs` and
+`user …`.
 
 ## MOTD (`update-motd.d/50-diytracker`)
 

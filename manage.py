@@ -1,34 +1,26 @@
 #!/usr/bin/env python3
 """diytracker management CLI.
 
-Start/stop the gunicorn server, inspect its status, follow logs, and manage
-users — all from one place. Run it through uv so the project's dependencies
-are available:
+Tail the server logs and manage users. Run it through uv so the project's
+dependencies are available:
 
     uv run python manage.py <command> [options]
 
 Commands:
-    start    Start the gunicorn server (daemonized by default)
-    stop     Stop the running server
-    restart  Stop then start the server
-    status   Show whether the server is running, plus per-process info
     logs     Tail the access or error log
     user     Manage users (list / add / passwd / admin / invite / delete)
+
+The gunicorn server itself runs under systemd — see deploy/README.md.
 """
 
 import argparse
 import getpass
 import os
-import signal
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-PIDFILE = PROJECT_ROOT / "instance" / "gunicorn.pid"
-GUNICORN_CONF = PROJECT_ROOT / "gunicorn_conf.py"
-APP_MODULE = "app:app"
 ACCESS_LOG = PROJECT_ROOT / "logs" / "access_log_diytracker"
 ERROR_LOG = PROJECT_ROOT / "logs" / "error_log_diytracker"
 
@@ -48,195 +40,7 @@ def green(t):
     return _c(t, "32")
 
 
-def red(t):
-    return _c(t, "31")
-
-
-def bold(t):
-    return _c(t, "1")
-
-
-def dim(t):
-    return _c(t, "2")
-
-
-# ── process helpers ───────────────────────────────────────────────────────────
-
-
-def _gunicorn_bin():
-    """Path to gunicorn inside the active venv, falling back to PATH."""
-    candidate = Path(sys.executable).with_name("gunicorn")
-    return str(candidate) if candidate.exists() else "gunicorn"
-
-
-def _read_pid():
-    try:
-        return int(PIDFILE.read_text().strip())
-    except (FileNotFoundError, ValueError):
-        return None
-
-
-def _pid_alive(pid):
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    return True
-
-
-def _running_pid():
-    """Return the master PID if the server is running, else None."""
-    pid = _read_pid()
-    return pid if pid and _pid_alive(pid) else None
-
-
-def _bind_addr():
-    """Read the `bind` setting from gunicorn_conf.py without importing the app."""
-    ns = {}
-    try:
-        exec(compile(GUNICORN_CONF.read_text(), str(GUNICORN_CONF), "exec"), ns)
-    except Exception:
-        return None
-    return ns.get("bind")
-
-
-def _ps_processes(master_pid):
-    """Return [{pid, ppid, cpu, mem, rss, etime}] for the master and its workers."""
-    fmt = "pid=,ppid=,pcpu=,pmem=,rss=,etime="
-    try:
-        out = subprocess.run(
-            ["ps", "-o", fmt, "--pid", str(master_pid), "--ppid", str(master_pid)],
-            capture_output=True,
-            text=True,
-            check=False,
-        ).stdout
-    except FileNotFoundError:
-        return []
-    rows = []
-    for line in out.splitlines():
-        parts = line.split()
-        if len(parts) < 6:
-            continue
-        pid, ppid, cpu, mem, rss, etime = parts[:6]
-        rows.append(
-            {
-                "pid": int(pid),
-                "ppid": int(ppid),
-                "cpu": cpu,
-                "mem": mem,
-                "rss": int(rss),
-                "etime": etime,
-            }
-        )
-    return rows
-
-
-# ── server lifecycle ──────────────────────────────────────────────────────────
-
-
-def cmd_start(args):
-    pid = _running_pid()
-    if pid:
-        print(f"Already running (master PID {pid}). Use 'restart' to reload.")
-        return 1
-
-    PIDFILE.parent.mkdir(parents=True, exist_ok=True)
-    (PROJECT_ROOT / "logs").mkdir(exist_ok=True)
-
-    cmd = [
-        _gunicorn_bin(),
-        "-c",
-        str(GUNICORN_CONF),
-        APP_MODULE,
-        "--chdir",
-        str(PROJECT_ROOT),
-        "--pid",
-        str(PIDFILE),
-    ]
-
-    if args.foreground:
-        return subprocess.run(cmd, cwd=PROJECT_ROOT).returncode
-
-    cmd.append("--daemon")
-    subprocess.run(cmd, cwd=PROJECT_ROOT, check=True)
-
-    # Daemonized gunicorn detaches immediately; wait for the pidfile to appear.
-    for _ in range(50):
-        pid = _running_pid()
-        if pid:
-            print(f"{green('Started')} (master PID {pid}).")
-            return 0
-        time.sleep(0.1)
-
-    print(red("Failed to start.") + f" Check the error log:\n  {ERROR_LOG}")
-    return 1
-
-
-def cmd_stop(args):
-    pid = _running_pid()
-    if not pid:
-        print("Not running.")
-        PIDFILE.unlink(missing_ok=True)
-        return 0
-
-    os.kill(pid, signal.SIGTERM)
-    for _ in range(args.timeout * 10):
-        if not _pid_alive(pid):
-            break
-        time.sleep(0.1)
-    else:
-        print(f"Did not stop within {args.timeout}s; sending SIGKILL.")
-        try:
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-
-    PIDFILE.unlink(missing_ok=True)
-    print(f"{green('Stopped')} (was PID {pid}).")
-    return 0
-
-
-def cmd_restart(args):
-    cmd_stop(argparse.Namespace(timeout=args.timeout))
-    return cmd_start(argparse.Namespace(foreground=False))
-
-
-def cmd_status(args):
-    pid = _running_pid()
-    if not pid:
-        print(f"diytracker: {red('stopped')}")
-        return 0
-
-    print(f"diytracker: {green('running')}")
-    bind = _bind_addr()
-    if bind:
-        print(f"  {dim('bind')}     {bind}")
-    print(f"  {dim('master')}   PID {pid}")
-
-    procs = _ps_processes(pid)
-    workers = [p for p in procs if p["pid"] != pid]
-    print(f"  {dim('workers')}  {len(workers)}")
-
-    master = next((p for p in procs if p["pid"] == pid), None)
-    if master:
-        print(f"  {dim('uptime')}   {master['etime']}")
-
-    if procs:
-        print()
-        print(
-            bold(
-                f"  {'PID':>7}  {'ROLE':<7}  {'CPU%':>5}  {'MEM%':>5}  {'RSS':>8}  UPTIME"
-            )
-        )
-        for p in sorted(procs, key=lambda x: (x["pid"] != pid, x["pid"])):
-            role = "master" if p["pid"] == pid else "worker"
-            rss = f"{p['rss'] / 1024:.0f}M"
-            print(
-                f"  {p['pid']:>7}  {role:<7}  {p['cpu']:>5}  {p['mem']:>5}  {rss:>8}  {p['etime']}"
-            )
-    return 0
+# ── logs ──────────────────────────────────────────────────────────────────────
 
 
 def cmd_logs(args):
@@ -404,37 +208,6 @@ def build_parser():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = p.add_subparsers(dest="command", required=True)
-
-    sp = sub.add_parser("start", help="Start the gunicorn server")
-    sp.add_argument(
-        "-f",
-        "--foreground",
-        action="store_true",
-        help="Run in the foreground instead of daemonizing",
-    )
-    sp.set_defaults(func=cmd_start)
-
-    sp = sub.add_parser("stop", help="Stop the running server")
-    sp.add_argument(
-        "--timeout",
-        type=int,
-        default=10,
-        help="Seconds to wait for graceful shutdown before SIGKILL (default: 10)",
-    )
-    sp.set_defaults(func=cmd_stop)
-
-    sp = sub.add_parser("restart", help="Restart the server")
-    sp.add_argument(
-        "--timeout",
-        type=int,
-        default=10,
-        help="Seconds to wait for graceful shutdown before SIGKILL (default: 10)",
-    )
-    sp.set_defaults(func=cmd_restart)
-
-    sub.add_parser("status", help="Show server status and process info").set_defaults(
-        func=cmd_status
-    )
 
     sp = sub.add_parser("logs", help="Tail the access (default) or error log")
     sp.add_argument(

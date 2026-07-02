@@ -1,4 +1,3 @@
-import importlib.util
 import os
 import threading
 import time as time_module
@@ -37,18 +36,6 @@ def get_progress():
     return dict(_scrape_progress)
 
 
-def _load_scraper():
-    spec = importlib.util.spec_from_file_location(
-        "scrape_events",
-        os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "utils", "scrape_events.py"
-        ),
-    )
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
 def _get_known_urls():
     scraped_urls = {
         r.url for r in ScrapedEvent.query.with_entities(ScrapedEvent.url).all() if r.url
@@ -65,11 +52,12 @@ def _get_known_urls():
 def _scrape_and_import(app):
     global _scrape_running, _scrape_progress
     try:
-        scraper = _load_scraper()
-        get_sitemap_event_urls = scraper.get_sitemap_event_urls
-        get_petzi_event_urls = scraper.get_petzi_event_urls
-        parse_metalgigs_event = scraper.parse_metalgigs_event
-        parse_petzi_event = scraper.parse_petzi_event
+        from services.scrape_events import (
+            get_petzi_event_urls,
+            get_sitemap_event_urls,
+            parse_metalgigs_event,
+            parse_petzi_event,
+        )
 
         _scrape_progress = {
             "total": 0,
