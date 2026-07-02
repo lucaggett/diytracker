@@ -2,7 +2,7 @@
 
 import pytest
 
-from diytracker.models import db, VenueAccessibility
+from diytracker.models import db, utcnow, VenueAccessibility
 
 
 class TestCalendar:
@@ -175,6 +175,43 @@ class TestEventPage:
         resp = client.get(f"/events/{ev.id}/")
         assert resp.status_code == 200
         assert b'href="javascript' not in resp.data
+
+    def test_calendar_card_links_to_event_page(self, client, make_event):
+        ev = make_event()
+        resp = client.get("/")
+        assert f'href="/events/{ev.id}/"'.encode() in resp.data
+
+    def test_event_page_points_to_contact_when_no_accessibility_info(
+        self, client, make_event
+    ):
+        ev = make_event()
+        resp = client.get(f"/events/{ev.id}/")
+        assert b"No accessibility info for this venue yet." in resp.data
+        assert b'href="/about"' in resp.data
+
+    def test_event_page_links_accessibility_report_when_info_exists(
+        self, client, make_venue, make_event
+    ):
+        venue = make_venue()
+        db.session.add(
+            VenueAccessibility(
+                venue_id=venue.id, step_free_entrance="yes", updated_at=utcnow()
+            )
+        )
+        db.session.commit()
+        ev = make_event(venue=venue)
+        resp = client.get(f"/events/{ev.id}/")
+        assert f"/venues/{venue.id}/accessibility".encode() in resp.data
+
+    def test_event_page_never_exposes_accessibility_token(
+        self, client, make_venue, make_event
+    ):
+        venue = make_venue()
+        venue.generate_accessibility_token()
+        db.session.commit()
+        ev = make_event(venue=venue)
+        resp = client.get(f"/events/{ev.id}/")
+        assert venue.accessibility_token.encode() not in resp.data
 
 
 class TestSitemap:

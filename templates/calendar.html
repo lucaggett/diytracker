@@ -104,6 +104,18 @@
                                class="text-bleed underline">{{ _('View accessibility info') }}</a>
                           </p>
                         {% endif %}
+                        <div class="pt-2">
+                          <a href="{{ url_for('public.event_page', event_id=event.id) }}"
+                             class="share-event-btn btn-press inline-flex items-center gap-1.5 border-2 border-ink bg-paper text-ink px-3 py-1.5 uppercase tracking-widest text-xs hover:bg-ink hover:text-paper transition-colors"
+                             data-share-title="{{ (event.name or event.acts)|e }}"
+                             data-copied-label="{{ _('Link copied!') }}">
+                            <svg class="w-3.5 h-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8.684 13.342a3 3 0 100-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684zm0-9.316a3 3 0 105.368-2.684 3 3 0 00-5.368 2.684z"/>
+                            </svg>
+                            <span class="share-label">{{ _('Share') }}</span>
+                          </a>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -331,6 +343,26 @@
         window.toggleEventDetails = function (element) {
             element.classList.toggle('is-open');
         }
+
+        // Share buttons: native share sheet where available, clipboard copy
+        // otherwise. Without JS the anchor simply navigates to the event page.
+        document.querySelectorAll('.share-event-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation(); // keep the card from collapsing
+                if (navigator.share) {
+                    e.preventDefault();
+                    navigator.share({ title: btn.dataset.shareTitle, url: btn.href }).catch(function () {});
+                } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                    e.preventDefault();
+                    navigator.clipboard.writeText(btn.href).then(function () {
+                        const label = btn.querySelector('.share-label');
+                        const original = label.textContent;
+                        label.textContent = btn.dataset.copiedLabel;
+                        setTimeout(function () { label.textContent = original; }, 1500);
+                    });
+                }
+            });
+        });
     });
 </script>
 {% endblock %}
