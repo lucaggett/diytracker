@@ -7,6 +7,10 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.14.1] - 2026-07-02
+- Added a share button to event cards.
+- Public pages now carry OpenGraph/Twitter meta tags, so shared links render a preview card in WhatsApp and other messengers. Event pages use the flyer as the preview image where available, falling back to the site banner.
+
 ## [0.14.0] - 2026-07-02
 - Restructured the repo: application code (`app.py`, `models.py`, `forms.py`, `utils.py`, `blueprints/`, `services/`) now lives in a `diytracker/` package. A thin root `app.py` shim keeps the `app:app` entry point working, so no gunicorn/systemd changes are needed.
 - Added `diytracker/paths.py` as the single source of truth for repo-anchored paths; runtime behaviour (DB, logs, uploads, cache, translations) no longer depends on the process CWD.

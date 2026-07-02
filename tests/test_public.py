@@ -170,6 +170,24 @@ class TestEventPage:
         assert b"application/ld+json" in resp.data
         assert b'"MusicEvent"' in resp.data
 
+    def test_event_page_og_image_uses_flyer(self, client, make_event):
+        ev = make_event(name="Doom Night", flyer="static/uploads/test.jpg")
+        resp = client.get(f"/events/{ev.id}/")
+        html = resp.data.decode()
+        assert 'property="og:title" content="Doom Night · diytracker.ch"' in html
+        assert (
+            'property="og:image" content="http://localhost/static/uploads/test.jpg"'
+            in html
+        )
+
+    def test_event_page_og_image_falls_back_to_banner(self, client, make_event):
+        ev = make_event()
+        resp = client.get(f"/events/{ev.id}/")
+        assert (
+            'property="og:image" content="http://localhost/static/img/banner.webp"'
+            in resp.data.decode()
+        )
+
     def test_unsafe_ticket_link_is_not_rendered_as_anchor(self, client, make_event):
         ev = make_event(ticket_link="javascript:alert(1)")
         resp = client.get(f"/events/{ev.id}/")

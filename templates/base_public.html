@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}diytracker.ch{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}DIY Event Tracker Schweiz — Konzerte, Festivals und Shows aus dem Underground.{% endblock %}">
+  <meta property="og:site_name" content="diytracker.ch">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ self.title() }}">
+  <meta property="og:description" content="{{ self.meta_description() }}">
+  <meta property="og:url" content="{{ request.base_url }}">
+  {% block og_image -%}
+  <meta property="og:image" content="{{ url_for('static', filename='img/banner.webp', _external=True) }}">
+  {%- endblock %}
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/MISPROJECT.woff2') }}" crossorigin>
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/JetBrainsMono-Regular.woff2') }}" crossorigin>

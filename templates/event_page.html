@@ -6,8 +6,17 @@
    'static/uploads/x.png'); resolved as-is they would break under /events/<id>/. #}
 {% set flyer_src = ('/' ~ event.flyer.lstrip('/') if '://' not in event.flyer else event.flyer) if event.flyer else None %}
 
+{% set flyer_url = (flyer_src if '://' in flyer_src else request.host_url.rstrip('/') ~ flyer_src) if flyer_src else None %}
+
 {% block title %}{{ display_name }} · diytracker.ch{% endblock %}
 {% block meta_description %}{{ display_name }} — {{ event.venue.name }}, {{ event.venue.city }} · {{ event.date.strftime('%d.%m.%Y') }}{% endblock %}
+
+{% block og_image -%}
+  {% if flyer_url -%}
+  <meta property="og:image" content="{{ flyer_url }}">
+  <meta property="og:image:alt" content="{{ display_name }}">
+  {%- else %}{{ super() }}{% endif %}
+{%- endblock %}
 
 {% block head_extra %}
   {% set ld = {
@@ -31,7 +40,7 @@
     }
   } %}
   {% if event.end_date %}{% set ld = dict(ld, endDate=event.end_date.strftime('%Y-%m-%d')) %}{% endif %}
-  {% if flyer_src %}{% set ld = dict(ld, image=flyer_src if '://' in flyer_src else request.host_url.rstrip('/') ~ flyer_src) %}{% endif %}
+  {% if flyer_url %}{% set ld = dict(ld, image=flyer_url) %}{% endif %}
   {% if event.ticket_link or event.ticket_price %}
     {% set ld = dict(ld, offers={"@type": "Offer", "url": event.ticket_link if ticket_is_safe else "", "price": event.ticket_price or "", "priceCurrency": "CHF"}) %}
   {% endif %}
