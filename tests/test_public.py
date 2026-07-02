@@ -149,3 +149,53 @@ class TestErrorHandlers:
     def test_404_uses_custom_template(self, client):
         resp = client.get("/this-route-does-not-exist")
         assert resp.status_code == 404
+
+
+class TestEventPage:
+    def test_event_page_renders(self, client, make_event):
+        ev = make_event(name="Doom Night")
+        resp = client.get(f"/events/{ev.id}/")
+        assert resp.status_code == 200
+        assert b"Doom Night" in resp.data
+        assert b"Kasheme" in resp.data
+
+    def test_event_page_404_for_missing_event(self, client):
+        assert client.get("/events/9999/").status_code == 404
+
+    def test_event_page_includes_json_ld(self, client, make_event):
+        ev = make_event()
+        resp = client.get(f"/events/{ev.id}/")
+        assert b"application/ld+json" in resp.data
+        assert b'"MusicEvent"' in resp.data
+
+    def test_unsafe_ticket_link_is_not_rendered_as_anchor(self, client, make_event):
+        ev = make_event(ticket_link="javascript:alert(1)")
+        resp = client.get(f"/events/{ev.id}/")
+        assert resp.status_code == 200
+        assert b'href="javascript' not in resp.data
+
+
+class TestSitemap:
+    def test_sitemap_lists_static_and_event_pages(self, client, make_event):
+        ev = make_event()
+        resp = client.get("/sitemap.xml")
+        assert resp.status_code == 200
+        assert resp.mimetype == "application/xml"
+        assert f"/events/{ev.id}/".encode() in resp.data
+        assert b"/de/impressum" in resp.data
+        assert b"<urlset" in resp.data
+
+    def test_sitemap_includes_only_venues_with_accessibility_info(
+        self, client, make_venue
+    ):
+        from datetime import datetime
+
+        with_info = make_venue(name="Accessible Hall")
+        without_info = make_venue(name="Plain Hall", plz="8002")
+        db.session.add(
+            VenueAccessibility(venue_id=with_info.id, updated_at=datetime.now())
+        )
+        db.session.commit()
+        resp = client.get("/sitemap.xml")
+        assert f"/venues/{with_info.id}/accessibility".encode() in resp.data
+        assert f"/venues/{without_info.id}/accessibility".encode() not in resp.data
