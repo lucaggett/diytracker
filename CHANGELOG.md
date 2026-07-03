@@ -7,6 +7,9 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.19.1] - 2026-07-03
+- Redrawn the map's X markers as hand-drawn pen strokes: four looser stroke shapes (curved, uneven, with round caps and slightly varying weights) cycle across venues alongside the existing rotation scatter, replacing the ruler-straight lines that made the marks look tilted rather than hand-made. The red-over-blue misprint and the faded grey no-upcoming variant are unchanged.
+
 ## [0.19.0] - 2026-07-03
 - Added public venue pages at `/venues/<id>/`: venue name and address, a small non-interactive Switzerland-cutout locator map, the accessibility-info link where available, and a list of all upcoming events at the venue linking to their event pages. Listed in the sitemap for every venue; translated into de/fr/it/en.
 - The map now loads all venues (not just those with upcoming shows): venues without upcoming events render as faded ink-grey X stamps in a separate layer, toggled by a new "Show all venues" button below the map, with the venue-count caption switching accordingly.
