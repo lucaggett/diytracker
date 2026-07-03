@@ -7,6 +7,10 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.17.0] - 2026-07-03
+- The venue map now only shows venues with events in the next three months (the calendar's horizon), instead of every venue with coordinates.
+- Restyled the map to match the xerox-zine look: tiles are desaturated and multiply-blended onto the paper background, markers are hand-stamped red X marks with the site's blue mis-registration ghost, and popups, zoom buttons and attribution are ink-bordered paper with hard offset shadows.
+
 ## [0.16.0] - 2026-07-03
 - Added a public venue map at `/map`: all venues with coordinates are shown as markers on an OpenStreetMap base layer (Leaflet 1.9.4, vendored under `static/vendor/leaflet/` — no CDN), with popups showing address and upcoming-event count. Linked from the public nav and the sitemap; translated into de/fr/it/en.
 - Added `scripts/geocode_venues.py` (+ a looser second pass in `scripts/geocode_venues_pass2.py`) to backfill `venue.coords` as `lat,lon` via the geo.admin.ch address search with OSM Nominatim as fallback. Ran it against the production database copy: 152 of 153 venues now carry coordinates (the "Unknown venue" placeholder intentionally has none).

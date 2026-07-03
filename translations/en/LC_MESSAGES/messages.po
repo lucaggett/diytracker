@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-03 13:48+0200\n"
+"POT-Creation-Date: 2026-07-03 14:41+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -857,29 +857,25 @@ msgid "Map"
 msgstr "Map"
 
 #: templates/map.html:4
-msgid "All DIY venues in Switzerland on one map."
-msgstr "All DIY venues in Switzerland on one map."
+msgid "Venues with upcoming shows in the next three months."
+msgstr "Venues with upcoming shows in the next three months."
 
-#: templates/map.html:39
+#: templates/map.html:89
 msgid "Where the shows happen"
 msgstr "Where the shows happen"
 
-#: templates/map.html:40
+#: templates/map.html:90
 msgid "MAP"
 msgstr "MAP"
 
-#: templates/map.html:50
+#: templates/map.html:100
 #, python-format
-msgid "%(num)d venues on the map"
-msgstr "%(num)d venues on the map"
+msgid "%(num)d venues with upcoming shows"
+msgstr "%(num)d venues with upcoming shows"
 
-#: templates/map.html:79
+#: templates/map.html:150
 msgid "upcoming events"
 msgstr "upcoming events"
-
-#: templates/map.html:80
-msgid "no upcoming events"
-msgstr "no upcoming events"
 
 #: templates/set_password.html:3
 msgid "Set password"
@@ -1309,4 +1305,13 @@ msgstr "Fuse blown, cable busted, something between stage and mixing desk."
 
 #~ msgid "Fill out accessibility info"
 #~ msgstr "Fill out accessibility info"
+
+#~ msgid "All DIY venues in Switzerland on one map."
+#~ msgstr "All DIY venues in Switzerland on one map."
+
+#~ msgid "%(num)d venues on the map"
+#~ msgstr "%(num)d venues on the map"
+
+#~ msgid "no upcoming events"
+#~ msgstr "no upcoming events"
 

@@ -1,34 +1,84 @@
 {% extends 'base_public.html' %}
 
 {% block title %}{{ _('Map') }} · diytracker.ch{% endblock %}
-{% block meta_description %}{{ _('All DIY venues in Switzerland on one map.') }}{% endblock %}
+{% block meta_description %}{{ _('Venues with upcoming shows in the next three months.') }}{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
 <style>
   #venue-map {
     height: min(70vh, 640px);
-    background: transparent;
+    background: var(--paper);
     cursor: crosshair;
+    font-family: inherit;
   }
-  /* Xerox-flyer treatment: desaturate the tiles so they sit on paper like a photocopy. */
+  /* Xerox treatment: desaturated tiles multiplied onto the paper background,
+     so the basemap reads as a photocopied street plan, not a glossy web map. */
   #venue-map .leaflet-tile-pane {
-    filter: grayscale(1) contrast(1.05);
+    filter: grayscale(1) contrast(1.15) brightness(1.04);
+    mix-blend-mode: multiply;
   }
+
+  /* Hand-stamped X markers: bleed red over a mis-registered blue ghost. */
+  .x-marker { background: none; border: none; }
+  .x-marker svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    transition: transform 120ms ease-out;
+  }
+  .x-marker:hover svg { transform: scale(1.35); }
+
+  /* Popups as stapled paper scraps. */
   #venue-map .leaflet-popup-content-wrapper,
   #venue-map .leaflet-popup-tip {
-    background: var(--color-paper, #f5f1e8);
-    color: var(--color-ink, #1a1a1a);
-    border: 2px solid currentColor;
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
     border-radius: 0;
-    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+    box-shadow: 4px 4px 0 var(--ink);
   }
+  #venue-map .leaflet-popup-tip { box-shadow: none; }
   #venue-map .leaflet-popup-content {
     font-family: inherit;
-    font-size: 0.8rem;
-    line-height: 1.4;
-    margin: 0.75rem 1rem;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    margin: 0.85rem 1rem;
+    letter-spacing: 0.02em;
   }
+  #venue-map a.leaflet-popup-close-button {
+    color: var(--ink);
+    font-family: inherit;
+  }
+  #venue-map a.leaflet-popup-close-button:hover { color: var(--bleed); }
+
+  /* Zoom buttons and attribution in the same paper/ink language. */
+  #venue-map .leaflet-control-zoom {
+    border: none;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  #venue-map .leaflet-control-zoom a {
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    font-family: inherit;
+    font-weight: 700;
+  }
+  #venue-map .leaflet-control-zoom a:first-child { border-bottom: none; }
+  #venue-map .leaflet-control-zoom a:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  #venue-map .leaflet-control-attribution {
+    background: var(--paper);
+    color: var(--smudge);
+    font-family: inherit;
+    font-size: 0.6rem;
+    border-top: 1px solid var(--ink);
+    border-left: 1px solid var(--ink);
+  }
+  #venue-map .leaflet-control-attribution a { color: var(--smudge); }
 </style>
 {% endblock %}
 
@@ -47,7 +97,7 @@
   </div>
 
   <p class="font-mono text-xs uppercase tracking-widest text-smudge">
-    {{ _('%(num)d venues on the map', num=markers|length) }}
+    {{ _('%(num)d venues with upcoming shows', num=markers|length) }}
   </p>
 
 </article>
@@ -59,7 +109,6 @@
   const venues = {{ markers|tojson }};
 
   const map = L.map('venue-map', { scrollWheelZoom: true });
-  L.Icon.Default.prototype.options.imagePath = "{{ url_for('static', filename='vendor/leaflet/images/') }}";
 
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -70,21 +119,37 @@
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
 
+  // Stamped X: blue mis-registered ghost under a bleed-red cross, each mark
+  // rotated a little differently so the map looks marked up by hand.
+  const xIcon = (rotation) => L.divIcon({
+    className: 'x-marker',
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+    popupAnchor: [0, -10],
+    html: `<svg viewBox="0 0 22 22" style="transform: rotate(${rotation}deg)" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="var(--bleed-offset)" stroke-width="3.4" stroke-linecap="square" opacity="0.55" transform="translate(1.6 1.1)">
+        <path d="M4 4 L18 18 M18 4 L4 18"/>
+      </g>
+      <g stroke="var(--bleed)" stroke-width="3.4" stroke-linecap="square">
+        <path d="M4 4 L18 18 M18 4 L4 18"/>
+      </g>
+    </svg>`
+  });
+
   const bounds = [];
-  for (const v of venues) {
+  venues.forEach((v, i) => {
     bounds.push([v.lat, v.lon]);
     const addressLine = [v.address, [v.plz, v.city].filter(Boolean).join(' ')]
       .filter(Boolean).map(escapeHtml).join('<br>');
-    const upcomingLine = v.upcoming > 0
-      ? `<span class="text-bleed">${v.upcoming} {{ _('upcoming events') }}</span>`
-      : `<span class="text-smudge">{{ _('no upcoming events') }}</span>`;
-    L.marker([v.lat, v.lon])
+    const rotation = ((i * 137) % 29) - 14;  // deterministic scatter, -14°..14°
+    L.marker([v.lat, v.lon], { icon: xIcon(rotation) })
       .addTo(map)
       .bindPopup(
         `<strong class="uppercase tracking-wider">${escapeHtml(v.name)}</strong><br>` +
-        `${addressLine}${addressLine ? '<br>' : ''}${upcomingLine}`
+        `${addressLine}${addressLine ? '<br>' : ''}` +
+        `<span class="text-bleed font-bold uppercase">{{ _('upcoming events') }}: ${v.upcoming}</span>`
       );
-  }
+  });
 
   // Fit the initial view to Swiss-area venues; far-away outliers (e.g. Vienna)
   // would otherwise shrink Switzerland to a corner. They stay reachable by panning.

@@ -216,16 +216,22 @@ def event_page(event_id):
 
 @bp.route("/map")
 def venue_map():
-    venues = (
-        Venue.query.filter(Venue.coords.isnot(None), Venue.coords != "")
-        .order_by(Venue.name.asc())
+    # Same horizon as the calendar: now through three months out.
+    now = datetime.now()
+    upcoming_counts = dict(
+        db.session.query(Event.venue_id, db.func.count(Event.id))
+        .filter(Event.date >= now, Event.date <= now + relativedelta(months=3))
+        .group_by(Event.venue_id)
         .all()
     )
 
-    upcoming_counts = dict(
-        db.session.query(Event.venue_id, db.func.count(Event.id))
-        .filter(Event.date >= datetime.now())
-        .group_by(Event.venue_id)
+    venues = (
+        Venue.query.filter(
+            Venue.id.in_(upcoming_counts.keys()),
+            Venue.coords.isnot(None),
+            Venue.coords != "",
+        )
+        .order_by(Venue.name.asc())
         .all()
     )
 
