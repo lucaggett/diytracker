@@ -30,12 +30,14 @@
     stroke: var(--ink);
   }
 
-  /* Hand-stamped X markers: bleed red over a mis-registered blue ghost. */
+  /* Hand-stamped X markers: bleed red over a mis-registered blue ghost.
+     overflow visible so overshooting stroke ends aren't clipped. */
   .x-marker { background: none; border: none; }
   .x-marker svg {
     display: block;
     width: 100%;
     height: 100%;
+    overflow: visible;
     transition: transform 120ms ease-out;
   }
   .x-marker:hover svg { transform: scale(1.35); }
@@ -173,39 +175,71 @@
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
 
-  // Hand-drawn X: blue mis-registered ghost under a bleed-red cross. Each
-  // mark is one of a few loose pen strokes — curved, uneven, overshooting
-  // the corners — cycled and rotated per venue so the map looks marked up
-  // by hand rather than machine-stamped. Venues without upcoming shows get
-  // a faded ink-grey mark instead.
+  // Hand-drawn X: blue mis-registered ghost under a bleed-red cross. Every
+  // mark is generated from a per-venue seed — strokes bow visibly off the
+  // diagonal, overshoot the corners unevenly, get retraced with a thinner
+  // second pen pass, and the whole mark tilts — so no two venues carry the
+  // same X. Seeded (not Math.random) so marks don't reshuffle per render.
+  // Venues without upcoming shows get a faded ink-grey mark instead.
   // Touch screens get a bigger mark so it stays a comfortable tap target.
-  const X_STROKES = [
-    { d: 'M3.6 4.4 C7.6 8.0 12.8 13.6 18.6 17.4 M18.0 3.4 C14.4 9.0 8.2 12.6 3.2 18.4', w: 3.4 },
-    { d: 'M4.6 3.2 C8.4 8.8 13.6 12.2 18.8 18.0 M17.6 4.8 C12.6 8.0 8.8 14.4 3.4 17.4', w: 3.1 },
-    { d: 'M3.2 5.4 C9.0 8.2 13.0 14.6 17.6 18.8 M18.8 3.6 C13.8 9.8 9.6 12.4 4.0 18.6', w: 3.7 },
-    { d: 'M5.0 4.6 C8.0 10.0 14.6 12.0 19.0 16.6 M16.8 3.0 C14.0 8.4 7.4 14.0 3.6 19.0', w: 3.3 },
-  ];
+  // mulberry32 — a plain LCG here leaves consecutive venue indices visibly
+  // correlated (marks would drift in lockstep down the venue list).
+  const seededRand = (seed) => {
+    let s = seed >>> 0;
+    return () => {
+      s = (s + 0x6D2B79F5) >>> 0;
+      let t = s;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+
+  // One pen stroke from (x0,y0) to (x1,y1): endpoints jittered so the arms
+  // overshoot unevenly, control points pushed off the chord so the stroke
+  // bows like a fast pen drag instead of a ruler line.
+  const penStroke = (r, x0, y0, x1, y1) => {
+    const j = (v) => v + (r() - 0.5) * 3.2;
+    x0 = j(x0); y0 = j(y0); x1 = j(x1); y1 = j(y1);
+    const dx = x1 - x0, dy = y1 - y0;
+    const len = Math.hypot(dx, dy);
+    const nx = -dy / len, ny = dx / len;
+    const b1 = (r() - 0.5) * 7, b2 = (r() - 0.5) * 7;
+    const p = (v) => v.toFixed(1);
+    return `M${p(x0)} ${p(y0)} C${p(x0 + dx * 0.3 + nx * b1)} ${p(y0 + dy * 0.3 + ny * b1)} ` +
+      `${p(x0 + dx * 0.7 + nx * b2)} ${p(y0 + dy * 0.7 + ny * b2)} ${p(x1)} ${p(y1)}`;
+  };
+
   const markerSize = window.matchMedia('(pointer: coarse)').matches ? 30 : 22;
   const xIcon = (i, faded) => {
-    const { d, w } = X_STROKES[i % X_STROKES.length];
-    const rotation = ((i * 137) % 29) - 14;  // deterministic scatter, -14°..14°
+    const r = seededRand(i);
+    const arms = penStroke(r, 3, 3.6, 19, 18.4) + ' ' + penStroke(r, 18.6, 3.2, 3.4, 18.8);
+    const retrace = penStroke(r, 3.6, 4.2, 18.4, 18) + ' ' + penStroke(r, 18, 3.8, 4, 18.4);
+    const w = (2.7 + r() * 1.3).toFixed(1);
+    const w2 = (w * 0.5).toFixed(1);
+    // rotate() on an inner group, so the CSS hover scale on the svg still applies
+    const rot = `transform="rotate(${((r() - 0.5) * 36).toFixed(0)} 11 11)"`;
     return L.divIcon({
       className: 'x-marker',
       iconSize: [markerSize, markerSize],
       iconAnchor: [markerSize / 2, markerSize / 2],
       popupAnchor: [0, -markerSize / 2],
       html: faded
-        ? `<svg viewBox="0 0 22 22" style="transform: rotate(${rotation}deg)" xmlns="http://www.w3.org/2000/svg">
-            <g fill="none" stroke="var(--smudge)" stroke-width="${w}" stroke-linecap="round" opacity="0.65">
-              <path d="${d}"/>
+        ? `<svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+            <g ${rot} fill="none" stroke="var(--smudge)" stroke-linecap="round" opacity="0.65">
+              <path d="${arms}" stroke-width="${w}"/>
+              <path d="${retrace}" stroke-width="${w2}"/>
             </g>
           </svg>`
-        : `<svg viewBox="0 0 22 22" style="transform: rotate(${rotation}deg)" xmlns="http://www.w3.org/2000/svg">
-            <g fill="none" stroke="var(--bleed-offset)" stroke-width="${w}" stroke-linecap="round" opacity="0.55" transform="translate(1.6 1.1)">
-              <path d="${d}"/>
-            </g>
-            <g fill="none" stroke="var(--bleed)" stroke-width="${w}" stroke-linecap="round">
-              <path d="${d}"/>
+        : `<svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+            <g ${rot}>
+              <g fill="none" stroke="var(--bleed-offset)" stroke-width="${w}" stroke-linecap="round" opacity="0.55" transform="translate(1.6 1.1)">
+                <path d="${arms}"/>
+              </g>
+              <g fill="none" stroke="var(--bleed)" stroke-linecap="round">
+                <path d="${arms}" stroke-width="${w}"/>
+                <path d="${retrace}" stroke-width="${w2}" opacity="0.85"/>
+              </g>
             </g>
           </svg>`
     });

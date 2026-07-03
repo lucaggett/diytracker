@@ -7,6 +7,9 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [Unreleased]
+- Reworked the map's hand-drawn X markers again: instead of cycling four pre-baked stroke shapes (whose curvature was too subtle to read at marker size), every mark is now generated from a per-venue seed — strokes bow visibly off the diagonal, overshoot the corners unevenly, get retraced with a thinner second pen pass, and each mark tilts differently. Seeded with mulberry32 so marks are unique per venue but stable across renders. Also fixed the hover zoom, which the old inline rotation style had been overriding.
+
 ## [0.19.2] - 2026-07-03
 - CI now auto-formats with `ruff format` and pushes the fix back to the branch (same-repo pushes/PRs only; forks fall back to a failing check) instead of just failing on unformatted code; `ruff check` still fails the build on real lint errors.
 - Added test coverage reporting: `pytest-cov` runs in CI and uploads results to Codecov.
