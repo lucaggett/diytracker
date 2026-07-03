@@ -1,30 +1,30 @@
-<!-- Kyuubi.html, a single page for a silly picture of kyuubi-->
+{% extends 'base_public.html' %}
 
-<!-- 427 It's Kyuubi Error -->
- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>She Arrives</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
-</head>
-<body>
-    <!-- Display "427 It's kyuubi" error-->
-    <h1>427 It's Kyuubi</h1>
-    <img src="{{ url_for('static', filename='img/kyuubi.jpg') }}" alt="Kyuubi">
-</body>
-</html>
+{% block title %}427 · It's Kyuubi — diytracker.ch{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-16 text-center">
+  <div class="flyer-card p-8 md:p-14 relative">
+    <svg class="absolute -top-3 left-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+    <svg class="absolute -top-3 right-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+
+    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-4">Error 427</p>
+    <h1 class="font-richEatin text-7xl md:text-9xl mis-reg leading-none">SHE ARRIVES</h1>
+    <div class="my-6 inline-block stamp">KYUUBI</div>
+
+    <img src="{{ url_for('static', filename='img/kyuubi.jpg') }}" alt="Kyuubi"
+         class="mx-auto my-6 max-w-xs w-full border-2 border-ink">
+
+    <p class="font-mono text-sm md:text-base text-ink leading-relaxed max-w-md mx-auto">
+      There is no error here.<br>
+      Only Kyuubi.
+    </p>
+    <p class="mt-8">
+      <a href="{{ url_for('public.calendar_view') }}"
+         class="inline-block font-mono text-xs uppercase tracking-widest border-2 border-ink px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
+        Back to calendar →
+      </a>
+    </p>
+  </div>
+</div>
+{% endblock %}
