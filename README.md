@@ -1,5 +1,11 @@
 # diytracker
 
+[![CI](https://github.com/lucaggett/diytracker/actions/workflows/ci.yml/badge.svg)](https://github.com/lucaggett/diytracker/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/lucaggett/diytracker/branch/main/graph/badge.svg)](https://codecov.io/gh/lucaggett/diytracker)
+[![Ruff](https://img.shields.io/badge/style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![Last commit](https://img.shields.io/github/last-commit/lucaggett/diytracker)](https://github.com/lucaggett/diytracker/commits/main)
+
 A Flask web app that aggregates DIY / underground concert listings in
 Switzerland. Events come in two ways:
 

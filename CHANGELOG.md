@@ -7,6 +7,11 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.19.2] - 2026-07-03
+- CI now auto-formats with `ruff format` and pushes the fix back to the branch (same-repo pushes/PRs only; forks fall back to a failing check) instead of just failing on unformatted code; `ruff check` still fails the build on real lint errors.
+- Added test coverage reporting: `pytest-cov` runs in CI and uploads results to Codecov.
+- Added CI/coverage/Python-version/last-commit badges to the README.
+
 ## [0.19.1] - 2026-07-03
 - Redrawn the map's X markers as hand-drawn pen strokes: four looser stroke shapes (curved, uneven, with round caps and slightly varying weights) cycle across venues alongside the existing rotation scatter, replacing the ruler-straight lines that made the marks look tilted rather than hand-made. The red-over-blue misprint and the faded grey no-upcoming variant are unchanged.
 

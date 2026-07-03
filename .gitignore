@@ -6,6 +6,8 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+.coverage
+coverage.xml
 instance/
 logs/
 venv/

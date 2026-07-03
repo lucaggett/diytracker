@@ -30,10 +30,17 @@ jobs:
         run: uv sync --locked
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest --cov=diytracker --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
   lint:
-    name: Lint (ruff)
+    name: Lint (ruff check)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,8 +57,47 @@ jobs:
       - name: ruff check
         run: uv run ruff check .
 
-      - name: ruff format --check
-        run: uv run ruff format --check .
+  format:
+    name: Format (ruff format)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # default GITHUB_TOKEN, but explicit so the later push works
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: ruff format
+        run: uv run ruff format .
+
+      - name: Commit and push formatting fixes
+        # Skip for PRs from forks: their GITHUB_TOKEN is read-only, so a
+        # push would fail. `ruff check` still catches real issues there;
+        # only auto-formatting is skipped.
+        if: |
+          github.event_name == 'push' ||
+          github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Already formatted, nothing to commit."
+            exit 0
+          fi
+          RUFF_VERSION="$(uv run ruff --version)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "style: auto-format with ${RUFF_VERSION}"
+          git push origin HEAD:"${{ github.head_ref || github.ref_name }}"
 
   tailwind:
     name: Build (Tailwind CSS)

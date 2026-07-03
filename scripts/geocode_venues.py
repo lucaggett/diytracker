@@ -83,10 +83,13 @@ def geocode(venue):
         if hit:
             return hit, f"geoadmin address ({query})"
 
-    for query in filter(None, (
-        f"{name}, {city}" if name and city else None,
-        f"{address}, {plz} {city}".strip(", ") if address and city else None,
-    )):
+    for query in filter(
+        None,
+        (
+            f"{name}, {city}" if name and city else None,
+            f"{address}, {plz} {city}".strip(", ") if address and city else None,
+        ),
+    ):
         attempts.append(f"nominatim: {query}")
         hit = nominatim(query)
         if hit:
@@ -110,9 +113,18 @@ def main():
         if result:
             lat, lon = result
             coords = f"{lat:.5f},{lon:.5f}"
-            conn.execute("UPDATE venue SET coords = ? WHERE id = ?", (coords, venue["id"]))
+            conn.execute(
+                "UPDATE venue SET coords = ? WHERE id = ?", (coords, venue["id"])
+            )
             conn.commit()
-            resolved.append({"id": venue["id"], "name": venue["name"], "coords": coords, "source": info})
+            resolved.append(
+                {
+                    "id": venue["id"],
+                    "name": venue["name"],
+                    "coords": coords,
+                    "source": info,
+                }
+            )
             print(f"[ok]   #{venue['id']:>3} {venue['name']}: {coords}  via {info}")
         else:
             unresolved.append({**dict(venue), "attempts": info})
@@ -120,7 +132,13 @@ def main():
 
     conn.close()
     report = db_path.with_name("geocode_report.json")
-    report.write_text(json.dumps({"resolved": resolved, "unresolved": unresolved}, indent=2, ensure_ascii=False))
+    report.write_text(
+        json.dumps(
+            {"resolved": resolved, "unresolved": unresolved},
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
     print(f"\n{len(resolved)} resolved, {len(unresolved)} unresolved. Report: {report}")
 
 

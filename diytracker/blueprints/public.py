@@ -273,9 +273,7 @@ def venue_map():
 def venue_page(venue_id):
     venue = Venue.query.get_or_404(venue_id)
     events = (
-        Event.query.filter(
-            Event.venue_id == venue.id, Event.date >= datetime.now()
-        )
+        Event.query.filter(Event.venue_id == venue.id, Event.date >= datetime.now())
         .order_by(Event.date.asc())
         .all()
     )
@@ -335,7 +333,6 @@ def set_language(lang):
     if next_url:
         return redirect(next_url)
     return redirect(url_for("public.calendar_view"))
-
 
 
 @bp.route("/kyuubi")

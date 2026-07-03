@@ -21,7 +21,7 @@ COUNTRIES = "ch,li,fr,at,de"
 def city_variants(city):
     city = city.strip()
     out = [city]
-    out.append(re.sub(r"\s+\d+$", "", city))          # "Genève 8" -> "Genève"
+    out.append(re.sub(r"\s+\d+$", "", city))  # "Genève 8" -> "Genève"
     out.extend(p.strip() for p in re.split(r"[/-]", city) if p.strip())
     seen, uniq = set(), []
     for c in out:
@@ -71,7 +71,9 @@ def main():
                 break
         if hit:
             coords = f"{hit[0]:.5f},{hit[1]:.5f}"
-            conn.execute("UPDATE venue SET coords = ? WHERE id = ?", (coords, venue["id"]))
+            conn.execute(
+                "UPDATE venue SET coords = ? WHERE id = ?", (coords, venue["id"])
+            )
             conn.commit()
             print(f"[ok]   #{venue['id']:>3} {name}: {coords}  via nominatim ({used})")
         else:
