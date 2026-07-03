@@ -7,6 +7,10 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.16.0] - 2026-07-03
+- Added a public venue map at `/map`: all venues with coordinates are shown as markers on an OpenStreetMap base layer (Leaflet 1.9.4, vendored under `static/vendor/leaflet/` — no CDN), with popups showing address and upcoming-event count. Linked from the public nav and the sitemap; translated into de/fr/it/en.
+- Added `scripts/geocode_venues.py` (+ a looser second pass in `scripts/geocode_venues_pass2.py`) to backfill `venue.coords` as `lat,lon` via the geo.admin.ch address search with OSM Nominatim as fallback. Ran it against the production database copy: 152 of 153 venues now carry coordinates (the "Unknown venue" placeholder intentionally has none).
+
 ## [0.15.0] - 2026-07-02
 - Added `manage.py venue dedup` to merge duplicate venues. Exact name matches (case/whitespace variants) in the same city merge automatically; same-name/different-city and similar-name candidates are confirmed interactively. The most complete row survives, its missing fields are backfilled from the duplicates, and events plus accessibility data are repointed before deletion. Dry-run by default; `--apply` writes, `--db-path` targets an alternate database copy.
 

@@ -214,12 +214,49 @@ def event_page(event_id):
     return render_template("event_page.html", event=event)
 
 
+@bp.route("/map")
+def venue_map():
+    venues = (
+        Venue.query.filter(Venue.coords.isnot(None), Venue.coords != "")
+        .order_by(Venue.name.asc())
+        .all()
+    )
+
+    upcoming_counts = dict(
+        db.session.query(Event.venue_id, db.func.count(Event.id))
+        .filter(Event.date >= datetime.now())
+        .group_by(Event.venue_id)
+        .all()
+    )
+
+    markers = []
+    for venue in venues:
+        try:
+            lat, lon = (float(part) for part in venue.coords.split(","))
+        except ValueError:
+            continue
+        markers.append(
+            {
+                "name": venue.name,
+                "lat": lat,
+                "lon": lon,
+                "address": venue.address or "",
+                "city": venue.city,
+                "plz": venue.plz or "",
+                "upcoming": upcoming_counts.get(venue.id, 0),
+            }
+        )
+
+    return render_template("map.html", markers=markers)
+
+
 @bp.route("/sitemap.xml")
 @cache.cached()
 def sitemap():
     pages = [
         (url_for("public.calendar_view", _external=True), "daily"),
         (url_for("public.about", _external=True), "monthly"),
+        (url_for("public.venue_map", _external=True), "weekly"),
     ]
     for lang in SUPPORTED_LOCALES:
         pages.append((url_for("public.impressum", lang=lang, _external=True), "yearly"))

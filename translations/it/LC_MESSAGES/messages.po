@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-02 21:16+0200\n"
+"POT-Creation-Date: 2026-07-03 13:48+0200\n"
 "PO-Revision-Date: 2026-04-22 12:23+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: it\n"
@@ -33,7 +33,7 @@ msgstr "Data evento"
 msgid "End Date"
 msgstr "Data di fine"
 
-#: diytracker/forms.py:122 templates/event_page.html:46
+#: diytracker/forms.py:122 templates/event_page.html:55
 msgid "Festival"
 msgstr "Festival"
 
@@ -42,7 +42,7 @@ msgid "Doors Open Time"
 msgstr "Apertura porte"
 
 #: diytracker/forms.py:127 templates/admin.html:64 templates/calendar.html:90
-#: templates/calendar.html:219 templates/event_page.html:82
+#: templates/calendar.html:219 templates/event_page.html:91
 #: templates/event_queue.html:125
 msgid "Genre"
 msgstr "Genere"
@@ -66,7 +66,7 @@ msgid "Ticket Link"
 msgstr "Link biglietti"
 
 #: diytracker/forms.py:137 templates/admin.html:89 templates/calendar.html:87
-#: templates/edit_venue.html:8 templates/event_page.html:67
+#: templates/edit_venue.html:8 templates/event_page.html:76
 #: templates/event_queue.html:50
 msgid "Venue"
 msgstr "Locale"
@@ -323,7 +323,7 @@ msgstr "Il locale esiste già. Verrà usato quello esistente."
 msgid "Event submitted successfully!"
 msgstr "Evento inviato con successo!"
 
-#: templates/_partials/header_public.html:26 templates/about.html:3
+#: templates/_partials/header_public.html:27 templates/about.html:3
 msgid "About"
 msgstr "Info"
 
@@ -477,7 +477,7 @@ msgstr "Qualsiasi altra informazione utile per i visitatori con disabilità"
 msgid "Save accessibility info"
 msgstr "Salva le informazioni sull'accessibilità"
 
-#: templates/_partials/header_public.html:18
+#: templates/_partials/header_public.html:19
 #: templates/_partials/nav_admin.html:6 templates/admin.html:3
 msgid "Admin"
 msgstr "Admin"
@@ -553,7 +553,7 @@ msgid "ID"
 msgstr "ID"
 
 #: templates/admin.html:88 templates/calendar.html:86
-#: templates/event_page.html:61 templates/event_queue.html:48
+#: templates/event_page.html:70 templates/event_queue.html:48
 msgid "Date"
 msgstr "Data"
 
@@ -602,23 +602,23 @@ msgstr "Agenda eventi DIY per la Svizzera — concerti, festival e show undergro
 msgid "TODAY"
 msgstr "OGGI"
 
-#: templates/calendar.html:88 templates/event_page.html:72
+#: templates/calendar.html:88 templates/event_page.html:81
 msgid "Address"
 msgstr "Indirizzo"
 
-#: templates/calendar.html:89 templates/event_page.html:77
+#: templates/calendar.html:89 templates/event_page.html:86
 msgid "Location"
 msgstr "Luogo"
 
-#: templates/calendar.html:92 templates/event_page.html:88
+#: templates/calendar.html:92 templates/event_page.html:97
 msgid "Price"
 msgstr "Prezzo"
 
-#: templates/calendar.html:95 templates/event_page.html:94
+#: templates/calendar.html:95 templates/event_page.html:103
 msgid "Tickets"
 msgstr "Biglietti"
 
-#: templates/calendar.html:104 templates/event_page.html:110
+#: templates/calendar.html:104 templates/event_page.html:119
 #: templates/venues.html:60
 msgid "View accessibility info"
 msgstr "Vedi informazioni accessibilità"
@@ -656,7 +656,7 @@ msgid "Edit Event"
 msgstr "Modifica evento"
 
 #: templates/edit_event.html:13 templates/event_page.html:3
-#: templates/event_page.html:46 templates/event_queue.html:49
+#: templates/event_page.html:55 templates/event_queue.html:49
 msgid "Event"
 msgstr "Evento"
 
@@ -747,20 +747,20 @@ msgstr "Torna al calendario"
 msgid "Update Venue"
 msgstr "Aggiorna evento"
 
-#: templates/event_page.html:102 templates/event_queue.html:161
+#: templates/event_page.html:111 templates/event_queue.html:161
 msgid "Description"
 msgstr "Descrizione"
 
-#: templates/event_page.html:114
+#: templates/event_page.html:123
 msgid "No accessibility info for this venue yet."
 msgstr "Ancora nessuna info sull'accessibilità per questo locale."
 
-#: templates/event_page.html:116
+#: templates/event_page.html:125
 msgid "Contact us if you have details."
 msgstr "Contattaci se hai informazioni."
 
 #: templates/errors/404.html:21 templates/errors/500.html:21
-#: templates/event_page.html:123 templates/venue_accessibility.html:147
+#: templates/event_page.html:132 templates/venue_accessibility.html:147
 msgid "Back to calendar"
 msgstr "Torna al calendario"
 
@@ -844,7 +844,7 @@ msgstr "Approva con modifiche"
 msgid "No events awaiting approval."
 msgstr "Nessun evento da approvare."
 
-#: templates/_partials/header_public.html:24 templates/login.html:3
+#: templates/_partials/header_public.html:25 templates/login.html:3
 msgid "Login"
 msgstr "Accedi"
 
@@ -855,6 +855,35 @@ msgstr "ACCEDI"
 #: templates/login.html:34
 msgid "Log in"
 msgstr "Accedi"
+
+#: templates/_partials/header_public.html:17 templates/map.html:3
+msgid "Map"
+msgstr "Mappa"
+
+#: templates/map.html:4
+msgid "All DIY venues in Switzerland on one map."
+msgstr "Tutti i locali DIY della Svizzera su una mappa."
+
+#: templates/map.html:39
+msgid "Where the shows happen"
+msgstr "Dove si tengono i concerti"
+
+#: templates/map.html:40
+msgid "MAP"
+msgstr "MAPPA"
+
+#: templates/map.html:50
+#, python-format
+msgid "%(num)d venues on the map"
+msgstr "%(num)d locali sulla mappa"
+
+#: templates/map.html:79
+msgid "upcoming events"
+msgstr "eventi in programma"
+
+#: templates/map.html:80
+msgid "no upcoming events"
+msgstr "nessun evento in programma"
 
 #: templates/set_password.html:3
 msgid "Set password"
@@ -1170,7 +1199,7 @@ msgstr "Lingua"
 msgid "Calendar"
 msgstr "Calendario"
 
-#: templates/_partials/header_public.html:21
+#: templates/_partials/header_public.html:22
 #: templates/_partials/nav_admin.html:13
 msgid "Logout"
 msgstr "Esci"
