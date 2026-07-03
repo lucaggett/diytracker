@@ -1,0 +1,194 @@
+{% extends 'base_public.html' %}
+
+{% block title %}{{ venue.name }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ venue.name }} — {{ venue.plz }} {{ venue.city }} · {{ _('%(num)d upcoming events', num=events|length) }}{% endblock %}
+
+{% block head_extra %}
+  {% set ld = {
+    "@context": "https://schema.org",
+    "@type": "MusicVenue",
+    "name": venue.name,
+    "url": url_for('public.venue_page', venue_id=venue.id, _external=True),
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": venue.address or "",
+      "addressLocality": venue.city or "",
+      "addressRegion": venue.canton or "",
+      "postalCode": venue.plz or "",
+      "addressCountry": "CH"
+    }
+  } %}
+  {% if coords %}{% set ld = dict(ld, geo={"@type": "GeoCoordinates", "latitude": coords[0], "longitude": coords[1]}) %}{% endif %}
+  <script type="application/ld+json">{{ ld|tojson }}</script>
+
+  {% if coords %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
+  <style>
+    #venue-mini-map {
+      height: 240px;
+      background: var(--paper);
+      font-family: inherit;
+    }
+    /* Same xerox treatment as the big map: desaturated tiles multiplied onto
+       the paper background. */
+    #venue-mini-map .leaflet-tile-pane {
+      filter: grayscale(1) contrast(1.15) brightness(1.04);
+      mix-blend-mode: multiply;
+    }
+    #venue-mini-map .ch-mask {
+      fill: var(--paper);
+      fill-opacity: 1;
+    }
+    #venue-mini-map .ch-border {
+      stroke: var(--ink);
+    }
+    .x-marker { background: none; border: none; }
+    .x-marker svg { display: block; width: 100%; height: 100%; }
+    #venue-mini-map .leaflet-control-attribution {
+      background: var(--paper);
+      color: var(--smudge);
+      font-family: inherit;
+      font-size: 0.6rem;
+      border-top: 1px solid var(--ink);
+      border-left: 1px solid var(--ink);
+    }
+    #venue-mini-map .leaflet-control-attribution a { color: var(--smudge); }
+  </style>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-10">
+
+  <header class="mb-8">
+    <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Venue') }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none mb-2">{{ venue.name }}</h1>
+  </header>
+
+  <div class="space-y-2 text-sm">
+    {% if venue.address %}
+    <p>
+      <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Address') }}</span>
+      {{ venue.address }}
+    </p>
+    {% endif %}
+    <p>
+      <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Location') }}</span>
+      {{ venue.plz }} {{ venue.city }}{% if venue.canton %}, {{ venue.canton }}{% endif %}
+    </p>
+  </div>
+
+  {% if coords %}
+  <div class="flyer-card p-2 relative mt-8">
+    <svg class="absolute -top-3 left-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
+    <svg class="absolute -top-3 right-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
+    <div id="venue-mini-map" class="border-2 border-ink" aria-label="{{ _('Map showing the venue location') }}"></div>
+  </div>
+  {% endif %}
+
+  <div class="mt-8">
+    {% if venue.accessibility %}
+    <a href="{{ url_for('public.venue_accessibility', venue_id=venue.id) }}"
+       class="btn-press inline-block font-mono text-xs uppercase tracking-widest border-2 border-ink bg-ink text-paper px-4 py-2 hover:bg-bleed transition-colors">
+      {{ _('View accessibility info') }}
+    </a>
+    {% else %}
+    <p class="text-xs text-smudge">
+      {{ _('No accessibility info for this venue yet.') }}
+      <a href="{{ url_for('public.about') }}"
+         class="text-bleed underline">{{ _('Contact us if you have details.') }}</a>
+    </p>
+    {% endif %}
+  </div>
+
+  <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-3 mt-10">{{ _('Upcoming events') }}</h2>
+  {% if events %}
+  <div class="space-y-2">
+    {% for event in events %}
+    <a href="{{ url_for('public.event_page', event_id=event.id) }}"
+       class="block bg-paper border border-ink p-3 hover:border-bleed transition-colors">
+      <p class="font-mono text-xs text-smudge">
+        {{ format_date(event.date) }}
+        <span class="text-ink/40">·</span> {{ event.doors.strftime('%H:%M') }}
+        {% if event.is_festival %}<span class="text-bleed uppercase tracking-wider"> · {{ _('Festival') }}</span>{% endif %}
+      </p>
+      <p class="font-richEatin text-lg leading-tight text-ink truncate">{{ event.name or event.acts }}</p>
+      {% if event.genre %}
+      <p class="font-mono text-xs text-smudge mt-0.5 truncate">{{ event.genre }}</p>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-sm text-smudge">{{ _('No upcoming events at this venue.') }}</p>
+  {% endif %}
+
+  <div class="mt-10 pt-6 border-t-2 border-ink">
+    <a href="{{ url_for('public.venue_map') }}"
+       class="text-xs uppercase tracking-widest text-bleed hover:underline">← {{ _('Back to the map') }}</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if coords %}
+<script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+<script>
+  // Static locator map: same Switzerland cutout as /map, no interaction.
+  const map = L.map('venue-mini-map', {
+    dragging: false,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    touchZoom: false,
+    boxZoom: false,
+    keyboard: false,
+    zoomControl: false,
+    attributionControl: true
+  });
+  map.setView([{{ coords[0] }}, {{ coords[1] }}], 11);
+
+  fetch("{{ url_for('static', filename='geo/switzerland.geojson') }}")
+    .then((r) => r.json())
+    .then((geo) => {
+      const rings = geo.coordinates.map(
+        (ring) => ring.map(([lon, lat]) => [lat, lon])
+      );
+      const world = [[-89, -180], [-89, 180], [89, 180], [89, -180]];
+      L.polygon([world, ...rings], {
+        stroke: false,
+        fillOpacity: 1,
+        className: 'ch-mask',
+        interactive: false
+      }).addTo(map);
+      L.polygon(rings, {
+        fill: false,
+        weight: 2,
+        className: 'ch-border',
+        interactive: false
+      }).addTo(map);
+
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+    });
+
+  L.marker([{{ coords[0] }}, {{ coords[1] }}], {
+    interactive: false,
+    icon: L.divIcon({
+      className: 'x-marker',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      html: `<svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="var(--bleed-offset)" stroke-width="3.4" stroke-linecap="square" opacity="0.55" transform="translate(1.6 1.1)">
+          <path d="M4 4 L18 18 M18 4 L4 18"/>
+        </g>
+        <g stroke="var(--bleed)" stroke-width="3.4" stroke-linecap="square">
+          <path d="M4 4 L18 18 M18 4 L4 18"/>
+        </g>
+      </svg>`
+    })
+  }).addTo(map);
+</script>
+{% endif %}
+{% endblock %}
