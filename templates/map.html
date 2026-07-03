@@ -1,0 +1,100 @@
+{% extends 'base_public.html' %}
+
+{% block title %}{{ _('Map') }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ _('All DIY venues in Switzerland on one map.') }}{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
+<style>
+  #venue-map {
+    height: min(70vh, 640px);
+    background: transparent;
+    cursor: crosshair;
+  }
+  /* Xerox-flyer treatment: desaturate the tiles so they sit on paper like a photocopy. */
+  #venue-map .leaflet-tile-pane {
+    filter: grayscale(1) contrast(1.05);
+  }
+  #venue-map .leaflet-popup-content-wrapper,
+  #venue-map .leaflet-popup-tip {
+    background: var(--color-paper, #f5f1e8);
+    color: var(--color-ink, #1a1a1a);
+    border: 2px solid currentColor;
+    border-radius: 0;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  }
+  #venue-map .leaflet-popup-content {
+    font-family: inherit;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin: 0.75rem 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="max-w-5xl mx-auto px-4 py-10">
+
+  <header class="mb-10">
+    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-2">{{ _('Where the shows happen') }}</p>
+    <h1 class="font-richEatin text-5xl md:text-7xl mis-reg leading-none">{{ _('MAP') }}</h1>
+  </header>
+
+  <div class="flyer-card p-2 md:p-3 relative mb-6">
+    <svg class="absolute -top-3 left-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
+    <svg class="absolute -top-3 right-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
+    <div id="venue-map" class="border-2 border-ink"></div>
+  </div>
+
+  <p class="font-mono text-xs uppercase tracking-widest text-smudge">
+    {{ _('%(num)d venues on the map', num=markers|length) }}
+  </p>
+
+</article>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+<script>
+  const venues = {{ markers|tojson }};
+
+  const map = L.map('venue-map', { scrollWheelZoom: true });
+  L.Icon.Default.prototype.options.imagePath = "{{ url_for('static', filename='vendor/leaflet/images/') }}";
+
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+
+  const bounds = [];
+  for (const v of venues) {
+    bounds.push([v.lat, v.lon]);
+    const addressLine = [v.address, [v.plz, v.city].filter(Boolean).join(' ')]
+      .filter(Boolean).map(escapeHtml).join('<br>');
+    const upcomingLine = v.upcoming > 0
+      ? `<span class="text-bleed">${v.upcoming} {{ _('upcoming events') }}</span>`
+      : `<span class="text-smudge">{{ _('no upcoming events') }}</span>`;
+    L.marker([v.lat, v.lon])
+      .addTo(map)
+      .bindPopup(
+        `<strong class="uppercase tracking-wider">${escapeHtml(v.name)}</strong><br>` +
+        `${addressLine}${addressLine ? '<br>' : ''}${upcomingLine}`
+      );
+  }
+
+  // Fit the initial view to Swiss-area venues; far-away outliers (e.g. Vienna)
+  // would otherwise shrink Switzerland to a corner. They stay reachable by panning.
+  const homeBounds = bounds.filter(([lat, lon]) => lat >= 45.7 && lat <= 47.9 && lon >= 5.8 && lon <= 10.6);
+  if (homeBounds.length) {
+    map.fitBounds(homeBounds, { padding: [30, 30] });
+  } else if (bounds.length) {
+    map.fitBounds(bounds, { padding: [30, 30] });
+  } else {
+    map.setView([46.8, 8.2], 8); // Switzerland
+  }
+</script>
+{% endblock %}
