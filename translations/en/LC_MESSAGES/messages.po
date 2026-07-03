@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-03 15:07+0200\n"
+"POT-Creation-Date: 2026-07-03 15:45+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -352,7 +352,7 @@ msgstr "Date"
 
 #: templates/admin.html:89 templates/calendar.html:87
 #: templates/edit_venue.html:8 templates/event_page.html:76
-#: templates/event_queue.html:50
+#: templates/event_queue.html:50 templates/venue_page.html:64
 msgid "Venue"
 msgstr "Venue"
 
@@ -404,10 +404,12 @@ msgid "TODAY"
 msgstr "TODAY"
 
 #: templates/calendar.html:88 templates/event_page.html:81
+#: templates/venue_page.html:71
 msgid "Address"
 msgstr "Address"
 
 #: templates/calendar.html:89 templates/event_page.html:86
+#: templates/venue_page.html:76
 msgid "Location"
 msgstr "Location"
 
@@ -424,7 +426,7 @@ msgid "Tickets"
 msgstr "Tickets"
 
 #: templates/calendar.html:104 templates/event_page.html:119
-#: templates/venues.html:60
+#: templates/venue_page.html:93 templates/venues.html:60
 msgid "View accessibility info"
 msgstr "View accessibility info"
 
@@ -566,7 +568,7 @@ msgstr "Back to calendar"
 msgid "Update Venue"
 msgstr "Update Event"
 
-#: templates/event_page.html:55
+#: templates/event_page.html:55 templates/venue_page.html:113
 msgid "Festival"
 msgstr "Festival"
 
@@ -574,11 +576,11 @@ msgstr "Festival"
 msgid "Description"
 msgstr "Description"
 
-#: templates/event_page.html:123
+#: templates/event_page.html:123 templates/venue_page.html:97
 msgid "No accessibility info for this venue yet."
 msgstr "No accessibility info for this venue yet."
 
-#: templates/event_page.html:125
+#: templates/event_page.html:125 templates/venue_page.html:99
 msgid "Contact us if you have details."
 msgstr "Contact us if you have details."
 
@@ -707,14 +709,35 @@ msgstr "Venues with upcoming shows in the next three months."
 msgid "Map of venues with upcoming shows"
 msgstr "Map of venues with upcoming shows"
 
-#: templates/map.html:106
+#: templates/map.html:108 templates/map.html:110
 #, python-format
 msgid "%(num)d venues with upcoming shows"
 msgstr "%(num)d venues with upcoming shows"
 
-#: templates/map.html:193
+#: templates/map.html:109
+#, python-format
+msgid "%(num)d venues"
+msgstr "%(num)d venues"
+
+#: templates/map.html:113 templates/map.html:116
+msgid "Show all venues"
+msgstr "Show all venues"
+
+#: templates/map.html:114
+msgid "Only venues with shows"
+msgstr "Only venues with shows"
+
+#: templates/map.html:212
+msgid "no upcoming events"
+msgstr "no upcoming events"
+
+#: templates/map.html:213
 msgid "upcoming events"
 msgstr "upcoming events"
+
+#: templates/map.html:219
+msgid "Venue page"
+msgstr "Venue page"
 
 #: templates/set_password.html:3
 msgid "Set password"
@@ -999,6 +1022,27 @@ msgstr "Quiet / alternative entrance"
 #: templates/venue_accessibility.html:139
 msgid "Additional notes"
 msgstr "Additional notes"
+
+#: templates/venue_page.html:4
+#, python-format
+msgid "%(num)d upcoming events"
+msgstr "%(num)d upcoming events"
+
+#: templates/venue_page.html:85
+msgid "Map showing the venue location"
+msgstr "Map showing the venue location"
+
+#: templates/venue_page.html:104
+msgid "Upcoming events"
+msgstr "Upcoming events"
+
+#: templates/venue_page.html:123
+msgid "No upcoming events at this venue."
+msgstr "No upcoming events at this venue."
+
+#: templates/venue_page.html:128
+msgid "Back to the map"
+msgstr "Back to the map"
 
 #: templates/venues.html:9
 msgid "Accessibility form link — share this with the venue"

@@ -232,6 +232,78 @@ class TestEventPage:
         assert venue.accessibility_token.encode() not in resp.data
 
 
+class TestVenuePage:
+    def test_venue_page_renders_with_upcoming_events(
+        self, client, make_venue, make_event
+    ):
+        venue = make_venue(coords="47.37,8.54")
+        ev = make_event(name="Doom Night", venue=venue)
+        resp = client.get(f"/venues/{venue.id}/")
+        assert resp.status_code == 200
+        assert b"Kasheme" in resp.data
+        assert b"Doom Night" in resp.data
+        assert f'href="/events/{ev.id}/"'.encode() in resp.data
+        assert b"venue-mini-map" in resp.data
+        assert b'"MusicVenue"' in resp.data
+
+    def test_venue_page_404_for_missing_venue(self, client):
+        assert client.get("/venues/9999/").status_code == 404
+
+    def test_venue_page_empty_state_and_no_map_without_coords(
+        self, client, make_venue, make_event
+    ):
+        venue = make_venue()
+        make_event(venue=venue, days_from_now=-10)  # past event stays hidden
+        resp = client.get(f"/venues/{venue.id}/")
+        assert resp.status_code == 200
+        assert b"No upcoming events at this venue." in resp.data
+        assert b"venue-mini-map" not in resp.data
+
+    def test_venue_page_links_accessibility_report_when_info_exists(
+        self, client, make_venue
+    ):
+        venue = make_venue()
+        db.session.add(
+            VenueAccessibility(
+                venue_id=venue.id, step_free_entrance="yes", updated_at=utcnow()
+            )
+        )
+        db.session.commit()
+        resp = client.get(f"/venues/{venue.id}/")
+        assert f"/venues/{venue.id}/accessibility".encode() in resp.data
+
+    def test_venue_page_never_exposes_accessibility_token(self, client, make_venue):
+        venue = make_venue()
+        venue.generate_accessibility_token()
+        db.session.commit()
+        resp = client.get(f"/venues/{venue.id}/")
+        assert venue.accessibility_token.encode() not in resp.data
+
+
+class TestVenueMap:
+    def test_map_includes_venues_without_upcoming_shows(
+        self, client, make_venue, make_event
+    ):
+        active = make_venue(name="Active Hall", coords="47.37,8.54")
+        make_event(venue=active)
+        quiet = make_venue(name="Quiet Hall", plz="8002", coords="46.94,7.44")
+        resp = client.get("/map")
+        html = resp.data.decode()
+        assert "Active Hall" in html
+        assert "Quiet Hall" in html
+        assert f'"id": {active.id}' in html
+        assert f'"id": {quiet.id}' in html
+
+    def test_map_skips_venues_outside_switzerland_or_without_coords(
+        self, client, make_venue
+    ):
+        make_venue(name="Vienna Hall", coords="48.21,16.37")
+        make_venue(name="No Coords Hall", plz="8002")
+        resp = client.get("/map")
+        assert b"Vienna Hall" not in resp.data
+        assert b"No Coords Hall" not in resp.data
+
+
 class TestSitemap:
     def test_sitemap_lists_static_and_event_pages(self, client, make_event):
         ev = make_event()
@@ -256,3 +328,6 @@ class TestSitemap:
         resp = client.get("/sitemap.xml")
         assert f"/venues/{with_info.id}/accessibility".encode() in resp.data
         assert f"/venues/{without_info.id}/accessibility".encode() not in resp.data
+        # Venue pages themselves are listed for every venue.
+        assert f"/venues/{with_info.id}/<".encode() in resp.data
+        assert f"/venues/{without_info.id}/<".encode() in resp.data

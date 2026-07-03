@@ -7,6 +7,11 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.19.0] - 2026-07-03
+- Added public venue pages at `/venues/<id>/`: venue name and address, a small non-interactive Switzerland-cutout locator map, the accessibility-info link where available, and a list of all upcoming events at the venue linking to their event pages. Listed in the sitemap for every venue; translated into de/fr/it/en.
+- The map now loads all venues (not just those with upcoming shows): venues without upcoming events render as faded ink-grey X stamps in a separate layer, toggled by a new "Show all venues" button below the map, with the venue-count caption switching accordingly.
+- Map popups now link to the venue's page, and venues without upcoming shows say so in the popup instead of showing a count.
+
 ## [0.18.0] - 2026-07-03
 - Reworked the map page into a "cutout" of Switzerland: an inverted mask built from a simplified OSM border polygon (vendored under `static/geo/switzerland.geojson`) hides all tiles outside the country, the border is drawn in ink, and panning/zooming is locked to Switzerland. Venues outside the Swiss bounding box are filtered out server-side since they would be unreachable.
 - Made the map page more mobile-friendly: removed the page title so the map sits at the top, made the map taller (`78dvh`), tightened mobile padding, and enlarged the X markers to 30px tap targets on touch screens.

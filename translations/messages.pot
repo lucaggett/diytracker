@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-03 15:07+0200\n"
+"POT-Creation-Date: 2026-07-03 15:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -340,7 +340,7 @@ msgstr ""
 
 #: templates/admin.html:89 templates/calendar.html:87
 #: templates/edit_venue.html:8 templates/event_page.html:76
-#: templates/event_queue.html:50
+#: templates/event_queue.html:50 templates/venue_page.html:64
 msgid "Venue"
 msgstr ""
 
@@ -390,10 +390,12 @@ msgid "TODAY"
 msgstr ""
 
 #: templates/calendar.html:88 templates/event_page.html:81
+#: templates/venue_page.html:71
 msgid "Address"
 msgstr ""
 
 #: templates/calendar.html:89 templates/event_page.html:86
+#: templates/venue_page.html:76
 msgid "Location"
 msgstr ""
 
@@ -410,7 +412,7 @@ msgid "Tickets"
 msgstr ""
 
 #: templates/calendar.html:104 templates/event_page.html:119
-#: templates/venues.html:60
+#: templates/venue_page.html:93 templates/venues.html:60
 msgid "View accessibility info"
 msgstr ""
 
@@ -548,7 +550,7 @@ msgstr ""
 msgid "Update Venue"
 msgstr ""
 
-#: templates/event_page.html:55
+#: templates/event_page.html:55 templates/venue_page.html:113
 msgid "Festival"
 msgstr ""
 
@@ -556,11 +558,11 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-#: templates/event_page.html:123
+#: templates/event_page.html:123 templates/venue_page.html:97
 msgid "No accessibility info for this venue yet."
 msgstr ""
 
-#: templates/event_page.html:125
+#: templates/event_page.html:125 templates/venue_page.html:99
 msgid "Contact us if you have details."
 msgstr ""
 
@@ -689,13 +691,34 @@ msgstr ""
 msgid "Map of venues with upcoming shows"
 msgstr ""
 
-#: templates/map.html:106
+#: templates/map.html:108 templates/map.html:110
 #, python-format
 msgid "%(num)d venues with upcoming shows"
 msgstr ""
 
-#: templates/map.html:193
+#: templates/map.html:109
+#, python-format
+msgid "%(num)d venues"
+msgstr ""
+
+#: templates/map.html:113 templates/map.html:116
+msgid "Show all venues"
+msgstr ""
+
+#: templates/map.html:114
+msgid "Only venues with shows"
+msgstr ""
+
+#: templates/map.html:212
+msgid "no upcoming events"
+msgstr ""
+
+#: templates/map.html:213
 msgid "upcoming events"
+msgstr ""
+
+#: templates/map.html:219
+msgid "Venue page"
 msgstr ""
 
 #: templates/set_password.html:3
@@ -973,6 +996,27 @@ msgstr ""
 
 #: templates/venue_accessibility.html:139
 msgid "Additional notes"
+msgstr ""
+
+#: templates/venue_page.html:4
+#, python-format
+msgid "%(num)d upcoming events"
+msgstr ""
+
+#: templates/venue_page.html:85
+msgid "Map showing the venue location"
+msgstr ""
+
+#: templates/venue_page.html:104
+msgid "Upcoming events"
+msgstr ""
+
+#: templates/venue_page.html:123
+msgid "No upcoming events at this venue."
+msgstr ""
+
+#: templates/venue_page.html:128
+msgid "Back to the map"
 msgstr ""
 
 #: templates/venues.html:9

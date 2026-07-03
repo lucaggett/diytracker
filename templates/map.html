@@ -102,9 +102,20 @@
     <div id="venue-map" class="border-2 border-ink" aria-label="{{ _('Map of venues with upcoming shows') }}"></div>
   </div>
 
-  <p class="font-mono text-xs uppercase tracking-widest text-smudge px-2 md:px-0">
-    {{ _('%(num)d venues with upcoming shows', num=markers|length) }}
-  </p>
+  {% set upcoming_count = markers|selectattr('upcoming', 'gt', 0)|list|length %}
+  <div class="flex flex-wrap items-center justify-between gap-3 px-2 md:px-0">
+    <p id="venue-count" class="font-mono text-xs uppercase tracking-widest text-smudge"
+       data-label-upcoming="{{ _('%(num)d venues with upcoming shows', num=upcoming_count) }}"
+       data-label-all="{{ _('%(num)d venues', num=markers|length) }}">
+      {{ _('%(num)d venues with upcoming shows', num=upcoming_count) }}
+    </p>
+    <button id="venues-toggle" type="button"
+            data-label-show-all="{{ _('Show all venues') }}"
+            data-label-only-upcoming="{{ _('Only venues with shows') }}"
+            class="btn-press font-mono text-xs uppercase tracking-widest border-2 border-ink bg-paper text-ink px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
+      {{ _('Show all venues') }}
+    </button>
+  </div>
 
 </article>
 {% endblock %}
@@ -163,35 +174,69 @@
   }[c]));
 
   // Stamped X: blue mis-registered ghost under a bleed-red cross, each mark
-  // rotated a little differently so the map looks marked up by hand.
+  // rotated a little differently so the map looks marked up by hand. Venues
+  // without upcoming shows get a faded ink-grey stamp instead.
   // Touch screens get a bigger stamp so it stays a comfortable tap target.
   const markerSize = window.matchMedia('(pointer: coarse)').matches ? 30 : 22;
-  const xIcon = (rotation) => L.divIcon({
+  const xIcon = (rotation, faded) => L.divIcon({
     className: 'x-marker',
     iconSize: [markerSize, markerSize],
     iconAnchor: [markerSize / 2, markerSize / 2],
     popupAnchor: [0, -markerSize / 2],
-    html: `<svg viewBox="0 0 22 22" style="transform: rotate(${rotation}deg)" xmlns="http://www.w3.org/2000/svg">
-      <g stroke="var(--bleed-offset)" stroke-width="3.4" stroke-linecap="square" opacity="0.55" transform="translate(1.6 1.1)">
-        <path d="M4 4 L18 18 M18 4 L4 18"/>
-      </g>
-      <g stroke="var(--bleed)" stroke-width="3.4" stroke-linecap="square">
-        <path d="M4 4 L18 18 M18 4 L4 18"/>
-      </g>
-    </svg>`
+    html: faded
+      ? `<svg viewBox="0 0 22 22" style="transform: rotate(${rotation}deg)" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="var(--smudge)" stroke-width="3.4" stroke-linecap="square" opacity="0.65">
+            <path d="M4 4 L18 18 M18 4 L4 18"/>
+          </g>
+        </svg>`
+      : `<svg viewBox="0 0 22 22" style="transform: rotate(${rotation}deg)" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="var(--bleed-offset)" stroke-width="3.4" stroke-linecap="square" opacity="0.55" transform="translate(1.6 1.1)">
+            <path d="M4 4 L18 18 M18 4 L4 18"/>
+          </g>
+          <g stroke="var(--bleed)" stroke-width="3.4" stroke-linecap="square">
+            <path d="M4 4 L18 18 M18 4 L4 18"/>
+          </g>
+        </svg>`
   });
+
+  // Venues without upcoming shows live in their own layer, toggled by the
+  // "show all venues" button below the map.
+  const quietVenuesLayer = L.layerGroup();
 
   venues.forEach((v, i) => {
     const addressLine = [v.address, [v.plz, v.city].filter(Boolean).join(' ')]
       .filter(Boolean).map(escapeHtml).join('<br>');
     const rotation = ((i * 137) % 29) - 14;  // deterministic scatter, -14°..14°
-    L.marker([v.lat, v.lon], { icon: xIcon(rotation) })
-      .addTo(map)
+    const faded = v.upcoming === 0;
+    const upcomingLine = faded
+      ? `<span class="text-smudge uppercase">{{ _('no upcoming events') }}</span>`
+      : `<span class="text-bleed font-bold uppercase">{{ _('upcoming events') }}: ${v.upcoming}</span>`;
+    const marker = L.marker([v.lat, v.lon], { icon: xIcon(rotation, faded) })
       .bindPopup(
         `<strong class="uppercase tracking-wider">${escapeHtml(v.name)}</strong><br>` +
         `${addressLine}${addressLine ? '<br>' : ''}` +
-        `<span class="text-bleed font-bold uppercase">{{ _('upcoming events') }}: ${v.upcoming}</span>`
+        `${upcomingLine}<br>` +
+        `<a href="/venues/${v.id}/" class="text-bleed font-bold uppercase underline">{{ _('Venue page') }} →</a>`
       );
+    marker.addTo(faded ? quietVenuesLayer : map);
+  });
+
+  const toggle = document.getElementById('venues-toggle');
+  const countLine = document.getElementById('venue-count');
+  let showingAll = false;
+  toggle.addEventListener('click', () => {
+    showingAll = !showingAll;
+    if (showingAll) {
+      quietVenuesLayer.addTo(map);
+    } else {
+      map.removeLayer(quietVenuesLayer);
+    }
+    toggle.textContent = showingAll
+      ? toggle.dataset.labelOnlyUpcoming
+      : toggle.dataset.labelShowAll;
+    countLine.textContent = showingAll
+      ? countLine.dataset.labelAll
+      : countLine.dataset.labelUpcoming;
   });
 </script>
 {% endblock %}

@@ -214,6 +214,19 @@ def event_page(event_id):
     return render_template("event_page.html", event=event)
 
 
+def _parse_swiss_coords(coords):
+    """Parse a 'lat,lon' string; None if malformed or outside the Swiss
+    bounding box. The map is a cutout of Switzerland with panning locked to
+    it, so venues outside the box would be unreachable anyway."""
+    try:
+        lat, lon = (float(part) for part in (coords or "").split(","))
+    except ValueError:
+        return None
+    if not (45.6 <= lat <= 48.0 and 5.7 <= lon <= 10.7):
+        return None
+    return lat, lon
+
+
 @bp.route("/map")
 def venue_map():
     # Same horizon as the calendar: now through three months out.
@@ -227,7 +240,6 @@ def venue_map():
 
     venues = (
         Venue.query.filter(
-            Venue.id.in_(upcoming_counts.keys()),
             Venue.coords.isnot(None),
             Venue.coords != "",
         )
@@ -237,16 +249,13 @@ def venue_map():
 
     markers = []
     for venue in venues:
-        try:
-            lat, lon = (float(part) for part in venue.coords.split(","))
-        except ValueError:
+        parsed = _parse_swiss_coords(venue.coords)
+        if parsed is None:
             continue
-        # The map is a cutout of Switzerland with panning locked to it, so
-        # venues outside the Swiss bounding box would be unreachable anyway.
-        if not (45.6 <= lat <= 48.0 and 5.7 <= lon <= 10.7):
-            continue
+        lat, lon = parsed
         markers.append(
             {
+                "id": venue.id,
                 "name": venue.name,
                 "lat": lat,
                 "lon": lon,
@@ -258,6 +267,20 @@ def venue_map():
         )
 
     return render_template("map.html", markers=markers)
+
+
+@bp.route("/venues/<int:venue_id>/")
+def venue_page(venue_id):
+    venue = Venue.query.get_or_404(venue_id)
+    events = (
+        Event.query.filter(
+            Event.venue_id == venue.id, Event.date >= datetime.now()
+        )
+        .order_by(Event.date.asc())
+        .all()
+    )
+    coords = _parse_swiss_coords(venue.coords)
+    return render_template("venue_page.html", venue=venue, events=events, coords=coords)
 
 
 @bp.route("/sitemap.xml")
@@ -281,20 +304,23 @@ def sitemap():
             (url_for("public.event_page", event_id=event.id, _external=True), "weekly")
         )
 
-    venues = (
-        Venue.query.filter(Venue.id.in_(db.session.query(VenueAccessibility.venue_id)))
-        .order_by(Venue.id.asc())
-        .all()
-    )
+    accessibility_ids = {
+        venue_id for (venue_id,) in db.session.query(VenueAccessibility.venue_id)
+    }
+    venues = Venue.query.order_by(Venue.id.asc()).all()
     for venue in venues:
         pages.append(
-            (
-                url_for(
-                    "public.venue_accessibility", venue_id=venue.id, _external=True
-                ),
-                "monthly",
-            )
+            (url_for("public.venue_page", venue_id=venue.id, _external=True), "weekly")
         )
+        if venue.id in accessibility_ids:
+            pages.append(
+                (
+                    url_for(
+                        "public.venue_accessibility", venue_id=venue.id, _external=True
+                    ),
+                    "monthly",
+                )
+            )
 
     xml = render_template("sitemap.xml", pages=pages)
     return Response(xml, mimetype="application/xml")

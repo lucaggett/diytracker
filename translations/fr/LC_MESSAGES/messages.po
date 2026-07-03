@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-03 15:07+0200\n"
+"POT-Creation-Date: 2026-07-03 15:45+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -367,7 +367,7 @@ msgstr "Date"
 
 #: templates/admin.html:89 templates/calendar.html:87
 #: templates/edit_venue.html:8 templates/event_page.html:76
-#: templates/event_queue.html:50
+#: templates/event_queue.html:50 templates/venue_page.html:64
 msgid "Venue"
 msgstr "Lieu"
 
@@ -417,10 +417,12 @@ msgid "TODAY"
 msgstr "AUJOURD'HUI"
 
 #: templates/calendar.html:88 templates/event_page.html:81
+#: templates/venue_page.html:71
 msgid "Address"
 msgstr "Adresse"
 
 #: templates/calendar.html:89 templates/event_page.html:86
+#: templates/venue_page.html:76
 msgid "Location"
 msgstr "Lieu"
 
@@ -437,7 +439,7 @@ msgid "Tickets"
 msgstr "Billets"
 
 #: templates/calendar.html:104 templates/event_page.html:119
-#: templates/venues.html:60
+#: templates/venue_page.html:93 templates/venues.html:60
 msgid "View accessibility info"
 msgstr "Voir les infos d'accessibilité"
 
@@ -579,7 +581,7 @@ msgstr "Retour au calendrier"
 msgid "Update Venue"
 msgstr "Mettre à jour l’événement"
 
-#: templates/event_page.html:55
+#: templates/event_page.html:55 templates/venue_page.html:113
 msgid "Festival"
 msgstr "Festival"
 
@@ -587,11 +589,11 @@ msgstr "Festival"
 msgid "Description"
 msgstr "Description"
 
-#: templates/event_page.html:123
+#: templates/event_page.html:123 templates/venue_page.html:97
 msgid "No accessibility info for this venue yet."
 msgstr "Pas encore d'infos d'accessibilité pour ce lieu."
 
-#: templates/event_page.html:125
+#: templates/event_page.html:125 templates/venue_page.html:99
 msgid "Contact us if you have details."
 msgstr "Contacte-nous si tu as des infos."
 
@@ -720,14 +722,35 @@ msgstr "Salles avec des concerts dans les trois prochains mois."
 msgid "Map of venues with upcoming shows"
 msgstr "Carte des salles avec des concerts à venir"
 
-#: templates/map.html:106
+#: templates/map.html:108 templates/map.html:110
 #, python-format
 msgid "%(num)d venues with upcoming shows"
 msgstr "%(num)d salles avec des concerts à venir"
 
-#: templates/map.html:193
+#: templates/map.html:109
+#, python-format
+msgid "%(num)d venues"
+msgstr "%(num)d salles"
+
+#: templates/map.html:113 templates/map.html:116
+msgid "Show all venues"
+msgstr "Afficher toutes les salles"
+
+#: templates/map.html:114
+msgid "Only venues with shows"
+msgstr "Seulement les salles avec concerts"
+
+#: templates/map.html:212
+msgid "no upcoming events"
+msgstr "pas de concerts à venir"
+
+#: templates/map.html:213
 msgid "upcoming events"
 msgstr "événements à venir"
+
+#: templates/map.html:219
+msgid "Venue page"
+msgstr "Page de la salle"
 
 #: templates/set_password.html:3
 msgid "Set password"
@@ -1012,6 +1035,27 @@ msgstr "Entrée calme / alternative"
 #: templates/venue_accessibility.html:139
 msgid "Additional notes"
 msgstr "Informations supplémentaires"
+
+#: templates/venue_page.html:4
+#, python-format
+msgid "%(num)d upcoming events"
+msgstr "%(num)d concerts à venir"
+
+#: templates/venue_page.html:85
+msgid "Map showing the venue location"
+msgstr "Carte montrant l'emplacement de la salle"
+
+#: templates/venue_page.html:104
+msgid "Upcoming events"
+msgstr "Concerts à venir"
+
+#: templates/venue_page.html:123
+msgid "No upcoming events at this venue."
+msgstr "Pas de concerts à venir dans cette salle."
+
+#: templates/venue_page.html:128
+msgid "Back to the map"
+msgstr "Retour à la carte"
 
 #: templates/venues.html:9
 msgid "Accessibility form link — share this with the venue"
