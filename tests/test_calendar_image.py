@@ -4,7 +4,10 @@ from datetime import date, timedelta
 
 from PIL import Image
 
-from diytracker.services.calendar_image import _load_font, generate_weekly_calendar_image
+from diytracker.services.calendar_image import (
+    _load_font,
+    generate_weekly_calendar_image,
+)
 
 
 def _monday_of(d):

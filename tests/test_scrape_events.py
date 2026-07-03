@@ -62,9 +62,7 @@ class TestFetchUrl:
             raise scrape_events.requests.RequestException("network down")
 
         monkeypatch.setattr(scrape_events.requests, "get", boom)
-        assert (
-            scrape_events.fetch_url("https://example.com", max_retries=2) is None
-        )
+        assert scrape_events.fetch_url("https://example.com", max_retries=2) is None
 
 
 class TestGetSitemapEventUrls:
@@ -107,7 +105,9 @@ class TestGetSitemapEventUrls:
 
     def test_returns_empty_when_fetch_fails(self, monkeypatch):
         monkeypatch.setattr(scrape_events, "fetch_url", lambda url, **kw: None)
-        assert scrape_events.get_sitemap_event_urls("https://x/sitemap.xml", "/x/") == []
+        assert (
+            scrape_events.get_sitemap_event_urls("https://x/sitemap.xml", "/x/") == []
+        )
 
 
 class TestGetPetziEventUrls:
