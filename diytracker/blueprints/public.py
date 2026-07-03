@@ -241,6 +241,10 @@ def venue_map():
             lat, lon = (float(part) for part in venue.coords.split(","))
         except ValueError:
             continue
+        # The map is a cutout of Switzerland with panning locked to it, so
+        # venues outside the Swiss bounding box would be unreachable anyway.
+        if not (45.6 <= lat <= 48.0 and 5.7 <= lon <= 10.7):
+            continue
         markers.append(
             {
                 "name": venue.name,

@@ -7,6 +7,10 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.18.0] - 2026-07-03
+- Reworked the map page into a "cutout" of Switzerland: an inverted mask built from a simplified OSM border polygon (vendored under `static/geo/switzerland.geojson`) hides all tiles outside the country, the border is drawn in ink, and panning/zooming is locked to Switzerland. Venues outside the Swiss bounding box are filtered out server-side since they would be unreachable.
+- Made the map page more mobile-friendly: removed the page title so the map sits at the top, made the map taller (`78dvh`), tightened mobile padding, and enlarged the X markers to 30px tap targets on touch screens.
+
 ## [0.17.0] - 2026-07-03
 - The venue map now only shows venues with events in the next three months (the calendar's horizon), instead of every venue with coordinates.
 - Restyled the map to match the xerox-zine look: tiles are desaturated and multiply-blended onto the paper background, markers are hand-stamped red X marks with the site's blue mis-registration ghost, and popups, zoom buttons and attribution are ink-bordered paper with hard offset shadows.

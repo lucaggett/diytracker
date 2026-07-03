@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
 <style>
   #venue-map {
-    height: min(70vh, 640px);
+    height: min(78vh, 700px);
+    height: min(78dvh, 700px);
     background: var(--paper);
     cursor: crosshair;
     font-family: inherit;
@@ -17,6 +18,16 @@
   #venue-map .leaflet-tile-pane {
     filter: grayscale(1) contrast(1.15) brightness(1.04);
     mix-blend-mode: multiply;
+  }
+
+  /* Cutout mask: everything outside the Swiss border is painted back over
+     in paper, so only Switzerland shows through. */
+  #venue-map .ch-mask {
+    fill: var(--paper);
+    fill-opacity: 1;
+  }
+  #venue-map .ch-border {
+    stroke: var(--ink);
   }
 
   /* Hand-stamped X markers: bleed red over a mis-registered blue ghost. */
@@ -83,20 +94,15 @@
 {% endblock %}
 
 {% block content %}
-<article class="max-w-5xl mx-auto px-4 py-10">
+<article class="max-w-5xl mx-auto px-2 py-4 md:px-4 md:py-10">
 
-  <header class="mb-10">
-    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-2">{{ _('Where the shows happen') }}</p>
-    <h1 class="font-richEatin text-5xl md:text-7xl mis-reg leading-none">{{ _('MAP') }}</h1>
-  </header>
-
-  <div class="flyer-card p-2 md:p-3 relative mb-6">
+  <div class="flyer-card p-2 md:p-3 relative mb-4 md:mb-6">
     <svg class="absolute -top-3 left-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
     <svg class="absolute -top-3 right-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
-    <div id="venue-map" class="border-2 border-ink"></div>
+    <div id="venue-map" class="border-2 border-ink" aria-label="{{ _('Map of venues with upcoming shows') }}"></div>
   </div>
 
-  <p class="font-mono text-xs uppercase tracking-widest text-smudge">
+  <p class="font-mono text-xs uppercase tracking-widest text-smudge px-2 md:px-0">
     {{ _('%(num)d venues with upcoming shows', num=markers|length) }}
   </p>
 
@@ -108,12 +114,49 @@
 <script>
   const venues = {{ markers|tojson }};
 
-  const map = L.map('venue-map', { scrollWheelZoom: true });
+  // Pan/zoom stays locked to Switzerland; server-side the markers are
+  // filtered to the same box, so nothing reachable is ever hidden.
+  const CH_BOUNDS = L.latLngBounds([45.6, 5.7], [48.0, 10.7]);
 
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
+  const map = L.map('venue-map', {
+    scrollWheelZoom: true,
+    maxBounds: CH_BOUNDS,
+    maxBoundsViscosity: 1.0,
+    minZoom: 6,
+    maxZoom: 19
+  });
+  map.fitBounds(CH_BOUNDS, { padding: [10, 10] });
+
+  // Cutout: the border GeoJSON's first ring is the country outline, the rest
+  // are foreign enclaves (Büsingen, Campione). One even-odd polygon — world
+  // rectangle, minus Switzerland, plus the enclaves — painted in paper hides
+  // every tile outside the border; tiles only load once the mask is in place.
+  fetch("{{ url_for('static', filename='geo/switzerland.geojson') }}")
+    .then((r) => r.json())
+    .then((geo) => {
+      const rings = geo.coordinates.map(
+        (ring) => ring.map(([lon, lat]) => [lat, lon])
+      );
+      const world = [[-89, -180], [-89, 180], [89, 180], [89, -180]];
+      L.polygon([world, ...rings], {
+        stroke: false,
+        fillOpacity: 1,
+        className: 'ch-mask',
+        interactive: false
+      }).addTo(map);
+      L.polygon(rings, {
+        fill: false,
+        weight: 2,
+        className: 'ch-border',
+        interactive: false
+      }).addTo(map);
+
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        bounds: CH_BOUNDS,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+    });
 
   const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -121,11 +164,13 @@
 
   // Stamped X: blue mis-registered ghost under a bleed-red cross, each mark
   // rotated a little differently so the map looks marked up by hand.
+  // Touch screens get a bigger stamp so it stays a comfortable tap target.
+  const markerSize = window.matchMedia('(pointer: coarse)').matches ? 30 : 22;
   const xIcon = (rotation) => L.divIcon({
     className: 'x-marker',
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
-    popupAnchor: [0, -10],
+    iconSize: [markerSize, markerSize],
+    iconAnchor: [markerSize / 2, markerSize / 2],
+    popupAnchor: [0, -markerSize / 2],
     html: `<svg viewBox="0 0 22 22" style="transform: rotate(${rotation}deg)" xmlns="http://www.w3.org/2000/svg">
       <g stroke="var(--bleed-offset)" stroke-width="3.4" stroke-linecap="square" opacity="0.55" transform="translate(1.6 1.1)">
         <path d="M4 4 L18 18 M18 4 L4 18"/>
@@ -136,9 +181,7 @@
     </svg>`
   });
 
-  const bounds = [];
   venues.forEach((v, i) => {
-    bounds.push([v.lat, v.lon]);
     const addressLine = [v.address, [v.plz, v.city].filter(Boolean).join(' ')]
       .filter(Boolean).map(escapeHtml).join('<br>');
     const rotation = ((i * 137) % 29) - 14;  // deterministic scatter, -14°..14°
@@ -150,16 +193,5 @@
         `<span class="text-bleed font-bold uppercase">{{ _('upcoming events') }}: ${v.upcoming}</span>`
       );
   });
-
-  // Fit the initial view to Swiss-area venues; far-away outliers (e.g. Vienna)
-  // would otherwise shrink Switzerland to a corner. They stay reachable by panning.
-  const homeBounds = bounds.filter(([lat, lon]) => lat >= 45.7 && lat <= 47.9 && lon >= 5.8 && lon <= 10.6);
-  if (homeBounds.length) {
-    map.fitBounds(homeBounds, { padding: [30, 30] });
-  } else if (bounds.length) {
-    map.fitBounds(bounds, { padding: [30, 30] });
-  } else {
-    map.setView([46.8, 8.2], 8); // Switzerland
-  }
 </script>
 {% endblock %}
