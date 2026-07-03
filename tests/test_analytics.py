@@ -29,7 +29,9 @@ class TestFindLogFiles:
         (prod_dir / "access.log.1.gz").write_text("b\n")
         (prod_dir / "other.log").write_text("c\n")
         monkeypatch.setattr(
-            analytics, "Path", lambda p: prod_dir if p == "/var/log/nginx" else pathlib.Path(p)
+            analytics,
+            "Path",
+            lambda p: prod_dir if p == "/var/log/nginx" else pathlib.Path(p),
         )
         files = analytics.find_log_files()
         names = sorted(f.name for f in files)
@@ -40,7 +42,9 @@ class TestFindLogFiles:
         monkeypatch.setattr(
             analytics,
             "Path",
-            lambda p: tmp_path / "nonexistent" if p == "/var/log/nginx" else pathlib.Path(p),
+            lambda p: (
+                tmp_path / "nonexistent" if p == "/var/log/nginx" else pathlib.Path(p)
+            ),
         )
         assert analytics.find_log_files() == []
 
