@@ -13,7 +13,7 @@ from flask import (
     send_file,
     url_for,
 )
-from sqlalchemy import func
+from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload
 
 from diytracker.forms import (
@@ -23,7 +23,7 @@ from diytracker.forms import (
     VenueForm,
     get_canton_choices,
 )
-from diytracker.models import db, Event, Venue
+from diytracker.models import db, Event, ScrapedEvent, Submitter, Venue
 from diytracker.services.analytics import REPORT_PATH, TIMEFRAMES, generate_report
 from diytracker.services.auth import admin_required
 from diytracker.services.cache import bust_cache
@@ -256,6 +256,48 @@ def generate_accessibility_link(venue_id):
     )
     flash(link, "accessibility_link")
     return redirect(url_for("admin.venues"))
+
+
+@bp.route("/admin/leaderboard")
+@admin_required
+def leaderboard():
+    # An Event approved out of the queue is linked from
+    # ScrapedEvent.approved_event_id and carries the approver as its
+    # submitter_id, so per user: "approved" = scraped rows pointing at their
+    # events, "submitted" = their events with no scraped row (direct
+    # submissions). Queue deletions set no approver and are not counted.
+    rows = (
+        db.session.query(
+            Submitter,
+            func.count(
+                func.distinct(case((ScrapedEvent.id.is_(None), Event.id)))
+            ).label("submitted"),
+            func.count(func.distinct(ScrapedEvent.id)).label("approved"),
+        )
+        .outerjoin(Event, Event.submitter_id == Submitter.id)
+        .outerjoin(ScrapedEvent, ScrapedEvent.approved_event_id == Event.id)
+        .group_by(Submitter.id)
+        .all()
+    )
+    entries = sorted(
+        (
+            {
+                "submitter": submitter,
+                "submitted": submitted,
+                "approved": approved,
+                "score": submitted + approved / 2,
+            }
+            for submitter, submitted, approved in rows
+        ),
+        key=lambda e: (-e["score"], e["submitter"].email.lower()),
+    )
+    # Competition ranking: equal scores share a rank.
+    prev_score, rank = None, 0
+    for i, entry in enumerate(entries, start=1):
+        if entry["score"] != prev_score:
+            rank, prev_score = i, entry["score"]
+        entry["rank"] = rank
+    return render_template("leaderboard.html", entries=entries)
 
 
 @bp.route("/admin/scrape-status")

@@ -8,6 +8,7 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 phase (breaking changes can happen in a minor bump).
 
 ## [Unreleased]
+- Added an admin leaderboard at `/admin/leaderboard` (linked in the admin nav): ranks all users by a combined score of `submitted + approved / 2`, showing both metrics per user. Directly submitted events and queue approvals are told apart via `ScrapedEvent.approved_event_id` — an event linked from a scraped row counts as a queue approval for its submitter, the rest as direct submissions — so no schema change was needed and historical data is included. Ties share a rank; queue deletions carry no approver and are not counted.
 - Reworked the map's hand-drawn X markers again: instead of cycling four pre-baked stroke shapes (whose curvature was too subtle to read at marker size), every mark is now generated from a per-venue seed — strokes bow visibly off the diagonal, overshoot the corners unevenly, get retraced with a thinner second pen pass, and each mark tilts differently. Seeded with mulberry32 so marks are unique per venue but stable across renders. Also fixed the hover zoom, which the old inline rotation style had been overriding.
 
 ## [0.19.2] - 2026-07-03

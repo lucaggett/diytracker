@@ -1,0 +1,42 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}{{ _('Leaderboard') }} · diytracker.ch{% endblock %}
+
+{% block content %}
+<header class="mb-6 flex items-end justify-between">
+  <div>
+    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Admin console') }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('LEADERBOARD') }}</h1>
+  </div>
+  <p class="text-xs text-smudge">{{ _('Score = submitted + approved / 2') }}</p>
+</header>
+
+<div class="overflow-x-auto border-2 border-ink">
+  <table class="min-w-full text-sm">
+    <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
+      <tr>
+        <th class="px-3 py-2 text-left">{{ _('Rank') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('User') }}</th>
+        <th class="px-3 py-2 text-right">{{ _('Submitted') }}</th>
+        <th class="px-3 py-2 text-right">{{ _('Approved') }}</th>
+        <th class="px-3 py-2 text-right">{{ _('Score') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in entries %}
+      <tr class="border-t border-ink/30 hover:bg-ink/5">
+        <td class="px-3 py-2 text-smudge">{{ entry.rank }}</td>
+        <td class="px-3 py-2 font-semibold">{{ entry.submitter.email }}</td>
+        <td class="px-3 py-2 text-right">{{ entry.submitted }}</td>
+        <td class="px-3 py-2 text-right">{{ entry.approved }}</td>
+        <td class="px-3 py-2 text-right font-semibold">{{ '%g'|format(entry.score) }}</td>
+      </tr>
+      {% else %}
+      <tr class="border-t border-ink/30">
+        <td colspan="5" class="px-3 py-4 text-center text-smudge">{{ _('No users yet.') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
