@@ -8,7 +8,6 @@
     <a href="{{ url_for('submissions.event_queue') }}" class="hover:text-bleed">{{ _('Queue') }}</a>
     <a href="{{ url_for('submissions.submit_event_link') }}" class="hover:text-bleed">{{ _('Submit') }}</a>
     <a href="{{ url_for('admin.analytics') }}" class="hover:text-bleed">{{ _('Analytics') }}</a>
-    <a href="{{ url_for('admin.leaderboard') }}" class="hover:text-bleed">{{ _('Leaderboard') }}</a>
     <form method="post" action="{{ url_for('auth.logout') }}" class="ml-auto inline">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="hover:text-bleed font-mono text-xs uppercase tracking-wider cursor-pointer">{{ _('Logout') }}</button>

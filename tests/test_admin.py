@@ -1,8 +1,6 @@
 """Admin dashboard, event/venue management, and exports."""
 
-import re
-
-from diytracker.models import db, Event, ScrapedEvent, Venue
+from diytracker.models import db, Event, Venue
 
 
 class TestEventManagement:
@@ -112,49 +110,3 @@ class TestExportsAndStatus:
     def test_export_requires_admin(self, client, make_user, login):
         login(make_user(is_admin=False))
         assert client.get("/admin/export-excel").status_code == 403
-
-
-class TestLeaderboard:
-    def _approve(self, event):
-        """Mark an event as having been created via queue approval."""
-        rec = ScrapedEvent(approved=True, approved_event_id=event.id)
-        db.session.add(rec)
-        db.session.commit()
-        return rec
-
-    def test_requires_admin(self, client, make_user, login):
-        login(make_user(is_admin=False))
-        assert client.get("/admin/leaderboard").status_code == 403
-
-    def test_ranking_and_score(self, client, admin, login, make_user, make_event):
-        login(admin)
-        alice = make_user(email="alice@example.com")
-        bob = make_user(email="bob@example.com")
-        # Alice: 1 direct submission + 2 queue approvals -> score 2.
-        make_event(name="A1", submitter_id=alice.id)
-        self._approve(make_event(name="A2", submitter_id=alice.id))
-        self._approve(make_event(name="A3", submitter_id=alice.id))
-        # Bob: 3 direct submissions -> score 3.
-        for n in ("B1", "B2", "B3"):
-            make_event(name=n, submitter_id=bob.id)
-
-        resp = client.get("/admin/leaderboard")
-        assert resp.status_code == 200
-        body = resp.data.decode()
-        # Bob (score 3) ranks above Alice (score 2), who ranks above the
-        # admin (score 0).
-        assert (
-            body.index("bob@example.com")
-            < body.index("alice@example.com")
-            < body.index("admin@example.com")
-        )
-        # Alice's row shows submitted=1, approved=2, score=2 as its numbers.
-        alice_row = body[body.index("alice@example.com") : body.index("admin@")]
-        numbers = re.findall(r">\s*([\d.]+)\s*<", alice_row)
-        assert numbers[:3] == ["1", "2", "2"]
-
-    def test_half_point_score_displayed(self, client, admin, login, make_event):
-        login(admin)
-        self._approve(make_event(name="Q1", submitter_id=admin.id))
-        resp = client.get("/admin/leaderboard")
-        assert b"0.5" in resp.data
