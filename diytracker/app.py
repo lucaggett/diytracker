@@ -27,7 +27,7 @@ from diytracker.services.cache import cache
 from diytracker.services.limits import limiter
 from diytracker.services.scraper import start_auto_scheduler
 from diytracker.services.uploads import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
-from diytracker.utils import parent_genres
+from diytracker.utils import normalise_canton, parent_genres
 
 load_dotenv(ROOT / ".env")
 
@@ -91,6 +91,7 @@ app.jinja_env.globals["format_date"] = format_date
 
 app.jinja_env.globals["SUPPORTED_LOCALES"] = SUPPORTED_LOCALES
 app.jinja_env.globals["parent_genres"] = parent_genres
+app.jinja_env.globals["normalise_canton"] = normalise_canton
 
 
 @app.context_processor

@@ -7,7 +7,8 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
-## [Unreleased]
+## [0.20.0]
+- The calendar's canton filter now always lists all 26 cantons with their upcoming-event count in brackets (e.g. "Bern (12)"); cantons without events are greyed out and unselectable instead of missing from the list. Liechtenstein still only appears when it actually has events. Canton values in the filter are now normalised to canton codes server-side, so a venue stored as "Neuchâtel" counts under Neuenburg instead of appearing as a separate option.
 - Reworked the map's hand-drawn X markers again: instead of cycling four pre-baked stroke shapes (whose curvature was too subtle to read at marker size), every mark is now generated from a per-venue seed — strokes bow visibly off the diagonal, overshoot the corners unevenly, get retraced with a thinner second pen pass, and each mark tilts differently. Seeded with mulberry32 so marks are unique per venue but stable across renders. Also fixed the hover zoom, which the old inline rotation style had been overriding.
 
 ## [0.19.2] - 2026-07-03

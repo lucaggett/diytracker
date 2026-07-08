@@ -54,7 +54,7 @@
                        data-genre="{{ event.genre|e }}"
                        data-acts="{{ event.acts|e }}"
                        data-flyer="{{ event.flyer|e }}"
-                       data-tags="canton:{{ event.venue.canton|e }}{% set _parents = parent_genres(event.genre) %}{% if _parents %},genre:{{ ';'.join(_parents)|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                       data-tags="canton:{{ normalise_canton(event.venue.canton)|e }}{% set _parents = parent_genres(event.genre) %}{% if _parents %},genre:{{ ';'.join(_parents)|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
                        onclick="toggleEventDetails(this)">
 
                     <div class="flex justify-between items-start gap-3">
@@ -170,6 +170,7 @@
             'genre': new Set(),
             'various': new Set()
         };
+        const cantonCounts = {};
 
         eventItems.forEach(function (item) {
             const tags = item.getAttribute('data-tags');
@@ -185,6 +186,10 @@
                             });
                         } else {
                             tagsByCategory[category].add(tagValue.trim());
+                        }
+                        if (category === 'canton') {
+                            const code = tagValue.trim();
+                            cantonCounts[code] = (cantonCounts[code] || 0) + 1;
                         }
                     }
                 });
@@ -230,7 +235,7 @@
             'LI': 'Liechtenstein'
         };
         for (const category in tagsByCategory) {
-            if (tagsByCategory[category].size === 0) continue;
+            if (category !== 'canton' && tagsByCategory[category].size === 0) continue;
 
             const categoryHeader = document.createElement('div');
             categoryHeader.className = 'category-header flex items-center justify-between cursor-pointer py-2 border-b border-ink/30 uppercase tracking-widest text-xs';
@@ -258,23 +263,39 @@
             const displayFor = function (t) {
                 return category === 'canton' ? (cantonNames[t] || t) : t;
             };
-            const tagsArray = Array.from(tagsByCategory[category]).sort(function (a, b) {
+            let tags;
+            if (category === 'canton') {
+                // Always list every canton; LI only when it has events.
+                tags = new Set(Object.keys(cantonNames).filter(function (code) {
+                    return code !== 'LI' || cantonCounts['LI'];
+                }));
+                tagsByCategory[category].forEach(function (t) { tags.add(t); });
+            } else {
+                tags = tagsByCategory[category];
+            }
+            const tagsArray = Array.from(tags).sort(function (a, b) {
                 return displayFor(a).localeCompare(displayFor(b));
             });
             tagsArray.forEach(function (tag) {
+                const count = category === 'canton' ? (cantonCounts[tag] || 0) : null;
+                const disabled = count === 0;
                 let label = document.createElement('label');
-                label.className = 'flex items-center mb-1.5 text-ink hover:text-bleed cursor-pointer';
+                label.className = disabled
+                    ? 'flex items-center mb-1.5 text-smudge/60 cursor-not-allowed'
+                    : 'flex items-center mb-1.5 text-ink hover:text-bleed cursor-pointer';
                 let checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.className = 'mr-2 accent-bleed';
                 checkbox.value = tag;
                 checkbox.checked = selectedTags[category].has(tag);
+                checkbox.disabled = disabled;
                 checkbox.addEventListener('change', function () {
                     if (this.checked) selectedTags[category].add(this.value);
                     else selectedTags[category].delete(this.value);
                 });
                 label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(displayFor(tag)));
+                const text = count === null ? displayFor(tag) : displayFor(tag) + ' (' + count + ')';
+                label.appendChild(document.createTextNode(text));
                 optionsContainer.appendChild(label);
             });
 
