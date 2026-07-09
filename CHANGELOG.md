@@ -8,6 +8,7 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 phase (breaking changes can happen in a minor bump).
 
 ## [Unreleased]
+- Fixed the map's X markers dwarfing the country on phones: the marks are fixed-pixel icons, so at the zoomed-out level a portrait screen needs to fit Switzerland they covered half the map. They now scale with the zoom level (down to half size, never above their current size, driven by a single CSS variable so no icons are regenerated); the invisible tap target keeps its full 30px. The map card also drops its 78vh height on small screens for a 10:7 aspect ratio matching Switzerland's shape, removing the empty paper bands above and below the country.
 - Added one-command remote deploys: `scripts/deploy_remote.sh` ssh-es into the production box (host from `DIYTRACKER_DEPLOY_HOST` or the first argument) and runs the new server-side `deploy/deploy.sh`, which does `git pull --ff-only`, `uv sync`, restarts `diytracker.service`, and fails loudly if the service doesn't come back up. The restart no longer needs the root password: a new sudoers drop-in (`deploy/sudoers-diytracker`, installed once to `/etc/sudoers.d/`) lets `diytrackeruser` run exactly `systemctl restart diytracker.service` passwordless. Setup and usage documented in `deploy/README.md`.
 
 ## [0.21.1] - 2026-07-09

@@ -7,12 +7,21 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
 <style>
   #venue-map {
+    --x-scale: 1;
     height: min(78vh, 700px);
     height: min(78dvh, 700px);
     background: var(--paper);
     cursor: crosshair;
     font-family: inherit;
     box-shadow: 3px 3px 0 var(--ink);
+  }
+  /* Portrait phones: Switzerland is wide and flat, so a 78vh map leaves big
+     empty paper bands above and below it. Match the country's shape instead. */
+  @media (max-width: 640px) {
+    #venue-map {
+      height: auto;
+      aspect-ratio: 10 / 7;
+    }
   }
   /* Xerox treatment: desaturated tiles multiplied onto the paper background,
      so the basemap reads as a photocopied street plan, not a glossy web map. */
@@ -40,8 +49,9 @@
     height: 100%;
     overflow: visible;
     transition: transform 120ms ease-out;
+    transform: scale(var(--x-scale));
   }
-  .x-marker:hover svg { transform: scale(1.35); }
+  .x-marker:hover svg { transform: scale(calc(var(--x-scale) * 1.35)); }
 
   /* Popups as stapled paper scraps. */
   #venue-map .leaflet-popup-content-wrapper,
@@ -163,6 +173,19 @@
     maxZoom: 19
   });
   map.fitBounds(CH_BOUNDS, { padding: [10, 10] });
+
+  // Markers are fixed-pixel divIcons, so zoomed out (a portrait phone fits
+  // Switzerland at ~zoom 6) the crosses dwarf the country. Shrink them below
+  // BASE_ZOOM via a CSS variable — one style write scales every mark, and the
+  // untouched 30px iconSize keeps the tap target comfortable.
+  const mapEl = document.getElementById('venue-map');
+  const BASE_ZOOM = 8;
+  const updateMarkerScale = () => {
+    const s = Math.min(1, Math.max(0.5, 2 ** (map.getZoom() - BASE_ZOOM)));
+    mapEl.style.setProperty('--x-scale', s.toFixed(3));
+  };
+  map.on('zoomend', updateMarkerScale);
+  updateMarkerScale();
 
   // Cutout: the border GeoJSON's first ring is the country outline, the rest
   // are foreign enclaves (Büsingen, Campione). One even-odd polygon — world
@@ -304,7 +327,6 @@
   // Cooperative gestures (the Google Maps pattern): the page owns the default
   // gesture — one-finger drag and plain wheel scroll past the map — and the
   // deliberate ones (two fingers, pinch, Ctrl/⌘+wheel) drive the map.
-  const mapEl = document.getElementById('venue-map');
   const hint = document.getElementById('map-hint');
   let hintTimer = null;
   const flashHint = (text) => {
