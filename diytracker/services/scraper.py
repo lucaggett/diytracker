@@ -4,11 +4,13 @@ import time as time_module
 from datetime import datetime
 
 from diytracker.paths import INSTANCE_DIR
-from diytracker.models import db, Event, ScrapedEvent
+from diytracker.models import db, Event, ScrapedEvent, SkippedUrl
 from diytracker.services.ingest import ingest_event
 
 LAST_SCRAPE_FILE = str(INSTANCE_DIR / "last_scrape.txt")
-SCRAPE_INTERVAL_HOURS = 1
+# Event listings change a few times a day at most; scraping more often
+# than this just re-downloads unchanged sitemaps and pages.
+SCRAPE_INTERVAL_HOURS = 6
 
 _scrape_lock = threading.Lock()
 _scrape_running = False
@@ -47,7 +49,17 @@ def _get_known_urls():
         .filter(Event.source_url.isnot(None))
         .all()
     }
-    return scraped_urls | event_urls
+    skipped_urls = {r.url for r in SkippedUrl.query.with_entities(SkippedUrl.url).all()}
+    return scraped_urls | event_urls | skipped_urls
+
+
+def _record_skipped(url, source, reason):
+    """Remember a rejected URL so later runs don't re-fetch it."""
+    if not url:
+        return
+    db.session.add(
+        SkippedUrl(url=url[:300], source=source, reason=(reason or "")[:200] or None)
+    )
 
 
 def _scrape_and_import(app):
@@ -68,7 +80,9 @@ def _scrape_and_import(app):
         }
 
         mg_urls = get_sitemap_event_urls(
-            "https://metalgigs.ch/sitemap.xml", "/konzerte/"
+            "https://metalgigs.ch/sitemap.xml",
+            "/konzerte/",
+            sub_sitemap_hints=["concert"],
         )
         petzi_urls = get_sitemap_event_urls(
             "https://www.petzi.ch/en/sitemap.xml", "/en/events/"
@@ -103,26 +117,32 @@ def _scrape_and_import(app):
 
         _scrape_progress["phase"] = "Importing to database"
         with app.app_context():
-            counts = {"created": 0, "duplicate": 0, "invalid": 0}
+            counts = {"created": 0, "duplicate": 0, "invalid": 0, "skipped": 0}
             for row in events:
                 raw_styles = row.get("styles") or ""
                 # petzi sitemap mixes concerts with theatre/workshop/club-night
                 # rows; the raw 'concert' token is the only signal, so filter
                 # on it before ingest's genre cleanup strips the token.
                 if row.get("source") == "petzi" and "concert" not in raw_styles.lower():
+                    _record_skipped(row.get("url"), "petzi", "not a concert")
+                    counts["skipped"] += 1
                     continue
                 # commit=False: batch commit below; in-batch url dupes are
                 # still caught because ingest's dedup queries autoflush.
                 result = ingest_event(row, commit=False)
                 counts[result.status] += 1
                 if result.status == "invalid":
+                    _record_skipped(
+                        row.get("url"), row.get("source"), f"invalid: {result.reason}"
+                    )
                     app.logger.warning(
                         f"Scrape: dropped invalid row {row.get('url')}: {result.reason}"
                     )
             db.session.commit()
             app.logger.info(
                 f"Scrape complete: {counts['created']} new, "
-                f"{counts['duplicate']} duplicate, {counts['invalid']} invalid"
+                f"{counts['duplicate']} duplicate, {counts['invalid']} invalid, "
+                f"{counts['skipped']} skipped (non-concert)"
             )
         set_last_scrape_time(datetime.now())
     except Exception:

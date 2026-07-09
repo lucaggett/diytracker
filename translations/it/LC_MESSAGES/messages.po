@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-09 13:17+0200\n"
+"POT-Creation-Date: 2026-07-09 16:07+0200\n"
 "PO-Revision-Date: 2026-04-22 12:23+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: it\n"
@@ -269,6 +269,11 @@ msgstr "Locale eliminato."
 msgid "No report has been generated yet. Use the form to create one."
 msgstr "Nessun report è stato ancora generato. Usa il modulo per crearne uno."
 
+#: diytracker/blueprints/admin.py:431
+#, python-format
+msgid "Cleared %(n)d suspect(s)."
+msgstr "%(n)d sospetti eliminati."
+
 #: diytracker/blueprints/auth.py:37
 msgid "Invalid email or password."
 msgstr "E-mail o password non validi."
@@ -277,7 +282,7 @@ msgstr "E-mail o password non validi."
 msgid "This invite link is invalid or has expired."
 msgstr "Questo link d'invito non è valido o è scaduto."
 
-#: diytracker/blueprints/public.py:148
+#: diytracker/blueprints/public.py:149
 msgid ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
@@ -285,11 +290,11 @@ msgstr ""
 "Il messaggio non è stato inviato — scrivici direttamente a "
 "kontakt@diytracker.ch."
 
-#: diytracker/blueprints/public.py:158
+#: diytracker/blueprints/public.py:159
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Grazie! Ti risponderemo al più presto."
 
-#: diytracker/blueprints/public.py:194
+#: diytracker/blueprints/public.py:195
 msgid "Accessibility info saved — thank you!"
 msgstr "Informazioni sull'accessibilità salvate — grazie!"
 
@@ -865,36 +870,36 @@ msgstr "Mappa"
 msgid "Venues with upcoming shows in the next three months."
 msgstr "Locali con concerti nei prossimi tre mesi."
 
-#: templates/map.html:124
+#: templates/map.html:127
 msgid "Map of venues with upcoming shows"
 msgstr "Mappa dei locali con concerti in programma"
 
-#: templates/map.html:127 templates/map.html:132
+#: templates/map.html:130
 msgid "Use two fingers to move the map"
 msgstr "Usa due dita per spostare la mappa"
 
-#: templates/map.html:128 templates/map.html:133
+#: templates/map.html:131
 msgid "Use Ctrl + scroll to zoom"
 msgstr "Usa Ctrl + scorrimento per lo zoom"
 
-#: templates/map.html:142
+#: templates/map.html:140
 #, python-format
 msgid "%(upcoming)d of %(total)d venues with upcoming shows"
 msgstr "%(upcoming)d locali su %(total)d con concerti in programma"
 
-#: templates/map.html:146
+#: templates/map.html:144
 msgid "Show all venues"
 msgstr "Mostra tutti i locali"
 
-#: templates/map.html:293
+#: templates/map.html:304
 msgid "no upcoming events"
 msgstr "nessun concerto in programma"
 
-#: templates/map.html:294
+#: templates/map.html:305
 msgid "upcoming events"
 msgstr "eventi in programma"
 
-#: templates/map.html:300
+#: templates/map.html:311
 msgid "Venue page"
 msgstr "Pagina del locale"
 
@@ -1222,7 +1227,7 @@ msgid "Calendar"
 msgstr "Calendario"
 
 #: templates/_partials/header_public.html:22
-#: templates/_partials/nav_admin.html:13
+#: templates/_partials/nav_admin.html:14
 msgid "Logout"
 msgstr "Esci"
 
@@ -1233,6 +1238,10 @@ msgstr "Invia"
 #: templates/_partials/nav_admin.html:10
 msgid "Analytics"
 msgstr "Analytics"
+
+#: templates/_partials/nav_admin.html:11
+msgid "Suspects"
+msgstr "Sospetti"
 
 #: templates/errors/404.html:3
 msgid "404 · Missing"

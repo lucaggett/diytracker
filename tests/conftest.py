@@ -45,6 +45,12 @@ app_module.app.config.update(
 # config is only read during init_app, so flip the live attribute instead.
 _limiter.enabled = False
 
+# Rapid-fire test requests look exactly like scraping; keep the detector off
+# except in test_scrape_detection.py, which enables and resets it per test.
+from diytracker.services.scrape_detection import detector as _detector  # noqa: E402
+
+_detector.enabled = False
+
 
 def pytest_unconfigure(config):
     try:

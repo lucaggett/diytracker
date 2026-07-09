@@ -25,6 +25,7 @@ from diytracker.services.i18n import (
 )
 from diytracker.services.cache import cache
 from diytracker.services.limits import limiter
+from diytracker.services.scrape_detection import detector
 from diytracker.services.scraper import start_auto_scheduler
 from diytracker.services.uploads import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from diytracker.utils import normalise_canton, parent_genres
@@ -71,6 +72,7 @@ app.config["BABEL_TRANSLATION_DIRECTORIES"] = str(TRANSLATIONS_DIR)
 db.init_app(app)
 cache.init_app(app)
 limiter.init_app(app)
+detector.init_app(app)
 
 with app.app_context():
     db.create_all()

@@ -9,6 +9,10 @@ from diytracker.services import scrape_events
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
+# Captured before the autouse _no_robots stub below replaces it, so
+# TestRobots can exercise the real implementation.
+_REAL_ROBOTS_ALLOWED = scrape_events._robots_allowed
+
 
 def _read_fixture(name):
     return (FIXTURES / name).read_text(encoding="utf-8")
@@ -26,6 +30,14 @@ class _FakeResponse:
 def _no_sleep(monkeypatch):
     # fetch_url sleeps a random delay before every attempt; skip that in tests.
     monkeypatch.setattr(scrape_events.time, "sleep", lambda *_: None)
+
+
+@pytest.fixture(autouse=True)
+def _no_robots(monkeypatch):
+    # fetch_url consults robots.txt (a real HTTP request) before every page;
+    # allow everything by default so tests stay offline. Robots behaviour
+    # itself is covered in TestRobots.
+    monkeypatch.setattr(scrape_events, "_robots_allowed", lambda url: True)
 
 
 class TestFetchUrl:
@@ -63,6 +75,82 @@ class TestFetchUrl:
 
         monkeypatch.setattr(scrape_events.requests, "get", boom)
         assert scrape_events.fetch_url("https://example.com", max_retries=2) is None
+
+    def test_does_not_retry_on_403(self, monkeypatch):
+        # A 403 means "go away"; retrying would only add load.
+        calls = []
+
+        def fake_get(*a, **kw):
+            calls.append(a)
+            return _FakeResponse(403)
+
+        monkeypatch.setattr(scrape_events.requests, "get", fake_get)
+        assert scrape_events.fetch_url("https://example.com") is None
+        assert len(calls) == 1
+
+    def test_skips_url_disallowed_by_robots(self, monkeypatch):
+        def fail(*a, **kw):
+            raise AssertionError("must not fetch a robots-disallowed URL")
+
+        monkeypatch.setattr(scrape_events.requests, "get", fail)
+        monkeypatch.setattr(scrape_events, "_robots_allowed", lambda url: False)
+        assert scrape_events.fetch_url("https://example.com/private") is None
+
+    def test_sends_honest_user_agent(self, monkeypatch):
+        seen = {}
+
+        def fake_get(url, headers=None, timeout=None):
+            seen["ua"] = (headers or {}).get("User-Agent", "")
+            return _FakeResponse(200, "ok")
+
+        monkeypatch.setattr(scrape_events.requests, "get", fake_get)
+        scrape_events.fetch_url("https://example.com")
+        assert seen["ua"].startswith("diytracker")
+
+
+class TestRobots:
+    @pytest.fixture(autouse=True)
+    def _real_robots(self, monkeypatch):
+        # Undo the module-wide _no_robots stub and start with a cold cache.
+        monkeypatch.setattr(scrape_events, "_robots_allowed", _REAL_ROBOTS_ALLOWED)
+        scrape_events._robots_cache.clear()
+        yield
+        scrape_events._robots_cache.clear()
+
+    def test_disallowed_path_blocked(self, monkeypatch):
+        robots = "User-agent: *\nDisallow: /private/\n"
+        monkeypatch.setattr(
+            scrape_events.requests,
+            "get",
+            lambda *a, **kw: _FakeResponse(200, robots),
+        )
+        assert scrape_events._robots_allowed("https://example.com/private/x") is False
+        assert scrape_events._robots_allowed("https://example.com/public/x") is True
+
+    def test_missing_robots_allows_all(self, monkeypatch):
+        monkeypatch.setattr(
+            scrape_events.requests, "get", lambda *a, **kw: _FakeResponse(404)
+        )
+        assert scrape_events._robots_allowed("https://example.com/anything") is True
+
+    def test_unreachable_robots_allows_all(self, monkeypatch):
+        def boom(*a, **kw):
+            raise scrape_events.requests.RequestException("network down")
+
+        monkeypatch.setattr(scrape_events.requests, "get", boom)
+        assert scrape_events._robots_allowed("https://example.com/anything") is True
+
+    def test_parser_is_cached_per_host(self, monkeypatch):
+        calls = []
+
+        def fake_get(url, **kw):
+            calls.append(url)
+            return _FakeResponse(200, "User-agent: *\nDisallow:\n")
+
+        monkeypatch.setattr(scrape_events.requests, "get", fake_get)
+        scrape_events._robots_allowed("https://example.com/a")
+        scrape_events._robots_allowed("https://example.com/b")
+        assert calls == ["https://example.com/robots.txt"]
 
 
 class TestGetSitemapEventUrls:
@@ -108,6 +196,50 @@ class TestGetSitemapEventUrls:
         assert (
             scrape_events.get_sitemap_event_urls("https://x/sitemap.xml", "/x/") == []
         )
+
+    def test_hints_skip_irrelevant_sub_sitemaps(self, monkeypatch):
+        index_xml = """<sitemapindex>
+          <sitemap><loc>https://metalgigs.ch/sitemap_concerts.xml</loc></sitemap>
+          <sitemap><loc>https://metalgigs.ch/sitemap_bands.xml</loc></sitemap>
+        </sitemapindex>"""
+        fetched = []
+
+        def fake_fetch(url, **kw):
+            fetched.append(url)
+            if url.endswith("sitemap.xml"):
+                return index_xml
+            return (
+                "<urlset><url><loc>https://metalgigs.ch/konzerte/a</loc></url></urlset>"
+            )
+
+        monkeypatch.setattr(scrape_events, "fetch_url", fake_fetch)
+        urls = scrape_events.get_sitemap_event_urls(
+            "https://metalgigs.ch/sitemap.xml",
+            "/konzerte/",
+            sub_sitemap_hints=["concert"],
+        )
+        assert urls == ["https://metalgigs.ch/konzerte/a"]
+        assert "https://metalgigs.ch/sitemap_bands.xml" not in fetched
+
+    def test_hints_fall_back_to_all_when_nothing_matches(self, monkeypatch):
+        index_xml = """<sitemapindex>
+          <sitemap><loc>https://metalgigs.ch/sitemap-renamed.xml</loc></sitemap>
+        </sitemapindex>"""
+        pages = {
+            "https://metalgigs.ch/sitemap.xml": index_xml,
+            "https://metalgigs.ch/sitemap-renamed.xml": (
+                "<urlset><url><loc>https://metalgigs.ch/konzerte/a</loc></url></urlset>"
+            ),
+        }
+        monkeypatch.setattr(
+            scrape_events, "fetch_url", lambda url, **kw: pages.get(url)
+        )
+        urls = scrape_events.get_sitemap_event_urls(
+            "https://metalgigs.ch/sitemap.xml",
+            "/konzerte/",
+            sub_sitemap_hints=["concert"],
+        )
+        assert urls == ["https://metalgigs.ch/konzerte/a"]
 
 
 class TestGetPetziEventUrls:

@@ -218,6 +218,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Remove this event from the queue?": "Diesen Event aus der Queue entfernen?",
         "via": "via",
         "Analytics": "Analytics",
+        "Suspects": "Verdächtige",
+        "Cleared %(n)d suspect(s).": "%(n)d Verdächtige gelöscht.",
         "Accessibility form link — share this with the venue": "Barrierefreiheits-Formularlink — mit dem Venue teilen",
         "Copy": "Kopieren",
         # Accessibility form & display
@@ -517,6 +519,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Remove this event from the queue?": "Retirer cet événement de la file ?",
         "via": "via",
         "Analytics": "Analytics",
+        "Suspects": "Suspects",
+        "Cleared %(n)d suspect(s).": "%(n)d suspect(s) supprimé(s).",
         "Accessibility form link — share this with the venue": "Lien du formulaire d'accessibilité — à partager avec le lieu",
         "Copy": "Copier",
         # Accessibility form & display
@@ -816,6 +820,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Remove this event from the queue?": "Rimuovere questo evento dalla coda?",
         "via": "via",
         "Analytics": "Analytics",
+        "Suspects": "Sospetti",
+        "Cleared %(n)d suspect(s).": "%(n)d sospetti eliminati.",
         "Accessibility form link — share this with the venue": "Link al modulo di accessibilità — da condividere con il locale",
         "Copy": "Copia",
         # Accessibility form & display

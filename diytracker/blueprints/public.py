@@ -30,6 +30,7 @@ from diytracker.services.i18n import (
     gettext as _,
     validate_lang,
 )
+from diytracker.services.scrape_detection import HONEYPOT_PATH
 
 bp = Blueprint("public", __name__)
 
@@ -322,6 +323,32 @@ def sitemap():
 
     xml = render_template("sitemap.xml", pages=pages)
     return Response(xml, mimetype="application/xml")
+
+
+@bp.route("/robots.txt")
+def robots():
+    # The honeypot disallow doubles as bait: polite crawlers skip it,
+    # scrapers that parse robots.txt for "interesting" paths walk into it.
+    body = "\n".join(
+        [
+            "User-agent: *",
+            f"Disallow: {HONEYPOT_PATH}",
+            "Disallow: /admin",
+            "Disallow: /login",
+            "",
+            f"Sitemap: {url_for('public.sitemap', _external=True)}",
+            "",
+        ]
+    )
+    return Response(body, mimetype="text/plain")
+
+
+@bp.route(HONEYPOT_PATH)
+def events_archive():
+    # Scrape-detection honeypot (services/scrape_detection.py flags the hit
+    # in its before_request hook). Render something plausible so scrapers
+    # don't realise they've been spotted.
+    return render_template("errors/404.html"), 200
 
 
 @bp.route("/set-language/<lang>")

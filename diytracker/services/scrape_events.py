@@ -30,6 +30,8 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import random
+from urllib.parse import urlparse
+from urllib.robotparser import RobotFileParser
 
 # Allow running standalone (`python diytracker/services/scrape_events.py`),
 # where the project root isn't on sys.path.
@@ -71,12 +73,52 @@ if not logger.handlers:
 # of triggering rate-limiting.  Values are inclusive in random.uniform.
 REQUEST_DELAY_RANGE: Tuple[float, float] = (0.5, 1.5)
 
+# Identify ourselves honestly so site operators can see who is crawling
+# and how to reach us, rather than disguising the scraper as a browser.
+USER_AGENT = "diytracker (+https://diytracker.ch; lucaggett@gmail.com)"
+
+# Per-host robots.txt parsers, refreshed after ROBOTS_CACHE_TTL seconds
+# (the scheduler process runs for weeks, so entries must expire).
+ROBOTS_CACHE_TTL = 24 * 3600
+_robots_cache: Dict[str, Tuple[float, Optional[RobotFileParser]]] = {}
+
+
+def _get_robots_parser(base_url: str) -> Optional[RobotFileParser]:
+    cached = _robots_cache.get(base_url)
+    if cached and time.time() - cached[0] < ROBOTS_CACHE_TTL:
+        return cached[1]
+    parser = None
+    robots_url = base_url + "/robots.txt"
+    try:
+        resp = requests.get(robots_url, headers={"User-Agent": USER_AGENT}, timeout=10)
+        if resp.status_code == 200:
+            parser = RobotFileParser()
+            parser.parse(resp.text.splitlines())
+        else:
+            # No robots.txt (or an error page): treat as allow-all.
+            logger.debug(
+                f"No robots.txt at {robots_url} (HTTP {resp.status_code}); allowing"
+            )
+    except requests.RequestException as e:
+        logger.warning(f"Could not fetch {robots_url} ({e}); assuming allowed")
+    _robots_cache[base_url] = (time.time(), parser)
+    return parser
+
+
+def _robots_allowed(url: str) -> bool:
+    """Check the target host's robots.txt before fetching a page."""
+    parsed = urlparse(url)
+    if not parsed.scheme or not parsed.netloc:
+        return True
+    parser = _get_robots_parser(f"{parsed.scheme}://{parsed.netloc}")
+    return parser is None or parser.can_fetch(USER_AGENT, url)
+
 
 def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str]:
     """Fetch a URL and return its text content.
 
-    A custom User‑Agent is supplied to reduce the chance of the server
-    returning a 403.  If the request fails or returns a non‑200 status
+    Honors the host's robots.txt and identifies the scraper with an
+    honest User-Agent.  If the request fails or returns a non-200 status
     code, None is returned instead of raising an exception.
 
     Args:
@@ -86,17 +128,11 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
     Returns:
         The response text, or None if the request failed.
     """
-    # Rotate among several common browser User‑Agent strings to reduce
-    # the chance of being flagged as a bot.  Each request picks one at
-    # random.
-    USER_AGENTS = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Safari/605.1.15",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.5993.91 Safari/537.36",
-    ]
-    user_agent = random.choice(USER_AGENTS)
+    if not _robots_allowed(url):
+        logger.warning(f"Skipping {url}: disallowed by robots.txt")
+        return None
     headers = {
-        "User-Agent": user_agent,
+        "User-Agent": USER_AGENT,
         "Accept-Language": "en-US,en;q=0.9",
     }
     for attempt in range(max_retries):
@@ -120,8 +156,8 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
             resp.encoding = resp.apparent_encoding
             logger.debug(f"Fetched {url} successfully (length {len(resp.text)})")
             return resp.text
-        # On rate limiting (429) or forbidden (403), wait longer and retry
-        if resp.status_code in (403, 429):
+        # On rate limiting (429), wait longer and retry
+        if resp.status_code == 429:
             retry_after = resp.headers.get("Retry-After")
             if retry_after and retry_after.isdigit():
                 wait_time = float(retry_after)
@@ -129,10 +165,15 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
                 # Exponential backoff: double the base delay each retry
                 wait_time = (attempt + 1) * 2.0
             logger.warning(
-                f"Got HTTP {resp.status_code} for {url}, waiting {wait_time} seconds before retry"
+                f"Got HTTP 429 for {url}, waiting {wait_time} seconds before retry"
             )
             time.sleep(wait_time)
             continue
+        # A 403 is the server telling us to go away; retrying would only
+        # add load, so give up immediately.
+        if resp.status_code == 403:
+            logger.warning(f"Got HTTP 403 for {url}, not retrying")
+            return None
         # Other non-200 responses are logged and not retried
         logger.warning(f"Non-200 response for {url}: {resp.status_code}")
         return None
@@ -140,7 +181,9 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
     return None
 
 
-def get_sitemap_event_urls(sitemap_url: str, pattern: str) -> List[str]:
+def get_sitemap_event_urls(
+    sitemap_url: str, pattern: str, sub_sitemap_hints: Optional[List[str]] = None
+) -> List[str]:
     """Extract event URLs matching a pattern from a sitemap.xml file.
 
     Handles both regular sitemaps and sitemap index files (which contain
@@ -151,6 +194,10 @@ def get_sitemap_event_urls(sitemap_url: str, pattern: str) -> List[str]:
         sitemap_url: URL to the sitemap.xml document.
         pattern: A substring that must appear in the event URL (for
             example ``'/konzerte/'`` or ``'/en/events/'``).
+        sub_sitemap_hints: Optional substrings used to pick which
+            sub-sitemaps of an index to fetch (e.g. ``['concert']`` to
+            skip a site's multi-megabyte bands/venues sitemaps).  If no
+            sub-sitemap matches any hint, all are fetched as a fallback.
 
     Returns:
         A list of unique event URLs matching the pattern.
@@ -162,14 +209,30 @@ def get_sitemap_event_urls(sitemap_url: str, pattern: str) -> List[str]:
     # Detect sitemap index: contains <sitemap> elements (not <url> elements)
     sub_sitemap_urls = re.findall(r"<sitemap>\s*<loc>(.*?)</loc>", sitemap_text)
     if sub_sitemap_urls:
+        sub_sitemap_urls = [u.strip() for u in sub_sitemap_urls]
+        if sub_sitemap_hints:
+            matching = [
+                u
+                for u in sub_sitemap_urls
+                if any(hint in u for hint in sub_sitemap_hints)
+            ]
+            # If the site renamed its sub-sitemaps and nothing matches,
+            # fall back to fetching all of them rather than missing events.
+            if matching:
+                skipped = len(sub_sitemap_urls) - len(matching)
+                if skipped:
+                    logger.debug(
+                        f"Skipping {skipped} sub-sitemaps of {sitemap_url} "
+                        f"not matching hints {sub_sitemap_hints}"
+                    )
+                sub_sitemap_urls = matching
         logger.debug(
-            f"Detected sitemap index at {sitemap_url} with {len(sub_sitemap_urls)} sub-sitemaps"
+            f"Detected sitemap index at {sitemap_url}, fetching {len(sub_sitemap_urls)} sub-sitemaps"
         )
         all_urls: List[str] = []
         seen: set = set()
         for sub_url in sub_sitemap_urls:
-            sub_url = sub_url.strip()
-            for url in get_sitemap_event_urls(sub_url, pattern):
+            for url in get_sitemap_event_urls(sub_url, pattern, sub_sitemap_hints):
                 if url not in seen:
                     all_urls.append(url)
                     seen.add(url)
@@ -718,9 +781,13 @@ def main() -> None:
     events: List[Dict[str, str]] = []
     # Fetch and parse metalgigs concerts and festivals
     print("Fetching metalgigs event URLs…", file=sys.stderr)
-    mg_urls = get_sitemap_event_urls("https://metalgigs.ch/sitemap.xml", "/konzerte/")
+    mg_urls = get_sitemap_event_urls(
+        "https://metalgigs.ch/sitemap.xml", "/konzerte/", sub_sitemap_hints=["concert"]
+    )
     mg_festival_urls = get_sitemap_event_urls(
-        "https://metalgigs.ch/sitemap.xml", "/festivals/"
+        "https://metalgigs.ch/sitemap.xml",
+        "/festivals/",
+        sub_sitemap_hints=["festival"],
     )
     print(
         f"Found {len(mg_urls)} metalgigs concerts, {len(mg_festival_urls)} festivals",

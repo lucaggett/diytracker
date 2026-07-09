@@ -213,6 +213,39 @@ class ScrapedEvent(db.Model):
         return f"<ScrapedEvent {self.id}: {self.title} on {self.start_date}>"
 
 
+class SkippedUrl(db.Model):
+    """URLs the scraper fetched and rejected (non-concert petzi rows, invalid
+    payloads). Without a record of these, every scrape run re-downloads the
+    same rejected pages; the scraper folds them into its known-URL set."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String(300), nullable=False, unique=True)
+    source = db.Column(db.String(20), nullable=True)
+    reason = db.Column(db.String(200), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+
+    def __repr__(self):
+        return f"<SkippedUrl {self.url}: {self.reason}>"
+
+
+class ScrapeSuspect(db.Model):
+    """IPs flagged by services/scrape_detection.py as likely scrapers.
+    Detection-only: rows are evidence for the admin view, nothing is blocked."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    ip = db.Column(db.String(45), nullable=False, unique=True)  # v6 max length
+    first_seen = db.Column(db.DateTime, nullable=False, default=utcnow)
+    last_seen = db.Column(db.DateTime, nullable=False, default=utcnow)
+    score = db.Column(db.Float, nullable=False, default=0.0)
+    request_count = db.Column(db.Integer, nullable=False, default=0)
+    signals = db.Column(db.Text, nullable=True)  # JSON list of signal names
+    user_agent = db.Column(db.String(300), nullable=True)
+    sample_paths = db.Column(db.Text, nullable=True)  # JSON list of paths
+
+    def __repr__(self):
+        return f"<ScrapeSuspect {self.ip} score={self.score}>"
+
+
 def _format_parent_genres(genre):
     parents = _compute_parent_genres(genre)
     return "," + ",".join(parents) + "," if parents else None

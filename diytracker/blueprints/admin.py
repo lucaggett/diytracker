@@ -23,7 +23,7 @@ from diytracker.forms import (
     VenueForm,
     get_canton_choices,
 )
-from diytracker.models import db, Event, Venue
+from diytracker.models import db, Event, ScrapeSuspect, Venue
 from diytracker.services.analytics import REPORT_PATH, TIMEFRAMES, generate_report
 from diytracker.services.auth import admin_required
 from diytracker.services.cache import bust_cache
@@ -404,6 +404,32 @@ def analytics_view():
         flash(_("No report has been generated yet. Use the form to create one."))
         return redirect(url_for("admin.analytics"))
     return send_file(REPORT_PATH, mimetype="text/html")
+
+
+@bp.route("/admin/scrape-suspects", methods=["GET"])
+@admin_required
+def scrape_suspects():
+    import json
+
+    suspects = ScrapeSuspect.query.order_by(ScrapeSuspect.last_seen.desc()).all()
+    rows = [
+        {
+            "suspect": s,
+            "signals": json.loads(s.signals or "[]"),
+            "sample_paths": json.loads(s.sample_paths or "[]"),
+        }
+        for s in suspects
+    ]
+    return render_template("scrape_suspects.html", rows=rows)
+
+
+@bp.route("/admin/scrape-suspects/clear", methods=["POST"])
+@admin_required
+def clear_scrape_suspects():
+    deleted = ScrapeSuspect.query.delete()
+    db.session.commit()
+    flash(_("Cleared %(n)d suspect(s).", n=deleted), "success")
+    return redirect(url_for("admin.scrape_suspects"))
 
 
 @bp.route("/admin/weekly-image")

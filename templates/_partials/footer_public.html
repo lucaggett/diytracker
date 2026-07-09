@@ -25,4 +25,10 @@
       </div>
     </div>
   </div>
+  {# Scrape-detection honeypot: invisible to humans (off-screen, no tab stop,
+     hidden from screen readers) and disallowed in robots.txt, so only
+     link-following scrapers ever request it. #}
+  <a href="{{ url_for('public.events_archive') }}" rel="nofollow"
+     tabindex="-1" aria-hidden="true"
+     style="position:absolute;left:-9999px;top:-9999px">archive</a>
 </footer>

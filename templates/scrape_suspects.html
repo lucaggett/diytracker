@@ -1,0 +1,63 @@
+{% extends 'base_admin.html' %}
+{% block title %}Scrape Suspects · diytracker.ch{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-lg font-bold uppercase tracking-wider">Scrape Suspects</h1>
+  {% if rows %}
+  <form method="post" action="{{ url_for('admin.clear_scrape_suspects') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="border border-ink px-3 py-1 text-xs uppercase tracking-wider hover:bg-ink hover:text-paper transition-colors">
+      Clear list
+    </button>
+  </form>
+  {% endif %}
+</div>
+
+<p class="text-xs text-smudge mb-4 max-w-2xl">
+  IPs whose traffic matched scraping heuristics (honeypot hits, scraper or
+  spoofed user agents, sustained rate, metronomic timing, ID enumeration,
+  rotating-proxy fingerprints). Detection only — nothing is blocked.
+</p>
+
+{% if rows %}
+<div class="overflow-x-auto">
+  <table class="w-full text-xs border border-ink">
+    <thead>
+      <tr class="bg-ink text-paper uppercase tracking-wider text-left">
+        <th class="px-3 py-2">IP</th>
+        <th class="px-3 py-2">Score</th>
+        <th class="px-3 py-2">Signals</th>
+        <th class="px-3 py-2">Requests</th>
+        <th class="px-3 py-2">First seen</th>
+        <th class="px-3 py-2">Last seen</th>
+        <th class="px-3 py-2">User agent / paths</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr class="border-t border-ink align-top">
+        <td class="px-3 py-2 whitespace-nowrap">{{ row.suspect.ip }}</td>
+        <td class="px-3 py-2">{{ '%.1f' | format(row.suspect.score) }}</td>
+        <td class="px-3 py-2">
+          {% for signal in row.signals %}
+            <span class="inline-block border border-ink px-1 mb-1">{{ signal }}</span>
+          {% endfor %}
+        </td>
+        <td class="px-3 py-2">{{ row.suspect.request_count }}</td>
+        <td class="px-3 py-2 whitespace-nowrap">{{ row.suspect.first_seen.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="px-3 py-2 whitespace-nowrap">{{ row.suspect.last_seen.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="px-3 py-2 max-w-xs">
+          <p class="break-all text-smudge">{{ row.suspect.user_agent or '—' }}</p>
+          {% for path in row.sample_paths %}
+            <p class="break-all">{{ path }}</p>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-sm text-smudge border border-ink p-4 max-w-md">No suspects flagged.</p>
+{% endif %}
+{% endblock %}

@@ -2,7 +2,15 @@
 
 from datetime import date, time
 
-from diytracker.models import db, Event, ScrapedEvent, Venue, VenueAccessibility, utcnow
+from diytracker.models import (
+    db,
+    Event,
+    ScrapedEvent,
+    SkippedUrl,
+    Venue,
+    VenueAccessibility,
+    utcnow,
+)
 from diytracker.services.events import compute_event_hash
 from diytracker.services.venue import (
     find_dedup_candidates,
@@ -65,7 +73,9 @@ class TestScrapeImport:
         monkeypatch.setattr(
             scrape_events,
             "get_sitemap_event_urls",
-            lambda url, frag: [r["url"] for r in scraped_rows if frag in r["url"]],
+            lambda url, frag, **kw: [
+                r["url"] for r in scraped_rows if frag in r["url"]
+            ],
         )
         monkeypatch.setattr(scrape_events, "get_petzi_event_urls", lambda: [])
         url_to_row = {r["url"]: r for r in scraped_rows}
@@ -118,7 +128,7 @@ class TestScrapeImport:
         self._run_import(app, monkeypatch, rows)
         assert ScrapedEvent.query.count() == 1
 
-    def test_petzi_non_concert_rows_filtered(self, app, monkeypatch):
+    def test_petzi_non_concert_rows_filtered_and_remembered(self, app, monkeypatch):
         rows = [
             {
                 "source": "petzi",
@@ -131,6 +141,50 @@ class TestScrapeImport:
         ]
         self._run_import(app, monkeypatch, rows)
         assert ScrapedEvent.query.count() == 0
+        # The rejected URL is remembered so later runs don't re-fetch it.
+        skipped = SkippedUrl.query.one()
+        assert skipped.url == "https://petzi.ch/en/events/theatre"
+        assert skipped.reason == "not a concert"
+
+    def test_invalid_rows_remembered(self, app, monkeypatch):
+        rows = [
+            {
+                "source": "metalgigs",
+                "url": "https://metalgigs.ch/konzerte/broken",
+                "title": "No Date",
+                "styles": "Punk",
+                # missing start_date -> ingest returns 'invalid'
+            }
+        ]
+        self._run_import(app, monkeypatch, rows)
+        assert ScrapedEvent.query.count() == 0
+        skipped = SkippedUrl.query.one()
+        assert skipped.url == "https://metalgigs.ch/konzerte/broken"
+        assert skipped.reason.startswith("invalid:")
+
+    def test_dedupes_against_skipped_urls(self, app, monkeypatch):
+        # A previously rejected URL must not be fetched or parsed again.
+        db.session.add(
+            SkippedUrl(
+                url="https://petzi.ch/en/events/theatre",
+                source="petzi",
+                reason="not a concert",
+            )
+        )
+        db.session.commit()
+        rows = [
+            {
+                "source": "petzi",
+                "url": "https://petzi.ch/en/events/theatre",
+                "title": "A Play",
+                "styles": "Theatre",
+                "city": "Bern",
+                "start_date": "2026-08-01",
+            }
+        ]
+        self._run_import(app, monkeypatch, rows)
+        assert ScrapedEvent.query.count() == 0
+        assert SkippedUrl.query.count() == 1  # no duplicate row added
 
 
 # ── venue deduplication ───────────────────────────────────────────────────────
