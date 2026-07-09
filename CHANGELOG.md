@@ -7,6 +7,9 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [Unreleased]
+- Added one-command remote deploys: `scripts/deploy_remote.sh` ssh-es into the production box (host from `DIYTRACKER_DEPLOY_HOST` or the first argument) and runs the new server-side `deploy/deploy.sh`, which does `git pull --ff-only`, `uv sync`, restarts `diytracker.service`, and fails loudly if the service doesn't come back up. The restart no longer needs the root password: a new sudoers drop-in (`deploy/sudoers-diytracker`, installed once to `/etc/sudoers.d/`) lets `diytrackeruser` run exactly `systemctl restart diytracker.service` passwordless. Setup and usage documented in `deploy/README.md`.
+
 ## [0.21.1] - 2026-07-09
 - Added an i18n status check to CI (`scripts/i18n_status.py`): extracts a fresh string catalog from the source tree, verifies `translations/messages.pot` is in sync, and reports per-locale coverage (translated/untranslated/fuzzy/missing/obsolete) as a table in the job summary. The job fails on any stale catalog or any untranslated, fuzzy, or missing string; obsolete entries are reported but don't fail. Runnable locally with `uv run python scripts/i18n_status.py`.
 - Fixed the 19 fuzzy-matched translations per locale that the new check flagged: the venue-management strings had been auto-populated with wrong nearby matches (e.g. "Edit Venue" showed "EVENT BEARBEITEN"/"MODIFIER ÉVÉNEMENT", "back to venues" pointed to the calendar, and the English catalog mapped "Loud" to "Logout" and "Calendar" to "Back to calendar" in the public header). All four locales are now at 100% with correct strings and recompiled `.mo` catalogs.

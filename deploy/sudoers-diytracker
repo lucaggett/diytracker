@@ -1,0 +1,8 @@
+# Let diytrackeruser restart the service without a password, and nothing else.
+# sudoers matches on the full path: confirm `command -v systemctl` prints
+# /usr/bin/systemctl on the server and adjust the line below if it doesn't.
+#
+# Install:
+#   sudo install -m 440 deploy/sudoers-diytracker /etc/sudoers.d/diytracker
+#   sudo visudo -c
+diytrackeruser ALL=(root) NOPASSWD: /usr/bin/systemctl restart diytracker.service
