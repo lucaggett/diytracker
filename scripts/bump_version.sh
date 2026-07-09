@@ -64,7 +64,7 @@ fi
 git add pyproject.toml package.json
 [[ -f uv.lock ]] && git add uv.lock
 
-git commit -m "Bump version to ${new_version}"
+git commit -a -m "Bump version to ${new_version}"
 git tag -a "$tag" -m "$tag"
 
 git push origin HEAD
