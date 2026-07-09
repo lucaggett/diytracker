@@ -9,6 +9,8 @@ phase (breaking changes can happen in a minor bump).
 
 ## [0.21.1] - 2026-07-09
 - Added an i18n status check to CI (`scripts/i18n_status.py`): extracts a fresh string catalog from the source tree, verifies `translations/messages.pot` is in sync, and reports per-locale coverage (translated/untranslated/fuzzy/missing/obsolete) as a table in the job summary. The job fails on any stale catalog or any untranslated, fuzzy, or missing string; obsolete entries are reported but don't fail. Runnable locally with `uv run python scripts/i18n_status.py`.
+- Fixed the 19 fuzzy-matched translations per locale that the new check flagged: the venue-management strings had been auto-populated with wrong nearby matches (e.g. "Edit Venue" showed "EVENT BEARBEITEN"/"MODIFIER ÉVÉNEMENT", "back to venues" pointed to the calendar, and the English catalog mapped "Loud" to "Logout" and "Calendar" to "Back to calendar" in the public header). All four locales are now at 100% with correct strings and recompiled `.mo` catalogs.
+- Removed the map's always-visible gesture note in the corner; the transient paper-scrap hint that flashes on a wrong gesture (and the zoom buttons) remain.
 
 ## [0.21.0] - 2026-07-09
 - Replaced the map's "Show all venues" button with a fixed-size toggle switch (44×24, ink-bordered with a tilted square knob to fit the zine look): only the knob position and track colour change on toggle, and the venue counter is now a single static "X of Y venues with upcoming shows" line, so the row no longer reflows on mobile when toggled. The switch is keyboard-operable and exposed as `role="switch"` to assistive tech.

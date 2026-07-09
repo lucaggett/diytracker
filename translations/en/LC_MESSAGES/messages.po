@@ -260,9 +260,8 @@ msgstr ""
 "(%(names)s%(more)s). Reassign or delete those events first."
 
 #: diytracker/blueprints/admin.py:244
-#, fuzzy
 msgid "Venue deleted."
-msgstr "Venue Details"
+msgstr "Venue deleted."
 
 #: diytracker/blueprints/admin.py:404
 msgid "No report has been generated yet. Use the form to create one."
@@ -289,9 +288,8 @@ msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Thanks! We will get back to you as soon as possible."
 
 #: diytracker/blueprints/public.py:194
-#, fuzzy
 msgid "Accessibility info saved — thank you!"
-msgstr "Accessibility information"
+msgstr "Accessibility info saved — thank you!"
 
 #: diytracker/blueprints/submissions.py:114
 msgid "Invalid event selection."
@@ -521,9 +519,8 @@ msgstr "Drop us a line if an immediate scrape is needed."
 
 #: templates/_partials/nav_admin.html:7 templates/admin.html:49
 #: templates/venues.html:3
-#, fuzzy
 msgid "Venues"
-msgstr "Venue"
+msgstr "Venues"
 
 #: templates/admin.html:54
 msgid "Export Excel"
@@ -719,24 +716,20 @@ msgid "Search or type to add genres"
 msgstr "Search or type to add genres"
 
 #: templates/edit_venue.html:3
-#, fuzzy
 msgid "Edit Venue"
-msgstr "EDIT EVENT"
+msgstr "Edit Venue"
 
 #: templates/edit_venue.html:9
-#, fuzzy
 msgid "EDIT VENUE"
-msgstr "EDIT EVENT"
+msgstr "EDIT VENUE"
 
 #: templates/edit_venue.html:11
-#, fuzzy
 msgid "back to venues"
-msgstr "Back to calendar"
+msgstr "back to venues"
 
 #: templates/edit_venue.html:67
-#, fuzzy
 msgid "Update Venue"
-msgstr "Update Event"
+msgstr "Update Venue"
 
 #: templates/event_page.html:86 templates/venue_page.html:76
 msgid "Location"
@@ -1007,9 +1000,8 @@ msgid "Yes"
 msgstr "Yes"
 
 #: templates/venue_accessibility.html:9
-#, fuzzy
 msgid "Partial"
-msgstr "Optional."
+msgstr "Partial"
 
 #: templates/venue_accessibility.html:10
 msgid "No"
@@ -1020,9 +1012,8 @@ msgid "Unknown"
 msgstr "Unknown"
 
 #: templates/venue_accessibility.html:12
-#, fuzzy
 msgid "Never"
-msgstr "Event"
+msgstr "Never"
 
 #: templates/venue_accessibility.html:13
 msgid "Sometimes"
@@ -1049,9 +1040,8 @@ msgid "Slight slope"
 msgstr "Slight slope"
 
 #: templates/venue_accessibility.html:19
-#, fuzzy
 msgid "Uneven"
-msgstr "Event"
+msgstr "Uneven"
 
 #: templates/venue_accessibility.html:20
 msgid "Cobblestones / gravel"
@@ -1062,19 +1052,16 @@ msgid "Very loud (120 dB+)"
 msgstr "Very loud (120 dB+)"
 
 #: templates/venue_accessibility.html:22
-#, fuzzy
 msgid "Loud"
-msgstr "Logout"
+msgstr "Loud"
 
 #: templates/venue_accessibility.html:23
-#, fuzzy
 msgid "Moderate"
-msgstr "Date"
+msgstr "Moderate"
 
 #: templates/venue_accessibility.html:24
-#, fuzzy
 msgid "Varies"
-msgstr "Address"
+msgstr "Varies"
 
 #: templates/venue_accessibility.html:25
 msgid "Ask staff"
@@ -1113,9 +1100,8 @@ msgid "Sign language interpretation"
 msgstr "Sign language interpretation"
 
 #: templates/venue_accessibility.html:113
-#, fuzzy
 msgid "First aid kit"
-msgstr "First and last name"
+msgstr "First aid kit"
 
 #: templates/venue_accessibility.html:114
 msgid "AED (defibrillator)"
@@ -1171,19 +1157,16 @@ msgid "Copy"
 msgstr "Copy"
 
 #: templates/venues.html:29
-#, fuzzy
 msgid "MANAGE VENUES"
-msgstr "MANAGE EVENTS"
+msgstr "MANAGE VENUES"
 
 #: templates/venues.html:31
-#, fuzzy
 msgid "venues"
-msgstr "Venue"
+msgstr "venues"
 
 #: templates/venues.html:43
-#, fuzzy
 msgid "Events"
-msgstr "events"
+msgstr "Events"
 
 #: templates/venues.html:44
 msgid "Access."
@@ -1194,14 +1177,12 @@ msgid "No accessibility info yet"
 msgstr "No accessibility info yet"
 
 #: templates/venues.html:71
-#, fuzzy
 msgid "Link"
-msgstr "LOGIN"
+msgstr "Link"
 
 #: templates/venues.html:77
-#, fuzzy
 msgid "Delete events first"
-msgstr "Select the event date"
+msgstr "Delete events first"
 
 #: templates/venues.html:84
 msgid "Delete venue permanently?"
@@ -1234,7 +1215,7 @@ msgstr "Language"
 #: templates/_partials/header_public.html:16
 #: templates/_partials/nav_admin.html:4
 msgid "Calendar"
-msgstr "Back to calendar"
+msgstr "Calendar"
 
 #: templates/_partials/header_public.html:22
 #: templates/_partials/nav_admin.html:13

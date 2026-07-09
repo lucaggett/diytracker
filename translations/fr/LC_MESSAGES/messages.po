@@ -261,7 +261,6 @@ msgstr ""
 "événements."
 
 #: diytracker/blueprints/admin.py:244
-#, fuzzy
 msgid "Venue deleted."
 msgstr "Lieu supprimé."
 
@@ -292,9 +291,8 @@ msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Merci ! Nous revenons vers toi dès que possible."
 
 #: diytracker/blueprints/public.py:194
-#, fuzzy
 msgid "Accessibility info saved — thank you!"
-msgstr "Informations d'accessibilité"
+msgstr "Informations d'accessibilité enregistrées — merci !"
 
 #: diytracker/blueprints/submissions.py:114
 msgid "Invalid event selection."
@@ -536,7 +534,6 @@ msgstr "Préviens-nous si une collecte immédiate est nécessaire."
 
 #: templates/_partials/nav_admin.html:7 templates/admin.html:49
 #: templates/venues.html:3
-#, fuzzy
 msgid "Venues"
 msgstr "Lieux"
 
@@ -732,24 +729,20 @@ msgid "Search or type to add genres"
 msgstr "Rechercher ou saisir des genres"
 
 #: templates/edit_venue.html:3
-#, fuzzy
 msgid "Edit Venue"
-msgstr "MODIFIER ÉVÉNEMENT"
+msgstr "Modifier le lieu"
 
 #: templates/edit_venue.html:9
-#, fuzzy
 msgid "EDIT VENUE"
-msgstr "MODIFIER ÉVÉNEMENT"
+msgstr "MODIFIER LE LIEU"
 
 #: templates/edit_venue.html:11
-#, fuzzy
 msgid "back to venues"
-msgstr "Retour au calendrier"
+msgstr "retour aux lieux"
 
 #: templates/edit_venue.html:67
-#, fuzzy
 msgid "Update Venue"
-msgstr "Mettre à jour l’événement"
+msgstr "Mettre à jour le lieu"
 
 #: templates/event_page.html:86 templates/venue_page.html:76
 msgid "Location"
@@ -1020,7 +1013,6 @@ msgid "Yes"
 msgstr "Oui"
 
 #: templates/venue_accessibility.html:9
-#, fuzzy
 msgid "Partial"
 msgstr "Partiel"
 
@@ -1033,7 +1025,6 @@ msgid "Unknown"
 msgstr "Inconnu"
 
 #: templates/venue_accessibility.html:12
-#, fuzzy
 msgid "Never"
 msgstr "Jamais"
 
@@ -1062,7 +1053,6 @@ msgid "Slight slope"
 msgstr "Légère pente"
 
 #: templates/venue_accessibility.html:19
-#, fuzzy
 msgid "Uneven"
 msgstr "Irrégulier"
 
@@ -1075,17 +1065,14 @@ msgid "Very loud (120 dB+)"
 msgstr "Très fort (120 dB+)"
 
 #: templates/venue_accessibility.html:22
-#, fuzzy
 msgid "Loud"
 msgstr "Fort"
 
 #: templates/venue_accessibility.html:23
-#, fuzzy
 msgid "Moderate"
 msgstr "Modéré"
 
 #: templates/venue_accessibility.html:24
-#, fuzzy
 msgid "Varies"
 msgstr "Variable"
 
@@ -1126,7 +1113,6 @@ msgid "Sign language interpretation"
 msgstr "Interprétation en langue des signes"
 
 #: templates/venue_accessibility.html:113
-#, fuzzy
 msgid "First aid kit"
 msgstr "Trousse de premiers secours"
 
@@ -1184,17 +1170,14 @@ msgid "Copy"
 msgstr "Copier"
 
 #: templates/venues.html:29
-#, fuzzy
 msgid "MANAGE VENUES"
 msgstr "GÉRER LES LIEUX"
 
 #: templates/venues.html:31
-#, fuzzy
 msgid "venues"
 msgstr "lieux"
 
 #: templates/venues.html:43
-#, fuzzy
 msgid "Events"
 msgstr "événements"
 
@@ -1207,14 +1190,12 @@ msgid "No accessibility info yet"
 msgstr "Aucune info d'accessibilité"
 
 #: templates/venues.html:71
-#, fuzzy
 msgid "Link"
 msgstr "Lien"
 
 #: templates/venues.html:77
-#, fuzzy
 msgid "Delete events first"
-msgstr "Sélectionner la date de l’événement"
+msgstr "Supprimez d'abord les événements"
 
 #: templates/venues.html:84
 msgid "Delete venue permanently?"

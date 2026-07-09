@@ -94,13 +94,6 @@
   }
   #venue-map .leaflet-control-attribution a { color: var(--smudge); }
 
-  /* Persistent usage note: show the string matching the pointer type. */
-  .map-usage-note .note-touch { display: none; }
-  @media (pointer: coarse) {
-    .map-usage-note .note-touch { display: inline; }
-    .map-usage-note .note-wheel { display: none; }
-  }
-
   /* Transient gesture hint: a paper scrap that flashes when the wrong
      gesture is used, then fades. Hidden (and empty) until JS fills it. */
   #map-hint {
@@ -122,11 +115,6 @@
     <svg class="absolute -top-3 left-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
     <svg class="absolute -top-3 right-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
     <div id="venue-map" class="border-2 border-ink" aria-label="{{ _('Map of venues with upcoming shows') }}"></div>
-    {# Always-visible usage note; the right string is picked per pointer type in CSS. #}
-    <p class="map-usage-note pointer-events-none absolute bottom-4 left-4 z-[1000] font-mono text-[0.6rem] uppercase tracking-widest text-smudge bg-paper/80 px-1.5 py-0.5">
-      <span class="note-touch">{{ _('Use two fingers to move the map') }}</span>
-      <span class="note-wheel">{{ _('Use Ctrl + scroll to zoom') }}</span>
-    </p>
     {# Transient stamp flashed when the wrong gesture is used; filled by JS. #}
     <div id="map-hint" aria-hidden="true"
          data-hint-touch="{{ _('Use two fingers to move the map') }}"
