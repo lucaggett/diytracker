@@ -7,6 +7,9 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.21.1] - 2026-07-09
+- Added an i18n status check to CI (`scripts/i18n_status.py`): extracts a fresh string catalog from the source tree, verifies `translations/messages.pot` is in sync, and reports per-locale coverage (translated/untranslated/fuzzy/missing/obsolete) as a table in the job summary. The job fails on any stale catalog or any untranslated, fuzzy, or missing string; obsolete entries are reported but don't fail. Runnable locally with `uv run python scripts/i18n_status.py`.
+
 ## [0.21.0] - 2026-07-09
 - Replaced the map's "Show all venues" button with a fixed-size toggle switch (44×24, ink-bordered with a tilted square knob to fit the zine look): only the knob position and track colour change on toggle, and the venue counter is now a single static "X of Y venues with upcoming shows" line, so the row no longer reflows on mobile when toggled. The switch is keyboard-operable and exposed as `role="switch"` to assistive tech.
 - Compacted the expanded event cards on the calendar: the eight stacked LABEL/value rows are now three to four icon-led lines (hand-sketched clock/pin/tag/wheelchair symbols shared via `svg_defs.html`), the raw ticket URL became a "Tickets · price" button, and the venue name and city/canton rows were dropped from the detail view since the collapsed header already shows them. Roughly half the previous height per card; screen readers still get the old field labels via visually-hidden text. The share button is unchanged.

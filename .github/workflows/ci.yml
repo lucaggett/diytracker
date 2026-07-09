@@ -99,6 +99,24 @@ jobs:
           git commit -am "style: auto-format with ${RUFF_VERSION}"
           git push origin HEAD:"${{ github.head_ref || github.ref_name }}"
 
+  i18n:
+    name: i18n (translation status)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Check translation status
+        run: uv run python scripts/i18n_status.py
+
   tailwind:
     name: Build (Tailwind CSS)
     runs-on: ubuntu-latest
