@@ -14,4 +14,4 @@ if [[ -z "$host" ]]; then
     exit 1
 fi
 
-exec ssh "$host" deploy/deploy.sh
+exec ssh "$host" diytracker/deploy/deploy.sh

@@ -10,6 +10,14 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+# Non-interactive ssh sessions don't source the login profile, so uv's
+# install dir isn't on PATH. Add the usual locations.
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+if ! command -v uv >/dev/null; then
+    echo "uv not found on PATH (checked ~/.local/bin and ~/.cargo/bin too)" >&2
+    exit 1
+fi
+
 echo "==> git pull"
 git pull --ff-only
 
