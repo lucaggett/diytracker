@@ -164,19 +164,19 @@ def about():
 @bp.route("/<lang>/impressum")
 def impressum(lang):
     validate_lang(lang)
-    return render_template("impressum.html")
+    return "WIP"
 
 
 @bp.route("/<lang>/agb")
 def agb(lang):
     validate_lang(lang)
-    return render_template("agb.html")
+    return "WIP"
 
 
 @bp.route("/<lang>/datenschutz")
 def datenschutz(lang):
     validate_lang(lang)
-    return render_template("datenschutz.html")
+    return "WIP"
 
 
 @bp.route("/accessibility/<token>", methods=["GET", "POST"])
