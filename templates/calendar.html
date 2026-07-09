@@ -77,34 +77,52 @@
                     </div>
 
                     <div class="event-details-wrap">
-                      <div class="event-details pt-3 border-t border-ink/30 text-sm font-mono text-ink space-y-1">
+                      <div class="event-details pt-3 border-t border-ink/30 text-sm font-mono text-ink space-y-1.5">
                         {% if event.flyer %}
                           <img src="{{ event.flyer }}" loading="lazy"
                                alt="{{ event.name }}"
                                class="w-full h-auto border border-ink mb-3">
                         {% endif %}
-                        <p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Date') }}</span> {{ event.date.strftime('%Y-%m-%d') }} · {{ event.doors.strftime('%H:%M') }}</p>
-                        <p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Venue') }}</span> {{ event.venue.name }}</p>
-                        {% if event.venue.address %}<p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Address') }}</span> {{ event.venue.address }}</p>{% endif %}
-                        <p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Location') }}</span> {{ event.venue.plz }} {{ event.venue.city }}, {{ event.venue.canton }}</p>
-                        {% if event.genre %}<p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Genre') }}</span> {{ event.genre }}</p>{% endif %}
-                        {% if event.acts %}<p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Acts') }}</span> {{ event.acts }}</p>{% endif %}
-                        {% if event.ticket_price %}<p><span class="text-smudge uppercase tracking-wider text-xs">{{ _('Price') }}</span> {{ event.ticket_price }}</p>{% endif %}
-                        {% if event.ticket_link %}
-                          <p>
-                            <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Tickets') }}</span>
-                            <a href="{{ event.ticket_link }}" target="_blank" rel="noopener"
-                               class="text-bleed underline break-all">{{ event.ticket_link }}</a>
+                        {# Compact icon rows: the collapsed header already shows
+                           name + venue/city/canton, so only what's new appears here. #}
+                        <p class="flex items-start gap-2">
+                          <svg class="w-3.5 h-3.5 mt-0.5 shrink-0 text-smudge" aria-hidden="true"><use href="#sym-clock"/></svg>
+                          <span class="sr-only">{{ _('Date') }}</span>
+                          <span>{{ event.date.strftime('%Y-%m-%d') }} <span class="text-ink/40">·</span> {{ _('doors') }} {{ event.doors.strftime('%H:%M') }}</span>
+                        </p>
+                        <p class="flex items-start gap-2">
+                          <svg class="w-3.5 h-3.5 mt-0.5 shrink-0 text-smudge" aria-hidden="true"><use href="#sym-pin"/></svg>
+                          <span class="sr-only">{{ _('Address') }}</span>
+                          <span>{% if event.venue.address %}{{ event.venue.address }}, {% endif %}{{ event.venue.plz }} {{ event.venue.city }}</span>
+                        </p>
+                        {% if event.genre or event.acts %}
+                          <p class="flex items-start gap-2">
+                            <svg class="w-3.5 h-3.5 mt-0.5 shrink-0 text-smudge" aria-hidden="true"><use href="#sym-tag"/></svg>
+                            <span class="sr-only">{{ _('Genre') }} / {{ _('Acts') }}</span>
+                            <span>{{ event.genre }}{% if event.genre and event.acts %} <span class="text-ink/40">·</span> {% endif %}{{ event.acts }}</span>
                           </p>
                         {% endif %}
                         {% if event.venue.accessibility %}
-                          <p>
-                            <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Accessibility') }}</span>
+                          <p class="flex items-start gap-2">
+                            <svg class="w-3.5 h-3.5 mt-0.5 shrink-0 text-smudge" aria-hidden="true"><use href="#sym-access"/></svg>
                             <a href="{{ url_for('public.venue_accessibility', venue_id=event.venue.id) }}"
-                               class="text-bleed underline">{{ _('View accessibility info') }}</a>
+                               class="text-bleed underline">{{ _('Accessibility info') }}</a>
                           </p>
                         {% endif %}
-                        <div class="pt-2">
+                        <div class="pt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+                          {% if event.ticket_link %}
+                            <a href="{{ event.ticket_link }}" target="_blank" rel="noopener"
+                               onclick="event.stopPropagation()"
+                               class="btn-press inline-flex items-center gap-1.5 border-2 border-ink bg-ink text-paper px-3 py-1.5 uppercase tracking-widest text-xs hover:bg-bleed transition-colors">
+                              <svg class="w-3.5 h-3.5 shrink-0" aria-hidden="true"><use href="#sym-ticket"/></svg>
+                              {{ _('Tickets') }}{% if event.ticket_price %} · {{ event.ticket_price }}{% endif %}
+                            </a>
+                          {% elif event.ticket_price %}
+                            <span class="inline-flex items-center gap-1.5 uppercase tracking-widest text-xs">
+                              <svg class="w-3.5 h-3.5 shrink-0 text-smudge" aria-hidden="true"><use href="#sym-ticket"/></svg>
+                              {{ event.ticket_price }}
+                            </span>
+                          {% endif %}
                           <a href="{{ url_for('public.event_page', event_id=event.id) }}"
                              class="share-event-btn btn-press inline-flex items-center gap-1.5 border-2 border-ink bg-paper text-ink px-3 py-1.5 uppercase tracking-widest text-xs hover:bg-ink hover:text-paper transition-colors"
                              data-share-title="{{ (event.name or event.acts)|e }}"

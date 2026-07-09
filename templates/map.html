@@ -93,6 +93,25 @@
     border-left: 1px solid var(--ink);
   }
   #venue-map .leaflet-control-attribution a { color: var(--smudge); }
+
+  /* Persistent usage note: show the string matching the pointer type. */
+  .map-usage-note .note-touch { display: none; }
+  @media (pointer: coarse) {
+    .map-usage-note .note-touch { display: inline; }
+    .map-usage-note .note-wheel { display: none; }
+  }
+
+  /* Transient gesture hint: a paper scrap that flashes when the wrong
+     gesture is used, then fades. Hidden (and empty) until JS fills it. */
+  #map-hint {
+    opacity: 0;
+    transform: translateX(-50%) rotate(-2deg);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  #map-hint.is-active { opacity: 1; }
+  @media (prefers-reduced-motion: no-preference) {
+    #map-hint { transition: opacity 200ms ease-out; }
+  }
 </style>
 {% endblock %}
 
@@ -103,21 +122,34 @@
     <svg class="absolute -top-3 left-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
     <svg class="absolute -top-3 right-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
     <div id="venue-map" class="border-2 border-ink" aria-label="{{ _('Map of venues with upcoming shows') }}"></div>
+    {# Always-visible usage note; the right string is picked per pointer type in CSS. #}
+    <p class="map-usage-note pointer-events-none absolute bottom-4 left-4 z-[1000] font-mono text-[0.6rem] uppercase tracking-widest text-smudge bg-paper/80 px-1.5 py-0.5">
+      <span class="note-touch">{{ _('Use two fingers to move the map') }}</span>
+      <span class="note-wheel">{{ _('Use Ctrl + scroll to zoom') }}</span>
+    </p>
+    {# Transient stamp flashed when the wrong gesture is used; filled by JS. #}
+    <div id="map-hint" aria-hidden="true"
+         data-hint-touch="{{ _('Use two fingers to move the map') }}"
+         data-hint-wheel="{{ _('Use Ctrl + scroll to zoom') }}"
+         class="pointer-events-none absolute bottom-10 left-1/2 z-[1000] font-mono text-xs uppercase tracking-widest bg-paper text-ink border-2 border-ink px-3 py-1.5"></div>
   </div>
 
   {% set upcoming_count = markers|selectattr('upcoming', 'gt', 0)|list|length %}
+  {# Fixed-size switch instead of a label-swapping button: nothing in this
+     row changes width on toggle, so it never reflows on mobile. #}
   <div class="flex flex-wrap items-center justify-between gap-3 px-2 md:px-0">
-    <p id="venue-count" class="font-mono text-xs uppercase tracking-widest text-smudge"
-       data-label-upcoming="{{ _('%(num)d venues with upcoming shows', num=upcoming_count) }}"
-       data-label-all="{{ _('%(num)d venues', num=markers|length) }}">
-      {{ _('%(num)d venues with upcoming shows', num=upcoming_count) }}
+    <p id="venue-count" class="font-mono text-xs uppercase tracking-widest text-smudge">
+      {{ _('%(upcoming)d of %(total)d venues with upcoming shows', upcoming=upcoming_count, total=markers|length) }}
     </p>
-    <button id="venues-toggle" type="button"
-            data-label-show-all="{{ _('Show all venues') }}"
-            data-label-only-upcoming="{{ _('Only venues with shows') }}"
-            class="btn-press font-mono text-xs uppercase tracking-widest border-2 border-ink bg-paper text-ink px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
-      {{ _('Show all venues') }}
-    </button>
+    <div class="flex items-center gap-3">
+      <span id="venues-toggle-label" class="font-mono text-xs uppercase tracking-widest text-ink">
+        {{ _('Show all venues') }}
+      </span>
+      <button id="venues-toggle" type="button" role="switch" aria-checked="false"
+              aria-labelledby="venues-toggle-label" class="toggle-switch">
+        <span class="toggle-knob" aria-hidden="true"></span>
+      </button>
+    </div>
   </div>
 
 </article>
@@ -132,8 +164,11 @@
   // filtered to the same box, so nothing reachable is ever hidden.
   const CH_BOUNDS = L.latLngBounds([45.6, 5.7], [48.0, 10.7]);
 
+  const isCoarse = window.matchMedia('(pointer: coarse)').matches;
   const map = L.map('venue-map', {
-    scrollWheelZoom: true,
+    scrollWheelZoom: false,   // re-enabled only while Ctrl/⌘ is held (see below)
+    dragging: !isCoarse,      // touch: one finger scrolls the page, two fingers pan
+    touchZoom: true,          // pinch zoom always works, independent of dragging
     maxBounds: CH_BOUNDS,
     maxBoundsViscosity: 1.0,
     minZoom: 6,
@@ -211,7 +246,7 @@
       `${p(x0 + dx * 0.7 + nx * b2)} ${p(y0 + dy * 0.7 + ny * b2)} ${p(x1)} ${p(y1)}`;
   };
 
-  const markerSize = window.matchMedia('(pointer: coarse)').matches ? 30 : 22;
+  const markerSize = isCoarse ? 30 : 22;
   const xIcon = (i, faded) => {
     const r = seededRand(i);
     const arms = penStroke(r, 3, 3.6, 19, 18.4) + ' ' + penStroke(r, 18.6, 3.2, 3.4, 18.8);
@@ -268,21 +303,61 @@
   });
 
   const toggle = document.getElementById('venues-toggle');
-  const countLine = document.getElementById('venue-count');
-  let showingAll = false;
   toggle.addEventListener('click', () => {
-    showingAll = !showingAll;
+    const showingAll = toggle.getAttribute('aria-checked') !== 'true';
+    toggle.setAttribute('aria-checked', String(showingAll));
     if (showingAll) {
       quietVenuesLayer.addTo(map);
     } else {
       map.removeLayer(quietVenuesLayer);
     }
-    toggle.textContent = showingAll
-      ? toggle.dataset.labelOnlyUpcoming
-      : toggle.dataset.labelShowAll;
-    countLine.textContent = showingAll
-      ? countLine.dataset.labelAll
-      : countLine.dataset.labelUpcoming;
   });
+
+  // Cooperative gestures (the Google Maps pattern): the page owns the default
+  // gesture — one-finger drag and plain wheel scroll past the map — and the
+  // deliberate ones (two fingers, pinch, Ctrl/⌘+wheel) drive the map.
+  const mapEl = document.getElementById('venue-map');
+  const hint = document.getElementById('map-hint');
+  let hintTimer = null;
+  const flashHint = (text) => {
+    hint.textContent = text;
+    hint.classList.add('is-active');
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => hint.classList.remove('is-active'), 1500);
+  };
+
+  if (isCoarse) {
+    // Capture phase, so dragging is enabled before Leaflet's own handler
+    // sees the same touchstart.
+    mapEl.addEventListener('touchstart', (e) => {
+      if (e.touches.length >= 2) {
+        map.dragging.enable();
+        hint.classList.remove('is-active');
+      }
+    }, { passive: true, capture: true });
+    mapEl.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1 && !map.dragging.enabled()) {
+        flashHint(hint.dataset.hintTouch);
+      }
+    }, { passive: true });
+    mapEl.addEventListener('touchend', (e) => {
+      if (e.touches.length === 0) map.dragging.disable();
+    });
+  } else {
+    // Non-passive: Ctrl+wheel must be preventDefault-ed or the browser
+    // zooms the whole page. A short grace window after the last Ctrl tick
+    // keeps continuous ctrl-scrolling smooth.
+    let wheelTimer = null;
+    mapEl.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        map.scrollWheelZoom.enable();
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(() => map.scrollWheelZoom.disable(), 1200);
+      } else if (!map.scrollWheelZoom.enabled()) {
+        flashHint(hint.dataset.hintWheel);
+      }
+    }, { passive: false });
+  }
 </script>
 {% endblock %}

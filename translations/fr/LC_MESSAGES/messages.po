@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-03 15:45+0200\n"
+"POT-Creation-Date: 2026-07-09 13:17+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -15,6 +15,215 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
+
+#: diytracker/forms.py:117 templates/event_queue.html:113
+msgid "Event Name"
+msgstr "Nom de l'événement"
+
+#: diytracker/forms.py:119
+msgid "Event Date"
+msgstr "Date de l'événement"
+
+#: diytracker/forms.py:121 templates/edit_event.html:53
+#: templates/edit_event.html:238 templates/edit_event.html:240
+#: templates/submit_event.html:51 templates/submit_event.html:216
+#: templates/submit_event.html:218
+msgid "End Date"
+msgstr "Date de fin"
+
+#: diytracker/forms.py:122 templates/event_page.html:55
+#: templates/venue_page.html:113
+msgid "Festival"
+msgstr "Festival"
+
+#: diytracker/forms.py:124
+msgid "Doors Open Time"
+msgstr "Heure d'ouverture des portes"
+
+#: diytracker/forms.py:127 templates/admin.html:64 templates/calendar.html:101
+#: templates/calendar.html:242 templates/event_page.html:91
+#: templates/event_queue.html:125
+msgid "Genre"
+msgstr "Genre"
+
+#: diytracker/forms.py:129 templates/calendar.html:101
+#: templates/event_queue.html:129
+msgid "Acts"
+msgstr "Artistes"
+
+#: diytracker/forms.py:130 templates/edit_event.html:137
+#: templates/event_queue.html:63
+msgid "Flyer"
+msgstr "Flyer"
+
+#: diytracker/forms.py:133 templates/event_queue.html:149
+msgid "Ticket Price"
+msgstr "Prix du billet"
+
+#: diytracker/forms.py:134
+msgid "Ticket Link"
+msgstr "Lien billetterie"
+
+#: diytracker/forms.py:137 templates/admin.html:89 templates/edit_venue.html:8
+#: templates/event_page.html:76 templates/event_queue.html:50
+#: templates/venue_page.html:64
+msgid "Venue"
+msgstr "Lieu"
+
+#: diytracker/forms.py:141 diytracker/forms.py:173
+#: templates/event_queue.html:133
+msgid "Venue Name"
+msgstr "Nom du lieu"
+
+#: diytracker/forms.py:142 diytracker/forms.py:174
+msgid "Venue Address"
+msgstr "Adresse du lieu"
+
+#: diytracker/forms.py:143 diytracker/forms.py:175
+#: templates/event_queue.html:137 templates/venues.html:40
+msgid "City"
+msgstr "Ville"
+
+#: diytracker/forms.py:144 diytracker/forms.py:176 templates/calendar.html:241
+#: templates/venues.html:41
+msgid "Canton"
+msgstr "Canton"
+
+#: diytracker/forms.py:145 diytracker/forms.py:177 templates/venues.html:42
+msgid "ZIP Code"
+msgstr "Code postal"
+
+#: diytracker/forms.py:146 diytracker/forms.py:178
+msgid "Coordinates"
+msgstr "Coordonnées"
+
+#: diytracker/forms.py:153 diytracker/forms.py:322
+msgid "Email"
+msgstr "E-mail"
+
+#: diytracker/forms.py:154 diytracker/forms.py:166
+msgid "Password"
+msgstr "Mot de passe"
+
+#: diytracker/forms.py:168
+msgid "Confirm Password"
+msgstr "Confirmer le mot de passe"
+
+#: diytracker/forms.py:223 templates/venue_accessibility.html:71
+msgid "Step-free entrance"
+msgstr "Entrée sans marches"
+
+#: diytracker/forms.py:226
+msgid "Entrance notes"
+msgstr "Remarques sur l'entrée"
+
+#: diytracker/forms.py:229 templates/venue_accessibility.html:72
+msgid "Step-free throughout interior"
+msgstr "Intérieur entièrement accessible sans marches"
+
+#: diytracker/forms.py:232 templates/venue_accessibility.html:73
+msgid "Accessible toilet"
+msgstr "Toilettes accessibles"
+
+#: diytracker/forms.py:235
+msgid "Toilet notes"
+msgstr "Remarques sur les toilettes"
+
+#: diytracker/forms.py:238 templates/venue_accessibility.html:76
+msgid "Dedicated wheelchair spaces"
+msgstr "Places réservées aux fauteuils roulants"
+
+#: diytracker/forms.py:241
+msgid "Number of wheelchair spaces"
+msgstr "Nombre de places fauteuil roulant"
+
+#: diytracker/forms.py:244 templates/venue_accessibility.html:83
+msgid "Floor surface"
+msgstr "Type de sol"
+
+#: diytracker/forms.py:249 templates/venue_accessibility.html:93
+msgid "Strobe / flashing lights"
+msgstr "Stroboscopes / lumières clignotantes"
+
+#: diytracker/forms.py:252
+msgid "Warning given before strobes"
+msgstr "Avertissement avant les stroboscopes"
+
+#: diytracker/forms.py:255 templates/venue_accessibility.html:95
+msgid "Smoke / haze machines"
+msgstr "Machines à fumée / brume"
+
+#: diytracker/forms.py:258 templates/venue_accessibility.html:96
+msgid "Typical sound level"
+msgstr "Niveau sonore habituel"
+
+#: diytracker/forms.py:261
+msgid "Quiet / low-stimulation room available"
+msgstr "Salle calme / peu stimulante disponible"
+
+#: diytracker/forms.py:266
+msgid "Free earplugs provided"
+msgstr "Bouchons d'oreilles gratuits disponibles"
+
+#: diytracker/forms.py:269
+msgid "Sensory-friendly events / nights"
+msgstr "Événements / soirées adaptés aux personnes sensorielles"
+
+#: diytracker/forms.py:274
+msgid "Hearing loop (induction loop)"
+msgstr "Boucle magnétique (boucle d'induction)"
+
+#: diytracker/forms.py:277
+msgid "Sign language interpretation at events"
+msgstr "Interprétation en langue des signes lors des événements"
+
+#: diytracker/forms.py:284 templates/venue_accessibility.html:112
+msgid "Refrigerator for medication"
+msgstr "Réfrigérateur pour médicaments"
+
+#: diytracker/forms.py:287
+msgid "First aid kit on site"
+msgstr "Trousse de premiers secours sur place"
+
+#: diytracker/forms.py:290
+msgid "AED (defibrillator) on site"
+msgstr "DEA (défibrillateur) sur place"
+
+#: diytracker/forms.py:295 templates/venue_accessibility.html:125
+msgid "Accessible parking"
+msgstr "Parking accessible"
+
+#: diytracker/forms.py:298
+msgid "Public transport access"
+msgstr "Accès aux transports en commun"
+
+#: diytracker/forms.py:301 templates/venue_accessibility.html:132
+msgid "Gender-neutral toilets"
+msgstr "Toilettes non genrées"
+
+#: diytracker/forms.py:304
+msgid "Rest / seating areas inside"
+msgstr "Zones de repos / sièges à l'intérieur"
+
+#: diytracker/forms.py:307
+msgid "Guide dogs & assistance animals welcome"
+msgstr "Chiens guides & animaux d'assistance bienvenus"
+
+#: diytracker/forms.py:312
+msgid "Quiet / alternative entrance option"
+msgstr "Entrée calme / alternative disponible"
+
+#: diytracker/forms.py:315
+msgid "Additional accessibility notes"
+msgstr "Informations d'accessibilité supplémentaires"
+
+#: diytracker/forms.py:320 templates/admin.html:87 templates/venues.html:39
+msgid "Name"
+msgstr "Nom"
+
+#: diytracker/forms.py:325
+msgid "Message"
+msgstr "Message"
 
 #: diytracker/blueprints/admin.py:141 diytracker/blueprints/submissions.py:290
 msgid "Selected venue does not exist."
@@ -115,7 +324,7 @@ msgstr "Le lieu existe déjà. Utilisation du lieu existant."
 msgid "Event submitted successfully!"
 msgstr "Événement soumis avec succès !"
 
-#: templates/about.html:3
+#: templates/_partials/header_public.html:27 templates/about.html:3
 msgid "About"
 msgstr "À propos"
 
@@ -167,8 +376,7 @@ msgstr "Tu fais quoi, qu'aimerais-tu apporter ?"
 msgid "Send"
 msgstr "Envoyer"
 
-#: templates/accessibility_form.html:3 templates/calendar.html:102
-#: templates/venue_accessibility.html:3
+#: templates/accessibility_form.html:3 templates/venue_accessibility.html:3
 msgid "Accessibility"
 msgstr "Accessibilité"
 
@@ -277,7 +485,8 @@ msgstr ""
 msgid "Save accessibility info"
 msgstr "Enregistrer les informations d'accessibilité"
 
-#: templates/admin.html:3
+#: templates/_partials/header_public.html:19
+#: templates/_partials/nav_admin.html:6 templates/admin.html:3
 msgid "Admin"
 msgstr "Admin"
 
@@ -325,7 +534,8 @@ msgstr "Aucune collecte enregistrée."
 msgid "Drop us a line if an immediate scrape is needed."
 msgstr "Préviens-nous si une collecte immédiate est nécessaire."
 
-#: templates/admin.html:49 templates/venues.html:3
+#: templates/_partials/nav_admin.html:7 templates/admin.html:49
+#: templates/venues.html:3
 #, fuzzy
 msgid "Venues"
 msgstr "Lieux"
@@ -337,12 +547,6 @@ msgstr "Export Excel"
 #: templates/admin.html:59
 msgid "Week of"
 msgstr "Semaine du"
-
-#: templates/admin.html:64 templates/calendar.html:90
-#: templates/calendar.html:219 templates/event_page.html:91
-#: templates/event_queue.html:125
-msgid "Genre"
-msgstr "Genre"
 
 #: templates/admin.html:67 templates/event_queue.html:26
 msgid "All"
@@ -356,20 +560,10 @@ msgstr "Image de la semaine"
 msgid "ID"
 msgstr "ID"
 
-#: templates/admin.html:87 templates/venues.html:39
-msgid "Name"
-msgstr "Nom"
-
-#: templates/admin.html:88 templates/calendar.html:86
+#: templates/admin.html:88 templates/calendar.html:90
 #: templates/event_page.html:70 templates/event_queue.html:48
 msgid "Date"
 msgstr "Date"
-
-#: templates/admin.html:89 templates/calendar.html:87
-#: templates/edit_venue.html:8 templates/event_page.html:76
-#: templates/event_queue.html:50 templates/venue_page.html:64
-msgid "Venue"
-msgstr "Lieu"
 
 #: templates/admin.html:90 templates/event_queue.html:52
 #: templates/venues.html:45
@@ -416,62 +610,48 @@ msgstr "Agenda DIY pour la Suisse — concerts, festivals et shows underground."
 msgid "TODAY"
 msgstr "AUJOURD'HUI"
 
-#: templates/calendar.html:88 templates/event_page.html:81
+#: templates/calendar.html:91
+msgid "doors"
+msgstr "portes"
+
+#: templates/calendar.html:95 templates/event_page.html:81
 #: templates/venue_page.html:71
 msgid "Address"
 msgstr "Adresse"
 
-#: templates/calendar.html:89 templates/event_page.html:86
-#: templates/venue_page.html:76
-msgid "Location"
-msgstr "Lieu"
+#: templates/calendar.html:109
+msgid "Accessibility info"
+msgstr "Infos d'accessibilité"
 
-#: templates/calendar.html:91 templates/event_queue.html:129
-msgid "Acts"
-msgstr "Artistes"
-
-#: templates/calendar.html:92 templates/event_page.html:97
-msgid "Price"
-msgstr "Prix"
-
-#: templates/calendar.html:95 templates/event_page.html:103
+#: templates/calendar.html:118 templates/event_page.html:103
 msgid "Tickets"
 msgstr "Billets"
 
-#: templates/calendar.html:104 templates/event_page.html:119
-#: templates/venue_page.html:93 templates/venues.html:60
-msgid "View accessibility info"
-msgstr "Voir les infos d'accessibilité"
-
-#: templates/calendar.html:111
+#: templates/calendar.html:129
 msgid "Link copied!"
 msgstr "Lien copié !"
 
-#: templates/calendar.html:116
+#: templates/calendar.html:134
 msgid "Share"
 msgstr "Partager"
 
-#: templates/calendar.html:133
+#: templates/calendar.html:151
 msgid "Open filters"
 msgstr "Ouvrir les filtres"
 
-#: templates/calendar.html:147
+#: templates/calendar.html:165
 msgid "FILTER"
 msgstr "FILTRE"
 
-#: templates/calendar.html:153
+#: templates/calendar.html:171
 msgid "Close"
 msgstr "Fermer"
 
-#: templates/calendar.html:156
+#: templates/calendar.html:174
 msgid "Apply"
 msgstr "Appliquer"
 
-#: templates/calendar.html:218 templates/venues.html:41
-msgid "Canton"
-msgstr "Canton"
-
-#: templates/calendar.html:220
+#: templates/calendar.html:243
 msgid "Tags"
 msgstr "Tags"
 
@@ -495,12 +675,6 @@ msgstr "retour"
 #: templates/edit_event.html:39 templates/submit_event.html:36
 msgid "Event Details"
 msgstr "Détails de l'événement"
-
-#: templates/edit_event.html:53 templates/edit_event.html:238
-#: templates/edit_event.html:240 templates/submit_event.html:51
-#: templates/submit_event.html:216 templates/submit_event.html:218
-msgid "End Date"
-msgstr "Date de fin"
 
 #: templates/edit_event.html:55 templates/edit_event.html:238
 #: templates/submit_event.html:216
@@ -535,10 +709,6 @@ msgstr "Sélectionner un lieu"
 #: templates/edit_event.html:102 templates/submit_event.html:97
 msgid "New Venue"
 msgstr "Nouveau lieu"
-
-#: templates/edit_event.html:137 templates/event_queue.html:63
-msgid "Flyer"
-msgstr "Flyer"
 
 #: templates/edit_event.html:143
 msgid "Current:"
@@ -581,13 +751,22 @@ msgstr "Retour au calendrier"
 msgid "Update Venue"
 msgstr "Mettre à jour l’événement"
 
-#: templates/event_page.html:55 templates/venue_page.html:113
-msgid "Festival"
-msgstr "Festival"
+#: templates/event_page.html:86 templates/venue_page.html:76
+msgid "Location"
+msgstr "Lieu"
+
+#: templates/event_page.html:97
+msgid "Price"
+msgstr "Prix"
 
 #: templates/event_page.html:111 templates/event_queue.html:161
 msgid "Description"
 msgstr "Description"
+
+#: templates/event_page.html:119 templates/venue_page.html:93
+#: templates/venues.html:60
+msgid "View accessibility info"
+msgstr "Voir les infos d'accessibilité"
 
 #: templates/event_page.html:123 templates/venue_page.html:97
 msgid "No accessibility info for this venue yet."
@@ -602,7 +781,7 @@ msgstr "Contacte-nous si tu as des infos."
 msgid "Back to calendar"
 msgstr "Retour au calendrier"
 
-#: templates/event_queue.html:3
+#: templates/_partials/nav_admin.html:8 templates/event_queue.html:3
 msgid "Queue"
 msgstr "File"
 
@@ -650,10 +829,6 @@ msgstr "Approuver"
 msgid "Remove this event from the queue?"
 msgstr "Retirer cet événement de la file ?"
 
-#: templates/event_queue.html:113
-msgid "Event Name"
-msgstr "Nom de l'événement"
-
 #: templates/event_queue.html:117
 msgid "Date (YYYY-MM-DD)"
 msgstr "Date (AAAA-MM-JJ)"
@@ -662,14 +837,6 @@ msgstr "Date (AAAA-MM-JJ)"
 msgid "Doors Open (HH:MM)"
 msgstr "Ouverture des portes (HH:MM)"
 
-#: templates/event_queue.html:133
-msgid "Venue Name"
-msgstr "Nom du lieu"
-
-#: templates/event_queue.html:137 templates/venues.html:40
-msgid "City"
-msgstr "Ville"
-
 #: templates/event_queue.html:141
 msgid "Postal Code"
 msgstr "Code postal"
@@ -677,10 +844,6 @@ msgstr "Code postal"
 #: templates/event_queue.html:145
 msgid "Street Address"
 msgstr "Adresse"
-
-#: templates/event_queue.html:149
-msgid "Ticket Price"
-msgstr "Prix du billet"
 
 #: templates/event_queue.html:153
 msgid "Ticket URL"
@@ -698,7 +861,7 @@ msgstr "Approuver avec modifications"
 msgid "No events awaiting approval."
 msgstr "Aucun événement en attente d'approbation."
 
-#: templates/login.html:3
+#: templates/_partials/header_public.html:25 templates/login.html:3
 msgid "Login"
 msgstr "Connexion"
 
@@ -710,7 +873,7 @@ msgstr "CONNEXION"
 msgid "Log in"
 msgstr "Se connecter"
 
-#: templates/map.html:3
+#: templates/_partials/header_public.html:17 templates/map.html:3
 msgid "Map"
 msgstr "Carte"
 
@@ -718,37 +881,36 @@ msgstr "Carte"
 msgid "Venues with upcoming shows in the next three months."
 msgstr "Salles avec des concerts dans les trois prochains mois."
 
-#: templates/map.html:102
+#: templates/map.html:124
 msgid "Map of venues with upcoming shows"
 msgstr "Carte des salles avec des concerts à venir"
 
-#: templates/map.html:108 templates/map.html:110
-#, python-format
-msgid "%(num)d venues with upcoming shows"
-msgstr "%(num)d salles avec des concerts à venir"
+#: templates/map.html:127 templates/map.html:132
+msgid "Use two fingers to move the map"
+msgstr "Utilisez deux doigts pour déplacer la carte"
 
-#: templates/map.html:109
-#, python-format
-msgid "%(num)d venues"
-msgstr "%(num)d salles"
+#: templates/map.html:128 templates/map.html:133
+msgid "Use Ctrl + scroll to zoom"
+msgstr "Utilisez Ctrl + molette pour zoomer"
 
-#: templates/map.html:113 templates/map.html:116
+#: templates/map.html:142
+#, python-format
+msgid "%(upcoming)d of %(total)d venues with upcoming shows"
+msgstr "%(upcoming)d salles sur %(total)d avec des concerts à venir"
+
+#: templates/map.html:146
 msgid "Show all venues"
 msgstr "Afficher toutes les salles"
 
-#: templates/map.html:114
-msgid "Only venues with shows"
-msgstr "Seulement les salles avec concerts"
-
-#: templates/map.html:212
+#: templates/map.html:293
 msgid "no upcoming events"
 msgstr "pas de concerts à venir"
 
-#: templates/map.html:213
+#: templates/map.html:294
 msgid "upcoming events"
 msgstr "événements à venir"
 
-#: templates/map.html:219
+#: templates/map.html:300
 msgid "Venue page"
 msgstr "Page de la salle"
 
@@ -939,41 +1101,9 @@ msgstr "À proximité"
 msgid "No accessibility information available yet for this venue."
 msgstr "Aucune information d'accessibilité disponible pour ce lieu."
 
-#: templates/venue_accessibility.html:71
-msgid "Step-free entrance"
-msgstr "Entrée sans marches"
-
-#: templates/venue_accessibility.html:72
-msgid "Step-free throughout interior"
-msgstr "Intérieur entièrement accessible sans marches"
-
-#: templates/venue_accessibility.html:73
-msgid "Accessible toilet"
-msgstr "Toilettes accessibles"
-
-#: templates/venue_accessibility.html:76
-msgid "Dedicated wheelchair spaces"
-msgstr "Places réservées aux fauteuils roulants"
-
-#: templates/venue_accessibility.html:83
-msgid "Floor surface"
-msgstr "Type de sol"
-
-#: templates/venue_accessibility.html:93
-msgid "Strobe / flashing lights"
-msgstr "Stroboscopes / lumières clignotantes"
-
 #: templates/venue_accessibility.html:94
 msgid "Warning before strobes"
 msgstr "Avertissement avant stroboscopes"
-
-#: templates/venue_accessibility.html:95
-msgid "Smoke / haze machines"
-msgstr "Machines à fumée / brume"
-
-#: templates/venue_accessibility.html:96
-msgid "Typical sound level"
-msgstr "Niveau sonore habituel"
 
 #: templates/venue_accessibility.html:97
 msgid "Quiet / low-stimulation room"
@@ -995,10 +1125,6 @@ msgstr "Boucle magnétique"
 msgid "Sign language interpretation"
 msgstr "Interprétation en langue des signes"
 
-#: templates/venue_accessibility.html:112
-msgid "Refrigerator for medication"
-msgstr "Réfrigérateur pour médicaments"
-
 #: templates/venue_accessibility.html:113
 #, fuzzy
 msgid "First aid kit"
@@ -1008,17 +1134,9 @@ msgstr "Trousse de premiers secours"
 msgid "AED (defibrillator)"
 msgstr "DEA (défibrillateur)"
 
-#: templates/venue_accessibility.html:125
-msgid "Accessible parking"
-msgstr "Parking accessible"
-
 #: templates/venue_accessibility.html:128
 msgid "Public transport"
 msgstr "Transports en commun"
-
-#: templates/venue_accessibility.html:132
-msgid "Gender-neutral toilets"
-msgstr "Toilettes non genrées"
 
 #: templates/venue_accessibility.html:133
 msgid "Rest / seating areas"
@@ -1075,10 +1193,6 @@ msgstr "GÉRER LES LIEUX"
 msgid "venues"
 msgstr "lieux"
 
-#: templates/venues.html:42
-msgid "ZIP Code"
-msgstr "Code postal"
-
 #: templates/venues.html:43
 #, fuzzy
 msgid "Events"
@@ -1105,6 +1219,48 @@ msgstr "Sélectionner la date de l’événement"
 #: templates/venues.html:84
 msgid "Delete venue permanently?"
 msgstr "Supprimer le lieu définitivement ?"
+
+#: templates/_partials/footer_public.html:10
+msgid "Underground. Non-commercial. Hand-curated."
+msgstr "Underground. Non commercial. Fait main."
+
+#: templates/_partials/footer_public.html:14
+msgid "Legal"
+msgstr "Mentions légales"
+
+#: templates/_partials/footer_public.html:16
+msgid "Imprint"
+msgstr "Mentions légales"
+
+#: templates/_partials/footer_public.html:17
+msgid "Terms"
+msgstr "CGU"
+
+#: templates/_partials/footer_public.html:18
+msgid "Privacy"
+msgstr "Confidentialité"
+
+#: templates/_partials/footer_public.html:22
+msgid "Language"
+msgstr "Langue"
+
+#: templates/_partials/header_public.html:16
+#: templates/_partials/nav_admin.html:4
+msgid "Calendar"
+msgstr "Calendrier"
+
+#: templates/_partials/header_public.html:22
+#: templates/_partials/nav_admin.html:13
+msgid "Logout"
+msgstr "Déconnexion"
+
+#: templates/_partials/nav_admin.html:9
+msgid "Submit"
+msgstr "Soumettre"
+
+#: templates/_partials/nav_admin.html:10
+msgid "Analytics"
+msgstr "Analytics"
 
 #: templates/errors/404.html:3
 msgid "404 · Missing"
@@ -1332,4 +1488,10 @@ msgstr ""
 
 #~ msgid "Analytics"
 #~ msgstr "Analytics"
+
+#~ msgid "%(num)d venues"
+#~ msgstr "%(num)d salles"
+
+#~ msgid "Only venues with shows"
+#~ msgstr "Seulement les salles avec concerts"
 
