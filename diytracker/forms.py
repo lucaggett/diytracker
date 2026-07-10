@@ -128,6 +128,17 @@ class EventForm(FlaskForm):
     )
     acts = TextAreaField(_l("Acts"), validators=[Optional()])
     flyer = FileField(_l("Flyer"), validators=[Optional()])
+    # Only rendered on the admin edit form; the public submit template
+    # doesn't include it, so submissions always default to "scheduled".
+    status = SelectField(
+        _l("Status"),
+        choices=[
+            ("scheduled", _l("Scheduled")),
+            ("cancelled", _l("Cancelled")),
+            ("postponed", _l("Postponed")),
+        ],
+        default="scheduled",
+    )
 
     # Ticket Details
     ticket_price = StringField(_l("Ticket Price"), validators=[DataRequired()])

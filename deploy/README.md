@@ -68,6 +68,32 @@ DIYTRACKER_DEPLOY_HOST=diytrackeruser@<host> scripts/deploy_remote.sh
 `scripts/deploy_remote.sh` just ssh-es in and runs `deploy/deploy.sh`,
 streaming its output; a failed pull, sync, or restart exits non-zero.
 
+## nginx (`nginx-diytracker.conf`)
+
+Reference copy of the nginx site config — the live one is
+`/etc/nginx/sites-available/diytracker` on the box and is NOT tracked here,
+so apply changes by hand and keep the two in sync. It covers:
+
+- **Canonicalization (SEO):** 301s from plain HTTP and from
+  `www.diytracker.ch` to `https://diytracker.ch`, so canonical tags,
+  `og:url` and the sitemap all agree on one origin. Pair with
+  `CANONICAL_HOST=https://diytracker.ch` in the production `.env`.
+- **Static files from disk** with long-lived cache headers.
+- **App-down error page:** `error_page 502 503 504` serves
+  `static/errors/offline.html` — a self-contained zine-styled page that
+  auto-retries every 30 s — instead of nginx's default white error page
+  whenever gunicorn is unreachable. App-rendered errors (the styled
+  404/500 pages) are untouched since `proxy_intercept_errors` stays off.
+
+After editing the live config:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+# simulate an outage to see the offline page:
+sudo systemctl stop diytracker && curl -sk https://diytracker.ch | head -5
+sudo systemctl start diytracker
+```
+
 ## MOTD (`update-motd.d/50-diytracker`)
 
 Dynamic login banner showing service state, last scrape, DB and disk usage

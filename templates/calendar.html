@@ -6,6 +6,10 @@
 {# Activates the crosshair cursor (only on hover-capable, fine-pointer devices). #}
 {% block body_class %}calendar-cursor{% endblock %}
 
+{% block json_ld %}
+  <script type="application/ld+json">{{ website_json_ld() | tojson }}</script>
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-4 py-6 max-w-2xl">
   {% set today = datetime.utcnow().date() %}

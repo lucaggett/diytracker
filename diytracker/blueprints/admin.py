@@ -126,6 +126,7 @@ def edit_event(event_id):
             event.acts = form.acts.data
             event.ticket_price = form.ticket_price.data
             event.ticket_link = form.ticket_link.data
+            event.status = form.status.data
             event.genre = (
                 ", ".join(clean_genre_tokens(", ".join(form.genre.data)))
                 if form.genre.data

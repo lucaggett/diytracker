@@ -1,26 +1,13 @@
 {% extends 'base_public.html' %}
 
 {% block title %}{{ venue.name }} · diytracker.ch{% endblock %}
-{% block meta_description %}{{ venue.name }} — {{ venue.plz }} {{ venue.city }} · {{ _('%(num)d upcoming events', num=events|length) }}{% endblock %}
+{% block meta_description %}{{ venue.name }} — {{ venue.plz }} {{ venue.city }}{% if venue.canton %}, {{ venue.canton }}{% endif %} · {{ _('%(num)d upcoming events', num=events|length) }}{% if events %} · {{ _('next on %(date)s', date=events[0].date.strftime('%d.%m.%Y')) }}{% endif %}{% endblock %}
+
+{% block json_ld %}
+  <script type="application/ld+json">{{ venue_ld | tojson }}</script>
+{% endblock %}
 
 {% block head_extra %}
-  {% set ld = {
-    "@context": "https://schema.org",
-    "@type": "MusicVenue",
-    "name": venue.name,
-    "url": url_for('public.venue_page', venue_id=venue.id, _external=True),
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": venue.address or "",
-      "addressLocality": venue.city or "",
-      "addressRegion": venue.canton or "",
-      "postalCode": venue.plz or "",
-      "addressCountry": "CH"
-    }
-  } %}
-  {% if coords %}{% set ld = dict(ld, geo={"@type": "GeoCoordinates", "latitude": coords[0], "longitude": coords[1]}) %}{% endif %}
-  <script type="application/ld+json">{{ ld|tojson }}</script>
-
   {% if coords %}
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
   <style>

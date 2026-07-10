@@ -72,6 +72,11 @@
   </div>
 
   <div class="mb-4">
+    {{ form.status.label(class=lbl) }}
+    {{ form.status(class=inp) }}
+  </div>
+
+  <div class="mb-4">
     {{ form.genre.label(class=lbl) }}
     {{ form.genre(class=inp) }}
     <small class="text-xs text-smudge">{{ _('Type a genre and press Enter to add it.') }}</small>

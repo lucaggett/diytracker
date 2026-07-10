@@ -54,6 +54,10 @@ class Event(db.Model):
     flyer = db.Column(db.String(200), nullable=True)  # File path to the uploaded flyer
     submitter_id = db.Column(db.Integer, db.ForeignKey("submitter.id"), nullable=True)
     submitter = db.relationship("Submitter", backref=db.backref("events", lazy=True))
+    # scheduled/cancelled/postponed — drives schema.org eventStatus and the
+    # visible badge on the event page.
+    status = db.Column(db.String(20), nullable=False, default="scheduled")
+    updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
 
     def __repr__(self):
         return f"<Event {self.id}: {self.name} @ {self.date} added by {self.submitter}>"
@@ -68,6 +72,7 @@ class Venue(db.Model):
     plz = db.Column(db.String(10), nullable=False)
     coords = db.Column(db.String(50), nullable=True)
     accessibility_token = db.Column(db.String(64), nullable=True, unique=True)
+    updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
 
     def generate_accessibility_token(self):
         self.accessibility_token = secrets.token_urlsafe(32)

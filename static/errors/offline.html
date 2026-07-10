@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<!-- Served directly by nginx via error_page 502/503/504 when gunicorn is
+     down (see deploy/nginx-diytracker.conf). Fully self-contained on
+     purpose: only /static/... asset references, no app routes, since the
+     app is unreachable when this page renders. Styles are hand-copied from
+     static/css/styles.css (flyer-card, stamp, mis-reg) — keep in sync if
+     the zine look changes. -->
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <!-- Retry automatically; the page disappears as soon as the app is back. -->
+  <meta http-equiv="refresh" content="30">
+  <title>Offline — diytracker.ch</title>
+  <link rel="icon" href="/static/favicon.ico">
+  <style>
+    @font-face {
+      font-family: 'RichEatinAllCaps';
+      src: url('/static/fonts/MISPROJECT.woff2') format('woff2');
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/static/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/static/fonts/JetBrainsMono-Bold.woff2') format('woff2');
+      font-weight: 700;
+      font-display: swap;
+    }
+
+    :root {
+      --paper: #ece7dc;
+      --ink: #0a0a0a;
+      --bleed: #c21a1a;
+      --bleed-offset: #1a4ec2;
+      --smudge: #6b6259;
+    }
+
+    * { margin: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .flyer-card {
+      position: relative;
+      background: var(--paper);
+      border: 1px solid var(--ink);
+      box-shadow: 3px 3px 0 var(--ink);
+      max-width: 42rem;
+      padding: 3.5rem 2rem;
+      text-align: center;
+    }
+
+    .staple {
+      position: absolute;
+      top: -0.55rem;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid var(--ink);
+      border-bottom: none;
+      transform: rotate(4deg);
+    }
+    .staple.left  { left: 1.5rem; }
+    .staple.right { right: 1.5rem; transform: rotate(-5deg); }
+
+    .eyebrow {
+      color: var(--bleed);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-family: 'RichEatinAllCaps', 'JetBrains Mono', ui-monospace, monospace;
+      font-weight: 400;
+      font-size: clamp(4.5rem, 18vw, 8rem);
+      line-height: 1;
+      text-shadow: 2px 0 0 var(--bleed), -2px 0 0 var(--bleed-offset);
+    }
+
+    .stamp {
+      display: inline-block;
+      color: var(--bleed);
+      border: 4px double var(--bleed);
+      padding: 0.25rem 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      transform: rotate(-8deg);
+      margin: 1.5rem 0;
+      text-transform: uppercase;
+    }
+
+    p.msg {
+      font-size: 0.875rem;
+      line-height: 1.65;
+      max-width: 28rem;
+      margin: 0 auto;
+    }
+
+    p.msg-en {
+      font-size: 0.8rem;
+      color: var(--smudge);
+      max-width: 28rem;
+      margin: 1rem auto 0;
+      line-height: 1.6;
+    }
+
+    .retry {
+      margin-top: 2rem;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--smudge);
+    }
+  </style>
+</head>
+<body>
+  <main class="flyer-card">
+    <span class="staple left" aria-hidden="true"></span>
+    <span class="staple right" aria-hidden="true"></span>
+
+    <p class="eyebrow">Error 502 · diytracker.ch</p>
+    <h1>OFFLINE</h1>
+    <div class="stamp">Stromausfall</div>
+    <p class="msg">
+      Der Server ist gerade nicht erreichbar.<br>
+      Generator wird angeworfen, Kabel werden neu gesteckt — gleich geht's weiter.
+    </p>
+    <p class="msg-en">
+      The server is temporarily unreachable. We're probably already on it —
+      this page retries by itself.
+    </p>
+    <p class="retry">↻ Neuer Versuch in 30 Sekunden</p>
+  </main>
+</body>
+</html>

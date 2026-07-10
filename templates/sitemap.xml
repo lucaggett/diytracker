@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{%- for loc, changefreq in pages %}
+{%- for loc, changefreq, lastmod in pages %}
   <url>
     <loc>{{ loc }}</loc>
     <changefreq>{{ changefreq }}</changefreq>
+    {%- if lastmod %}
+    <lastmod>{{ lastmod }}</lastmod>
+    {%- endif %}
   </url>
 {%- endfor %}
 </urlset>

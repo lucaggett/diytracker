@@ -37,7 +37,7 @@ import threading
 import time
 from collections import OrderedDict, deque
 
-from flask import request, session
+from flask import current_app, request, session
 
 from diytracker.models import ScrapeSuspect, db, utcnow
 
@@ -56,6 +56,9 @@ _SCRAPER_UA_RE = re.compile(
     re.IGNORECASE,
 )
 _BROWSER_UA_RE = re.compile(r"Mozilla/", re.IGNORECASE)
+_SEARCH_ENGINE_UA_RE = re.compile(
+    r"Googlebot|bingbot|DuckDuckBot|Applebot|YandexBot|Baiduspider", re.IGNORECASE
+)
 _CHROME_UA_RE = re.compile(r"Chrome/(\d+)")
 _EVENT_PAGE_RE = re.compile(r"^/events/(\d+)/$")
 
@@ -112,6 +115,20 @@ class ScrapeDetector:
         # is not meaningful either way; logged-in users are trusted.
         if request.endpoint == "static" or "user_id" in session:
             return
+        # Sitemap and robots.txt exist for crawlers; hitting them must never
+        # contribute to a scraper score.
+        if request.endpoint in ("public.sitemap", "public.robots"):
+            return
+        # Audit marker only (UA is self-declared, so no scoring exemption):
+        # makes search-engine crawl activity greppable in the logs.
+        ua = request.headers.get("User-Agent", "")
+        if _SEARCH_ENGINE_UA_RE.search(ua):
+            current_app.logger.info(
+                "search-engine crawler: ua=%r path=%s ip=%s",
+                ua,
+                request.path,
+                request.remote_addr,
+            )
 
         ip = request.remote_addr or "unknown"
         now = time.monotonic()

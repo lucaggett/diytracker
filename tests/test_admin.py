@@ -25,6 +25,26 @@ class TestEventManagement:
         assert ev.genre == "Techno"
         assert ev.parent_genres == ",Electronic,"
 
+    def test_edit_event_sets_status(self, client, admin, login, make_event):
+        login(admin)
+        ev = make_event()
+        assert ev.status == "scheduled"
+        resp = client.post(
+            f"/edit_event/{ev.id}",
+            data={
+                "name": ev.name,
+                "date": ev.date.strftime("%Y-%m-%d"),
+                "doors": "19:00",
+                "acts": ev.acts,
+                "ticket_price": ev.ticket_price,
+                "venue_id": str(ev.venue_id),
+                "status": "cancelled",
+            },
+        )
+        assert resp.status_code == 302
+        db.session.refresh(ev)
+        assert ev.status == "cancelled"
+
     def test_edit_requires_admin(self, client, make_user, login, make_event):
         ev = make_event()
         login(make_user(is_admin=False))

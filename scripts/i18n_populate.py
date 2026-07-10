@@ -324,6 +324,24 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "SOUNDCHECK": "SOUNDCHECK",
         "Something went wrong on the server side.": "Etwas ist serverseitig schiefgelaufen.",
         "Fuse blown, cable busted, something between stage and mixing desk.": "Sicherung raus, Kabel kaputt, irgendwas zwischen Bühne und Mischpult.",
+        # SEO: event status, past-event notice, city landing pages
+        "Status": "Status",
+        "Scheduled": "Findet statt",
+        "Cancelled": "Abgesagt",
+        "Postponed": "Verschoben",
+        "This event has been cancelled.": "Dieser Event wurde abgesagt.",
+        "This event has been postponed.": "Dieser Event wurde verschoben.",
+        "This event has already taken place.": "Dieser Event hat bereits stattgefunden.",
+        "Upcoming at %(venue)s:": "Demnächst im %(venue)s:",
+        "See the venue page": "Zur Venue-Seite",
+        "More events in %(city)s": "Mehr Events in %(city)s",
+        "Cities": "Städte",
+        "DIY & punk concerts in %(city)s": "DIY- & Punk-Konzerte in %(city)s",
+        "DIY concerts in %(city)s": "DIY-Konzerte in %(city)s",
+        "%(num)d upcoming DIY, punk and underground shows in %(city)s — dates, venues, prices and accessibility info.": "%(num)d kommende DIY-, Punk- und Underground-Shows in %(city)s — Daten, Venues, Preise und Infos zur Barrierefreiheit.",
+        "Upcoming DIY, punk, hardcore and underground shows in %(city)s. Hand-curated, non-commercial, updated continuously.": "Kommende DIY-, Punk-, Hardcore- und Underground-Shows in %(city)s. Handkuratiert, nicht-kommerziell, laufend aktualisiert.",
+        "No upcoming events right now.": "Zurzeit keine kommenden Events.",
+        "next on %(date)s": "nächster am %(date)s",
     },
     "fr": {
         "Invalid email or password.": "E-mail ou mot de passe invalide.",
@@ -625,6 +643,24 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "SOUNDCHECK": "SOUNDCHECK",
         "Something went wrong on the server side.": "Quelque chose a mal tourné côté serveur.",
         "Fuse blown, cable busted, something between stage and mixing desk.": "Fusible grillé, câble cassé, un souci entre la scène et la table de mixage.",
+        # SEO: event status, past-event notice, city landing pages
+        "Status": "Statut",
+        "Scheduled": "Prévu",
+        "Cancelled": "Annulé",
+        "Postponed": "Reporté",
+        "This event has been cancelled.": "Cet événement a été annulé.",
+        "This event has been postponed.": "Cet événement a été reporté.",
+        "This event has already taken place.": "Cet événement a déjà eu lieu.",
+        "Upcoming at %(venue)s:": "Prochainement à %(venue)s :",
+        "See the venue page": "Voir la page du lieu",
+        "More events in %(city)s": "Plus d'événements à %(city)s",
+        "Cities": "Villes",
+        "DIY & punk concerts in %(city)s": "Concerts DIY & punk à %(city)s",
+        "DIY concerts in %(city)s": "Concerts DIY à %(city)s",
+        "%(num)d upcoming DIY, punk and underground shows in %(city)s — dates, venues, prices and accessibility info.": "%(num)d concerts DIY, punk et underground à venir à %(city)s — dates, lieux, prix et infos accessibilité.",
+        "Upcoming DIY, punk, hardcore and underground shows in %(city)s. Hand-curated, non-commercial, updated continuously.": "Concerts DIY, punk, hardcore et underground à venir à %(city)s. Sélection à la main, non commerciale, mise à jour en continu.",
+        "No upcoming events right now.": "Aucun événement à venir pour le moment.",
+        "next on %(date)s": "prochain le %(date)s",
     },
     "it": {
         "Invalid email or password.": "E-mail o password non validi.",
@@ -926,6 +962,24 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "SOUNDCHECK": "SOUNDCHECK",
         "Something went wrong on the server side.": "Qualcosa è andato storto lato server.",
         "Fuse blown, cable busted, something between stage and mixing desk.": "Fusibile saltato, cavo rotto, qualcosa tra il palco e il mixer.",
+        # SEO: event status, past-event notice, city landing pages
+        "Status": "Stato",
+        "Scheduled": "In programma",
+        "Cancelled": "Annullato",
+        "Postponed": "Rinviato",
+        "This event has been cancelled.": "Questo evento è stato annullato.",
+        "This event has been postponed.": "Questo evento è stato rinviato.",
+        "This event has already taken place.": "Questo evento si è già svolto.",
+        "Upcoming at %(venue)s:": "Prossimamente a %(venue)s:",
+        "See the venue page": "Vai alla pagina del locale",
+        "More events in %(city)s": "Altri eventi a %(city)s",
+        "Cities": "Città",
+        "DIY & punk concerts in %(city)s": "Concerti DIY & punk a %(city)s",
+        "DIY concerts in %(city)s": "Concerti DIY a %(city)s",
+        "%(num)d upcoming DIY, punk and underground shows in %(city)s — dates, venues, prices and accessibility info.": "%(num)d concerti DIY, punk e underground in arrivo a %(city)s — date, locali, prezzi e informazioni sull'accessibilità.",
+        "Upcoming DIY, punk, hardcore and underground shows in %(city)s. Hand-curated, non-commercial, updated continuously.": "Concerti DIY, punk, hardcore e underground in arrivo a %(city)s. Curati a mano, non commerciali, aggiornati di continuo.",
+        "No upcoming events right now.": "Nessun evento in arrivo al momento.",
+        "next on %(date)s": "prossimo il %(date)s",
     },
 }
 
@@ -941,6 +995,9 @@ def populate(lang: str, translations: dict[str, str]) -> None:
             continue
         if message.id in translations:
             message.string = translations[message.id]
+            # pybabel update fuzzy-matches new entries; a canned translation
+            # is authoritative, so drop the flag or i18n_status fails.
+            message.flags.discard("fuzzy")
             filled += 1
     with open(po_path, "wb") as f:
         write_po(f, catalog)
@@ -959,8 +1016,9 @@ def main() -> int:
         catalog_en = read_po(f)
     catalog_en.locale = "en"
     for message in catalog_en:
-        if message.id and not message.string:
+        if message.id and (not message.string or message.fuzzy):
             message.string = message.id
+            message.flags.discard("fuzzy")
     with open(en_path, "wb") as f:
         write_po(f, catalog_en)
     print("en: mirrored source strings")

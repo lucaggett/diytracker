@@ -26,6 +26,7 @@ from diytracker.services.i18n import (
 from diytracker.services.cache import cache
 from diytracker.services.limits import limiter
 from diytracker.services.scrape_detection import detector
+from diytracker.services.seo import CitySlugConverter, canonical_url, website_json_ld
 from diytracker.services.scraper import start_auto_scheduler
 from diytracker.services.uploads import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from diytracker.utils import normalise_canton, parent_genres
@@ -59,6 +60,10 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["ALLOWED_EXTENSIONS"] = ALLOWED_EXTENSIONS
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 31536000
+# Canonical origin for <link rel="canonical">, og:url and JSON-LD URLs
+# (e.g. "https://diytracker.ch"). Empty = fall back to the request host
+# (dev/tests); production must set it so canonicals don't depend on headers.
+app.config["CANONICAL_HOST"] = os.environ.get("CANONICAL_HOST", "")
 app.config["COMPRESS_ALGORITHM"] = ["br", "gzip"]
 Compress(app)
 csrf = CSRFProtect(app)
@@ -94,6 +99,16 @@ app.jinja_env.globals["format_date"] = format_date
 app.jinja_env.globals["SUPPORTED_LOCALES"] = SUPPORTED_LOCALES
 app.jinja_env.globals["parent_genres"] = parent_genres
 app.jinja_env.globals["normalise_canton"] = normalise_canton
+app.jinja_env.globals["canonical_url"] = canonical_url
+app.jinja_env.globals["website_json_ld"] = website_json_ld
+
+
+@app.context_processor
+def _inject_footer_cities():
+    # Lazy import: cities.py needs the models, which need an initialized db.
+    from diytracker.services.cities import top_cities
+
+    return {"footer_cities": top_cities}
 
 
 @app.context_processor
@@ -128,6 +143,9 @@ def _handle_404(_err):
 def _handle_500(_err):
     return render_template("errors/500.html"), 500
 
+
+# Must be registered before the blueprints that use it in routes.
+app.url_map.converters["city_slug"] = CitySlugConverter
 
 from diytracker.blueprints.auth import bp as auth_bp
 from diytracker.blueprints.public import bp as public_bp

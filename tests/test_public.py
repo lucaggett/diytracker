@@ -149,7 +149,9 @@ class TestI18n:
 
 class TestErrorHandlers:
     def test_404_uses_custom_template(self, client):
-        resp = client.get("/this-route-does-not-exist")
+        # Single-segment paths hit the city-slug route's slash redirect
+        # first, so follow redirects to reach the final 404.
+        resp = client.get("/this-route-does-not-exist", follow_redirects=True)
         assert resp.status_code == 404
 
 
@@ -311,7 +313,8 @@ class TestSitemap:
         assert resp.status_code == 200
         assert resp.mimetype == "application/xml"
         assert f"/events/{ev.id}/".encode() in resp.data
-        assert b"/de/impressum" in resp.data
+        # Legal pages are placeholder "WIP" routes and deliberately excluded.
+        assert b"/de/impressum" not in resp.data
         assert b"<urlset" in resp.data
 
     def test_sitemap_includes_only_venues_with_accessibility_info(

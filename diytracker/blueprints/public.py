@@ -30,7 +30,15 @@ from diytracker.services.i18n import (
     gettext as _,
     validate_lang,
 )
+from diytracker.services.cities import city_directory
 from diytracker.services.scrape_detection import HONEYPOT_PATH
+from diytracker.services.seo import (
+    canonical_url,
+    event_json_ld,
+    parse_swiss_coords,
+    slugify,
+    venue_json_ld,
+)
 
 bp = Blueprint("public", __name__)
 
@@ -212,20 +220,36 @@ def event_page(event_id):
         .filter_by(id=event_id)
         .first_or_404()
     )
-    return render_template("event_page.html", event=event)
+    # Past events stay live (they hold rankings for band/venue queries) but
+    # get a visible notice plus pointers to what's coming up instead.
+    now = datetime.now()
+    is_past = (
+        datetime.combine(event.end_date, event.doors) if event.end_date else event.date
+    ) < now
+    more_at_venue = []
+    if is_past:
+        more_at_venue = (
+            Event.query.filter(Event.venue_id == event.venue_id, Event.date >= now)
+            .order_by(Event.date.asc())
+            .limit(5)
+            .all()
+        )
+    city_slug = slugify(event.venue.city)
+    if city_slug not in city_directory():
+        city_slug = None
+    return render_template(
+        "event_page.html",
+        event=event,
+        event_ld=event_json_ld(event),
+        is_past=is_past,
+        more_at_venue=more_at_venue,
+        city_slug=city_slug,
+    )
 
 
-def _parse_swiss_coords(coords):
-    """Parse a 'lat,lon' string; None if malformed or outside the Swiss
-    bounding box. The map is a cutout of Switzerland with panning locked to
-    it, so venues outside the box would be unreachable anyway."""
-    try:
-        lat, lon = (float(part) for part in (coords or "").split(","))
-    except ValueError:
-        return None
-    if not (45.6 <= lat <= 48.0 and 5.7 <= lon <= 10.7):
-        return None
-    return lat, lon
+# Kept for map/venue views; implementation moved to services/seo.py because
+# the JSON-LD builders need it too.
+_parse_swiss_coords = parse_swiss_coords
 
 
 @bp.route("/map")
@@ -279,45 +303,94 @@ def venue_page(venue_id):
         .all()
     )
     coords = _parse_swiss_coords(venue.coords)
-    return render_template("venue_page.html", venue=venue, events=events, coords=coords)
+    return render_template(
+        "venue_page.html",
+        venue=venue,
+        events=events,
+        coords=coords,
+        venue_ld=venue_json_ld(venue, coords),
+    )
+
+
+@bp.route("/<city_slug:city_slug>/")
+def city_page(city_slug):
+    # The city_slug converter excludes reserved segments at routing time
+    # (so /logout etc. keep their behavior), and static rules take
+    # precedence anyway; unknown-but-valid slugs 404 here.
+    info = city_directory().get(city_slug)
+    if info is None:
+        abort(404)
+    events = (
+        Event.query.options(joinedload(Event.venue))
+        .join(Venue)
+        .filter(Venue.city.in_(info["raw_names"]), Event.date >= datetime.now())
+        .order_by(Event.date.asc())
+        .all()
+    )
+    venues = (
+        Venue.query.filter(Venue.city.in_(info["raw_names"]))
+        .order_by(Venue.name.asc())
+        .all()
+    )
+    return render_template("city.html", city=info["name"], events=events, venues=venues)
 
 
 @bp.route("/sitemap.xml")
 @cache.cached()
 def sitemap():
+    # (loc, changefreq, lastmod ISO date or None). Legal pages are excluded
+    # while their routes still return "WIP" placeholders.
     pages = [
-        (url_for("public.calendar_view", _external=True), "daily"),
-        (url_for("public.about", _external=True), "monthly"),
-        (url_for("public.venue_map", _external=True), "weekly"),
+        (canonical_url(url_for("public.calendar_view")), "daily", None),
+        (canonical_url(url_for("public.about")), "monthly", None),
+        (canonical_url(url_for("public.venue_map")), "weekly", None),
     ]
-    for lang in SUPPORTED_LOCALES:
-        pages.append((url_for("public.impressum", lang=lang, _external=True), "yearly"))
-        pages.append((url_for("public.agb", lang=lang, _external=True), "yearly"))
+
+    for slug in sorted(city_directory()):
         pages.append(
-            (url_for("public.datenschutz", lang=lang, _external=True), "yearly")
+            (canonical_url(url_for("public.city_page", city_slug=slug)), "daily", None)
         )
 
-    events = Event.query.order_by(Event.date.asc()).all()
+    # Past events stay listed for two years — they keep ranking for band and
+    # venue queries — then age out of the sitemap (the pages themselves stay).
+    horizon = datetime.now() - relativedelta(years=2)
+    events = Event.query.filter(Event.date >= horizon).order_by(Event.date.asc()).all()
     for event in events:
         pages.append(
-            (url_for("public.event_page", event_id=event.id, _external=True), "weekly")
+            (
+                canonical_url(url_for("public.event_page", event_id=event.id)),
+                "weekly",
+                event.updated_at.date().isoformat() if event.updated_at else None,
+            )
         )
 
-    accessibility_ids = {
-        venue_id for (venue_id,) in db.session.query(VenueAccessibility.venue_id)
+    accessibility = {
+        row.venue_id: row.updated_at
+        for row in db.session.query(
+            VenueAccessibility.venue_id, VenueAccessibility.updated_at
+        )
     }
     venues = Venue.query.order_by(Venue.id.asc()).all()
     for venue in venues:
+        lastmod_candidates = [venue.updated_at, accessibility.get(venue.id)]
+        lastmod = max((ts for ts in lastmod_candidates if ts), default=None)
         pages.append(
-            (url_for("public.venue_page", venue_id=venue.id, _external=True), "weekly")
+            (
+                canonical_url(url_for("public.venue_page", venue_id=venue.id)),
+                "weekly",
+                lastmod.date().isoformat() if lastmod else None,
+            )
         )
-        if venue.id in accessibility_ids:
+        if venue.id in accessibility:
             pages.append(
                 (
-                    url_for(
-                        "public.venue_accessibility", venue_id=venue.id, _external=True
+                    canonical_url(
+                        url_for("public.venue_accessibility", venue_id=venue.id)
                     ),
                     "monthly",
+                    accessibility[venue.id].date().isoformat()
+                    if accessibility[venue.id]
+                    else None,
                 )
             )
 
@@ -336,7 +409,7 @@ def robots():
             "Disallow: /admin",
             "Disallow: /login",
             "",
-            f"Sitemap: {url_for('public.sitemap', _external=True)}",
+            f"Sitemap: {canonical_url(url_for('public.sitemap'))}",
             "",
         ]
     )
