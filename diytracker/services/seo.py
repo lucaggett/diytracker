@@ -23,7 +23,7 @@ _SWISS_TRANSLIT = str.maketrans(
     {"ä": "ae", "ö": "oe", "ü": "ue", "Ä": "ae", "Ö": "oe", "Ü": "ue", "ß": "ss"}
 )
 
-# Slugs that may never become city landing pages: every static first path
+# Slugs that may never become canton landing pages: every static first path
 # segment of the app, plus the locale prefixes used by the legal pages.
 RESERVED_SLUGS = frozenset(
     {
@@ -49,11 +49,11 @@ RESERVED_SLUGS = frozenset(
 )
 
 
-class CitySlugConverter(BaseConverter):
-    """URL converter for /<city-slug>/ landing pages: lowercase slugs only,
+class CantonSlugConverter(BaseConverter):
+    """URL converter for /<canton-slug>/ landing pages: lowercase slugs only,
     with reserved segments excluded at routing time so paths like /logout
     keep their original behavior (405, honeypot, ...) instead of being
-    slash-redirected into the city route."""
+    slash-redirected into the canton route."""
 
     regex = (
         r"(?!(?:" + "|".join(re.escape(s) for s in sorted(RESERVED_SLUGS)) + r")$)"

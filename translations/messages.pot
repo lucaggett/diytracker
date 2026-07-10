@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-10 00:47+0200\n"
+"POT-Creation-Date: 2026-07-10 09:57+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -96,13 +96,13 @@ msgstr ""
 msgid "Venue Address"
 msgstr ""
 
-#: diytracker/forms.py:154 diytracker/forms.py:186 templates/city.html:10
+#: diytracker/forms.py:154 diytracker/forms.py:186
 #: templates/event_queue.html:137 templates/venues.html:40
 msgid "City"
 msgstr ""
 
 #: diytracker/forms.py:155 diytracker/forms.py:187 templates/calendar.html:245
-#: templates/venues.html:41
+#: templates/canton.html:10 templates/venues.html:41
 msgid "Canton"
 msgstr ""
 
@@ -242,6 +242,110 @@ msgstr ""
 msgid "Message"
 msgstr ""
 
+#: diytracker/utils.py:48
+msgid "Aargau"
+msgstr ""
+
+#: diytracker/utils.py:49
+msgid "Appenzell Innerrhoden"
+msgstr ""
+
+#: diytracker/utils.py:50
+msgid "Appenzell Ausserrhoden"
+msgstr ""
+
+#: diytracker/utils.py:51
+msgid "Bern"
+msgstr ""
+
+#: diytracker/utils.py:52
+msgid "Basel-Landschaft"
+msgstr ""
+
+#: diytracker/utils.py:53
+msgid "Basel-Stadt"
+msgstr ""
+
+#: diytracker/utils.py:54
+msgid "Fribourg"
+msgstr ""
+
+#: diytracker/utils.py:55
+msgid "Genève"
+msgstr ""
+
+#: diytracker/utils.py:56
+msgid "Glarus"
+msgstr ""
+
+#: diytracker/utils.py:57
+msgid "Graubünden"
+msgstr ""
+
+#: diytracker/utils.py:58
+msgid "Jura"
+msgstr ""
+
+#: diytracker/utils.py:59
+msgid "Luzern"
+msgstr ""
+
+#: diytracker/utils.py:60
+msgid "Neuchâtel"
+msgstr ""
+
+#: diytracker/utils.py:61
+msgid "Nidwalden"
+msgstr ""
+
+#: diytracker/utils.py:62
+msgid "Obwalden"
+msgstr ""
+
+#: diytracker/utils.py:63
+msgid "St. Gallen"
+msgstr ""
+
+#: diytracker/utils.py:64
+msgid "Schaffhausen"
+msgstr ""
+
+#: diytracker/utils.py:65
+msgid "Solothurn"
+msgstr ""
+
+#: diytracker/utils.py:66
+msgid "Schwyz"
+msgstr ""
+
+#: diytracker/utils.py:67
+msgid "Thurgau"
+msgstr ""
+
+#: diytracker/utils.py:68
+msgid "Ticino"
+msgstr ""
+
+#: diytracker/utils.py:69
+msgid "Uri"
+msgstr ""
+
+#: diytracker/utils.py:70
+msgid "Vaud"
+msgstr ""
+
+#: diytracker/utils.py:71
+msgid "Valais"
+msgstr ""
+
+#: diytracker/utils.py:72
+msgid "Zug"
+msgstr ""
+
+#: diytracker/utils.py:73
+msgid "Zürich"
+msgstr ""
+
 #: diytracker/blueprints/admin.py:142 diytracker/blueprints/submissions.py:290
 msgid "Selected venue does not exist."
 msgstr ""
@@ -295,17 +399,17 @@ msgstr ""
 msgid "This invite link is invalid or has expired."
 msgstr ""
 
-#: diytracker/blueprints/public.py:157
+#: diytracker/blueprints/public.py:158
 msgid ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
 msgstr ""
 
-#: diytracker/blueprints/public.py:167
+#: diytracker/blueprints/public.py:168
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr ""
 
-#: diytracker/blueprints/public.py:203
+#: diytracker/blueprints/public.py:204
 msgid "Accessibility info saved — thank you!"
 msgstr ""
 
@@ -530,7 +634,7 @@ msgid "Drop us a line if an immediate scrape is needed."
 msgstr ""
 
 #: templates/_partials/nav_admin.html:7 templates/admin.html:49
-#: templates/city.html:33 templates/venues.html:3
+#: templates/canton.html:33 templates/venues.html:3
 msgid "Venues"
 msgstr ""
 
@@ -649,39 +753,39 @@ msgstr ""
 msgid "Tags"
 msgstr ""
 
-#: templates/city.html:3
+#: templates/canton.html:3
 #, python-format
-msgid "DIY & punk concerts in %(city)s"
+msgid "DIY & punk concerts in %(canton)s"
 msgstr ""
 
-#: templates/city.html:4
+#: templates/canton.html:4
 #, python-format
 msgid ""
-"%(num)d upcoming DIY, punk and underground shows in %(city)s — dates, "
+"%(num)d upcoming DIY, punk and underground shows in %(canton)s — dates, "
 "venues, prices and accessibility info."
 msgstr ""
 
-#: templates/city.html:11
+#: templates/canton.html:11
 #, python-format
-msgid "DIY concerts in %(city)s"
+msgid "DIY concerts in %(canton)s"
 msgstr ""
 
-#: templates/city.html:13
+#: templates/canton.html:13
 #, python-format
 msgid ""
-"Upcoming DIY, punk, hardcore and underground shows in %(city)s. Hand-"
+"Upcoming DIY, punk, hardcore and underground shows in %(canton)s. Hand-"
 "curated, non-commercial, updated continuously."
 msgstr ""
 
-#: templates/city.html:17 templates/venue_page.html:91
+#: templates/canton.html:17 templates/venue_page.html:91
 msgid "Upcoming events"
 msgstr ""
 
-#: templates/city.html:29
+#: templates/canton.html:29
 msgid "No upcoming events right now."
 msgstr ""
 
-#: templates/city.html:47 templates/errors/404.html:21
+#: templates/canton.html:47 templates/errors/404.html:21
 #: templates/errors/500.html:21 templates/event_page.html:135
 #: templates/venue_accessibility.html:147
 msgid "Back to calendar"
@@ -802,7 +906,7 @@ msgstr ""
 
 #: templates/event_page.html:51
 #, python-format
-msgid "More events in %(city)s"
+msgid "More events in %(canton)s"
 msgstr ""
 
 #: templates/event_page.html:89 templates/venue_page.html:63
@@ -1259,11 +1363,11 @@ msgid "Delete venue permanently?"
 msgstr ""
 
 #: templates/_partials/footer_public.html:10
-msgid "Underground. Non-commercial. Hand-curated."
+msgid "No ads. No sponsors. No algorithm."
 msgstr ""
 
 #: templates/_partials/footer_public.html:14
-msgid "Cities"
+msgid "Cantons"
 msgstr ""
 
 #: templates/_partials/footer_public.html:23

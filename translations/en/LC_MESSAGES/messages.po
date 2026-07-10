@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-10 00:47+0200\n"
+"POT-Creation-Date: 2026-07-10 09:57+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -95,13 +95,13 @@ msgstr "Venue Name"
 msgid "Venue Address"
 msgstr "Street Address"
 
-#: diytracker/forms.py:154 diytracker/forms.py:186 templates/city.html:10
+#: diytracker/forms.py:154 diytracker/forms.py:186
 #: templates/event_queue.html:137 templates/venues.html:40
 msgid "City"
 msgstr "City"
 
 #: diytracker/forms.py:155 diytracker/forms.py:187 templates/calendar.html:245
-#: templates/venues.html:41
+#: templates/canton.html:10 templates/venues.html:41
 msgid "Canton"
 msgstr "Canton"
 
@@ -241,6 +241,110 @@ msgstr "Name"
 msgid "Message"
 msgstr "Message"
 
+#: diytracker/utils.py:48
+msgid "Aargau"
+msgstr "Aargau"
+
+#: diytracker/utils.py:49
+msgid "Appenzell Innerrhoden"
+msgstr "Appenzell Innerrhoden"
+
+#: diytracker/utils.py:50
+msgid "Appenzell Ausserrhoden"
+msgstr "Appenzell Ausserrhoden"
+
+#: diytracker/utils.py:51
+msgid "Bern"
+msgstr "Bern"
+
+#: diytracker/utils.py:52
+msgid "Basel-Landschaft"
+msgstr "Basel-Landschaft"
+
+#: diytracker/utils.py:53
+msgid "Basel-Stadt"
+msgstr "Basel-Stadt"
+
+#: diytracker/utils.py:54
+msgid "Fribourg"
+msgstr "Fribourg"
+
+#: diytracker/utils.py:55
+msgid "Genève"
+msgstr "Genève"
+
+#: diytracker/utils.py:56
+msgid "Glarus"
+msgstr "Glarus"
+
+#: diytracker/utils.py:57
+msgid "Graubünden"
+msgstr "Graubünden"
+
+#: diytracker/utils.py:58
+msgid "Jura"
+msgstr "Jura"
+
+#: diytracker/utils.py:59
+msgid "Luzern"
+msgstr "Luzern"
+
+#: diytracker/utils.py:60
+msgid "Neuchâtel"
+msgstr "Neuchâtel"
+
+#: diytracker/utils.py:61
+msgid "Nidwalden"
+msgstr "Nidwalden"
+
+#: diytracker/utils.py:62
+msgid "Obwalden"
+msgstr "Obwalden"
+
+#: diytracker/utils.py:63
+msgid "St. Gallen"
+msgstr "St. Gallen"
+
+#: diytracker/utils.py:64
+msgid "Schaffhausen"
+msgstr "Schaffhausen"
+
+#: diytracker/utils.py:65
+msgid "Solothurn"
+msgstr "Solothurn"
+
+#: diytracker/utils.py:66
+msgid "Schwyz"
+msgstr "Schwyz"
+
+#: diytracker/utils.py:67
+msgid "Thurgau"
+msgstr "Thurgau"
+
+#: diytracker/utils.py:68
+msgid "Ticino"
+msgstr "Ticino"
+
+#: diytracker/utils.py:69
+msgid "Uri"
+msgstr "Uri"
+
+#: diytracker/utils.py:70
+msgid "Vaud"
+msgstr "Vaud"
+
+#: diytracker/utils.py:71
+msgid "Valais"
+msgstr "Valais"
+
+#: diytracker/utils.py:72
+msgid "Zug"
+msgstr "Zug"
+
+#: diytracker/utils.py:73
+msgid "Zürich"
+msgstr "Zürich"
+
 #: diytracker/blueprints/admin.py:142 diytracker/blueprints/submissions.py:290
 msgid "Selected venue does not exist."
 msgstr "Selected venue does not exist."
@@ -296,7 +400,7 @@ msgstr "Invalid email or password."
 msgid "This invite link is invalid or has expired."
 msgstr "This invite link is invalid or has expired."
 
-#: diytracker/blueprints/public.py:157
+#: diytracker/blueprints/public.py:158
 msgid ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
@@ -304,11 +408,11 @@ msgstr ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
 
-#: diytracker/blueprints/public.py:167
+#: diytracker/blueprints/public.py:168
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Thanks! We will get back to you as soon as possible."
 
-#: diytracker/blueprints/public.py:203
+#: diytracker/blueprints/public.py:204
 msgid "Accessibility info saved — thank you!"
 msgstr "Accessibility info saved — thank you!"
 
@@ -539,7 +643,7 @@ msgid "Drop us a line if an immediate scrape is needed."
 msgstr "Drop us a line if an immediate scrape is needed."
 
 #: templates/_partials/nav_admin.html:7 templates/admin.html:49
-#: templates/city.html:33 templates/venues.html:3
+#: templates/canton.html:33 templates/venues.html:3
 msgid "Venues"
 msgstr "Venues"
 
@@ -660,43 +764,43 @@ msgstr "Apply"
 msgid "Tags"
 msgstr "Tags"
 
-#: templates/city.html:3
+#: templates/canton.html:3
 #, python-format
-msgid "DIY & punk concerts in %(city)s"
-msgstr "DIY & punk concerts in %(city)s"
+msgid "DIY & punk concerts in %(canton)s"
+msgstr "DIY & punk concerts in %(canton)s"
 
-#: templates/city.html:4
-#, python-format
-msgid ""
-"%(num)d upcoming DIY, punk and underground shows in %(city)s — dates, "
-"venues, prices and accessibility info."
-msgstr ""
-"%(num)d upcoming DIY, punk and underground shows in %(city)s — dates, "
-"venues, prices and accessibility info."
-
-#: templates/city.html:11
-#, python-format
-msgid "DIY concerts in %(city)s"
-msgstr "DIY concerts in %(city)s"
-
-#: templates/city.html:13
+#: templates/canton.html:4
 #, python-format
 msgid ""
-"Upcoming DIY, punk, hardcore and underground shows in %(city)s. Hand-"
+"%(num)d upcoming DIY, punk and underground shows in %(canton)s — dates, "
+"venues, prices and accessibility info."
+msgstr ""
+"%(num)d upcoming DIY, punk and underground shows in %(canton)s — dates, "
+"venues, prices and accessibility info."
+
+#: templates/canton.html:11
+#, python-format
+msgid "DIY concerts in %(canton)s"
+msgstr "DIY concerts in %(canton)s"
+
+#: templates/canton.html:13
+#, python-format
+msgid ""
+"Upcoming DIY, punk, hardcore and underground shows in %(canton)s. Hand-"
 "curated, non-commercial, updated continuously."
 msgstr ""
-"Upcoming DIY, punk, hardcore and underground shows in %(city)s. Hand-"
+"Upcoming DIY, punk, hardcore and underground shows in %(canton)s. Hand-"
 "curated, non-commercial, updated continuously."
 
-#: templates/city.html:17 templates/venue_page.html:91
+#: templates/canton.html:17 templates/venue_page.html:91
 msgid "Upcoming events"
 msgstr "Upcoming events"
 
-#: templates/city.html:29
+#: templates/canton.html:29
 msgid "No upcoming events right now."
 msgstr "No upcoming events right now."
 
-#: templates/city.html:47 templates/errors/404.html:21
+#: templates/canton.html:47 templates/errors/404.html:21
 #: templates/errors/500.html:21 templates/event_page.html:135
 #: templates/venue_accessibility.html:147
 msgid "Back to calendar"
@@ -817,8 +921,8 @@ msgstr "See the venue page"
 
 #: templates/event_page.html:51
 #, python-format
-msgid "More events in %(city)s"
-msgstr "More events in %(city)s"
+msgid "More events in %(canton)s"
+msgstr "More events in %(canton)s"
 
 #: templates/event_page.html:89 templates/venue_page.html:63
 msgid "Location"
@@ -1274,12 +1378,12 @@ msgid "Delete venue permanently?"
 msgstr "Delete venue permanently?"
 
 #: templates/_partials/footer_public.html:10
-msgid "Underground. Non-commercial. Hand-curated."
-msgstr "Underground. Non-commercial. Hand-curated."
+msgid "No ads. No sponsors. No algorithm."
+msgstr "No ads. No sponsors. No algorithm."
 
 #: templates/_partials/footer_public.html:14
-msgid "Cities"
-msgstr "Cities"
+msgid "Cantons"
+msgstr "Cantons"
 
 #: templates/_partials/footer_public.html:23
 msgid "Legal"
@@ -1550,4 +1654,34 @@ msgstr "Fuse blown, cable busted, something between stage and mixing desk."
 
 #~ msgid "Only venues with shows"
 #~ msgstr "Only venues with shows"
+
+#~ msgid "DIY & punk concerts in %(city)s"
+#~ msgstr "DIY & punk concerts in %(city)s"
+
+#~ msgid ""
+#~ "%(num)d upcoming DIY, punk and "
+#~ "underground shows in %(city)s — dates,"
+#~ " venues, prices and accessibility info."
+#~ msgstr ""
+#~ "%(num)d upcoming DIY, punk and "
+#~ "underground shows in %(city)s — dates,"
+#~ " venues, prices and accessibility info."
+
+#~ msgid "DIY concerts in %(city)s"
+#~ msgstr "DIY concerts in %(city)s"
+
+#~ msgid ""
+#~ "Upcoming DIY, punk, hardcore and "
+#~ "underground shows in %(city)s. Hand-"
+#~ "curated, non-commercial, updated continuously."
+#~ msgstr ""
+#~ "Upcoming DIY, punk, hardcore and "
+#~ "underground shows in %(city)s. Hand-"
+#~ "curated, non-commercial, updated continuously."
+
+#~ msgid "More events in %(city)s"
+#~ msgstr "More events in %(city)s"
+
+#~ msgid "Cities"
+#~ msgstr "Cities"
 

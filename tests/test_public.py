@@ -149,7 +149,7 @@ class TestI18n:
 
 class TestErrorHandlers:
     def test_404_uses_custom_template(self, client):
-        # Single-segment paths hit the city-slug route's slash redirect
+        # Single-segment paths hit the canton-slug route's slash redirect
         # first, so follow redirects to reach the final 404.
         resp = client.get("/this-route-does-not-exist", follow_redirects=True)
         assert resp.status_code == 404

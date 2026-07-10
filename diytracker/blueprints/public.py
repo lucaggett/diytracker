@@ -30,7 +30,7 @@ from diytracker.services.i18n import (
     gettext as _,
     validate_lang,
 )
-from diytracker.services.cities import city_directory
+from diytracker.services.cantons import canton_directory
 from diytracker.services.scrape_detection import HONEYPOT_PATH
 from diytracker.services.seo import (
     canonical_url,
@@ -39,6 +39,7 @@ from diytracker.services.seo import (
     slugify,
     venue_json_ld,
 )
+from diytracker.utils import CANTONS, resolve_canton
 
 bp = Blueprint("public", __name__)
 
@@ -234,16 +235,18 @@ def event_page(event_id):
             .limit(5)
             .all()
         )
-    city_slug = slugify(event.venue.city)
-    if city_slug not in city_directory():
-        city_slug = None
+    canton_name = CANTONS.get(resolve_canton(event.venue.canton, event.venue.city))
+    canton_slug = slugify(canton_name) if canton_name else None
+    if canton_slug not in canton_directory():
+        canton_slug = canton_name = None
     return render_template(
         "event_page.html",
         event=event,
         event_ld=event_json_ld(event),
         is_past=is_past,
         more_at_venue=more_at_venue,
-        city_slug=city_slug,
+        canton_slug=canton_slug,
+        canton_name=canton_name,
     )
 
 
@@ -312,27 +315,28 @@ def venue_page(venue_id):
     )
 
 
-@bp.route("/<city_slug:city_slug>/")
-def city_page(city_slug):
-    # The city_slug converter excludes reserved segments at routing time
+@bp.route("/<canton_slug:canton_slug>/")
+def canton_page(canton_slug):
+    # The canton_slug converter excludes reserved segments at routing time
     # (so /logout etc. keep their behavior), and static rules take
     # precedence anyway; unknown-but-valid slugs 404 here.
-    info = city_directory().get(city_slug)
+    info = canton_directory().get(canton_slug)
     if info is None:
         abort(404)
     events = (
         Event.query.options(joinedload(Event.venue))
-        .join(Venue)
-        .filter(Venue.city.in_(info["raw_names"]), Event.date >= datetime.now())
+        .filter(Event.venue_id.in_(info["venue_ids"]), Event.date >= datetime.now())
         .order_by(Event.date.asc())
         .all()
     )
     venues = (
-        Venue.query.filter(Venue.city.in_(info["raw_names"]))
+        Venue.query.filter(Venue.id.in_(info["venue_ids"]))
         .order_by(Venue.name.asc())
         .all()
     )
-    return render_template("city.html", city=info["name"], events=events, venues=venues)
+    return render_template(
+        "canton.html", canton=info["name"], events=events, venues=venues
+    )
 
 
 @bp.route("/sitemap.xml")
@@ -346,9 +350,13 @@ def sitemap():
         (canonical_url(url_for("public.venue_map")), "weekly", None),
     ]
 
-    for slug in sorted(city_directory()):
+    for slug in sorted(canton_directory()):
         pages.append(
-            (canonical_url(url_for("public.city_page", city_slug=slug)), "daily", None)
+            (
+                canonical_url(url_for("public.canton_page", canton_slug=slug)),
+                "daily",
+                None,
+            )
         )
 
     # Past events stay listed for two years — they keep ranking for band and

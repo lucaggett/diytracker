@@ -26,7 +26,7 @@ from diytracker.services.i18n import (
 from diytracker.services.cache import cache
 from diytracker.services.limits import limiter
 from diytracker.services.scrape_detection import detector
-from diytracker.services.seo import CitySlugConverter, canonical_url, website_json_ld
+from diytracker.services.seo import CantonSlugConverter, canonical_url, website_json_ld
 from diytracker.services.scraper import start_auto_scheduler
 from diytracker.services.uploads import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from diytracker.utils import normalise_canton, parent_genres
@@ -104,11 +104,11 @@ app.jinja_env.globals["website_json_ld"] = website_json_ld
 
 
 @app.context_processor
-def _inject_footer_cities():
-    # Lazy import: cities.py needs the models, which need an initialized db.
-    from diytracker.services.cities import top_cities
+def _inject_footer_cantons():
+    # Lazy import: cantons.py needs the models, which need an initialized db.
+    from diytracker.services.cantons import top_cantons
 
-    return {"footer_cities": top_cities}
+    return {"footer_cantons": top_cantons}
 
 
 @app.context_processor
@@ -145,7 +145,7 @@ def _handle_500(_err):
 
 
 # Must be registered before the blueprints that use it in routes.
-app.url_map.converters["city_slug"] = CitySlugConverter
+app.url_map.converters["canton_slug"] = CantonSlugConverter
 
 from diytracker.blueprints.auth import bp as auth_bp
 from diytracker.blueprints.public import bp as public_bp

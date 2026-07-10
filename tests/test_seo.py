@@ -1,5 +1,5 @@
 """SEO features: slug/price/acts helpers, JSON-LD builders, canonical tags,
-city landing pages, past-event notices, and the sitemap upgrades."""
+canton landing pages, past-event notices, and the sitemap upgrades."""
 
 import json
 import re
@@ -171,8 +171,8 @@ class TestCanonical:
             app.config["CANONICAL_HOST"] = ""
 
 
-class TestCityPages:
-    def test_city_page_renders_events(self, client, make_event):
+class TestCantonPages:
+    def test_canton_page_renders_events(self, client, make_event):
         ev = make_event(name="Doom Night")
         resp = client.get("/zuerich/")
         html = resp.data.decode()
@@ -181,29 +181,55 @@ class TestCityPages:
         assert f'href="/events/{ev.id}/"' in html
         assert f'href="/venues/{ev.venue_id}/"' in html
 
-    def test_unknown_city_404(self, client, make_event):
+    def test_unknown_canton_404(self, client, make_event):
         make_event()
         assert client.get("/atlantis/").status_code == 404
 
-    def test_reserved_slug_not_a_city(self, client):
-        # Routing keeps reserved segments away from the city route entirely.
+    def test_reserved_slug_not_a_canton(self, client):
+        # Routing keeps reserved segments away from the canton route entirely.
         assert client.get("/logout").status_code == 405
 
-    def test_city_spellings_merge_by_slug(self, client, make_venue, make_event):
-        make_event(venue=make_venue(name="Cave", city="GENÈVE"))
-        make_event(venue=make_venue(name="Usine", city="Genève"))
+    def test_cities_merge_into_canton(self, client, make_venue, make_event):
+        make_event(venue=make_venue(name="Cave", city="Genève", canton="GE"))
+        make_event(venue=make_venue(name="Undertown", city="Meyrin", canton="GE"))
         resp = client.get("/geneve/")
         html = resp.data.decode()
         assert resp.status_code == 200
-        assert "Cave" in html and "Usine" in html
+        assert "Cave" in html and "Undertown" in html
+        # The venue's city is shown per row, since cities differ within a canton.
+        assert "Meyrin" in html
 
-    def test_city_without_upcoming_events_404s(self, client, make_venue, make_event):
-        make_event(venue=make_venue(city="Basel"), days_from_now=-30)
+    def test_canton_inferred_from_city_when_null(self, client, make_venue, make_event):
+        make_event(venue=make_venue(name="Gaskessel", city="Bern", canton=None))
+        resp = client.get("/bern/")
+        assert resp.status_code == 200
+        assert "Gaskessel" in resp.data.decode()
+
+    def test_full_name_canton_normalised(self, client, make_venue, make_event):
+        make_event(venue=make_venue(name="Werk21", city="Uster", canton="Zürich"))
+        resp = client.get("/zuerich/")
+        assert resp.status_code == 200
+        assert "Werk21" in resp.data.decode()
+
+    def test_canton_without_upcoming_events_404s(
+        self, client, make_venue, make_event
+    ):
+        make_event(
+            venue=make_venue(city="Basel", canton="BS"), days_from_now=-30
+        )
+        assert client.get("/basel-stadt/").status_code == 404
+        # City slugs are no longer routes at all.
         assert client.get("/basel/").status_code == 404
 
-    def test_footer_links_city_pages(self, client, make_event):
+    def test_footer_links_canton_pages(self, client, make_event):
         make_event()
         assert 'href="/zuerich/"' in client.get("/").data.decode()
+
+    def test_sitemap_lists_canton_not_city(self, client, make_venue, make_event):
+        make_event(venue=make_venue(city="Winterthur", canton="ZH"))
+        data = client.get("/sitemap.xml").data.decode()
+        assert "http://localhost/zuerich/" in data
+        assert "/winterthur/" not in data
 
 
 class TestPastEventNotice:
@@ -225,7 +251,7 @@ class TestPastEventNotice:
 
 
 class TestSitemapSeo:
-    def test_sitemap_valid_xml_with_lastmod_and_cities(self, client, make_event):
+    def test_sitemap_valid_xml_with_lastmod_and_cantons(self, client, make_event):
         ev = make_event()
         resp = client.get("/sitemap.xml")
         root = ET.fromstring(resp.data)

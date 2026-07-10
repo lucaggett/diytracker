@@ -1,16 +1,16 @@
 {% extends 'base_public.html' %}
 
-{% block title %}{{ _('DIY & punk concerts in %(city)s', city=city) }} · diytracker.ch{% endblock %}
-{% block meta_description %}{{ _('%(num)d upcoming DIY, punk and underground shows in %(city)s — dates, venues, prices and accessibility info.', num=events|length, city=city) }}{% endblock %}
+{% block title %}{{ _('DIY & punk concerts in %(canton)s', canton=_(canton)) }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ _('%(num)d upcoming DIY, punk and underground shows in %(canton)s — dates, venues, prices and accessibility info.', num=events|length, canton=_(canton)) }}{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto px-4 py-10">
 
   <header class="mb-8">
-    <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ _('City') }}</p>
-    <h1 class="font-richEatin text-4xl mis-reg leading-none mb-2">{{ _('DIY concerts in %(city)s', city=city) }}</h1>
+    <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Canton') }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none mb-2">{{ _('DIY concerts in %(canton)s', canton=_(canton)) }}</h1>
     <p class="text-sm text-smudge">
-      {{ _('Upcoming DIY, punk, hardcore and underground shows in %(city)s. Hand-curated, non-commercial, updated continuously.', city=city) }}
+      {{ _('Upcoming DIY, punk, hardcore and underground shows in %(canton)s. Hand-curated, non-commercial, updated continuously.', canton=_(canton)) }}
     </p>
   </header>
 
@@ -21,7 +21,7 @@
     <li>
       <a href="{{ url_for('public.event_page', event_id=event.id) }}"
          class="text-bleed underline">{{ event.name or event.acts }}</a>
-      <span class="text-smudge">· {{ format_date(event.date) }} · {{ event.venue.name }}</span>
+      <span class="text-smudge">· {{ format_date(event.date) }} · {{ event.venue.name }}, {{ event.venue.city }}</span>
     </li>
     {% endfor %}
   </ul>
@@ -36,7 +36,7 @@
     <li>
       <a href="{{ url_for('public.venue_page', venue_id=venue.id) }}"
          class="text-bleed underline">{{ venue.name }}</a>
-      {% if venue.address %}<span class="text-smudge">· {{ venue.address }}</span>{% endif %}
+      <span class="text-smudge">· {% if venue.address %}{{ venue.address }}, {% endif %}{{ venue.city }}</span>
     </li>
     {% endfor %}
   </ul>

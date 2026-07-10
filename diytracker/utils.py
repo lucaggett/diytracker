@@ -35,6 +35,44 @@ _VALID_CODES = {
     "ZH",
 }
 
+def N_(s):
+    """Babel extraction marker (in Babel's DEFAULT_KEYWORDS); identity at runtime."""
+    return s
+
+
+# Code → canonical display name, in the canton's locally dominant language
+# (bilingual cantons use the majority language: BE→Bern, FR→Fribourg,
+# VS→Valais, GR→Graubünden). Canonical names drive the /<canton-slug>/
+# landing-page URLs via slugify(); display is localized through gettext.
+CANTONS = {
+    "AG": N_("Aargau"),
+    "AI": N_("Appenzell Innerrhoden"),
+    "AR": N_("Appenzell Ausserrhoden"),
+    "BE": N_("Bern"),
+    "BL": N_("Basel-Landschaft"),
+    "BS": N_("Basel-Stadt"),
+    "FR": N_("Fribourg"),
+    "GE": N_("Genève"),
+    "GL": N_("Glarus"),
+    "GR": N_("Graubünden"),
+    "JU": N_("Jura"),
+    "LU": N_("Luzern"),
+    "NE": N_("Neuchâtel"),
+    "NW": N_("Nidwalden"),
+    "OW": N_("Obwalden"),
+    "SG": N_("St. Gallen"),
+    "SH": N_("Schaffhausen"),
+    "SO": N_("Solothurn"),
+    "SZ": N_("Schwyz"),
+    "TG": N_("Thurgau"),
+    "TI": N_("Ticino"),
+    "UR": N_("Uri"),
+    "VD": N_("Vaud"),
+    "VS": N_("Valais"),
+    "ZG": N_("Zug"),
+    "ZH": N_("Zürich"),
+}
+
 # Maps lowercase full/alternative canton names → 2-letter code.
 # Covers German, French, and Italian names plus common variants.
 _CANTON_NAME_TO_CODE = {

@@ -47,8 +47,8 @@
     </ul>
     {% endif %}
     <p{% if more_at_venue %} class="mt-1"{% endif %}>
-      <a href="{{ url_for('public.venue_page', venue_id=event.venue.id) }}" class="text-bleed underline">{{ _('See the venue page') }}</a>{% if city_slug %} ·
-      <a href="{{ url_for('public.city_page', city_slug=city_slug) }}" class="text-bleed underline">{{ _('More events in %(city)s', city=event.venue.city) }}</a>{% endif %}
+      <a href="{{ url_for('public.venue_page', venue_id=event.venue.id) }}" class="text-bleed underline">{{ _('See the venue page') }}</a>{% if canton_slug %} ·
+      <a href="{{ url_for('public.canton_page', canton_slug=canton_slug) }}" class="text-bleed underline">{{ _('More events in %(canton)s', canton=_(canton_name)) }}</a>{% endif %}
     </p>
   </div>
   {% endif %}
