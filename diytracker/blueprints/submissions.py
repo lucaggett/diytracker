@@ -14,22 +14,28 @@ from flask import (
 )
 
 from diytracker.forms import DeleteScrapedEventForm, EventForm
-from diytracker.models import db, Event, ScrapedEvent, Submitter, Venue
+from diytracker.models import db, ScrapedEvent, Submitter
 from diytracker.services.auth import login_required
 from diytracker.services.cache import bust_cache
-from diytracker.services.events import compute_event_hash
+from diytracker.services.events import (
+    clean_genre_string,
+    create_event,
+    resolve_venue_from_form,
+)
 from diytracker.services.i18n import gettext as _
+from diytracker.services.ingest import parse_time
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 from diytracker.services.venue import get_or_create_venue
-from diytracker.utils import clean_genre_tokens, resolve_canton
+from diytracker.utils import resolve_canton
 
 bp = Blueprint("submissions", __name__)
 
 _ALLOWED_QUEUE_PARAMS = {"date_from", "date_to", "source"}
 
 
-def _clean_genre(raw):
-    return ", ".join(clean_genre_tokens(raw))
+def _queue_redirect_args():
+    """Preserve the queue's filter params across a POST redirect."""
+    return {k: v for k, v in request.args.items() if k in _ALLOWED_QUEUE_PARAMS}
 
 
 def _scraped_event_to_dict(rec):
@@ -129,7 +135,7 @@ def event_queue():
         plz = _ov("override_postal_code", data.get("postal_code") or "")
         street = _ov("override_street_address", data.get("street_address"))
         raw_genre = _ov("override_genre", data.get("styles") or "")
-        genre = _clean_genre(raw_genre)
+        genre = clean_genre_string(raw_genre)
         acts = _ov("override_acts", data.get("performers") or "")
         ticket_price = _ov("override_ticket_price", data.get("ticket_price") or "")
         ticket_link = _ov(
@@ -143,23 +149,18 @@ def event_queue():
         event_date = data.get("_event_date")
         if override_date:
             try:
+                # Kept a datetime (not ingest.parse_date's date): Event.date
+                # is a DateTime column and the dedup hash stringifies it, so
+                # a bare date would hash differently than scraped rows do.
                 event_date = datetime.strptime(override_date, "%Y-%m-%d")
             except ValueError:
                 pass
 
         override_doors = request.form.get("override_doors", "").strip()
         if override_doors:
-            try:
-                doors_time = datetime.strptime(override_doors, "%H:%M").time()
-            except ValueError:
-                doors_time = time_type(19, 0)
+            doors_time = parse_time(override_doors) or time_type(19, 0)
         else:
-            try:
-                doors_time = datetime.strptime(
-                    data.get("doors_open") or "19:00", "%H:%M"
-                ).time()
-            except ValueError:
-                doors_time = time_type(19, 0)
+            doors_time = parse_time(data.get("doors_open")) or time_type(19, 0)
 
         venue, _discarded = get_or_create_venue(
             name=venue_name,
@@ -169,21 +170,7 @@ def event_queue():
             plz=plz,
             coords=data.get("coords") or "",
         )
-        event_hash = compute_event_hash(
-            name,
-            event_date,
-            doors_time,
-            genre,
-            acts,
-            ticket_link,
-            ticket_price,
-            venue.id,
-        )
-        existing = Event.query.filter_by(event_hash=event_hash).first()
-        if existing:
-            flash(_("This event already exists."))
-            return redirect(url_for("submissions.event_queue"))
-        new_event = Event(
+        new_event = create_event(
             name=name,
             date=event_date,
             doors=doors_time,
@@ -195,10 +182,12 @@ def event_queue():
             ticket_link=ticket_link,
             ticket_price=ticket_price,
             venue_id=venue.id,
-            event_hash=event_hash,
             submitter_id=submitter.id,
+            reject_duplicate=True,
         )
-        db.session.add(new_event)
+        if new_event is None:
+            flash(_("This event already exists."))
+            return redirect(url_for("submissions.event_queue"))
         db.session.flush()
         rec.approved = True
         rec.approved_at = datetime.now()
@@ -206,10 +195,7 @@ def event_queue():
         db.session.commit()
         bust_cache()
         flash(_("Event approved and added to calendar!"))
-        redirect_args = {
-            k: v for k, v in request.args.items() if k in _ALLOWED_QUEUE_PARAMS
-        }
-        return redirect(url_for("submissions.event_queue", **redirect_args))
+        return redirect(url_for("submissions.event_queue", **_queue_redirect_args()))
     now = datetime.now().date()
     return render_template(
         "event_queue.html",
@@ -232,10 +218,7 @@ def delete_scraped_event(scraped_id):
     scraped.approved_at = datetime.now()
     db.session.commit()
     flash(_("Event removed from queue."))
-    redirect_args = {
-        k: v for k, v in request.args.items() if k in _ALLOWED_QUEUE_PARAMS
-    }
-    return redirect(url_for("submissions.event_queue", **redirect_args))
+    return redirect(url_for("submissions.event_queue", **_queue_redirect_args()))
 
 
 @bp.route("/submit", methods=["GET", "POST"])
@@ -245,69 +228,36 @@ def submit_event_link():
     submitter = db.session.get(Submitter, session["user_id"])
 
     if form.validate_on_submit():
-        name = form.name.data
-        date = form.date.data
-        end_date = form.end_date.data
-        is_festival = form.is_festival.data
-        doors = form.doors.data
-        genres = form.genre.data
-        acts = form.acts.data
-        ticket_link = form.ticket_link.data
-        ticket_price = form.ticket_price.data
-
         flyer = save_flyer_file(
             form.flyer.data, current_app.config.get("UPLOAD_FOLDER", UPLOAD_FOLDER)
         )
 
-        genre_str = _clean_genre(", ".join(genres)) if genres else ""
+        venue, created, error = resolve_venue_from_form(
+            form, require_new_venue_details=True
+        )
+        if error == "missing_details":
+            flash(_("Please provide all required venue details for a new venue."))
+            return redirect(url_for("submissions.submit_event_link"))
+        if error == "not_found":
+            flash(_("Selected venue does not exist."))
+            return redirect(url_for("submissions.submit_event_link"))
+        if not created and form.venue_id.data in (None, "", "new"):
+            flash(_("Venue already exists. Using existing venue."))
 
-        venue_id = form.venue_id.data
-        if venue_id == "new" or not venue_id:
-            venue_name = form.venue_name.data
-            venue_address = form.venue_address.data
-            venue_city = form.venue_city.data
-            venue_canton = form.venue_canton.data
-            venue_plz = form.venue_plz.data
-            venue_coords = form.venue_coords.data
-
-            if not venue_name or not venue_city or not venue_plz:
-                flash(_("Please provide all required venue details for a new venue."))
-                return redirect(url_for("submissions.submit_event_link"))
-
-            venue, created = get_or_create_venue(
-                name=venue_name,
-                address=venue_address,
-                city=venue_city,
-                canton=venue_canton,
-                plz=venue_plz,
-                coords=venue_coords,
-            )
-            if not created:
-                flash(_("Venue already exists. Using existing venue."))
-        else:
-            venue = db.session.get(Venue, int(venue_id)) if venue_id.isdigit() else None
-            if not venue:
-                flash(_("Selected venue does not exist."))
-                return redirect(url_for("submissions.submit_event_link"))
-
-        new_event = Event(
-            name=name,
-            date=date,
-            end_date=end_date,
-            is_festival=is_festival,
-            doors=doors,
-            genre=genre_str,
-            acts=acts,
+        create_event(
+            name=form.name.data,
+            date=form.date.data,
+            end_date=form.end_date.data,
+            is_festival=form.is_festival.data,
+            doors=form.doors.data,
+            genre=clean_genre_string(form.genre.data or []),
+            acts=form.acts.data,
             flyer=flyer,
-            ticket_link=ticket_link,
-            ticket_price=ticket_price,
+            ticket_link=form.ticket_link.data,
+            ticket_price=form.ticket_price.data,
             venue_id=venue.id,
-            event_hash=compute_event_hash(
-                name, date, doors, genre_str, acts, ticket_link, ticket_price, venue.id
-            ),
             submitter_id=submitter.id,
         )
-        db.session.add(new_event)
         db.session.commit()
         bust_cache()
 

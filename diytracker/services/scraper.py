@@ -66,11 +66,17 @@ def _scrape_and_import(app):
     global _scrape_running, _scrape_progress
     try:
         from diytracker.services.scrape_events import (
+            configure_logging,
             get_petzi_event_urls,
             get_sitemap_event_urls,
             parse_metalgigs_event,
             parse_petzi_event,
         )
+
+        # Handlers attach lazily so merely importing the parsers (as the web
+        # workers do) never opens logs/scrape_events.log; an actual scrape
+        # run should still be captured there.
+        configure_logging()
 
         _scrape_progress = {
             "total": 0,

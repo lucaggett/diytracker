@@ -13,7 +13,10 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from diytracker.app import app, db
+from diytracker.app import create_app
+from diytracker.models import db
+
+app = create_app()
 
 COLUMNS = [
     ("flyer", "VARCHAR(200)"),

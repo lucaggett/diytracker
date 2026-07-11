@@ -22,7 +22,6 @@ import csv
 import json
 import re
 import sys
-import os
 from datetime import datetime
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -33,26 +32,26 @@ import random
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 
-# Allow running standalone (`python diytracker/services/scrape_events.py`),
-# where the project root isn't on sys.path.
-sys.path.insert(
-    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-)
 from diytracker.paths import INSTANCE_DIR, LOGS_DIR
-from diytracker.utils import resolve_canton
+from diytracker.utils import resolve_canton, split_leading_plz
 
-# Configure verbose logging
 import logging
 
-# Set up a logger for the scraper.  Log messages are written to a file
-# and to stderr.  This aids troubleshooting by capturing all requests
-# and parsing operations.  The log level can be adjusted here; DEBUG
-# includes the most detail.  Each message includes a timestamp and
-# severity level.
+# Messages go nowhere until configure_logging() attaches handlers — the web
+# app imports this module only for the parsers and must not open log files
+# as an import side effect. Scrape runs (the scraper service and the CLI in
+# scripts/) call configure_logging() first.
 logger = logging.getLogger("scrape_events")
-# The logger is a process-wide singleton; only attach handlers once so
-# repeated imports/runs don't add duplicates.
-if not logger.handlers:
+
+
+def configure_logging():
+    """Attach file (logs/scrape_events.log) + stderr handlers for a scrape run.
+
+    Idempotent: the logger is a process-wide singleton, so handlers are only
+    attached once even across repeated runs.
+    """
+    if logger.handlers:
+        return
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 
@@ -63,10 +62,20 @@ if not logger.handlers:
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    # Stream handler outputs logs to stderr
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
+
+
+def _dedup_preserving_order(urls) -> List[str]:
+    """Drop duplicate URLs while keeping first-seen order."""
+    seen: set = set()
+    unique: List[str] = []
+    for url in urls:
+        if url not in seen:
+            unique.append(url)
+            seen.add(url)
+    return unique
 
 
 # Random delay (in seconds) between requests to reduce the likelihood
@@ -229,30 +238,17 @@ def get_sitemap_event_urls(
         logger.debug(
             f"Detected sitemap index at {sitemap_url}, fetching {len(sub_sitemap_urls)} sub-sitemaps"
         )
-        all_urls: List[str] = []
-        seen: set = set()
-        for sub_url in sub_sitemap_urls:
-            for url in get_sitemap_event_urls(sub_url, pattern, sub_sitemap_hints):
-                if url not in seen:
-                    all_urls.append(url)
-                    seen.add(url)
-        return all_urls
+        return _dedup_preserving_order(
+            url
+            for sub_url in sub_sitemap_urls
+            for url in get_sitemap_event_urls(sub_url, pattern, sub_sitemap_hints)
+        )
 
     # Regular sitemap: extract <loc> tags and filter by pattern
     loc_urls = re.findall(r"<loc>(.*?)</loc>", sitemap_text)
-    urls: List[str] = []
-    for loc in loc_urls:
-        loc = loc.strip()
-        if pattern in loc:
-            urls.append(loc)
-    # Deduplicate while preserving order
-    seen = set()
-    unique_urls: List[str] = []
-    for url in urls:
-        if url not in seen:
-            unique_urls.append(url)
-            seen.add(url)
-    return unique_urls
+    return _dedup_preserving_order(
+        loc.strip() for loc in loc_urls if pattern in loc.strip()
+    )
 
 
 def get_petzi_event_urls() -> List[str]:
@@ -284,14 +280,7 @@ def get_petzi_event_urls() -> List[str]:
             else:
                 url = base_url + href
             urls.append(url)
-    # Deduplicate
-    seen: set = set()
-    unique_urls: List[str] = []
-    for url in urls:
-        if url not in seen:
-            unique_urls.append(url)
-            seen.add(url)
-    return unique_urls
+    return _dedup_preserving_order(urls)
 
 
 def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
@@ -520,15 +509,11 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
             if len(parts) > 1:
                 event["street_address"] = parts[1]
             if len(parts) > 2:
-                raw_city = parts[2]
-                # Strip leading PLZ (e.g. "8005 Zürich" → city="Zürich", postal_code="8005")
-                plz_match = re.match(r"^(\d{4})\s+(.+)$", raw_city)
-                if plz_match:
-                    if not event.get("postal_code"):
-                        event["postal_code"] = plz_match.group(1)
-                    event["city"] = plz_match.group(2)
-                else:
-                    event["city"] = raw_city
+                # e.g. "8005 Zürich" → city="Zürich", postal_code="8005"
+                plz, city = split_leading_plz(parts[2])
+                if plz and not event.get("postal_code"):
+                    event["postal_code"] = plz
+                event["city"] = city
             logger.debug(
                 f"MetalGigs location: {event.get('venue_name')}, {event.get('street_address')}, {event.get('city')}"
             )
@@ -778,6 +763,7 @@ def write_csv(events: Iterable[Dict[str, str]], filename: str) -> None:
 
 def main() -> None:
     """Main entry point of the script."""
+    configure_logging()
     events: List[Dict[str, str]] = []
     # Fetch and parse metalgigs concerts and festivals
     print("Fetching metalgigs event URLs…", file=sys.stderr)

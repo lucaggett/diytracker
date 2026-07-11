@@ -35,6 +35,8 @@ STATE_FILENAME = ".diytracker-forwarded.json"
 
 
 def eventbot_to_payload(rec):
+    # Deliberate copy of scripts/import_eventbot.py's mapper: this script is
+    # stdlib-only on the eventbot machine and cannot import it — keep in sync.
     ev = rec.get("event") or {}
     artists = [a.strip() for a in (ev.get("artists") or []) if a and a.strip()]
     description = (ev.get("description") or "").strip()

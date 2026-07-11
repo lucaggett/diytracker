@@ -3,13 +3,6 @@ module.exports = {
     './templates/**/*.html',
   ],
   safelist: [
-    'bg-paper',
-    'bg-ink',
-    'text-paper',
-    'text-ink',
-    'text-bleed',
-    'border-ink',
-    'border-bleed',
     { pattern: /^(bg|text|border)-(paper|ink|bleed|bleed-offset|smudge)$/ },
   ],
   theme: {

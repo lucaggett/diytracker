@@ -99,6 +99,7 @@ class ScrapeDetector:
         self._fingerprints: dict[str, dict[str, float]] = {}
 
     def init_app(self, app):
+        self.enabled = app.config.get("SCRAPE_DETECTION_ENABLED", True)
         app.before_request(self._on_request)
 
     def reset(self):

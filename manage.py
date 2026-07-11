@@ -62,16 +62,23 @@ def cmd_logs(args):
 # ── user management ───────────────────────────────────────────────────────────
 
 
-def _load_app():
-    """Import the Flask app lazily (it requires .env and starts a scraper thread)."""
-    os.chdir(PROJECT_ROOT)
+def _load_app(db_path=None):
+    """Build the Flask app via the factory (never starts the scraper thread)."""
     sys.path.insert(0, str(PROJECT_ROOT))
+    from dotenv import load_dotenv
+
+    from diytracker.app import create_app
+    from diytracker.config import Config
+    from diytracker.models import db, Submitter
+
+    load_dotenv(PROJECT_ROOT / ".env")
     try:
-        from diytracker.app import app, db
-        from diytracker.models import Submitter
-    except KeyError as exc:
-        sys.exit(f"Missing environment variable {exc}. Is your .env present?")
-    return app, db, Submitter
+        config = Config.from_env()
+    except RuntimeError as exc:
+        sys.exit(str(exc))
+    if db_path is not None:
+        config.SQLALCHEMY_DATABASE_URI = f"sqlite:///{db_path}"
+    return create_app(config), db, Submitter
 
 
 def _send_email(to_address, subject, body):
@@ -249,17 +256,12 @@ def _missing_columns(db, models):
 
 
 def cmd_venue_dedup(args):
+    db_path = None
     if args.db_path:
         db_path = Path(args.db_path).resolve()
         if not db_path.is_file():
             sys.exit(f"No database file at {db_path}")
-        # Must be set before _load_app(): the app reads DATABASE_URI at import
-        # time and would silently create_all() an empty DB at a bad path.
-        os.environ["DATABASE_URI"] = f"sqlite:///{db_path}"
-    # A maintenance run must never start the scrape scheduler, even if .env
-    # sets ENABLE_SCRAPER=1.
-    os.environ.setdefault("ENABLE_SCRAPER", "0")
-    app, db, _submitter = _load_app()
+    app, db, _submitter = _load_app(db_path=db_path)
     with app.app_context():
         from sqlalchemy import func
 

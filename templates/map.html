@@ -5,14 +5,13 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
+{% include '_partials/ch_map_styles.html' %}
 <style>
   #venue-map {
     --x-scale: 1;
     height: min(78vh, 700px);
     height: min(78dvh, 700px);
-    background: var(--paper);
     cursor: crosshair;
-    font-family: inherit;
     box-shadow: 3px 3px 0 var(--ink);
   }
   /* Portrait phones: Switzerland is wide and flat, so a 78vh map leaves big
@@ -23,30 +22,10 @@
       aspect-ratio: 10 / 7;
     }
   }
-  /* Xerox treatment: desaturated tiles multiplied onto the paper background,
-     so the basemap reads as a photocopied street plan, not a glossy web map. */
-  #venue-map .leaflet-tile-pane {
-    filter: grayscale(1) contrast(1.15) brightness(1.04);
-    mix-blend-mode: multiply;
-  }
 
-  /* Cutout mask: everything outside the Swiss border is painted back over
-     in paper, so only Switzerland shows through. */
-  #venue-map .ch-mask {
-    fill: var(--paper);
-    fill-opacity: 1;
-  }
-  #venue-map .ch-border {
-    stroke: var(--ink);
-  }
-
-  /* Hand-stamped X markers: bleed red over a mis-registered blue ghost.
-     overflow visible so overshooting stroke ends aren't clipped. */
-  .x-marker { background: none; border: none; }
+  /* On top of the shared .x-marker base: bleed red over a mis-registered blue
+     ghost, overflow visible so overshooting stroke ends aren't clipped. */
   .x-marker svg {
-    display: block;
-    width: 100%;
-    height: 100%;
     overflow: visible;
     transition: transform 120ms ease-out;
     transform: scale(var(--x-scale));
@@ -94,16 +73,6 @@
     background: var(--ink);
     color: var(--paper);
   }
-  #venue-map .leaflet-control-attribution {
-    background: var(--paper);
-    color: var(--smudge);
-    font-family: inherit;
-    font-size: 0.6rem;
-    border-top: 1px solid var(--ink);
-    border-left: 1px solid var(--ink);
-  }
-  #venue-map .leaflet-control-attribution a { color: var(--smudge); }
-
   /* Transient gesture hint: a paper scrap that flashes when the wrong
      gesture is used, then fades. Hidden (and empty) until JS fills it. */
   #map-hint {
@@ -124,7 +93,7 @@
   <div class="flyer-card p-2 md:p-3 relative mb-4 md:mb-6">
     <svg class="absolute -top-3 left-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
     <svg class="absolute -top-3 right-6 w-4 h-4 text-ink z-[1000]" aria-hidden="true"><use href="#sym-staple"/></svg>
-    <div id="venue-map" class="border-2 border-ink" aria-label="{{ _('Map of venues with upcoming shows') }}"></div>
+    <div id="venue-map" class="ch-map border-2 border-ink" aria-label="{{ _('Map of venues with upcoming shows') }}"></div>
     {# Transient stamp flashed when the wrong gesture is used; filled by JS. #}
     <div id="map-hint" aria-hidden="true"
          data-hint-touch="{{ _('Use two fingers to move the map') }}"
@@ -155,6 +124,7 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ch_map.js') }}?v={{ css_version }}"></script>
 <script>
   const venues = {{ markers|tojson }};
 
@@ -187,36 +157,8 @@
   map.on('zoomend', updateMarkerScale);
   updateMarkerScale();
 
-  // Cutout: the border GeoJSON's first ring is the country outline, the rest
-  // are foreign enclaves (Büsingen, Campione). One even-odd polygon — world
-  // rectangle, minus Switzerland, plus the enclaves — painted in paper hides
-  // every tile outside the border; tiles only load once the mask is in place.
-  fetch("{{ url_for('static', filename='geo/switzerland.geojson') }}")
-    .then((r) => r.json())
-    .then((geo) => {
-      const rings = geo.coordinates.map(
-        (ring) => ring.map(([lon, lat]) => [lat, lon])
-      );
-      const world = [[-89, -180], [-89, 180], [89, 180], [89, -180]];
-      L.polygon([world, ...rings], {
-        stroke: false,
-        fillOpacity: 1,
-        className: 'ch-mask',
-        interactive: false
-      }).addTo(map);
-      L.polygon(rings, {
-        fill: false,
-        weight: 2,
-        className: 'ch-border',
-        interactive: false
-      }).addTo(map);
-
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        bounds: CH_BOUNDS,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(map);
-    });
+  addSwissCutout(map, "{{ url_for('static', filename='geo/switzerland.geojson') }}",
+    { bounds: CH_BOUNDS });
 
   const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'

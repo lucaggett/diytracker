@@ -326,6 +326,22 @@ def normalise_canton(value: str) -> str:
     return _CANTON_NAME_TO_CODE.get(lower, stripped)
 
 
+_LEADING_PLZ = re.compile(r"^(\d{4})\s+(.*)$")
+
+
+def split_leading_plz(value: str) -> tuple:
+    """Split a leading Swiss postal code off a city string.
+
+    ``"8005 Zürich"`` → ``("8005", "Zürich")``; no leading PLZ →
+    ``("", value)``. Shared by canton inference, venue dedup and the
+    scrapers so the PLZ convention lives in one place.
+    """
+    match = _LEADING_PLZ.match((value or "").strip())
+    if match:
+        return match.group(1), match.group(2)
+    return "", (value or "").strip()
+
+
 def infer_canton_from_city(city: str) -> str:
     """Attempt to infer a canton code from a city name.
 
@@ -336,8 +352,7 @@ def infer_canton_from_city(city: str) -> str:
     """
     if not city:
         return ""
-    # Strip a leading 4-digit PLZ
-    city_clean = re.sub(r"^\d{4}\s+", "", city.strip())
+    _plz, city_clean = split_leading_plz(city)
     return _CITY_TO_CANTON.get(city_clean.lower(), "")
 
 

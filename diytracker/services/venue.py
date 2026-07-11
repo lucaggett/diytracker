@@ -1,7 +1,7 @@
-import re
 from difflib import SequenceMatcher
 
 from diytracker.models import db, Event, Venue, VenueAccessibility, utcnow
+from diytracker.utils import split_leading_plz
 
 
 def get_or_create_venue(name, address, city, canton, plz, coords=""):
@@ -25,8 +25,6 @@ def get_or_create_venue(name, address, city, canton, plz, coords=""):
 
 # ── deduplication ─────────────────────────────────────────────────────────────
 
-_LEADING_PLZ = re.compile(r"^\d{4}\s+")
-
 # Same-city venues with different names only become merge candidates when one
 # name contains the other (and the shorter isn't trivially short) or the names
 # are this similar — and even then they need manual confirmation.
@@ -43,7 +41,7 @@ def normalize_name(name):
 
 def normalize_city(city):
     """Like normalize_name, but also strips a leading 4-digit PLZ ("8005 Zürich")."""
-    return " ".join(_LEADING_PLZ.sub("", (city or "").strip()).split()).lower()
+    return normalize_name(split_leading_plz(city)[1])
 
 
 def _filled(value):

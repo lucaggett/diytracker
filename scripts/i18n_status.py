@@ -15,35 +15,12 @@ set. Exits 1 on any stale, missing, untranslated, or fuzzy string.
 import os
 import sys
 
-from babel.messages.catalog import Catalog
-from babel.messages.extract import DEFAULT_KEYWORDS, extract_from_dir
-from babel.messages.frontend import parse_mapping_cfg
 from babel.messages.pofile import read_po
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from i18n_extract import ROOT, keep_dir  # noqa: E402
+from i18n_extract import ROOT, build_source_catalog  # noqa: E402
 
 MAX_LISTED = 20
-
-
-def build_source_catalog() -> Catalog:
-    with open(os.path.join(ROOT, "babel.cfg")) as f:
-        method_map, options_map = parse_mapping_cfg(f)
-    keywords = dict(DEFAULT_KEYWORDS)
-    keywords["_l"] = None
-    catalog = Catalog(project="diytracker", charset="utf-8")
-    for filename, lineno, message, comments, context in extract_from_dir(
-        ROOT,
-        method_map=method_map,
-        options_map=options_map,
-        keywords=keywords,
-        directory_filter=keep_dir,
-    ):
-        rel = os.path.relpath(filename, ROOT).replace(os.sep, "/")
-        catalog.add(
-            message, None, [(rel, lineno)], auto_comments=comments, context=context
-        )
-    return catalog
 
 
 def message_ids(catalog) -> set:

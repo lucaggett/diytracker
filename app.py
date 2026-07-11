@@ -1,11 +1,22 @@
-"""Entry-point shim.
+"""WSGI / dev-server entrypoint.
 
-The application package lives in diytracker/; this module keeps the
-long-standing entry point `app:app` working unchanged
+Keeps the long-standing gunicorn target `app:app` working unchanged
 (deploy/diytracker.service: ExecStart ... gunicorn -c gunicorn_conf.py app:app).
+The application itself is built by the factory in diytracker/app.py.
 """
 
-from diytracker.app import app
+import os
+
+from diytracker.app import create_app
+from diytracker.services.scraper import start_auto_scheduler
+
+app = create_app()
+
+# Only one process may run the scrape scheduler. Under gunicorn the
+# post_fork hook in gunicorn_conf.py sets this for the first worker only;
+# for the dev server or a standalone run, set ENABLE_SCRAPER=1 yourself.
+if os.environ.get("ENABLE_SCRAPER") == "1":
+    start_auto_scheduler(app)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
