@@ -170,20 +170,10 @@ def about():
     return render_template("about.html", form=form)
 
 
-@bp.route("/<lang>/impressum")
-def impressum(lang):
-    validate_lang(lang)
-    return "WIP"
-
-
-@bp.route("/<lang>/agb")
-def agb(lang):
-    validate_lang(lang)
-    return "WIP"
-
-
-@bp.route("/<lang>/datenschutz")
-def datenschutz(lang):
+# Placeholder until the drafts in templates/legal/ pass legal review; then
+# switch to render_template("legal.html", doc=doc).
+@bp.route("/<lang>/<any(impressum, agb, datenschutz):doc>")
+def legal(lang, doc):
     validate_lang(lang)
     return "WIP"
 
@@ -250,11 +240,6 @@ def event_page(event_id):
     )
 
 
-# Kept for map/venue views; implementation moved to services/seo.py because
-# the JSON-LD builders need it too.
-_parse_swiss_coords = parse_swiss_coords
-
-
 @bp.route("/map")
 def venue_map():
     # Same horizon as the calendar: now through three months out.
@@ -277,7 +262,7 @@ def venue_map():
 
     markers = []
     for venue in venues:
-        parsed = _parse_swiss_coords(venue.coords)
+        parsed = parse_swiss_coords(venue.coords)
         if parsed is None:
             continue
         lat, lon = parsed
@@ -305,7 +290,7 @@ def venue_page(venue_id):
         .order_by(Event.date.asc())
         .all()
     )
-    coords = _parse_swiss_coords(venue.coords)
+    coords = parse_swiss_coords(venue.coords)
     return render_template(
         "venue_page.html",
         venue=venue,

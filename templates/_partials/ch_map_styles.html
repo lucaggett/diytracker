@@ -1,0 +1,36 @@
+{# Shared "xerox" styling for the Leaflet Switzerland maps. Add the ch-map
+   class to the map container and include this in head_extra alongside
+   leaflet.css; page-specific rules (size, popups, controls) stay local. #}
+<style>
+  .ch-map {
+    background: var(--paper);
+    font-family: inherit;
+  }
+  /* Xerox treatment: desaturated tiles multiplied onto the paper background,
+     so the basemap reads as a photocopied street plan, not a glossy web map. */
+  .ch-map .leaflet-tile-pane {
+    filter: grayscale(1) contrast(1.15) brightness(1.04);
+    mix-blend-mode: multiply;
+  }
+  /* Cutout mask: everything outside the Swiss border is painted back over
+     in paper, so only Switzerland shows through. */
+  .ch-map .ch-mask {
+    fill: var(--paper);
+    fill-opacity: 1;
+  }
+  .ch-map .ch-border {
+    stroke: var(--ink);
+  }
+  /* Hand-stamped X markers (base; /map adds hover/zoom scaling). */
+  .x-marker { background: none; border: none; }
+  .x-marker svg { display: block; width: 100%; height: 100%; }
+  .ch-map .leaflet-control-attribution {
+    background: var(--paper);
+    color: var(--smudge);
+    font-family: inherit;
+    font-size: 0.6rem;
+    border-top: 1px solid var(--ink);
+    border-left: 1px solid var(--ink);
+  }
+  .ch-map .leaflet-control-attribution a { color: var(--smudge); }
+</style>

@@ -26,13 +26,18 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from diytracker.app import app
+from diytracker.app import create_app
 from diytracker.models import db
 from diytracker.services.ingest import ingest_event
 
 
 def eventbot_to_payload(rec):
-    """Map one eventbot JSONL record onto the services.ingest payload."""
+    """Map one eventbot JSONL record onto the services.ingest payload.
+
+    Deliberately duplicated in scripts/eventbot_forwarder.py, which runs
+    stdlib-only on the eventbot machine and cannot import this repo — keep
+    the two copies in sync.
+    """
     ev = rec.get("event") or {}
     artists = [a.strip() for a in (ev.get("artists") or []) if a and a.strip()]
     description = (ev.get("description") or "").strip()
@@ -92,6 +97,9 @@ def main():
 
     counts = {"created": 0, "duplicate": 0, "invalid": 0}
     missing_flyers = 0
+    # Built here rather than at import so tests can import eventbot_to_payload
+    # without an environment.
+    app = create_app()
     with app.app_context():
         with open(jsonl, encoding="utf-8") as f:
             for line in f:

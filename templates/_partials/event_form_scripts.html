@@ -1,0 +1,20 @@
+{# Script includes + config for _partials/event_form.html. Set
+   preselected_venue_id / preselected_genres before including (edit page). #}
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  window.EVENT_FORM_CONFIG = {
+    preselectedVenueId: {{ (preselected_venue_id if preselected_venue_id else none) | tojson }},
+    preselectedGenres: {{ (preselected_genres or []) | tojson }},
+    messages: {
+      pressEnterToAdd: {{ _('Press Enter to add') | tojson }},
+      genrePlaceholder: {{ _('Search or type to add genres') | tojson }},
+      endDate: {{ _('End Date') | tojson }},
+      requiredForFestivals: {{ _('(required for festivals)') | tojson }},
+      optional: {{ _('(optional)') | tojson }},
+      flyerPreviewAlt: {{ _('Flyer Preview') | tojson }},
+      uploadJpgPng: {{ _('Please upload a JPG or PNG image.') | tojson }}
+    }
+  };
+</script>
+<script src="{{ url_for('static', filename='js/event_form.js') }}?v={{ css_version }}"></script>

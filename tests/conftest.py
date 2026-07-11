@@ -1,12 +1,8 @@
 """Shared pytest fixtures.
 
-The application (`app.py`) is a module-level singleton: importing it binds the
-DB engine and starts the scraper thread. We make it test-friendly by:
-
-  * setting SECRET_KEY + DATABASE_URI (a throwaway temp file) before import,
-  * stubbing out the scraper scheduler so importing the app never touches the
-    network or spawns a background thread,
-  * disabling CSRF and turning on TESTING.
+The app is built once per session via the factory (`create_app(TestConfig)`),
+which never loads .env, never starts the scraper thread, and applies the test
+overrides (CSRF off, rate limiter off, scrape detector off) through config.
 
 Schema is rebuilt per-test (drop_all/create_all) so tests are isolated.
 """
@@ -17,39 +13,27 @@ import tempfile
 
 import pytest
 
-# --- Configure the environment *before* importing the app singleton. --------
-_DB_FD, _DB_PATH = tempfile.mkstemp(suffix=".db", prefix="diytracker-test-")
-os.close(_DB_FD)
-os.environ["SECRET_KEY"] = "test-secret-key"
-os.environ["DATABASE_URI"] = f"sqlite:///{_DB_PATH}"
-
 # Make sure the project root is importable regardless of pytest's rootdir.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Neutralise the auto-scrape scheduler before app import so no thread/network.
-import diytracker.services.scraper as _scraper_module  # noqa: E402
-
-_scraper_module.start_auto_scheduler = lambda app: None
-
-import diytracker.app as app_module  # noqa: E402
+from diytracker.app import create_app  # noqa: E402
+from diytracker.config import TestConfig  # noqa: E402
 from diytracker.models import db, Submitter, Venue, Event  # noqa: E402
+
+# A shared temp-file DB (rather than sqlite:///:memory:) so every connection
+# from the pool sees the same database.
+_DB_FD, _DB_PATH = tempfile.mkstemp(suffix=".db", prefix="diytracker-test-")
+os.close(_DB_FD)
+
+_app = create_app(TestConfig(f"sqlite:///{_DB_PATH}"))
+
+# Tests hammer /login far past the brute-force limit. Disabled via the live
+# attribute (not RATELIMIT_ENABLED) so the rate-limit test can flip it back
+# on for one request burst — config-level disable can't be re-enabled at
+# runtime.
 from diytracker.services.limits import limiter as _limiter  # noqa: E402
 
-app_module.app.config.update(
-    TESTING=True,
-    WTF_CSRF_ENABLED=False,
-    # The test client speaks plain http; Secure cookies would never be sent.
-    SESSION_COOKIE_SECURE=False,
-)
-# Tests hammer /login far past the brute-force limit. RATELIMIT_ENABLED in
-# config is only read during init_app, so flip the live attribute instead.
 _limiter.enabled = False
-
-# Rapid-fire test requests look exactly like scraping; keep the detector off
-# except in test_scrape_detection.py, which enables and resets it per test.
-from diytracker.services.scrape_detection import detector as _detector  # noqa: E402
-
-_detector.enabled = False
 
 
 def pytest_unconfigure(config):
@@ -61,7 +45,7 @@ def pytest_unconfigure(config):
 
 @pytest.fixture
 def app(tmp_path):
-    flask_app = app_module.app
+    flask_app = _app
     # Per-test upload folder so flyer uploads never touch the real tree.
     upload_dir = tmp_path / "uploads"
     upload_dir.mkdir()

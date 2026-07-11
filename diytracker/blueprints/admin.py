@@ -28,6 +28,7 @@ from diytracker.services.analytics import REPORT_PATH, TIMEFRAMES, generate_repo
 from diytracker.services.auth import admin_required
 from diytracker.services.cache import bust_cache
 from diytracker.services.calendar_image import generate_weekly_calendar_image
+from diytracker.services.events import clean_genre_string, resolve_venue_from_form
 from diytracker.services.i18n import gettext as _
 from diytracker.services.scraper import (
     SCRAPE_INTERVAL_HOURS,
@@ -36,8 +37,7 @@ from diytracker.services.scraper import (
     is_running,
 )
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
-from diytracker.services.venue import get_or_create_venue
-from diytracker.utils import PARENT_GENRES_ORDER, clean_genre_tokens
+from diytracker.utils import PARENT_GENRES_ORDER
 
 bp = Blueprint("admin", __name__)
 
@@ -127,29 +127,12 @@ def edit_event(event_id):
             event.ticket_price = form.ticket_price.data
             event.ticket_link = form.ticket_link.data
             event.status = form.status.data
-            event.genre = (
-                ", ".join(clean_genre_tokens(", ".join(form.genre.data)))
-                if form.genre.data
-                else ""
-            )
+            event.genre = clean_genre_string(form.genre.data or [])
 
-            venue_id = form.venue_id.data
-            if venue_id and venue_id != "new":
-                venue = (
-                    db.session.get(Venue, int(venue_id)) if venue_id.isdigit() else None
-                )
-                if not venue:
-                    flash(_("Selected venue does not exist."))
-                    return redirect(url_for("admin.edit_event", event_id=event_id))
-            else:
-                venue, _created = get_or_create_venue(
-                    name=form.venue_name.data,
-                    address=form.venue_address.data,
-                    city=form.venue_city.data,
-                    canton=form.venue_canton.data,
-                    plz=form.venue_plz.data,
-                    coords=form.venue_coords.data,
-                )
+            venue, _created, error = resolve_venue_from_form(form)
+            if error:
+                flash(_("Selected venue does not exist."))
+                return redirect(url_for("admin.edit_event", event_id=event_id))
             event.venue_id = venue.id
 
             saved = save_flyer_file(

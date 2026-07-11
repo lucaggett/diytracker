@@ -42,9 +42,8 @@
   </ul>
   {% endif %}
 
-  <div class="mt-10 pt-6 border-t-2 border-ink">
-    <a href="{{ url_for('public.calendar_view') }}"
-       class="text-xs uppercase tracking-widest text-bleed hover:underline">← {{ _('Back to calendar') }}</a>
-  </div>
+  {% set back_url = url_for('public.calendar_view') %}
+  {% set back_label = _('Back to calendar') %}
+  {% include '_partials/back_link.html' %}
 </div>
 {% endblock %}

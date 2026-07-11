@@ -8,6 +8,7 @@ are scanned. Babel's default directory filter skips them.
 import os
 import sys
 
+from babel.messages.catalog import Catalog
 from babel.messages.extract import DEFAULT_KEYWORDS, extract_from_dir
 from babel.messages.frontend import parse_mapping_cfg
 from babel.messages.pofile import write_po
@@ -33,19 +34,17 @@ def keep_dir(path: str) -> bool:
     return True
 
 
-def main() -> int:
+def build_source_catalog() -> Catalog:
+    """Extract every translatable string from the source tree.
+
+    Shared with scripts/i18n_status.py so extraction and the coverage check
+    can never disagree on what counts as a source string.
+    """
     with open(os.path.join(ROOT, "babel.cfg")) as f:
         method_map, options_map = parse_mapping_cfg(f)
     keywords = dict(DEFAULT_KEYWORDS)
     keywords["_l"] = None
-    catalog_kwargs = {
-        "project": "diytracker",
-        "version": "0.1",
-        "charset": "utf-8",
-    }
-    from babel.messages.catalog import Catalog
-
-    catalog = Catalog(**catalog_kwargs)
+    catalog = Catalog(project="diytracker", version="0.1", charset="utf-8")
     for filename, lineno, message, comments, context in extract_from_dir(
         ROOT,
         method_map=method_map,
@@ -57,6 +56,11 @@ def main() -> int:
         catalog.add(
             message, None, [(rel, lineno)], auto_comments=comments, context=context
         )
+    return catalog
+
+
+def main() -> int:
+    catalog = build_source_catalog()
     out = os.path.join(ROOT, "translations", "messages.pot")
     with open(out, "wb") as f:
         write_po(f, catalog)

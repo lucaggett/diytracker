@@ -48,23 +48,13 @@ npx @tailwindcss/cli -i ./static/css/styles.css -o ./static/css/output.css --min
 
 ### Environment
 
-Create a `.env` file in the project root (loaded by `python-dotenv`):
-
+```bash
+cp .env.example .env
 ```
-SECRET_KEY=<any long random string>
 
-# Only required if you want the contact form to send mail
-EMAIL_SERVER=smtp.example.com
-EMAIL_USERNAME=...
-EMAIL_PASSWORD=...
-
-# Optional: where analytics reads nginx logs from
-NGINX_LOG_PATTERN=access.log
-
-# Only required to accept pushes on POST /api/ingest (see "Ingest");
-# unset disables the endpoint.
-INGEST_TOKEN=<any long random string>
-```
+then fill in at least `SECRET_KEY`. Every variable is documented in
+[`.env.example`](.env.example); environment reading lives in one place,
+`Config.from_env()` in `diytracker/config.py`.
 
 The background scraper only runs when `ENABLE_SCRAPER=1` is set for the
 process. Under gunicorn you don't set it yourself: `gunicorn_conf.py`'s
@@ -73,7 +63,17 @@ process. Under gunicorn you don't set it yourself: `gunicorn_conf.py`'s
 gunicorn worker would start its own scheduler).
 
 The SQLite database (`instance/events.db`) is created automatically on
-first run via `db.create_all()` in `diytracker/app.py`.
+first run via `db.create_all()` in the app factory.
+
+### Architecture
+
+The app is built by a factory: `create_app()` in `diytracker/app.py` wires
+config, extensions and blueprints and has no import-time side effects (no
+`.env` loading, no DB access, no threads). Entrypoints own those decisions:
+the root-level `app.py` (gunicorn target `app:app` and the dev server, and
+the only place that starts the scrape scheduler), `manage.py` (CLI), and
+`tests/conftest.py` (builds a test app from `TestConfig`). To embed the app
+elsewhere, pass your own `Config` instance to `create_app()`.
 
 ### Run
 
