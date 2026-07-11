@@ -231,6 +231,23 @@ def _print_merge_stats(stats, totals, warnings):
     warnings.extend(stats["warnings"])
 
 
+def _missing_columns(db, models):
+    """Model columns absent from the live schema (DB behind the code)."""
+    from sqlalchemy import inspect
+
+    inspector = inspect(db.engine)
+    missing = []
+    for model in models:
+        table = model.__tablename__
+        actual = {column["name"] for column in inspector.get_columns(table)}
+        missing.extend(
+            f"{table}.{column.name}"
+            for column in model.__table__.columns
+            if column.name not in actual
+        )
+    return missing
+
+
 def cmd_venue_dedup(args):
     if args.db_path:
         db_path = Path(args.db_path).resolve()
@@ -247,11 +264,25 @@ def cmd_venue_dedup(args):
         from sqlalchemy import func
 
         from diytracker.models import Event, Venue
+        from diytracker.models import VenueAccessibility
         from diytracker.services.venue import (
             find_dedup_candidates,
             merge_group,
             select_survivor,
         )
+
+        # create_all() only creates missing tables — it never adds columns to
+        # existing ones. On a DB that predates newer model fields (e.g. the
+        # SEO columns event.status and *.updated_at) the dedup queries would
+        # die mid-run with OperationalError, so refuse to start instead.
+        missing = _missing_columns(db, (Venue, Event, VenueAccessibility))
+        if missing:
+            sys.exit(
+                "Database schema is behind the models; missing column(s): "
+                + ", ".join(missing)
+                + "\nRun the scripts in migrations/ first "
+                "(e.g. migrate_add_seo_columns.py), then rerun dedup."
+            )
 
         def event_counts():
             return dict(

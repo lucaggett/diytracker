@@ -1,6 +1,6 @@
 """Service-layer tests: event hashing, venue get-or-create/dedup, scrape import."""
 
-from datetime import date, time
+from datetime import date, time, timedelta
 
 from diytracker.models import (
     db,
@@ -308,6 +308,21 @@ class TestMergeGroup:
         assert Venue.query.count() == 1
         assert survivor.coords == "47,8"  # backfilled from the loser
         assert survivor.address == "Tellistrasse 118"  # not overwritten
+
+    def test_merge_bumps_updated_at_for_sitemap(self, app, make_venue, make_event):
+        survivor = make_venue(name="Kiff", city="Aarau")
+        loser = make_venue(name="KiFF", city="Aarau")
+        ev = make_event(venue=loser)
+        stale = utcnow() - timedelta(days=30)
+        survivor.updated_at = stale
+        db.session.query(Event).filter_by(id=ev.id).update({"updated_at": stale})
+        db.session.commit()
+        merge_group(survivor, [loser])
+        db.session.commit()
+        # Bulk repoint bypasses the ORM onupdate; both must still be bumped
+        # so the sitemap <lastmod> reflects the merge.
+        assert db.session.get(Event, ev.id).updated_at > stale
+        assert survivor.updated_at > stale
 
     def test_token_moves_when_survivor_has_none(self, app, make_venue):
         survivor = make_venue(name="Hall", city="Bern")

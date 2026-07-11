@@ -1,7 +1,7 @@
 import re
 from difflib import SequenceMatcher
 
-from diytracker.models import db, Event, Venue, VenueAccessibility
+from diytracker.models import db, Event, Venue, VenueAccessibility, utcnow
 
 
 def get_or_create_venue(name, address, city, canton, plz, coords=""):
@@ -207,9 +207,16 @@ def merge_group(survivor, losers):
                 "(survivor keeps its own; the old link stops working)"
             )
 
+    # Bulk UPDATE bypasses the ORM onupdate, so bump updated_at by hand —
+    # the sitemap <lastmod> must reflect the venue change on these events.
     stats["events_repointed"] = Event.query.filter(
         Event.venue_id.in_(loser_ids)
-    ).update({"venue_id": survivor.id}, synchronize_session=False)
+    ).update(
+        {"venue_id": survivor.id, "updated_at": utcnow()},
+        synchronize_session=False,
+    )
+    # The survivor's page changes even without backfills (it absorbs events).
+    survivor.updated_at = utcnow()
 
     for loser in losers:
         db.session.delete(loser)
