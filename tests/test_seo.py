@@ -211,12 +211,8 @@ class TestCantonPages:
         assert resp.status_code == 200
         assert "Werk21" in resp.data.decode()
 
-    def test_canton_without_upcoming_events_404s(
-        self, client, make_venue, make_event
-    ):
-        make_event(
-            venue=make_venue(city="Basel", canton="BS"), days_from_now=-30
-        )
+    def test_canton_without_upcoming_events_404s(self, client, make_venue, make_event):
+        make_event(venue=make_venue(city="Basel", canton="BS"), days_from_now=-30)
         assert client.get("/basel-stadt/").status_code == 404
         # City slugs are no longer routes at all.
         assert client.get("/basel/").status_code == 404

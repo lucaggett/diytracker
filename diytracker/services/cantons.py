@@ -22,9 +22,7 @@ def canton_directory():
     names from CANTONS; slugs derive from them. Cached; bust_cache() on any
     event/venue write invalidates it."""
     rows = (
-        db.session.query(
-            Venue.id, Venue.canton, Venue.city, db.func.count(Event.id)
-        )
+        db.session.query(Venue.id, Venue.canton, Venue.city, db.func.count(Event.id))
         .join(Event, Event.venue_id == Venue.id)
         .filter(Event.date >= datetime.now())
         .group_by(Venue.id)

@@ -35,6 +35,7 @@ _VALID_CODES = {
     "ZH",
 }
 
+
 def N_(s):
     """Babel extraction marker (in Babel's DEFAULT_KEYWORDS); identity at runtime."""
     return s
