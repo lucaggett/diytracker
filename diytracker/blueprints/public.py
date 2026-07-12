@@ -31,6 +31,7 @@ from diytracker.services.i18n import (
     validate_lang,
 )
 from diytracker.services.cantons import canton_directory
+from diytracker.services.genres import genre_directory
 from diytracker.services.scrape_detection import HONEYPOT_PATH
 from diytracker.services.seo import (
     canonical_url,
@@ -39,7 +40,7 @@ from diytracker.services.seo import (
     slugify,
     venue_json_ld,
 )
-from diytracker.utils import CANTONS, resolve_canton
+from diytracker.utils import CANTONS, parent_genres, resolve_canton
 
 bp = Blueprint("public", __name__)
 
@@ -229,6 +230,12 @@ def event_page(event_id):
     canton_slug = slugify(canton_name) if canton_name else None
     if canton_slug not in canton_directory():
         canton_slug = canton_name = None
+    # Parent-genre links, limited to genres that have a live landing page.
+    genre_links = [
+        (slugify(name), name)
+        for name in parent_genres(event.genre)
+        if slugify(name) in genre_directory()
+    ]
     return render_template(
         "event_page.html",
         event=event,
@@ -237,6 +244,7 @@ def event_page(event_id):
         more_at_venue=more_at_venue,
         canton_slug=canton_slug,
         canton_name=canton_name,
+        genre_links=genre_links,
     )
 
 
@@ -324,6 +332,42 @@ def canton_page(canton_slug):
     )
 
 
+@bp.route("/genre/<genre_slug>/")
+def genre_page(genre_slug):
+    # Like canton pages, only genres with an upcoming event resolve; the
+    # directory maps slugs to canonical parent genre names ("Other" excluded).
+    info = genre_directory().get(genre_slug)
+    if info is None:
+        abort(404)
+    events = (
+        Event.query.options(joinedload(Event.venue))
+        .filter(
+            Event.parent_genres.like(f"%,{info['name']},%"),
+            Event.date >= datetime.now(),
+        )
+        .order_by(Event.date.asc())
+        .all()
+    )
+    venues = (
+        Venue.query.filter(Venue.id.in_(info["venue_ids"]))
+        .order_by(Venue.name.asc())
+        .all()
+    )
+    live_cantons = canton_directory()
+    cantons = sorted(
+        (slug, live_cantons[slug]["name"])
+        for slug in info["canton_slugs"]
+        if slug in live_cantons
+    )
+    return render_template(
+        "genre.html",
+        genre=info["name"],
+        events=events,
+        venues=venues,
+        cantons=cantons,
+    )
+
+
 @bp.route("/sitemap.xml")
 @cache.cached()
 def sitemap():
@@ -339,6 +383,15 @@ def sitemap():
         pages.append(
             (
                 canonical_url(url_for("public.canton_page", canton_slug=slug)),
+                "daily",
+                None,
+            )
+        )
+
+    for slug in sorted(genre_directory()):
+        pages.append(
+            (
+                canonical_url(url_for("public.genre_page", genre_slug=slug)),
                 "daily",
                 None,
             )

@@ -32,6 +32,7 @@ RESERVED_SLUGS = frozenset(
         "admin",
         "api",
         "events",
+        "genre",
         "kyuubi",
         "login",
         "logout",

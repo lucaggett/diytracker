@@ -228,6 +228,63 @@ class TestCantonPages:
         assert "/winterthur/" not in data
 
 
+class TestGenrePages:
+    def test_genre_slugs_cover_parent_genres(self):
+        from diytracker.services.genres import GENRE_SLUGS
+        from diytracker.utils import PARENT_GENRES_ORDER
+
+        assert set(GENRE_SLUGS.values()) == set(PARENT_GENRES_ORDER) - {"Other"}
+        for slug in ("goth-industrial", "hip-hop", "jazz-blues", "reggae-ska"):
+            assert slug in GENRE_SLUGS
+
+    def test_genre_page_renders_events(self, client, make_event):
+        ev = make_event(name="Doom Night", genre="Doom Metal, Punk")
+        resp = client.get("/genre/metal/")
+        html = resp.data.decode()
+        assert resp.status_code == 200
+        assert "<h1" in html and "Metal" in html
+        assert f'href="/events/{ev.id}/"' in html
+        assert f'href="/venues/{ev.venue_id}/"' in html
+        # The second parent genre gets its own page too.
+        assert client.get("/genre/punk/").status_code == 200
+
+    def test_genre_page_links_cantons(self, client, make_event):
+        make_event(genre="Punk")  # default venue is in ZH
+        html = client.get("/genre/punk/").data.decode()
+        assert 'href="/zuerich/"' in html
+
+    def test_unknown_genre_404(self, client, make_event):
+        make_event()
+        assert client.get("/genre/polka/").status_code == 404
+
+    def test_other_is_not_a_page(self, client, make_event):
+        make_event(genre="Yodel")  # unknown token -> parent genre Other
+        assert client.get("/genre/other/").status_code == 404
+
+    def test_genre_without_upcoming_events_404s(self, client, make_event):
+        make_event(genre="Ska", days_from_now=-30)
+        assert client.get("/genre/reggae-ska/").status_code == 404
+
+    def test_genre_not_a_canton_slug(self, client, make_event):
+        make_event()
+        # /genre is reserved, so the canton route never swallows it.
+        assert client.get("/genre/").status_code == 404
+
+    def test_sitemap_lists_genres(self, client, make_event):
+        make_event(genre="Hardcore")
+        data = client.get("/sitemap.xml").data.decode()
+        assert "http://localhost/genre/hardcore/" in data
+
+    def test_footer_links_genre_pages(self, client, make_event):
+        make_event(genre="Black Metal")
+        assert 'href="/genre/metal/"' in client.get("/").data.decode()
+
+    def test_event_page_links_genre(self, client, make_event):
+        ev = make_event(genre="Crust Punk")
+        html = client.get(f"/events/{ev.id}/").data.decode()
+        assert 'href="/genre/punk/"' in html
+
+
 class TestPastEventNotice:
     def test_past_event_stays_live_with_notice(self, client, make_event):
         venue_event = make_event(days_from_now=-5)

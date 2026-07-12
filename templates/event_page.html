@@ -8,7 +8,7 @@
 
 {% set flyer_url = (flyer_src if '://' in flyer_src else request.host_url.rstrip('/') ~ flyer_src) if flyer_src else None %}
 
-{% block title %}{{ display_name }} · diytracker.ch{% endblock %}
+{% block title %}{{ display_name }}{% if event.venue.city %} · {{ event.venue.city }}{% endif %} · diytracker.ch{% endblock %}
 {% block meta_description %}{{ display_name }} — {{ event.venue.name }}, {{ event.venue.city }} · {{ event.date.strftime('%d.%m.%Y') }}{% if event.genre %} · {{ event.genre }}{% endif %}{% if event.name and event.acts %} · {{ event.acts.replace('\n', ', ') | truncate(80) }}{% endif %}{% endblock %}
 
 {% block og_image -%}
@@ -93,6 +93,13 @@
     <p>
       <span class="text-smudge uppercase tracking-wider text-xs">{{ _('Genre') }}</span>
       {{ event.genre }}
+      {%- if genre_links %}
+      <span class="text-ink/40">·</span>
+      {% for slug, name in genre_links -%}
+      <a href="{{ url_for('public.genre_page', genre_slug=slug) }}"
+         class="text-bleed underline">{{ _('more %(genre)s shows', genre=name) }}</a>{% if not loop.last %} <span class="text-ink/40">·</span> {% endif %}
+      {%- endfor %}
+      {%- endif %}
     </p>
     {% endif %}
     {% if event.ticket_price %}

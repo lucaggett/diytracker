@@ -1,7 +1,7 @@
 {% extends 'base_public.html' %}
 
-{% block title %}{{ _('diytracker.ch · Swiss DIY concerts') }}{% endblock %}
-{% block meta_description %}{{ _('DIY event tracker for Switzerland — concerts, festivals and underground shows.') }}{% endblock %}
+{% block title %}{{ _('DIY & punk concerts in Switzerland') }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ _('Every DIY, punk, hardcore and underground show in Switzerland — one calendar, no ads, no algorithm.') }}{% endblock %}
 
 {# Activates the crosshair cursor (only on hover-capable, fine-pointer devices). #}
 {% block body_class %}calendar-cursor{% endblock %}
@@ -12,6 +12,9 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-6 max-w-2xl">
+  {# The visual identity is the banner image, so the page's H1 is
+     screen-reader/crawler-only. #}
+  <h1 class="sr-only">{{ _('DIY & punk concerts in Switzerland') }}</h1>
   {% set today = datetime.utcnow().date() %}
 
   {# Loop unchanged — same nesting (.date-card > .event-container > .event-item)

@@ -83,6 +83,12 @@ def create_app(config: Config | None = None) -> Flask:
         return {"footer_cantons": top_cantons}
 
     @app.context_processor
+    def _inject_footer_genres():
+        from diytracker.services.genres import top_genres
+
+        return {"footer_genres": top_genres}
+
+    @app.context_processor
     def _static_version():
         css_path = os.path.join(app.static_folder, "css", "output.css")
         try:

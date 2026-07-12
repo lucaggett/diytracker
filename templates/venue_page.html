@@ -1,6 +1,6 @@
 {% extends 'base_public.html' %}
 
-{% block title %}{{ venue.name }} · diytracker.ch{% endblock %}
+{% block title %}{{ venue.name }}{% if venue.city %} — {{ _('concerts in %(city)s', city=venue.city) }}{% endif %} · diytracker.ch{% endblock %}
 {% block meta_description %}{{ venue.name }} — {{ venue.plz }} {{ venue.city }}{% if venue.canton %}, {{ venue.canton }}{% endif %} · {{ _('%(num)d upcoming events', num=events|length) }}{% if events %} · {{ _('next on %(date)s', date=events[0].date.strftime('%d.%m.%Y')) }}{% endif %}{% endblock %}
 
 {% block json_ld %}
