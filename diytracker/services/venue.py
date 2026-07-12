@@ -1,3 +1,4 @@
+import unicodedata
 from difflib import SequenceMatcher
 
 from diytracker.models import db, Event, Venue, VenueAccessibility, utcnow
@@ -33,15 +34,38 @@ FUZZY_RATIO_THRESHOLD = 0.80
 
 _BACKFILL_FIELDS = ("address", "city", "plz", "canton", "coords")
 
+_CANTON_CODES = frozenset(
+    "ag ai ar be bl bs fr ge gl gr ju lu ne nw ow sg sh so sz tg ti ur vd vs zg zh".split()
+)
+
+
+def _fold_diacritics(text):
+    """Strip accents so "Bahnhöfli"/"Bahnhofli" and "Château"/"Chateau" compare equal."""
+    decomposed = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in decomposed if not unicodedata.combining(c)).replace(
+        "ß", "ss"
+    )
+
 
 def normalize_name(name):
-    """Lowercase, trim, and collapse internal whitespace."""
-    return " ".join((name or "").split()).lower()
+    """Lowercase, fold diacritics, trim, and collapse internal whitespace."""
+    return _fold_diacritics(" ".join((name or "").split()).lower())
 
 
 def normalize_city(city):
-    """Like normalize_name, but also strips a leading 4-digit PLZ ("8005 Zürich")."""
-    return normalize_name(split_leading_plz(city)[1])
+    """Like normalize_name, but also strips a leading 4-digit PLZ ("8005 Zürich")
+    and a trailing canton abbreviation ("Bremgarten AG")."""
+    normalized = normalize_name(split_leading_plz(city)[1])
+    tokens = normalized.split()
+    if len(tokens) > 1 and tokens[-1] in _CANTON_CODES:
+        normalized = " ".join(tokens[:-1])
+    return normalized
+
+
+def normalize_address(address):
+    """Normalize the street part of an address: anything after the first comma
+    (", 2504 Biel/Bienne") is dropped so differently-padded entries compare equal."""
+    return normalize_name((address or "").split(",", 1)[0])
 
 
 def _filled(value):
@@ -70,7 +94,7 @@ def find_dedup_candidates(venues):
         are compatible (equal after normalization, or empty) — safe to merge.
       * interactive_pairs: (venue_a, venue_b, reason) tuples for same-name
         venues in different cities (typo or genuinely distinct?) and same-city
-        venues with similar names.
+        venues with similar names or the same street address.
     """
     auto_groups = []
     pairs = []
@@ -114,6 +138,7 @@ def find_dedup_candidates(venues):
                 if name_a == name_b:
                     continue  # handled by the exact-name pass above
                 shorter, longer = sorted((name_a, name_b), key=len)
+                address_a = normalize_address(a.address)
                 if len(shorter) >= MIN_CONTAINMENT_LENGTH and shorter in longer:
                     pairs.append((a, b, "one name contains the other"))
                 elif (
@@ -121,6 +146,8 @@ def find_dedup_candidates(venues):
                     >= FUZZY_RATIO_THRESHOLD
                 ):
                     pairs.append((a, b, "similar names"))
+                elif address_a and address_a == normalize_address(b.address):
+                    pairs.append((a, b, "same address"))
 
     return auto_groups, pairs
 

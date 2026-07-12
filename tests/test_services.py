@@ -208,14 +208,24 @@ def _venue(vid, name, city, plz="", address="", coords="", canton="", token=None
 class TestVenueNormalization:
     def test_normalize_name(self):
         assert normalize_name("  KiFF ") == "kiff"
-        assert normalize_name("Case  à\tChocs") == "case à chocs"
+        assert normalize_name("Case  à\tChocs") == "case a chocs"
         assert normalize_name(None) == ""
 
+    def test_normalize_name_folds_diacritics(self):
+        assert normalize_name("Bahnhöfli") == normalize_name("Bahnhofli")
+        assert normalize_name("Château d'Erguël") == normalize_name("chateau d'erguel")
+        assert normalize_name("Grosse Straße") == "grosse strasse"
+
     def test_normalize_city_strips_leading_plz(self):
-        assert normalize_city("8005 Zürich") == "zürich"
+        assert normalize_city("8005 Zürich") == "zurich"
         assert normalize_city(" Baden ") == "baden"
         # Only a *leading* PLZ is stripped — a trailing district number stays.
         assert normalize_city("Luzern 6") == "luzern 6"
+
+    def test_normalize_city_strips_trailing_canton_code(self):
+        assert normalize_city("Bremgarten AG") == "bremgarten"
+        # A bare canton-code-like city name is left alone.
+        assert normalize_city("AG") == "ag"
 
 
 class TestFindDedupCandidates:
@@ -270,6 +280,45 @@ class TestFindDedupCandidates:
     def test_unrelated_same_city_names_ignored(self):
         a = _venue(1, "Dachstock", "Bern")
         b = _venue(2, "Rössli", "Bern")
+        assert find_dedup_candidates([a, b]) == ([], [])
+
+    def test_containment_across_diacritics(self):
+        a = _venue(1, "Bahnhofli", "Biel/Bienne")
+        b = _venue(2, "Bahnhöfli Biel", "Biel/Bienne")
+        auto, pairs = find_dedup_candidates([a, b])
+        assert auto == []
+        assert [(p[0], p[1], p[2]) for p in pairs] == [
+            (a, b, "one name contains the other")
+        ]
+
+    def test_exact_name_across_diacritics_different_city_is_interactive(self):
+        a = _venue(1, "chateau d'erguël", "St. Imier")
+        b = _venue(2, "Château d'Erguël", "Sonvilier")
+        auto, pairs = find_dedup_candidates([a, b])
+        assert auto == []
+        assert [({p[0].id, p[1].id}, p[2]) for p in pairs] == [
+            ({1, 2}, "same name, city differs")
+        ]
+
+    def test_same_address_same_city_is_interactive(self):
+        a = _venue(1, "Komplex 457", "Zürich", address="Hohlstrasse 457")
+        b = _venue(2, "Komplex Klub", "Zürich", address="Hohlstrasse 457, 8048 Zürich")
+        auto, pairs = find_dedup_candidates([a, b])
+        assert auto == []
+        assert [(p[0], p[1], p[2]) for p in pairs] == [(a, b, "same address")]
+
+    def test_trailing_canton_code_joins_city_bucket(self):
+        a = _venue(1, "KUZEB - Kulturzentrum Bremgarten", "Bremgarten")
+        b = _venue(2, "KUZEB", "Bremgarten AG")
+        auto, pairs = find_dedup_candidates([a, b])
+        assert auto == []
+        assert [(p[0], p[1], p[2]) for p in pairs] == [
+            (a, b, "one name contains the other")
+        ]
+
+    def test_empty_addresses_do_not_pair(self):
+        a = _venue(1, "Dachstock", "Bern", address="")
+        b = _venue(2, "Rössli", "Bern", address="")
         assert find_dedup_candidates([a, b]) == ([], [])
 
 
