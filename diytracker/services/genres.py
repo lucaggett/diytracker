@@ -44,7 +44,12 @@ def genre_directory():
                 continue
             entry = by_name.setdefault(
                 name,
-                {"name": name, "event_count": 0, "venue_ids": set(), "canton_slugs": set()},
+                {
+                    "name": name,
+                    "event_count": 0,
+                    "venue_ids": set(),
+                    "canton_slugs": set(),
+                },
             )
             entry["event_count"] += 1
             entry["venue_ids"].add(venue_id)
@@ -52,9 +57,7 @@ def genre_directory():
                 entry["canton_slugs"].add(canton_slug)
 
     return {
-        slug: by_name[name]
-        for slug, name in GENRE_SLUGS.items()
-        if name in by_name
+        slug: by_name[name] for slug, name in GENRE_SLUGS.items() if name in by_name
     }
 
 

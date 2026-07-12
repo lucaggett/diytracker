@@ -176,7 +176,9 @@ class TestEventPage:
         ev = make_event(name="Doom Night", flyer="static/uploads/test.jpg")
         resp = client.get(f"/events/{ev.id}/")
         html = resp.data.decode()
-        assert 'property="og:title" content="Doom Night · Zürich · diytracker.ch"' in html
+        assert (
+            'property="og:title" content="Doom Night · Zürich · diytracker.ch"' in html
+        )
         assert (
             'property="og:image" content="http://localhost/static/uploads/test.jpg"'
             in html
