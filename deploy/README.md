@@ -94,6 +94,28 @@ sudo systemctl stop diytracker && curl -sk https://diytracker.ch | head -5
 sudo systemctl start diytracker
 ```
 
+## Audit scripts (`security_audit.sh`, `traffic_audit.sh`)
+
+Both are read-only — they report findings and never change anything.
+
+- `security_audit.sh` checks host hardening (updates, sshd, firewall,
+  fail2ban, accounts, …). Run as root for full coverage:
+  `sudo bash deploy/security_audit.sh`.
+- `traffic_audit.sh` analyzes the nginx access logs (rotated + gzipped
+  included) to tell legitimate audience growth from bots, scrapers and
+  scanners: daily requests vs. unique-IP trend, traffic concentration,
+  per-IP burst rates, scripted/rotating user agents, fake-Googlebot
+  reverse-DNS spot-check, exploit-path probes, POST abuse and referrers.
+  Run it as root or an `adm`-group member (the logs aren't world-readable):
+  `sudo bash deploy/traffic_audit.sh`. By default it only looks at the last
+  30 days of log data, so old incidents (e.g. past DDoS attacks still
+  sitting in rotated logs) don't skew the picture. Tunables via env:
+  `DAYS` (window in days, `0` = all data), `LOG_GLOB` (default
+  `/var/log/nginx/access.log*`), `TOP_N`, `TREND_DAYS`.
+
+Note that static assets have `access_log off` in the nginx config, so the
+traffic audit sees only real app requests.
+
 ## MOTD (`update-motd.d/50-diytracker`)
 
 Dynamic login banner showing service state, last scrape, DB and disk usage

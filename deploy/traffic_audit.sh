@@ -3,6 +3,8 @@
 # Answers "is this traffic growth legitimate?" — reports findings only, never
 # changes anything. Run on the server:
 #   sudo bash deploy/traffic_audit.sh            # root/adm needed to read /var/log/nginx
+#   DAYS=7 sudo -E bash deploy/traffic_audit.sh  # only the last week (default: 30 days)
+#   DAYS=0 sudo -E bash deploy/traffic_audit.sh  # no time limit — all log data
 #   LOG_GLOB='/var/log/nginx/access.log*' bash deploy/traffic_audit.sh
 #
 # Notes on what the log contains: static files and the favicon have
@@ -13,6 +15,7 @@ set -u
 LOG_GLOB="${LOG_GLOB:-/var/log/nginx/access.log*}"
 TOP_N="${TOP_N:-15}"
 TREND_DAYS="${TREND_DAYS:-14}"
+DAYS="${DAYS:-30}"   # analyze only the last N days of log data; DAYS=0 = everything
 
 PASS=0 WARN=0
 ok()   { printf '  \033[32m[ OK ]\033[0m %s\n' "$1"; PASS=$((PASS+1)); }
@@ -27,9 +30,26 @@ if [ ! -e "${LOGS[0]}" ]; then
   exit 1
 fi
 
-# Emit all matched logs (rotated + gzipped included), oldest data first not
-# guaranteed — every analysis below is order-independent.
-dump() { zcat -f -- "${LOGS[@]}" 2>/dev/null; }
+# Cutoff for the DAYS window as yyyymmdd (GNU date on the server; BSD
+# fallback so the script also runs on a Mac against copied logs).
+CUTOFF=""
+if [ "$DAYS" -gt 0 ]; then
+  CUTOFF=$(date -d "$DAYS days ago" +%Y%m%d 2>/dev/null || date -v -"${DAYS}d" +%Y%m%d)
+fi
+
+# Emit all matched logs (rotated + gzipped included), filtered to the DAYS
+# window. Oldest data first not guaranteed — every analysis below is
+# order-independent.
+dump() {
+  zcat -f -- "${LOGS[@]}" 2>/dev/null | awk -v cutoff="$CUTOFF" '
+    cutoff == "" { print; next }
+    {
+      if (!match($0, /\[[0-9]{1,2}\/[A-Za-z]{3}\/[0-9]{4}/)) next;
+      split(substr($0, RSTART+1, RLENGTH-1), dt, "/");
+      m = (index("JanFebMarAprMayJunJulAugSepOctNovDec", dt[2]) + 2) / 3;
+      if (sprintf("%04d%02d%02d", dt[3], m, dt[1]) >= cutoff) print
+    }'
+}
 
 # Combined log format, parsed by splitting on '"':
 #   pre='ip - user [time] '  $2=request  post=' status bytes '  $4=referer  $6=user-agent
@@ -51,6 +71,11 @@ UNIQ_IPS=$(dump | awk -F'"' "$AWK_COMBINED"'{print ip()}' | sort -u | wc -l | tr
 
 section "Log coverage"
 info "Files: ${LOGS[*]}"
+if [ -n "$CUTOFF" ]; then
+  info "Window: last $DAYS days (since $CUTOFF; older lines ignored — DAYS=0 for everything)"
+else
+  info "Window: all available log data (set DAYS=N to limit)"
+fi
 info "Total requests: $TOTAL from $UNIQ_IPS unique IPs"
 [ "$TOTAL" -eq 0 ] && { warn "Logs are empty — nothing to analyze"; exit 0; }
 
