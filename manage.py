@@ -10,6 +10,9 @@ Commands:
     logs     Tail the access or error log
     user     Manage users (list / add / passwd / admin / invite / delete)
     venue    Manage venues (dedup)
+    event    Manage events (list / status / delete)
+    stats    App statistics (leaderboard / overview)
+    db       Database maintenance (backup / vacuum)
 
 The gunicorn server itself runs under systemd — see deploy/README.md.
 """
@@ -367,6 +370,262 @@ def cmd_venue_dedup(args):
     return 0
 
 
+# ── event management ──────────────────────────────────────────────────────────
+
+
+EVENT_STATUSES = ("scheduled", "cancelled", "postponed")
+
+
+def _find_event(db, Event, event_id):
+    event = db.session.get(Event, event_id)
+    if not event:
+        sys.exit(f"No event found with id {event_id}.")
+    return event
+
+
+def _event_line(event):
+    venue = event.venue.name if event.venue else "(no venue)"
+    who = event.submitter.email if event.submitter else "-"
+    return (
+        f"  {event.id:>5}  {event.date:%Y-%m-%d}  {event.status:<10}  "
+        f"{event.name[:40]:<40}  {venue[:25]:<25}  {who}"
+    )
+
+
+def cmd_event_list(args):
+    app, db, _submitter = _load_app()
+    with app.app_context():
+        from diytracker.models import Event, utcnow
+
+        q = Event.query
+        if args.all:
+            q = q.order_by(Event.date.desc())
+        else:
+            q = q.filter(Event.date >= utcnow()).order_by(Event.date.asc())
+        if args.lines:
+            q = q.limit(args.lines)
+        events = q.all()
+        if not events:
+            print("No events." if args.all else "No upcoming events.")
+            return 0
+        print()
+        scope = "events (newest first)" if args.all else "upcoming events"
+        print(f"  {len(events)} {scope}:")
+        print(
+            f"  {'ID':>5}  {'DATE':<10}  {'STATUS':<10}  {'NAME':<40}  {'VENUE':<25}  SUBMITTER"
+        )
+        print(f"  {'-' * 100}")
+        for event in events:
+            print(_event_line(event))
+        print()
+    return 0
+
+
+def cmd_event_status(args):
+    app, db, _submitter = _load_app()
+    with app.app_context():
+        from diytracker.models import Event
+        from diytracker.services.cache import bust_cache
+
+        event = _find_event(db, Event, args.event_id)
+        event.status = args.status
+        db.session.commit()
+        bust_cache()
+        print(f"{green('Status set')} to {args.status} for #{event.id} {event.name!r}.")
+    return 0
+
+
+def cmd_event_delete(args):
+    app, db, _submitter = _load_app()
+    with app.app_context():
+        from diytracker.models import Event
+        from diytracker.services.cache import bust_cache
+
+        event = _find_event(db, Event, args.event_id)
+        print(_event_line(event))
+        if not args.yes:
+            confirm = (
+                input(f"  Delete event #{event.id}? This cannot be undone. (yes/no): ")
+                .strip()
+                .lower()
+            )
+            if confirm != "yes":
+                print("  Cancelled.")
+                return 0
+        db.session.delete(event)
+        db.session.commit()
+        bust_cache()
+        print(f"{green('Removed')} event #{args.event_id}.")
+    return 0
+
+
+# ── statistics ────────────────────────────────────────────────────────────────
+
+
+TIMEFRAMES = {
+    "7d": "last 7 days",
+    "month": "last month",
+    "3months": "last 3 months",
+    "all": "all time",
+}
+
+
+def _since(timeframe):
+    """Start of the given timeframe as naive UTC, or None for all time."""
+    from datetime import timedelta
+
+    from dateutil.relativedelta import relativedelta
+
+    from diytracker.models import utcnow
+
+    now = utcnow()
+    return {
+        "7d": now - timedelta(days=7),
+        "month": now - relativedelta(months=1),
+        "3months": now - relativedelta(months=3),
+        "all": None,
+    }[timeframe]
+
+
+def cmd_stats_leaderboard(args):
+    app, db, Submitter = _load_app()
+    with app.app_context():
+        from sqlalchemy import func
+
+        from diytracker.models import Event
+
+        missing = _missing_columns(db, (Event,))
+        if missing:
+            sys.exit(
+                "Database schema is behind the models; missing column(s): "
+                + ", ".join(missing)
+                + "\nRun migrations/migrate_add_created_at.py first."
+            )
+
+        since = _since(args.timeframe)
+        ranked = (
+            db.session.query(Submitter.email, func.count(Event.id).label("n"))
+            .join(Event, Event.submitter_id == Submitter.id)
+            .group_by(Submitter.id)
+        )
+        unattributed = Event.query.filter(Event.submitter_id.is_(None))
+        if since is not None:
+            ranked = ranked.filter(Event.created_at >= since)
+            unattributed = unattributed.filter(Event.created_at >= since)
+        rows = ranked.order_by(func.count(Event.id).desc(), Submitter.email).all()
+        n_unattributed = unattributed.count()
+
+        print()
+        print(f"  Contributions ({TIMEFRAMES[args.timeframe]}):")
+        if not rows and not n_unattributed:
+            print("  No contributions in this timeframe.")
+            print()
+            return 0
+        print(f"  {'':>3}  {'EVENTS':>6}  submitter")
+        print(f"  {'-' * 50}")
+        for i, (email, count) in enumerate(rows, 1):
+            print(f"  {i:>3}  {count:>6}  {email}")
+        if n_unattributed:
+            print(f"  {'':>3}  {n_unattributed:>6}  (no submitter, e.g. scraped)")
+        total = sum(count for _email, count in rows) + n_unattributed
+        print(f"  {'-' * 50}")
+        print(f"  {'':>3}  {total:>6}  total")
+        print()
+    return 0
+
+
+def cmd_stats_overview(args):
+    app, db, Submitter = _load_app()
+    with app.app_context():
+        from diytracker.models import Event, ScrapedEvent, SkippedUrl, Venue, utcnow
+
+        now = utcnow()
+        total_events = Event.query.count()
+        upcoming = Event.query.filter(Event.date >= now).count()
+        users = Submitter.query.all()
+        n_admins = sum(1 for user in users if user.is_admin)
+        n_no_pw = sum(1 for user in users if not user.password_hash)
+        pending = ScrapedEvent.query.filter(ScrapedEvent.approved.is_(False)).count()
+
+        print()
+        print(f"  Database: {db.engine.url.database}")
+        db_file = Path(db.engine.url.database)
+        if db_file.is_file():
+            print(f"  Size:     {_fmt_size(db_file.stat().st_size)}")
+        print()
+        print(
+            f"  Events:       {total_events} ({upcoming} upcoming, {total_events - upcoming} past)"
+        )
+        print(f"  Venues:       {Venue.query.count()}")
+        print(
+            f"  Users:        {len(users)} ({n_admins} admin(s), {n_no_pw} without password)"
+        )
+        print(f"  Scrape queue: {pending} pending")
+        print(f"  Skipped URLs: {SkippedUrl.query.count()}")
+        print()
+    return 0
+
+
+# ── database maintenance ──────────────────────────────────────────────────────
+
+
+def _fmt_size(n_bytes):
+    for unit in ("B", "KiB", "MiB", "GiB"):
+        if n_bytes < 1024 or unit == "GiB":
+            return f"{n_bytes:.1f} {unit}" if unit != "B" else f"{n_bytes} B"
+        n_bytes /= 1024
+
+
+def cmd_db_backup(args):
+    import sqlite3
+    from datetime import datetime
+
+    app, db, _submitter = _load_app()
+    with app.app_context():
+        src = Path(db.engine.url.database)
+        if not src.is_file():
+            sys.exit(f"No database file at {src}")
+        if args.dest:
+            dest = Path(args.dest).resolve()
+        else:
+            stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            dest = PROJECT_ROOT / "backups" / f"diytracker-{stamp}.sqlite3"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        # sqlite3's online backup API copies a consistent snapshot even while
+        # the WAL is live, unlike a plain file copy.
+        source_conn = sqlite3.connect(src)
+        dest_conn = sqlite3.connect(dest)
+        try:
+            source_conn.backup(dest_conn)
+        finally:
+            dest_conn.close()
+            source_conn.close()
+        print(f"{green('Backed up')} to {dest} ({_fmt_size(dest.stat().st_size)}).")
+    return 0
+
+
+def cmd_db_vacuum(args):
+    app, db, _submitter = _load_app()
+    with app.app_context():
+        path = Path(db.engine.url.database)
+        if not path.is_file():
+            sys.exit(f"No database file at {path}")
+        before = path.stat().st_size
+        # VACUUM refuses to run inside a transaction, hence autocommit; the
+        # checkpoint folds the WAL back in so the reported size is real.
+        with db.engine.connect().execution_options(
+            isolation_level="AUTOCOMMIT"
+        ) as conn:
+            conn.execute(db.text("VACUUM"))
+            conn.execute(db.text("PRAGMA wal_checkpoint(TRUNCATE)"))
+        after = path.stat().st_size
+        print(
+            f"{green('Vacuumed')} {path.name}: "
+            f"{_fmt_size(before)} -> {_fmt_size(after)}."
+        )
+    return 0
+
+
 # ── argument parsing ──────────────────────────────────────────────────────────
 
 
@@ -448,6 +707,65 @@ def build_parser():
         help="Operate on an alternate SQLite database file instead of the app DB",
     )
     sp.set_defaults(func=cmd_venue_dedup)
+
+    ep = sub.add_parser("event", help="Event management")
+    esub = ep.add_subparsers(dest="event_command", required=True)
+
+    sp = esub.add_parser("list", help="List upcoming events")
+    sp.add_argument(
+        "-n",
+        "--lines",
+        type=int,
+        default=20,
+        help="Number of events to show, 0 for no limit (default: 20)",
+    )
+    sp.add_argument(
+        "--all",
+        action="store_true",
+        help="Include past events (newest first) instead of upcoming only",
+    )
+    sp.set_defaults(func=cmd_event_list)
+
+    sp = esub.add_parser("status", help="Set an event's status")
+    sp.add_argument("event_id", type=int)
+    sp.add_argument("status", choices=EVENT_STATUSES)
+    sp.set_defaults(func=cmd_event_status)
+
+    sp = esub.add_parser("delete", help="Delete an event")
+    sp.add_argument("event_id", type=int)
+    sp.add_argument("--yes", action="store_true", help="Skip the confirmation prompt")
+    sp.set_defaults(func=cmd_event_delete)
+
+    stp = sub.add_parser("stats", help="App statistics")
+    ssub = stp.add_subparsers(dest="stats_command", required=True)
+
+    sp = ssub.add_parser("leaderboard", help="Contributions per submitter")
+    sp.add_argument(
+        "-t",
+        "--timeframe",
+        choices=sorted(TIMEFRAMES),
+        default="all",
+        help="Only count events contributed in this window (default: all)",
+    )
+    sp.set_defaults(func=cmd_stats_leaderboard)
+
+    ssub.add_parser("overview", help="Event/venue/user/queue totals").set_defaults(
+        func=cmd_stats_overview
+    )
+
+    dp = sub.add_parser("db", help="Database maintenance")
+    dsub = dp.add_subparsers(dest="db_command", required=True)
+
+    sp = dsub.add_parser("backup", help="Snapshot the database (WAL-safe)")
+    sp.add_argument(
+        "--dest",
+        help="Backup file path (default: backups/diytracker-<timestamp>.sqlite3)",
+    )
+    sp.set_defaults(func=cmd_db_backup)
+
+    dsub.add_parser("vacuum", help="Compact the database file").set_defaults(
+        func=cmd_db_vacuum
+    )
 
     return p
 

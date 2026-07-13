@@ -57,6 +57,9 @@ class Event(db.Model):
     # scheduled/cancelled/postponed — drives schema.org eventStatus and the
     # visible badge on the event page.
     status = db.Column(db.String(20), nullable=False, default="scheduled")
+    # Nullable: SQLite can't ALTER TABLE ADD COLUMN with a non-constant NOT
+    # NULL default; migrations/migrate_add_created_at.py backfills old rows.
+    created_at = db.Column(db.DateTime, nullable=True, default=utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
 
     def __repr__(self):

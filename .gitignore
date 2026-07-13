@@ -10,6 +10,7 @@ __pycache__/
 coverage.xml
 instance/
 logs/
+backups/
 venv/
 static/uploads/
 CLAUDE.md
