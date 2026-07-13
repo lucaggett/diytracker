@@ -37,27 +37,31 @@ if [ "$DAYS" -gt 0 ]; then
   CUTOFF=$(date -d "$DAYS days ago" +%Y%m%d 2>/dev/null || date -v -"${DAYS}d" +%Y%m%d)
 fi
 
-# Emit all matched logs (rotated + gzipped included), filtered to the DAYS
-# window. Oldest data first not guaranteed — every analysis below is
-# order-independent.
-dump() {
-  zcat -f -- "${LOGS[@]}" 2>/dev/null | awk -v cutoff="$CUTOFF" '
-    cutoff == "" { print; next }
-    {
-      if (!match($0, /\[[0-9]{1,2}\/[A-Za-z]{3}\/[0-9]{4}/)) next;
-      split(substr($0, RSTART+1, RLENGTH-1), dt, "/");
-      m = (index("JanFebMarAprMayJunJulAugSepOctNovDec", dt[2]) + 2) / 3;
-      if (sprintf("%04d%02d%02d", dt[3], m, dt[1]) >= cutoff) print
-    }'
-}
+# Decompress all matched logs (rotated + gzipped included) and filter to the
+# DAYS window ONCE into a temp file — the analyses below each read the data
+# in full, and re-decompressing per pass is slow on big logs. Note the date
+# regex avoids {n,m} intervals: Debian's default awk is mawk, which treats
+# them as literal braces. Line order is not guaranteed across rotated files —
+# every analysis below is order-independent.
+WINDOW=$(mktemp "${TMPDIR:-/tmp}/traffic_audit.XXXXXX")
+trap 'rm -f "$WINDOW"' EXIT
+zcat -f -- "${LOGS[@]}" 2>/dev/null | awk -v cutoff="$CUTOFF" '
+  cutoff == "" { print; next }
+  {
+    if (!match($0, /\[[0-9][0-9]?\/[A-Za-z][A-Za-z][A-Za-z]\/[0-9][0-9][0-9][0-9]/)) next;
+    split(substr($0, RSTART+1, RLENGTH-1), dt, "/");
+    m = (index("JanFebMarAprMayJunJulAugSepOctNovDec", dt[2]) + 2) / 3;
+    if (sprintf("%04d%02d%02d", dt[3], m, dt[1]) >= cutoff) print
+  }' > "$WINDOW"
+dump() { cat "$WINDOW"; }
 
 # Combined log format, parsed by splitting on '"':
 #   pre='ip - user [time] '  $2=request  post=' status bytes '  $4=referer  $6=user-agent
 # awk helper prefix shared by most passes:
 AWK_COMBINED='
 function ip()      { split($1, a, " "); return a[1] }
-function day()     { if (!match($1, /\[[0-9]{1,2}\/[A-Za-z]{3}\/[0-9]{4}/)) return ""; return substr($1, RSTART+1, RLENGTH-1) }
-function minute()  { if (!match($1, /\[[^ ]+/)) return ""; t=substr($1, RSTART+1, RLENGTH-1); sub(/:[0-9]{2}$/, "", t); return t }  # dd/Mon/yyyy:hh:mm
+function day()     { if (!match($1, /\[[0-9][0-9]?\/[A-Za-z][A-Za-z][A-Za-z]\/[0-9][0-9][0-9][0-9]/)) return ""; return substr($1, RSTART+1, RLENGTH-1) }
+function minute()  { if (!match($1, /\[[^ ]+/)) return ""; t=substr($1, RSTART+1, RLENGTH-1); sub(/:[0-9][0-9]$/, "", t); return t }  # dd/Mon/yyyy:hh:mm
 function req()     { return $2 }
 function path()    { split($2, r, " "); p=r[2]; sub(/\?.*/, "", p); return p }
 function method()  { split($2, r, " "); return r[1] }
