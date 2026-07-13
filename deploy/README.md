@@ -103,7 +103,8 @@ Both are read-only — they report findings and never change anything.
   `sudo bash deploy/security_audit.sh`.
 - `traffic_audit.sh` analyzes the nginx access logs (rotated + gzipped
   included) to tell legitimate audience growth from bots, scrapers and
-  scanners: daily requests vs. unique-IP trend, traffic concentration,
+  scanners: daily requests vs. unique-IP trend, a per-day "estimated real
+  users" count (IPs that look human), traffic concentration,
   per-IP burst rates, scripted/rotating user agents, fake-Googlebot
   reverse-DNS spot-check, exploit-path probes, POST abuse and referrers.
   Run it as root or an `adm`-group member (the logs aren't world-readable):

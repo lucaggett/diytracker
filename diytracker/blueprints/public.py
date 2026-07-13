@@ -450,6 +450,15 @@ def robots():
     # scrapers that parse robots.txt for "interesting" paths walk into it.
     body = "\n".join(
         [
+            # Awario's brand-monitoring crawler was the single heaviest
+            # client in the July 2026 traffic audit (~17% of all requests)
+            # with zero value to us. It honours robots.txt per
+            # https://awario.com/bots.html — all its agent names are banned.
+            "User-agent: AwarioBot",
+            "User-agent: AwarioRssBot",
+            "User-agent: AwarioSmartBot",
+            "Disallow: /",
+            "",
             "User-agent: *",
             f"Disallow: {HONEYPOT_PATH}",
             "Disallow: /admin",

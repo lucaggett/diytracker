@@ -94,6 +94,50 @@ dump | awk -F'"' "$AWK_COMBINED"'
 info "Legit growth: requests and unique IPs rise together, top-IP share stays low."
 info "Suspicious: requests explode while unique IPs stay flat, or one IP owns a big share."
 
+# ── 1b. Estimated real users ─────────────────────────────────────────────────
+# Heuristic: an IP counts as a probable human if every one of these holds —
+#   - it presented a browser user agent (Mozilla/…) that carries no
+#     bot/crawler/scripted token, and never a scripted UA,
+#   - it did not rotate through more than 5 distinct UAs,
+#   - it never probed a known-exploit path,
+#   - it got at least one successful (2xx/3xx) response,
+#   - it stayed under 500 requests total in the window.
+# IP counting undercounts (households/CGNAT share IPs) and overcounts
+# (one phone hopping networks) — treat it as a trend, not a census.
+section "Estimated real users (heuristic, by IP)"
+REAL=$(dump | awk -F'"' "$AWK_COMBINED"'
+  BEGIN {
+    botrx = "bot|crawl|spider|slurp|scan|monitor|preview|awario|semrush|ahrefs|bytespider|petal|gptbot|claudebot|ccbot|amazonbot|headless|python|curl|wget|scrapy|go-http|okhttp|aiohttp|httpclient|libwww|java/|zgrab"
+    probrx = "wp-login|wp-admin|xmlrpc\\.php|\\.php$|\\.env|\\.git|phpmyadmin|/cgi-bin|\\.aws|/vendor/|/config\\.|/backup|/actuator|/\\.ssh"
+  }
+  {
+    ipv = ip(); u = tolower(ua()); d = day(); st = status()
+    tot[ipv]++
+    if (!((ipv, u) in uaseen)) { uaseen[ipv, u] = 1; uacnt[ipv]++ }
+    if (u ~ /^mozilla/ && u !~ botrx) browser[ipv] = 1
+    if (u == "-" || u == "" || u ~ botrx) botlike[ipv] = 1
+    if (tolower(path()) ~ probrx) probe[ipv] = 1
+    if (st ~ /^[23]/) okhit[ipv] = 1
+    if (d != "") dayip[d, ipv] = 1
+  }
+  END {
+    for (ipv in tot)
+      if (browser[ipv] && !botlike[ipv] && !probe[ipv] && okhit[ipv] && uacnt[ipv] <= 5 && tot[ipv] < 500) {
+        real[ipv] = 1; nreal++; realreq += tot[ipv]
+      }
+    for (k in dayip) { split(k, a, SUBSEP); if (a[2] in real) daycnt[a[1]]++ }
+    for (d in daycnt) printf "DAY %s %d\n", d, daycnt[d]
+    printf "SUM %d %d\n", nreal + 0, realreq + 0
+  }')
+read -r NREAL REALREQ <<EOF
+$(printf '%s\n' "$REAL" | awk '$1 == "SUM" { print $2, $3 }')
+EOF
+info "Estimated real users in window: $NREAL of $UNIQ_IPS unique IPs, sending $REALREQ of $TOTAL requests ($((REALREQ * 100 / TOTAL))%)"
+printf '%s\n' "$REAL" | awk '$1 == "DAY" { print $2, $3 }' \
+  | sort -t/ -k3,3n -k2,2M -k1,1n | tail -n "$TREND_DAYS" \
+  | awk '{ printf "  %s  %5d est. real users\n", $1, $2 }'
+info "If this per-day count is growing, the audience is real — regardless of what bots add on top."
+
 # ── 2. Traffic concentration ─────────────────────────────────────────────────
 section "Top $TOP_N IPs (all logs)"
 dump | awk -F'"' "$AWK_COMBINED"'{print ip()}' | sort | uniq -c | sort -rn | head -n "$TOP_N" \
