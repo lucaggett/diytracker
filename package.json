@@ -1,6 +1,6 @@
 {
   "name": "diytracker",
-  "version": "0.27.0",
+  "version": "0.29.0",
   "private": true,
   "dependencies": {
     "tailwindcss": "^4.3.2"
