@@ -30,6 +30,11 @@ from diytracker.services.i18n import (
     gettext as _,
     validate_lang,
 )
+from diytracker.services.archive import (
+    adjacent_months,
+    archive_directory,
+    archive_month_events,
+)
 from diytracker.services.cantons import canton_directory
 from diytracker.services.genres import genre_directory
 from diytracker.services.scrape_detection import HONEYPOT_PATH
@@ -368,6 +373,42 @@ def genre_page(genre_slug):
     )
 
 
+def _archive_cache_key(*_args, **_kwargs):
+    # flask-caching passes the view args (year, month) through; the request
+    # path already encodes them, so the key only needs path + locale.
+    return f"archive:{request.path}:{getattr(g, 'locale', DEFAULT_LOCALE)}"
+
+
+@bp.route("/archive/")
+@cache.cached(make_cache_key=_archive_cache_key, unless=_skip_calendar_cache)
+def archive_index():
+    # Not to be confused with /events/archive/, the scrape-detection
+    # honeypot below — this is the real, visible archive.
+    return render_template(
+        "archive_index.html", directory=archive_directory(), datetime=datetime
+    )
+
+
+@bp.route("/archive/<int:year>/<int:month>/")
+@cache.cached(make_cache_key=_archive_cache_key, unless=_skip_calendar_cache)
+def archive_month(year, month):
+    months = dict(archive_directory().get(year, []))
+    if month not in months:
+        abort(404)
+    prev_month, next_month = adjacent_months(year, month)
+    return render_template(
+        "archive_month.html",
+        year=year,
+        month=month,
+        month_date=datetime(year, month, 1),
+        grouped_events=archive_month_events(year, month),
+        event_count=months[month],
+        prev_month=prev_month,
+        next_month=next_month,
+        datetime=datetime,
+    )
+
+
 @bp.route("/sitemap.xml")
 @cache.cached()
 def sitemap():
@@ -397,9 +438,26 @@ def sitemap():
             )
         )
 
+    # Archive pages follow the same two-year sitemap horizon as past events
+    # below; older months stay reachable through the archive index.
+    horizon = datetime.now() - relativedelta(years=2)
+    pages.append((canonical_url(url_for("public.archive_index")), "monthly", None))
+    for year, month_counts in archive_directory().items():
+        for month, _count in month_counts:
+            if datetime(year, month, 1) + relativedelta(months=1) < horizon:
+                continue
+            pages.append(
+                (
+                    canonical_url(
+                        url_for("public.archive_month", year=year, month=month)
+                    ),
+                    "monthly",
+                    None,
+                )
+            )
+
     # Past events stay listed for two years — they keep ranking for band and
     # venue queries — then age out of the sitemap (the pages themselves stay).
-    horizon = datetime.now() - relativedelta(years=2)
     events = Event.query.filter(Event.date >= horizon).order_by(Event.date.asc()).all()
     for event in events:
         pages.append(

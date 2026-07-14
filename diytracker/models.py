@@ -254,6 +254,27 @@ class ScrapeSuspect(db.Model):
         return f"<ScrapeSuspect {self.ip} score={self.score}>"
 
 
+class EventDailyViews(db.Model):
+    """Per-day hit/visitor counts for /events/<id>/ pages, distilled from
+    nginx access logs by services/event_views.py on the analytics schedule.
+    event_id is deliberately not a foreign key: log lines may reference
+    events that were deleted later, and rows must outlive the log window
+    (days that rotate out of the logs are never recomputed)."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, nullable=False, index=True)
+    date = db.Column(db.Date, nullable=False)
+    hits = db.Column(db.Integer, nullable=False, default=0)
+    visitors = db.Column(db.Integer, nullable=False, default=0)  # distinct IPs
+
+    __table_args__ = (
+        db.UniqueConstraint("event_id", "date", name="ux_event_daily_views"),
+    )
+
+    def __repr__(self):
+        return f"<EventDailyViews event={self.event_id} {self.date}: {self.hits}>"
+
+
 def _format_parent_genres(genre):
     parents = _compute_parent_genres(genre)
     return "," + ",".join(parents) + "," if parents else None

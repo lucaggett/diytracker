@@ -30,6 +30,7 @@ RESERVED_SLUGS = frozenset(
         "about",
         "accessibility",
         "admin",
+        "archive",
         "api",
         "events",
         "genre",

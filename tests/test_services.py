@@ -417,3 +417,95 @@ class TestMergeGroup:
         rows = VenueAccessibility.query.all()
         assert [r.id for r in rows] == [keep.id]
         assert any("accessibility data" in w for w in stats["warnings"])
+
+
+class TestArchiveDirectory:
+    def test_past_boundary_is_start_of_today(self, app, make_event):
+        from diytracker.services.archive import archive_directory
+
+        make_event(name="Today Show", days_from_now=0)  # later today — not past
+        past = make_event(name="Yesterday Show", days_from_now=-1)
+        directory = archive_directory()
+        months = dict(directory.get(past.date.year, []))
+        assert months.get(past.date.month) == 1
+
+    def test_cache_busts_on_event_write(self, app, make_event):
+        from diytracker.services.archive import archive_directory
+        from diytracker.services.cache import bust_cache
+
+        make_event(days_from_now=-40)
+        first = archive_directory()
+        make_event(name="Another", days_from_now=-40, acts="X")
+        bust_cache()
+        second = archive_directory()
+        assert sum(c for months in second.values() for _m, c in months) == 1 + sum(
+            c for months in first.values() for _m, c in months
+        )
+
+
+class TestDbStats:
+    def test_events_per_month_and_year(self, app, make_event):
+        from diytracker.services import db_stats
+
+        ev = make_event(days_from_now=-1)
+        key = ev.date.strftime("%Y-%m")
+        assert (key, 1) in db_stats.events_per_month()
+        assert dict(db_stats.events_per_year())[ev.date.year] == 1
+        series = db_stats.monthly_series(months=24)
+        assert len(series) == 24
+        assert {"month": key, "count": 1} in series
+
+    def test_events_by_parent_genre_buckets(self, app, make_event):
+        from diytracker.services import db_stats
+
+        make_event(genre="Punk")
+        make_event(genre="", acts="Mystery")  # untagged → Other
+        counts = dict(db_stats.events_by_parent_genre())
+        assert counts["Punk"] == 1
+        assert counts["Other"] == 1
+
+    def test_events_by_canton_resolves_and_buckets_unknown(
+        self, app, make_event, make_venue
+    ):
+        from diytracker.services import db_stats
+
+        make_event(venue=make_venue(name="ZH Hall", canton="ZH", city="Zürich"))
+        make_event(
+            venue=make_venue(name="Mystery Hall", canton="", city="Nowhereville", plz="0000")
+        )
+        counts = dict(db_stats.events_by_canton())
+        assert counts["Zürich"] == 1
+        assert counts[None] == 1
+
+    def test_top_venues_ranked(self, app, make_event, make_venue):
+        from diytracker.services import db_stats
+
+        busy = make_venue(name="Busy Hall")
+        quiet = make_venue(name="Quiet Hall", plz="8002")
+        make_event(venue=busy)
+        make_event(venue=busy, acts="Other Band")
+        make_event(venue=quiet)
+        ranked = db_stats.top_venues()
+        assert ranked[0][0].name == "Busy Hall"
+        assert ranked[0][1] == 2
+
+    def test_ticket_price_stats_mixed_inputs(self, app, make_event):
+        from diytracker.services import db_stats
+
+        for price, acts in [
+            ("15.-", "a"),
+            ("Kollekte", "b"),
+            ("8-25", "c"),
+            ("tba", "d"),
+            ("", "e"),
+        ]:
+            make_event(ticket_price=price, acts=acts)
+        stats = db_stats.ticket_price_stats()
+        assert stats["total"] == 5
+        assert stats["free"] == 1        # Kollekte
+        assert stats["unparsed"] == 2    # tba, ""
+        assert stats["paid"] == 2        # 15 and 8 (range lower bound)
+        assert stats["min"] == 8.0
+        assert stats["max"] == 15.0
+        assert dict(stats["buckets"])["0–10"] == 1
+        assert dict(stats["buckets"])["10–20"] == 1

@@ -298,6 +298,19 @@ def _generate_stats_guarded(app):
             app.logger.warning("Analytics stats generation failed: %s", message)
     except Exception:
         app.logger.exception("Analytics stats generation failed")
+    try:
+        # Lazy import: event_views pulls in the models, which this module
+        # must not do at import time (scripts import it without an app).
+        from diytracker.services.event_views import generate_event_view_stats
+
+        with app.app_context():
+            success, message = generate_event_view_stats()
+        if success:
+            app.logger.info(message)
+        else:
+            app.logger.warning("Event view stats generation failed: %s", message)
+    except Exception:
+        app.logger.exception("Event view stats generation failed")
     finally:
         with _stats_lock:
             _stats_generating = False

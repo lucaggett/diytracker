@@ -184,3 +184,34 @@ class TestAnalyticsStats:
         assert data["age_seconds"] < 60
         # Fresh cache -> no background regeneration kicked.
         assert kicked == []
+
+
+class TestStatisticsPage:
+    def test_requires_admin(self, client):
+        resp = client.get("/admin/statistics")
+        assert resp.status_code == 302
+
+    def test_renders_sections(self, client, admin, login, make_event):
+        login(admin)
+        make_event(name="Some Show", ticket_price="15.-")
+        resp = client.get("/admin/statistics")
+        assert resp.status_code == 200
+        assert b"Most viewed events" in resp.data
+        assert b"Events over time" in resp.data
+        assert b"By genre" in resp.data
+        assert b"By canton" in resp.data
+        assert b"Top venues" in resp.data
+        assert b"Ticket prices" in resp.data
+        # No view data yet — the popularity table shows its empty state.
+        assert "Collecting view data…".encode() in resp.data
+
+    def test_shows_popularity_rows(self, client, admin, login, make_event):
+        from datetime import date
+        from diytracker.services.event_views import persist_event_day_counts
+
+        login(admin)
+        ev = make_event(name="Viewed Show", days_from_now=-5)
+        persist_event_day_counts({(ev.id, date(2026, 7, 1)): (12, 7)})
+        resp = client.get("/admin/statistics")
+        assert b"Viewed Show" in resp.data
+        assert f'href="/events/{ev.id}/"'.encode() in resp.data

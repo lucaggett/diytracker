@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-12 03:31+0200\n"
+"POT-Creation-Date: 2026-07-14 21:37+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: de\n"
@@ -38,7 +38,7 @@ msgstr "Festival"
 msgid "Doors Open Time"
 msgstr "Einlasszeit"
 
-#: diytracker/forms.py:127 templates/admin.html:64 templates/calendar.html:108
+#: diytracker/forms.py:127 templates/admin.html:86 templates/calendar.html:108
 #: templates/calendar.html:249 templates/event_page.html:94
 #: templates/event_queue.html:125 templates/genre.html:12
 msgid "Genre"
@@ -78,7 +78,8 @@ msgstr "Ticketpreis"
 msgid "Ticket Link"
 msgstr "Ticketlink"
 
-#: diytracker/forms.py:148 templates/admin.html:89 templates/edit_venue.html:8
+#: diytracker/forms.py:148 templates/admin.html:111
+#: templates/admin_statistics.html:23 templates/edit_venue.html:8
 #: templates/event_page.html:79 templates/event_queue.html:50
 #: templates/venue_page.html:24
 msgid "Venue"
@@ -231,7 +232,7 @@ msgstr "Ruhiger / alternativer Eingang"
 msgid "Additional accessibility notes"
 msgstr "Weitere Hinweise zur Barrierefreiheit"
 
-#: diytracker/forms.py:331 templates/admin.html:87 templates/venues.html:39
+#: diytracker/forms.py:331 templates/admin.html:109 templates/venues.html:39
 msgid "Name"
 msgstr "Name"
 
@@ -343,32 +344,32 @@ msgstr "Zug"
 msgid "Zürich"
 msgstr "Zürich"
 
-#: diytracker/blueprints/admin.py:134 diytracker/blueprints/submissions.py:242
+#: diytracker/blueprints/admin.py:146 diytracker/blueprints/submissions.py:242
 msgid "Selected venue does not exist."
 msgstr "Ausgewähltes Venue existiert nicht."
 
-#: diytracker/blueprints/admin.py:146
+#: diytracker/blueprints/admin.py:158
 msgid "Event updated successfully!"
 msgstr "Event erfolgreich aktualisiert!"
 
-#: diytracker/blueprints/admin.py:162
+#: diytracker/blueprints/admin.py:174
 msgid "Event deleted successfully!"
 msgstr "Event erfolgreich gelöscht!"
 
-#: diytracker/blueprints/admin.py:184
+#: diytracker/blueprints/admin.py:196
 msgid "— none —"
 msgstr "— keiner —"
 
-#: diytracker/blueprints/admin.py:193
+#: diytracker/blueprints/admin.py:205
 msgid "Venue updated successfully!"
 msgstr "Venue erfolgreich aktualisiert!"
 
-#: diytracker/blueprints/admin.py:214
+#: diytracker/blueprints/admin.py:226
 #, python-format
 msgid " and %(k)d more"
 msgstr " und %(k)d weitere"
 
-#: diytracker/blueprints/admin.py:217
+#: diytracker/blueprints/admin.py:229
 #, python-format
 msgid ""
 "Cannot delete venue \"%(venue)s\": it still has %(n)d event(s) "
@@ -378,15 +379,15 @@ msgstr ""
 "Event(s) (%(names)s%(more)s). Diese Events zuerst neu zuweisen oder "
 "löschen."
 
-#: diytracker/blueprints/admin.py:228
+#: diytracker/blueprints/admin.py:240
 msgid "Venue deleted."
 msgstr "Venue gelöscht."
 
-#: diytracker/blueprints/admin.py:388
+#: diytracker/blueprints/admin.py:400
 msgid "No report has been generated yet. Use the form to create one."
 msgstr "Es wurde noch kein Report erstellt. Erstelle einen über das Formular."
 
-#: diytracker/blueprints/admin.py:415
+#: diytracker/blueprints/admin.py:459
 #, python-format
 msgid "Cleared %(n)d suspect(s)."
 msgstr "%(n)d Verdächtige gelöscht."
@@ -399,7 +400,7 @@ msgstr "E-Mail oder Passwort ungültig."
 msgid "This invite link is invalid or has expired."
 msgstr "Dieser Einladungslink ist ungültig oder abgelaufen."
 
-#: diytracker/blueprints/public.py:159
+#: diytracker/blueprints/public.py:164
 msgid ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
@@ -407,11 +408,11 @@ msgstr ""
 "Nachricht konnte nicht gesendet werden — bitte schreib uns direkt an "
 "kontakt@diytracker.ch."
 
-#: diytracker/blueprints/public.py:169
+#: diytracker/blueprints/public.py:174
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Danke! Wir melden uns sobald wie möglich."
 
-#: diytracker/blueprints/public.py:195
+#: diytracker/blueprints/public.py:200
 msgid "Accessibility info saved — thank you!"
 msgstr "Infos zur Barrierefreiheit gespeichert — danke!"
 
@@ -607,7 +608,8 @@ msgstr "Informationen zur Barrierefreiheit speichern"
 msgid "Admin"
 msgstr "Admin"
 
-#: templates/admin.html:8 templates/venues.html:28
+#: templates/admin.html:8 templates/admin_statistics.html:7
+#: templates/venues.html:28
 msgid "Admin console"
 msgstr "Admin-Konsole"
 
@@ -615,11 +617,13 @@ msgstr "Admin-Konsole"
 msgid "MANAGE EVENTS"
 msgstr "EVENTS VERWALTEN"
 
-#: templates/admin.html:11 templates/event_queue.html:39
+#: templates/admin.html:11 templates/archive_index.html:25
+#: templates/event_queue.html:39
 msgid "events"
 msgstr "Events"
 
-#: templates/admin.html:11 templates/event_queue.html:39
+#: templates/admin.html:11 templates/archive_index.html:25
+#: templates/event_queue.html:39
 msgid "event"
 msgstr "Event"
 
@@ -627,90 +631,318 @@ msgstr "Event"
 msgid "live"
 msgstr "live"
 
-#: templates/admin.html:21
-msgid "Scraping in progress…"
-msgstr "Scrape läuft…"
+#: templates/admin.html:17
+msgid "Traffic"
+msgstr "Traffic"
 
-#: templates/admin.html:26
-msgid "Auto-scrape once per hour."
-msgstr "Auto-Scrape einmal pro Stunde."
+#: templates/admin.html:22
+msgid "Visitors today"
+msgstr "Besucher heute"
 
-#: templates/admin.html:29
-msgid "Last:"
-msgstr "Letzter:"
+#: templates/admin.html:24 templates/admin.html:34 templates/admin.html:213
+#: templates/admin.html:217
+msgid "yesterday:"
+msgstr "gestern:"
 
-#: templates/admin.html:34
-msgid "Next:"
-msgstr "Nächster:"
+#: templates/admin.html:27
+msgid "Visitors 30d"
+msgstr "Besucher 30 T."
 
-#: templates/admin.html:40
-msgid "No scrape recorded yet."
-msgstr "Noch kein Scrape erfasst."
+#: templates/admin.html:29 templates/admin.html:39 templates/admin.html:180
+msgid "vs previous 30 days"
+msgstr "ggü. vorherigen 30 Tagen"
 
-#: templates/admin.html:43
-msgid "Drop us a line if an immediate scrape is needed."
-msgstr "Melde dich, falls sofort ein Scrape gebraucht wird."
+#: templates/admin.html:32
+msgid "Hits today"
+msgstr "Hits heute"
 
-#: templates/_partials/nav_admin.html:7 templates/admin.html:49
+#: templates/admin.html:37
+msgid "Hits 30d"
+msgstr "Hits 30 T."
+
+#: templates/admin.html:44
+msgid "Visitors / day, last 30 days"
+msgstr "Besucher / Tag, letzte 30 Tage"
+
+#: templates/admin.html:44
+msgid "Hits / day, last 30 days"
+msgstr "Hits / Tag, letzte 30 Tage"
+
+#: templates/admin.html:61 templates/admin.html:223
+msgid "Last updated:"
+msgstr "Zuletzt aktualisiert:"
+
+#: templates/admin.html:61 templates/admin.html:172
+msgid "refreshes every"
+msgstr "aktualisiert alle"
+
+#: templates/admin.html:61 templates/admin.html:172
+msgid "min"
+msgstr "Min."
+
+#: templates/admin.html:61 templates/admin.html:233
+msgid "Collecting stats…"
+msgstr "Sammle Statistiken…"
+
+#: templates/_partials/nav_admin.html:7 templates/admin.html:71
 #: templates/canton.html:33 templates/genre.html:35 templates/venues.html:3
 msgid "Venues"
 msgstr "Venues"
 
-#: templates/admin.html:54
+#: templates/admin.html:76
 msgid "Export Excel"
 msgstr "Excel-Export"
 
-#: templates/admin.html:59
+#: templates/admin.html:81
 msgid "Week of"
 msgstr "Woche vom"
 
-#: templates/admin.html:67 templates/event_queue.html:26
+#: templates/admin.html:89 templates/event_queue.html:26
 msgid "All"
 msgstr "Alle"
 
-#: templates/admin.html:75
+#: templates/admin.html:97
 msgid "Weekly Image"
 msgstr "Wochenbild"
 
-#: templates/admin.html:86 templates/venues.html:38
+#: templates/admin.html:108 templates/venues.html:38
 msgid "ID"
 msgstr "ID"
 
-#: templates/admin.html:88 templates/calendar.html:97
-#: templates/event_page.html:73 templates/event_queue.html:48
+#: templates/admin.html:110 templates/admin_statistics.html:22
+#: templates/calendar.html:97 templates/event_page.html:73
+#: templates/event_queue.html:48
 msgid "Date"
 msgstr "Datum"
 
-#: templates/admin.html:90 templates/event_queue.html:52
+#: templates/admin.html:112 templates/event_queue.html:52
 #: templates/venues.html:45
 msgid "Actions"
 msgstr "Aktionen"
 
-#: templates/admin.html:102 templates/event_queue.html:93
+#: templates/admin.html:124 templates/event_queue.html:93
 #: templates/venues.html:68
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: templates/admin.html:107
+#: templates/admin.html:129
 msgid "Delete this event?"
 msgstr "Diesen Event löschen?"
 
-#: templates/admin.html:107 templates/event_queue.html:100
+#: templates/admin.html:129 templates/event_queue.html:100
 #: templates/venues.html:79 templates/venues.html:85
 msgid "Delete"
 msgstr "Löschen"
 
-#: templates/admin.html:133
+#: templates/admin.html:142
+msgid "Scraping in progress…"
+msgstr "Scrape läuft…"
+
+#: templates/admin.html:147
+msgid "Auto-scrape once per hour."
+msgstr "Auto-Scrape einmal pro Stunde."
+
+#: templates/admin.html:150
+msgid "Last:"
+msgstr "Letzter:"
+
+#: templates/admin.html:155
+msgid "Next:"
+msgstr "Nächster:"
+
+#: templates/admin.html:161
+msgid "No scrape recorded yet."
+msgstr "Noch kein Scrape erfasst."
+
+#: templates/admin.html:164
+msgid "Drop us a line if an immediate scrape is needed."
+msgstr "Melde dich, falls sofort ein Scrape gebraucht wird."
+
+#: templates/admin.html:184
+msgid "just now"
+msgstr "gerade eben"
+
+#: templates/admin.html:186 templates/admin.html:187
+msgid "ago"
+msgstr "her"
+
+#: templates/admin.html:257
 msgid "Scrape complete — reloading…"
 msgstr "Scrape abgeschlossen — lade neu…"
 
-#: templates/admin.html:137
+#: templates/admin.html:261
 msgid "Scraping…"
 msgstr "Scrape…"
 
-#: templates/admin.html:143
+#: templates/admin.html:267
 msgid "left"
 msgstr "verbleibend"
+
+#: templates/_partials/nav_admin.html:11 templates/admin_statistics.html:3
+msgid "Statistics"
+msgstr "Statistik"
+
+#: templates/admin_statistics.html:8
+msgid "STATISTICS"
+msgstr "STATISTIK"
+
+#: templates/admin_statistics.html:14
+msgid "Most viewed events"
+msgstr "Meistbesuchte Events"
+
+#: templates/admin_statistics.html:21 templates/edit_event.html:13
+#: templates/event_page.html:3 templates/event_page.html:58
+#: templates/event_queue.html:49
+msgid "Event"
+msgstr "Event"
+
+#: templates/admin_statistics.html:24
+msgid "Hits"
+msgstr "Hits"
+
+#: templates/admin_statistics.html:25
+msgid "Visitors"
+msgstr "Besucher"
+
+#: templates/admin_statistics.html:36
+msgid "past"
+msgstr "vorbei"
+
+#: templates/admin_statistics.html:38
+msgid "Deleted event"
+msgstr "Gelöschter Event"
+
+#: templates/admin_statistics.html:50
+msgid ""
+"Counted from event page requests in the nginx logs, crawlers filtered "
+"out. Visitors are sums of daily unique IPs — a trend, not a census. "
+"History accumulates from July 2026 onward."
+msgstr ""
+"Gezählt aus den Event-Seitenaufrufen in den nginx-Logs, Crawler "
+"herausgefiltert. Besucher sind Summen täglicher eindeutiger IPs — ein "
+"Trend, keine Volkszählung. Die Historie wächst ab Juli 2026."
+
+#: templates/admin_statistics.html:52
+msgid "Collecting view data…"
+msgstr "Sammle Aufrufdaten…"
+
+#: templates/admin_statistics.html:58
+msgid "Events over time"
+msgstr "Events über die Zeit"
+
+#: templates/admin_statistics.html:61 templates/admin_statistics.html:62
+msgid "Events / month, last 24 months"
+msgstr "Events / Monat, letzte 24 Monate"
+
+#: templates/admin_statistics.html:72
+msgid "Events / year"
+msgstr "Events / Jahr"
+
+#: templates/admin_statistics.html:90
+msgid "By genre"
+msgstr "Nach Genre"
+
+#: templates/admin_statistics.html:91
+msgid "By canton"
+msgstr "Nach Kanton"
+
+#: templates/admin_statistics.html:92
+msgid "Top venues"
+msgstr "Top-Venues"
+
+#: templates/admin_statistics.html:115 templates/venue_accessibility.html:11
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: templates/admin_statistics.html:129
+msgid "Ticket prices"
+msgstr "Ticketpreise"
+
+#: templates/admin_statistics.html:132
+msgid "Median (CHF)"
+msgstr "Median (CHF)"
+
+#: templates/admin_statistics.html:134
+msgid "mean:"
+msgstr "Schnitt:"
+
+#: templates/admin_statistics.html:137
+msgid "Paid events"
+msgstr "Bezahlte Events"
+
+#: templates/admin_statistics.html:142
+msgid "Free / donation"
+msgstr "Gratis / Kollekte"
+
+#: templates/admin_statistics.html:147
+msgid "Unparseable"
+msgstr "Nicht lesbar"
+
+#: templates/admin_statistics.html:164
+msgid ""
+"Parsed from the free-text price field — ranges count their lower bound, "
+"so treat these as approximate."
+msgstr ""
+"Aus dem Freitext-Preisfeld geparst — Spannen zählen mit ihrer "
+"Untergrenze, also als Näherung verstehen."
+
+#: templates/_partials/footer_public.html:31 templates/archive_index.html:3
+#: templates/archive_month.html:3
+msgid "Event archive"
+msgstr "Event-Archiv"
+
+#: templates/archive_index.html:4
+msgid ""
+"Archive of past DIY, punk and underground shows in Switzerland — browse "
+"previous events by month."
+msgstr ""
+"Archiv vergangener DIY-, Punk- und Underground-Shows in der Schweiz — "
+"vergangene Events nach Monat durchstöbern."
+
+#: templates/archive_index.html:10 templates/archive_month.html:10
+msgid "Archive"
+msgstr "Archiv"
+
+#: templates/archive_index.html:11
+msgid "Past events"
+msgstr "Vergangene Events"
+
+#: templates/archive_index.html:13
+msgid ""
+"Everything that already happened — DIY, punk, hardcore and underground "
+"shows across Switzerland, month by month."
+msgstr ""
+"Alles, was schon vorbei ist — DIY-, Punk-, Hardcore- und Underground-"
+"Shows aus der ganzen Schweiz, Monat für Monat."
+
+#: templates/archive_index.html:31
+msgid "Nothing in the archive yet."
+msgstr "Noch nichts im Archiv."
+
+#: templates/archive_index.html:35 templates/canton.html:46
+#: templates/errors/404.html:21 templates/errors/500.html:21
+#: templates/event_page.html:129 templates/genre.html:60
+#: templates/venue_accessibility.html:146
+msgid "Back to calendar"
+msgstr "Zurück zum Kalender"
+
+#: templates/archive_month.html:4
+#, python-format
+msgid ""
+"%(num)d past DIY, punk and underground shows from %(month)s — dates, "
+"venues and line-ups."
+msgstr ""
+"%(num)d vergangene DIY-, Punk- und Underground-Shows aus dem %(month)s — "
+"Daten, Venues und Line-ups."
+
+#: templates/archive_month.html:13
+#, python-format
+msgid "%(num)d past events this month."
+msgstr "%(num)d vergangene Events in diesem Monat."
+
+#: templates/archive_month.html:46
+msgid "Back to archive"
+msgstr "Zurück zum Archiv"
 
 #: templates/base_public.html:7
 msgid ""
@@ -813,20 +1045,9 @@ msgstr "Kommende Events"
 msgid "No upcoming events right now."
 msgstr "Zurzeit keine kommenden Events."
 
-#: templates/canton.html:46 templates/errors/404.html:21
-#: templates/errors/500.html:21 templates/event_page.html:129
-#: templates/genre.html:60 templates/venue_accessibility.html:146
-msgid "Back to calendar"
-msgstr "Zurück zum Kalender"
-
 #: templates/edit_event.html:3
 msgid "Edit Event"
 msgstr "Event bearbeiten"
-
-#: templates/edit_event.html:13 templates/event_page.html:3
-#: templates/event_page.html:58 templates/event_queue.html:49
-msgid "Event"
-msgstr "Event"
 
 #: templates/edit_event.html:14
 msgid "EDIT EVENT"
@@ -1108,10 +1329,6 @@ msgstr "Teilweise"
 #: templates/venue_accessibility.html:10
 msgid "No"
 msgstr "Nein"
-
-#: templates/venue_accessibility.html:11
-msgid "Unknown"
-msgstr "Unbekannt"
 
 #: templates/venue_accessibility.html:12
 msgid "Never"
@@ -1436,23 +1653,23 @@ msgstr "Bitte ein JPG- oder PNG-Bild hochladen."
 msgid "No ads. No sponsors. No algorithm."
 msgstr "Keine Werbung. Keine Sponsoren. Kein Algorithmus."
 
-#: templates/_partials/footer_public.html:32
+#: templates/_partials/footer_public.html:35
 msgid "Legal"
 msgstr "Rechtliches"
 
-#: templates/_partials/footer_public.html:34
+#: templates/_partials/footer_public.html:37
 msgid "Imprint"
 msgstr "Impressum"
 
-#: templates/_partials/footer_public.html:35
+#: templates/_partials/footer_public.html:38
 msgid "Terms"
 msgstr "AGB"
 
-#: templates/_partials/footer_public.html:36
+#: templates/_partials/footer_public.html:39
 msgid "Privacy"
 msgstr "Datenschutz"
 
-#: templates/_partials/footer_public.html:40
+#: templates/_partials/footer_public.html:43
 msgid "Language"
 msgstr "Sprache"
 
@@ -1466,7 +1683,7 @@ msgid "Map"
 msgstr "Karte"
 
 #: templates/_partials/header_public.html:22
-#: templates/_partials/nav_admin.html:14
+#: templates/_partials/nav_admin.html:15
 msgid "Logout"
 msgstr "Logout"
 
@@ -1478,7 +1695,7 @@ msgstr "Einreichen"
 msgid "Analytics"
 msgstr "Analytics"
 
-#: templates/_partials/nav_admin.html:11
+#: templates/_partials/nav_admin.html:12
 msgid "Suspects"
 msgstr "Verdächtige"
 

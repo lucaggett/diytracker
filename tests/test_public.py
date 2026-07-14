@@ -336,3 +336,68 @@ class TestSitemap:
         # Venue pages themselves are listed for every venue.
         assert f"/venues/{with_info.id}/<".encode() in resp.data
         assert f"/venues/{without_info.id}/<".encode() in resp.data
+
+
+class TestArchive:
+    def test_index_lists_months_with_past_events(self, client, make_event):
+        past = make_event(name="Bygone Fest", days_from_now=-40)
+        resp = client.get("/archive/")
+        assert resp.status_code == 200
+        month_url = f"/archive/{past.date.year}/{past.date.month}/"
+        assert month_url.encode() in resp.data
+
+    def test_index_renders_empty_state(self, client):
+        resp = client.get("/archive/")
+        assert resp.status_code == 200
+        assert b"Nothing in the archive yet." in resp.data
+
+    def test_month_page_lists_only_past_events(self, client, make_event):
+        past = make_event(name="Bygone Show", days_from_now=-3)
+        # An upcoming event in the very same month must not appear.
+        upcoming = make_event(name="Future Show", days_from_now=20)
+        resp = client.get(f"/archive/{past.date.year}/{past.date.month}/")
+        assert resp.status_code == 200
+        assert b"Bygone Show" in resp.data
+        if (upcoming.date.year, upcoming.date.month) == (
+            past.date.year,
+            past.date.month,
+        ):
+            assert b"Future Show" not in resp.data
+
+    def test_month_without_past_events_404s(self, client, make_event):
+        make_event(days_from_now=-40)
+        assert client.get("/archive/1999/1/").status_code == 404
+        assert client.get("/archive/2026/13/").status_code == 404
+
+    def test_upcoming_events_do_not_create_archive_months(self, client, make_event):
+        upcoming = make_event(days_from_now=30)
+        url = f"/archive/{upcoming.date.year}/{upcoming.date.month}/"
+        assert client.get(url).status_code == 404
+
+    def test_footer_links_the_archive(self, client):
+        resp = client.get("/about")
+        assert b'href="/archive/"' in resp.data
+
+    def test_sitemap_includes_archive_pages(self, client, make_event):
+        past = make_event(days_from_now=-40)
+        resp = client.get("/sitemap.xml")
+        assert b"/archive/<" in resp.data or b"/archive/</loc>" in resp.data
+        month_url = f"/archive/{past.date.year}/{past.date.month}/"
+        assert month_url.encode() in resp.data
+
+    def test_honeypot_route_is_untouched(self, client, app):
+        """Regression: the real archive must not displace the scrape-detection
+        honeypot at /events/archive/ (which fake-404s with status 200)."""
+        from flask import url_for
+
+        resp = client.get("/events/archive/")
+        assert resp.status_code == 200
+        assert b"404" in resp.data
+        with app.test_request_context():
+            assert url_for("public.archive_index") == "/archive/"
+            assert url_for("public.events_archive") == "/events/archive/"
+
+    def test_archive_slug_is_reserved_for_cantons(self):
+        from diytracker.services.seo import RESERVED_SLUGS
+
+        assert "archive" in RESERVED_SLUGS

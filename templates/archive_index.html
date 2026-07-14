@@ -1,0 +1,38 @@
+{% extends 'base_public.html' %}
+
+{% block title %}{{ _('Event archive') }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ _('Archive of past DIY, punk and underground shows in Switzerland — browse previous events by month.') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-10">
+
+  <header class="mb-8">
+    <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Archive') }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none mb-2">{{ _('Past events') }}</h1>
+    <p class="text-sm text-smudge">
+      {{ _('Everything that already happened — DIY, punk, hardcore and underground shows across Switzerland, month by month.') }}
+    </p>
+  </header>
+
+  {% if directory %}
+    {% for year, months in directory.items() %}
+    <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-3 {% if not loop.first %}mt-10{% endif %}">{{ year }}</h2>
+    <ul class="space-y-2 text-sm">
+      {% for month, count in months %}
+      <li>
+        <a href="{{ url_for('public.archive_month', year=year, month=month) }}"
+           class="text-bleed underline">{{ format_date(datetime(year, month, 1), 'MMMM') }}</a>
+        <span class="text-smudge">· {{ count }} {% if count != 1 %}{{ _('events') }}{% else %}{{ _('event') }}{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endfor %}
+  {% else %}
+  <p class="text-sm text-smudge">{{ _('Nothing in the archive yet.') }}</p>
+  {% endif %}
+
+  {% set back_url = url_for('public.calendar_view') %}
+  {% set back_label = _('Back to calendar') %}
+  {% include '_partials/back_link.html' %}
+</div>
+{% endblock %}

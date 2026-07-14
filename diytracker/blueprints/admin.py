@@ -34,6 +34,8 @@ from diytracker.services.analytics import (
     stats_age_seconds,
 )
 from diytracker.services.auth import admin_required
+from diytracker.services import db_stats
+from diytracker.services.event_views import event_popularity
 from diytracker.services.cache import bust_cache
 from diytracker.services.calendar_image import generate_weekly_calendar_image
 from diytracker.services.events import clean_genre_string, resolve_venue_from_form
@@ -413,6 +415,23 @@ def analytics_stats():
     if stats is None:
         return jsonify({"status": "pending"}), 202
     return jsonify({"status": "ok", "age_seconds": age, **stats})
+
+
+@bp.route("/admin/statistics")
+@admin_required
+def statistics():
+    now = datetime.now()
+    return render_template(
+        "admin_statistics.html",
+        popularity=event_popularity(),
+        monthly=db_stats.monthly_series(),
+        yearly=db_stats.events_per_year(),
+        by_genre=db_stats.events_by_parent_genre(),
+        by_canton=db_stats.events_by_canton(),
+        top_venues=db_stats.top_venues(),
+        price_stats=db_stats.ticket_price_stats(),
+        now=now,
+    )
 
 
 @bp.route("/admin/scrape-suspects", methods=["GET"])
