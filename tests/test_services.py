@@ -471,7 +471,9 @@ class TestDbStats:
 
         make_event(venue=make_venue(name="ZH Hall", canton="ZH", city="Zürich"))
         make_event(
-            venue=make_venue(name="Mystery Hall", canton="", city="Nowhereville", plz="0000")
+            venue=make_venue(
+                name="Mystery Hall", canton="", city="Nowhereville", plz="0000"
+            )
         )
         counts = dict(db_stats.events_by_canton())
         assert counts["Zürich"] == 1
@@ -502,9 +504,9 @@ class TestDbStats:
             make_event(ticket_price=price, acts=acts)
         stats = db_stats.ticket_price_stats()
         assert stats["total"] == 5
-        assert stats["free"] == 1        # Kollekte
-        assert stats["unparsed"] == 2    # tba, ""
-        assert stats["paid"] == 2        # 15 and 8 (range lower bound)
+        assert stats["free"] == 1  # Kollekte
+        assert stats["unparsed"] == 2  # tba, ""
+        assert stats["paid"] == 2  # 15 and 8 (range lower bound)
         assert stats["min"] == 8.0
         assert stats["max"] == 15.0
         assert dict(stats["buckets"])["0–10"] == 1
