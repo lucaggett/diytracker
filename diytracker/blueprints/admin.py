@@ -24,7 +24,15 @@ from diytracker.forms import (
     get_canton_choices,
 )
 from diytracker.models import db, Event, ScrapeSuspect, Venue
-from diytracker.services.analytics import REPORT_PATH, TIMEFRAMES, generate_report
+from diytracker.services.analytics import (
+    REPORT_PATH,
+    STATS_INTERVAL_MINUTES,
+    TIMEFRAMES,
+    generate_report,
+    kick_stats_generation,
+    read_stats,
+    stats_age_seconds,
+)
 from diytracker.services.auth import admin_required
 from diytracker.services.cache import bust_cache
 from diytracker.services.calendar_image import generate_weekly_calendar_image
@@ -95,6 +103,8 @@ def admin():
         scrape_running=is_running(),
         current_monday=current_monday,
         parent_genres_order=PARENT_GENRES_ORDER,
+        analytics_stats=read_stats(),
+        stats_interval_minutes=STATS_INTERVAL_MINUTES,
     )
 
 
@@ -388,6 +398,21 @@ def analytics_view():
         flash(_("No report has been generated yet. Use the form to create one."))
         return redirect(url_for("admin.analytics"))
     return send_file(REPORT_PATH, mimetype="text/html")
+
+
+@bp.route("/admin/analytics/stats")
+@admin_required
+def analytics_stats():
+    stats = read_stats()
+    age = stats_age_seconds()
+    # Regenerate in the background when the cache is missing or the scheduler
+    # looks dead (dev mode, or the first gunicorn worker died). Never generate
+    # inline: goaccess over 60 days of logs must not block a request.
+    if stats is None or age is None or age > 3 * STATS_INTERVAL_MINUTES * 60:
+        kick_stats_generation(current_app._get_current_object())
+    if stats is None:
+        return jsonify({"status": "pending"}), 202
+    return jsonify({"status": "ok", "age_seconds": age, **stats})
 
 
 @bp.route("/admin/scrape-suspects", methods=["GET"])

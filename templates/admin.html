@@ -11,37 +11,59 @@
   <p class="text-xs text-smudge">{{ events|length }} {% if events|length != 1 %}{{ _('events') }}{% else %}{{ _('event') }}{% endif %} {{ _('live') }}</p>
 </header>
 
-{# Action bar — auto-scrape status, export, weekly image. #}
-<section class="border-2 border-ink bg-paper p-4 mb-6 flex flex-wrap items-center gap-4">
+{# Traffic — visitor/hit numbers from nginx logs, refreshed by a background
+   goaccess run and polled by the script below. #}
+<section class="border-2 border-ink bg-paper p-4 mb-6">
+  <p class="text-xs uppercase tracking-widest text-smudge mb-3">{{ _('Traffic') }}</p>
 
-  {# Auto-scrape status pill — runs every hour in the background. #}
-  <div class="flex items-center gap-3 border-2 border-ink px-3 py-2 text-xs">
-    {% if scrape_running %}
-      <span id="scrape-indicator" class="inline-block w-2 h-2 rounded-full bg-bleed animate-pulse"></span>
-      <span id="scrape-progress" class="text-ink">{{ _('Scraping in progress…') }}</span>
-    {% else %}
-      <span class="inline-block w-2 h-2 rounded-full bg-ink"></span>
-      <span id="scrape-progress" class="sr-only"></span>
-    {% endif %}
-    <span class="text-smudge">{{ _('Auto-scrape once per hour.') }}</span>
-    {% if last_scrape %}
-      <span class="text-smudge/60">·</span>
-      <span class="text-smudge">{{ _('Last:') }}
-        <span class="font-bold text-ink" id="last-scrape">{{ time_since_last }}</span>
-        <span class="text-smudge/70">({{ last_scrape.strftime('%Y-%m-%d %H:%M') }})</span>
-      </span>
-      <span class="text-smudge/60">·</span>
-      <span class="text-smudge">{{ _('Next:') }}
-        <span class="font-bold text-ink">{{ time_until_next }}</span>
-        {% if next_scrape %}<span class="text-smudge/70">({{ next_scrape.strftime('%Y-%m-%d %H:%M') }})</span>{% endif %}
-      </span>
-    {% else %}
-      <span class="text-smudge/60">·</span>
-      <span class="text-smudge">{{ _('No scrape recorded yet.') }}</span>
-    {% endif %}
-    <span class="text-smudge/60">·</span>
-    <span class="text-smudge italic">{{ _('Drop us a line if an immediate scrape is needed.') }}</span>
+  {% set stats = analytics_stats %}
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+    <div class="border-2 border-ink p-3">
+      <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Visitors today') }}</p>
+      <p class="font-bold text-2xl text-ink" id="stat-visitors-today">{{ stats.totals.today.visitors if stats else '—' }}</p>
+      <p class="text-xs text-smudge" id="stat-visitors-today-sub">{% if stats %}{{ _('yesterday:') }} {{ stats.totals.yesterday.visitors }}{% endif %}</p>
+    </div>
+    <div class="border-2 border-ink p-3">
+      <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Visitors 30d') }}</p>
+      <p class="font-bold text-2xl text-ink" id="stat-visitors-30d">{{ stats.totals.last_30d.visitors if stats else '—' }}</p>
+      <p class="text-xs text-smudge" id="stat-visitors-30d-sub">{% if stats %}{% if stats.growth_30d.visitors_pct is not none %}{{ '%+.1f' % stats.growth_30d.visitors_pct }}% {{ _('vs previous 30 days') }}{% else %}—{% endif %}{% endif %}</p>
+    </div>
+    <div class="border-2 border-ink p-3">
+      <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Hits today') }}</p>
+      <p class="font-bold text-2xl text-ink" id="stat-hits-today">{{ stats.totals.today.hits if stats else '—' }}</p>
+      <p class="text-xs text-smudge" id="stat-hits-today-sub">{% if stats %}{{ _('yesterday:') }} {{ stats.totals.yesterday.hits }}{% endif %}</p>
+    </div>
+    <div class="border-2 border-ink p-3">
+      <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Hits 30d') }}</p>
+      <p class="font-bold text-2xl text-ink" id="stat-hits-30d">{{ stats.totals.last_30d.hits if stats else '—' }}</p>
+      <p class="text-xs text-smudge" id="stat-hits-30d-sub">{% if stats %}{% if stats.growth_30d.hits_pct is not none %}{{ '%+.1f' % stats.growth_30d.hits_pct }}% {{ _('vs previous 30 days') }}{% else %}—{% endif %}{% endif %}</p>
+    </div>
   </div>
+
+  <div class="grid md:grid-cols-2 gap-4">
+    {% for key, label in [('visitors', _('Visitors / day, last 30 days')), ('hits', _('Hits / day, last 30 days'))] %}
+    <div>
+      <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ label }}</p>
+      <svg viewBox="0 0 300 48" class="w-full h-16 text-ink" id="chart-{{ key }}" role="img" aria-label="{{ label }}">
+        {% if stats %}
+          {% set maxv = [stats.daily | map(attribute=key) | max, 1] | max %}
+          {% for d in stats.daily %}
+            {% set h = (d[key] / maxv * 44) | round | int %}
+            <rect {% if loop.last %}class="text-bleed" {% endif %}x="{{ loop.index0 * 10 + 1 }}" y="{{ 48 - h }}" width="8" height="{{ h }}" fill="currentColor"><title>{{ d.date }} — {{ d[key] }}</title></rect>
+          {% endfor %}
+        {% endif %}
+      </svg>
+    </div>
+    {% endfor %}
+  </div>
+
+  <p class="text-xs text-smudge mt-3" id="traffic-updated">
+    {% if stats %}{{ _('Last updated:') }} {{ stats.generated_at.replace('T', ' ') }} · {{ _('refreshes every') }} {{ stats_interval_minutes }} {{ _('min') }}{% else %}{{ _('Collecting stats…') }}{% endif %}
+  </p>
+</section>
+
+{# Action bar — export, weekly image. #}
+<section class="border-2 border-ink bg-paper p-4 mb-6 flex flex-wrap items-center gap-4">
 
   <div class="ml-auto flex items-end gap-3">
     <a href="{{ url_for('admin.venues') }}"
@@ -112,9 +134,111 @@
     </tbody>
   </table>
 </div>
+
+{# Auto-scrape status — demoted to a footnote; runs every hour in the background. #}
+<div class="mt-6 flex flex-wrap items-center gap-2 text-xs text-smudge">
+  {% if scrape_running %}
+    <span id="scrape-indicator" class="inline-block w-2 h-2 rounded-full bg-bleed animate-pulse"></span>
+    <span id="scrape-progress" class="text-ink">{{ _('Scraping in progress…') }}</span>
+  {% else %}
+    <span class="inline-block w-2 h-2 rounded-full bg-ink"></span>
+    <span id="scrape-progress" class="sr-only"></span>
+  {% endif %}
+  <span>{{ _('Auto-scrape once per hour.') }}</span>
+  {% if last_scrape %}
+    <span class="text-smudge/60">·</span>
+    <span>{{ _('Last:') }}
+      <span class="font-bold text-ink" id="last-scrape">{{ time_since_last }}</span>
+      <span class="text-smudge/70">({{ last_scrape.strftime('%Y-%m-%d %H:%M') }})</span>
+    </span>
+    <span class="text-smudge/60">·</span>
+    <span>{{ _('Next:') }}
+      <span class="font-bold text-ink">{{ time_until_next }}</span>
+      {% if next_scrape %}<span class="text-smudge/70">({{ next_scrape.strftime('%Y-%m-%d %H:%M') }})</span>{% endif %}
+    </span>
+  {% else %}
+    <span class="text-smudge/60">·</span>
+    <span>{{ _('No scrape recorded yet.') }}</span>
+  {% endif %}
+  <span class="text-smudge/60">·</span>
+  <span class="italic">{{ _('Drop us a line if an immediate scrape is needed.') }}</span>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<script>
+(function() {
+    const url = '{{ url_for("admin.analytics_stats") }}';
+    const refreshLabel = {{ (_('refreshes every') ~ ' ' ~ stats_interval_minutes ~ ' ' ~ _('min'))|tojson }};
+
+    function set(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    }
+    function fmtPct(pct) {
+        if (pct == null) return '—';
+        return (pct >= 0 ? '+' : '') + pct.toFixed(1) + '% ' + {{ _('vs previous 30 days')|tojson }};
+    }
+    function fmtAge(secs) {
+        if (secs == null) return '';
+        if (secs < 60) return {{ _('just now')|tojson }};
+        const m = Math.round(secs / 60);
+        if (m < 60) return m + 'm ' + {{ _('ago')|tojson }};
+        return Math.floor(m / 60) + 'h ' + (m % 60) + 'm ' + {{ _('ago')|tojson }};
+    }
+    function renderBars(svgId, daily, key) {
+        const svg = document.getElementById(svgId);
+        if (!svg || !daily.length) return;
+        const max = Math.max(1, ...daily.map(d => d[key]));
+        const slot = 300 / daily.length;
+        const ns = 'http://www.w3.org/2000/svg';
+        svg.replaceChildren();
+        daily.forEach((d, i) => {
+            const h = Math.round(d[key] / max * 44);
+            const rect = document.createElementNS(ns, 'rect');
+            if (i === daily.length - 1) rect.setAttribute('class', 'text-bleed');
+            rect.setAttribute('x', (i * slot + 1).toFixed(1));
+            rect.setAttribute('y', 48 - h);
+            rect.setAttribute('width', (slot - 2).toFixed(1));
+            rect.setAttribute('height', h);
+            rect.setAttribute('fill', 'currentColor');
+            const title = document.createElementNS(ns, 'title');
+            title.textContent = d.date + ' — ' + d[key];
+            rect.appendChild(title);
+            svg.appendChild(rect);
+        });
+    }
+    function apply(data) {
+        set('stat-visitors-today', data.totals.today.visitors);
+        set('stat-visitors-today-sub', {{ _('yesterday:')|tojson }} + ' ' + data.totals.yesterday.visitors);
+        set('stat-visitors-30d', data.totals.last_30d.visitors);
+        set('stat-visitors-30d-sub', fmtPct(data.growth_30d.visitors_pct));
+        set('stat-hits-today', data.totals.today.hits);
+        set('stat-hits-today-sub', {{ _('yesterday:')|tojson }} + ' ' + data.totals.yesterday.hits);
+        set('stat-hits-30d', data.totals.last_30d.hits);
+        set('stat-hits-30d-sub', fmtPct(data.growth_30d.hits_pct));
+        renderBars('chart-visitors', data.daily, 'visitors');
+        renderBars('chart-hits', data.daily, 'hits');
+        set('traffic-updated',
+            {{ _('Last updated:')|tojson }} + ' ' + fmtAge(data.age_seconds) + ' · ' + refreshLabel);
+    }
+    function poll() {
+        fetch(url)
+            .then(r => r.status === 202 ? null : r.json())
+            .then(data => {
+                if (data && data.status === 'ok') {
+                    apply(data);
+                    setTimeout(poll, 60000);
+                } else {
+                    set('traffic-updated', {{ _('Collecting stats…')|tojson }});
+                    setTimeout(poll, 15000);
+                }
+            })
+            .catch(() => setTimeout(poll, 120000));
+    }
+    poll();
+})();
+</script>
 {% if scrape_running %}
 <script>
 (function() {

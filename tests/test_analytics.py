@@ -1,9 +1,18 @@
 """Tests for the goaccess report generation service."""
 
+import json
 import pathlib
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from diytracker.services import analytics
+
+
+def _panel_entry(day, hits, visitors):
+    return {
+        "data": day.isoformat(),
+        "hits": {"count": hits},
+        "visitors": {"count": visitors},
+    }
 
 
 class _FakeCompleted:
@@ -158,3 +167,161 @@ class TestGenerateReport:
         success, message = analytics.generate_report("all")
         assert success is False
         assert "goaccess error: boom" == message
+
+
+class TestParsePanelDate:
+    def test_supported_formats(self):
+        expected = date(2026, 7, 3)
+        assert analytics._parse_panel_date("2026-07-03") == expected
+        assert analytics._parse_panel_date("20260703") == expected
+        assert analytics._parse_panel_date("03/Jul/2026") == expected
+
+    def test_unknown_format_returns_none(self):
+        assert analytics._parse_panel_date("July 3rd") is None
+
+
+class TestParseGoaccessJson:
+    def test_window_totals_growth_and_daily(self):
+        today = date(2026, 7, 13)
+        data = {
+            "visitors": {
+                "data": [
+                    _panel_entry(today, 10, 2),
+                    _panel_entry(today - timedelta(days=1), 8, 3),
+                    _panel_entry(today - timedelta(days=5), 20, 4),
+                    _panel_entry(today - timedelta(days=40), 100, 10),
+                ]
+            }
+        }
+        stats = analytics._parse_goaccess_json(data, today)
+
+        assert stats["totals"]["today"] == {"hits": 10, "visitors": 2}
+        assert stats["totals"]["yesterday"] == {"hits": 8, "visitors": 3}
+        assert stats["totals"]["last_7d"] == {"hits": 38, "visitors": 9}
+        assert stats["totals"]["last_30d"] == {"hits": 38, "visitors": 9}
+        assert stats["growth_30d"]["prev_30d"] == {"hits": 100, "visitors": 10}
+        assert stats["growth_30d"]["hits_pct"] == -62.0
+        assert stats["growth_30d"]["visitors_pct"] == -10.0
+
+        daily = stats["daily"]
+        assert len(daily) == 30
+        assert daily[-1] == {"date": today.isoformat(), "hits": 10, "visitors": 2}
+        # Gap days are zero-filled.
+        assert daily[-3] == {
+            "date": (today - timedelta(days=2)).isoformat(),
+            "hits": 0,
+            "visitors": 0,
+        }
+
+    def test_growth_none_when_previous_window_empty(self):
+        today = date(2026, 7, 13)
+        data = {"visitors": {"data": [_panel_entry(today, 5, 1)]}}
+        stats = analytics._parse_goaccess_json(data, today)
+        assert stats["growth_30d"]["hits_pct"] is None
+        assert stats["growth_30d"]["visitors_pct"] is None
+
+    def test_skips_unparseable_dates(self):
+        today = date(2026, 7, 13)
+        data = {
+            "visitors": {
+                "data": [
+                    {"data": "???", "hits": {"count": 9}, "visitors": {"count": 9}},
+                    _panel_entry(today, 5, 1),
+                ]
+            }
+        }
+        stats = analytics._parse_goaccess_json(data, today)
+        assert stats["totals"]["today"] == {"hits": 5, "visitors": 1}
+
+
+class TestGenerateStats:
+    def test_fails_when_goaccess_missing(self, monkeypatch):
+        monkeypatch.setattr(analytics.shutil, "which", lambda name: None)
+        success, message = analytics.generate_stats()
+        assert success is False
+        assert "goaccess not found" in message
+
+    def test_fails_when_no_log_files(self, monkeypatch):
+        monkeypatch.setattr(analytics.shutil, "which", lambda name: "/usr/bin/goaccess")
+        monkeypatch.setattr(analytics, "find_log_files", lambda: [])
+        success, message = analytics.generate_stats()
+        assert success is False
+        assert "No nginx access log files found" in message
+
+    def test_keeps_cache_when_no_entries_in_window(self, tmp_path, monkeypatch):
+        stats_path = tmp_path / "analytics_stats.json"
+        stats_path.write_text('{"old": true}')
+        monkeypatch.setattr(analytics, "STATS_PATH", stats_path)
+        monkeypatch.setattr(analytics.shutil, "which", lambda name: "/usr/bin/goaccess")
+        log = tmp_path / "access.log"
+        log.write_text('x - - [01/Jan/2000:00:00:00 +0000] "GET / HTTP/1.1" 200 1\n')
+        monkeypatch.setattr(analytics, "find_log_files", lambda: [log])
+        success, message = analytics.generate_stats()
+        assert success is False
+        assert "No log entries found" in message
+        assert json.loads(stats_path.read_text()) == {"old": True}
+
+    def test_success_writes_stats_json(self, tmp_path, monkeypatch):
+        stats_path = tmp_path / "instance" / "analytics_stats.json"
+        monkeypatch.setattr(analytics, "STATS_PATH", stats_path)
+        monkeypatch.setattr(analytics.shutil, "which", lambda name: "/usr/bin/goaccess")
+        today = datetime.now().date()
+        log = tmp_path / "access.log"
+        log.write_text(
+            f'x - - [{today.strftime("%d/%b/%Y")}:00:00:00 +0000] "GET / HTTP/1.1" 200 1\n'
+        )
+        monkeypatch.setattr(analytics, "find_log_files", lambda: [log])
+
+        def fake_run(cmd, input, capture_output, text, env):
+            out = next(a for a in cmd if a.startswith("--output=")).split("=", 1)[1]
+            fixture = {"visitors": {"data": [_panel_entry(today, 7, 3)]}}
+            pathlib.Path(out).write_text(json.dumps(fixture))
+            return _FakeCompleted(returncode=0)
+
+        monkeypatch.setattr(analytics.subprocess, "run", fake_run)
+        success, message = analytics.generate_stats()
+        assert success is True
+        assert "Stats generated" in message
+        stats = json.loads(stats_path.read_text())
+        assert stats["totals"]["today"] == {"hits": 7, "visitors": 3}
+        assert len(stats["daily"]) == 30
+        # The raw goaccess output is cleaned up.
+        assert not stats_path.with_name("analytics_stats_raw.json").exists()
+
+    def test_reports_goaccess_error(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(analytics, "STATS_PATH", tmp_path / "stats.json")
+        monkeypatch.setattr(analytics.shutil, "which", lambda name: "/usr/bin/goaccess")
+        today = datetime.now().date()
+        log = tmp_path / "access.log"
+        log.write_text(
+            f'x - - [{today.strftime("%d/%b/%Y")}:00:00:00 +0000] "GET / HTTP/1.1" 200 1\n'
+        )
+        monkeypatch.setattr(analytics, "find_log_files", lambda: [log])
+        monkeypatch.setattr(
+            analytics.subprocess,
+            "run",
+            lambda *a, **kw: _FakeCompleted(returncode=1, stderr="boom"),
+        )
+        success, message = analytics.generate_stats()
+        assert success is False
+        assert message == "goaccess error: boom"
+
+
+class TestReadStats:
+    def test_missing_file_returns_none(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(analytics, "STATS_PATH", tmp_path / "missing.json")
+        assert analytics.read_stats() is None
+        assert analytics.stats_age_seconds() is None
+
+    def test_corrupt_file_returns_none(self, tmp_path, monkeypatch):
+        path = tmp_path / "stats.json"
+        path.write_text("{not json")
+        monkeypatch.setattr(analytics, "STATS_PATH", path)
+        assert analytics.read_stats() is None
+
+    def test_valid_file_round_trips(self, tmp_path, monkeypatch):
+        path = tmp_path / "stats.json"
+        path.write_text('{"window_days": 30}')
+        monkeypatch.setattr(analytics, "STATS_PATH", path)
+        assert analytics.read_stats() == {"window_days": 30}
+        assert analytics.stats_age_seconds() < 60

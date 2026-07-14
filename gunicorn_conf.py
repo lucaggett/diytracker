@@ -15,8 +15,9 @@ errorlog = os.path.join(_ROOT, "logs", "error_log_diytracker")
 
 
 def post_fork(server, worker):
-    # Exactly one worker runs the background scrape scheduler (app.py gates
-    # on ENABLE_SCRAPER). worker.age is 1 for the first worker spawned; note
-    # that if that worker dies, the scheduler is gone until the next restart.
+    # Exactly one worker runs the background jobs — scrape scheduler and
+    # analytics stats refresh (app.py gates on ENABLE_SCRAPER). worker.age is
+    # 1 for the first worker spawned; note that if that worker dies, the
+    # schedulers are gone until the next restart.
     if worker.age == 1:
         os.environ["ENABLE_SCRAPER"] = "1"

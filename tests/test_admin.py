@@ -130,3 +130,57 @@ class TestExportsAndStatus:
     def test_export_requires_admin(self, client, make_user, login):
         login(make_user(is_admin=False))
         assert client.get("/admin/export-excel").status_code == 403
+
+
+class TestAnalyticsStats:
+    def test_requires_admin(self, client, make_user, login):
+        login(make_user(is_admin=False))
+        assert client.get("/admin/analytics/stats").status_code == 403
+
+    def test_pending_when_no_cache(self, client, admin, login, tmp_path, monkeypatch):
+        from diytracker.blueprints import admin as admin_bp
+        from diytracker.services import analytics
+
+        login(admin)
+        monkeypatch.setattr(analytics, "STATS_PATH", tmp_path / "stats.json")
+        kicked = []
+        monkeypatch.setattr(
+            admin_bp, "kick_stats_generation", lambda app: kicked.append(app)
+        )
+        resp = client.get("/admin/analytics/stats")
+        assert resp.status_code == 202
+        assert resp.get_json() == {"status": "pending"}
+        assert len(kicked) == 1
+
+    def test_serves_cached_stats(self, client, admin, login, tmp_path, monkeypatch):
+        import json
+
+        from diytracker.blueprints import admin as admin_bp
+        from diytracker.services import analytics
+
+        login(admin)
+        stats_path = tmp_path / "stats.json"
+        stats_path.write_text(
+            json.dumps(
+                {
+                    "generated_at": "2026-07-13T12:00:00",
+                    "window_days": 30,
+                    "totals": {"today": {"hits": 1, "visitors": 1}},
+                    "growth_30d": {},
+                    "daily": [],
+                }
+            )
+        )
+        monkeypatch.setattr(analytics, "STATS_PATH", stats_path)
+        kicked = []
+        monkeypatch.setattr(
+            admin_bp, "kick_stats_generation", lambda app: kicked.append(app)
+        )
+        resp = client.get("/admin/analytics/stats")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["status"] == "ok"
+        assert data["totals"]["today"] == {"hits": 1, "visitors": 1}
+        assert data["age_seconds"] < 60
+        # Fresh cache -> no background regeneration kicked.
+        assert kicked == []
