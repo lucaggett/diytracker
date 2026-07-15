@@ -4,6 +4,7 @@ canton landing pages, past-event notices, and the sitemap upgrades."""
 import json
 import re
 import xml.etree.ElementTree as ET
+from datetime import timedelta, timezone
 
 import pytest
 
@@ -113,6 +114,38 @@ class TestEventJsonLd:
         html = client.get(f"/events/{ev.id}/").data.decode()
         ld = extract_json_ld(html, "MusicEvent")
         assert "offers" not in ld
+
+    def test_end_date_defaults_to_start_date(self, client, make_event):
+        ev = make_event()
+        assert ev.end_date is None
+        html = client.get(f"/events/{ev.id}/").data.decode()
+        ld = extract_json_ld(html, "MusicEvent")
+        assert ld["endDate"] == ev.date.date().isoformat()
+
+    def test_explicit_end_date_kept(self, client, make_event):
+        end_date = (make_event().date + timedelta(days=2)).date()
+        ev = make_event(end_date=end_date)
+        html = client.get(f"/events/{ev.id}/").data.decode()
+        ld = extract_json_ld(html, "MusicEvent")
+        assert ld["endDate"] == end_date.isoformat()
+
+    def test_valid_from_inferred_from_created_at(self, client, make_event):
+        ev = make_event()
+        html = client.get(f"/events/{ev.id}/").data.decode()
+        ld = extract_json_ld(html, "MusicEvent")
+        assert ld["validFrom"] == ev.created_at.replace(tzinfo=timezone.utc).isoformat()
+
+    def test_description_falls_back_to_genre_and_acts(self, client, make_event):
+        ev = make_event(description=None, genre="Doom Metal, Punk")
+        html = client.get(f"/events/{ev.id}/").data.decode()
+        ld = extract_json_ld(html, "MusicEvent")
+        assert ld["description"] == "Doom Metal, Punk · Band A, Band B"
+
+    def test_explicit_description_not_overridden(self, client, make_event):
+        ev = make_event(description="A crushing night.", genre="Doom Metal")
+        html = client.get(f"/events/{ev.id}/").data.decode()
+        ld = extract_json_ld(html, "MusicEvent")
+        assert ld["description"] == "A crushing night."
 
 
 class TestVenueJsonLd:

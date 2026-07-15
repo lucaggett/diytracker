@@ -7,7 +7,7 @@ The JSON-LD builders return plain dicts; templates render them with
 
 import re
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 from flask import current_app, request, url_for
@@ -194,8 +194,12 @@ def event_json_ld(event):
         "location": location,
     }
 
-    if event.end_date:
-        ld["endDate"] = event.end_date.isoformat()
+    ld["endDate"] = (event.end_date or event.date.date()).isoformat()
+
+    # created_at is nullable (backfilled), updated_at never is — one of the
+    # two always gives an honest lower bound for when the listing went live.
+    valid_from = event.created_at or event.updated_at
+    ld["validFrom"] = valid_from.replace(tzinfo=timezone.utc).isoformat()
 
     performers = parse_acts(event.acts)
     if performers:
@@ -219,6 +223,16 @@ def event_json_ld(event):
     if event.description:
         text = " ".join(event.description.split())
         ld["description"] = text[:300]
+    else:
+        # No free-text description: fall back to genre(s) and lineup so the
+        # listing still has something for search engines to show.
+        fallback_parts = []
+        if event.genre:
+            fallback_parts.append(event.genre)
+        if performers:
+            fallback_parts.append(", ".join(performers))
+        if fallback_parts:
+            ld["description"] = " · ".join(fallback_parts)
 
     return ld
 
