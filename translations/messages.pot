@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-15 21:59+0200\n"
+"POT-Creation-Date: 2026-07-15 23:41+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -447,7 +447,7 @@ msgstr ""
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr ""
 
-#: diytracker/blueprints/public.py:203
+#: diytracker/blueprints/public.py:205
 msgid "Accessibility info saved — thank you!"
 msgstr ""
 
@@ -503,29 +503,33 @@ msgid ""
 " punk concerts in Switzerland."
 msgstr ""
 
-#: templates/about.html:21
+#: templates/about.html:19
+msgid "Contact"
+msgstr ""
+
+#: templates/about.html:25
 msgid "Contribute"
 msgstr ""
 
-#: templates/about.html:23
+#: templates/about.html:27
 msgid ""
 "The site is maintained by hand. We welcome new contributors — tell us "
 "briefly who you are and how you would like to help."
 msgstr ""
 
-#: templates/about.html:40
+#: templates/about.html:44
 msgid "First and last name"
 msgstr ""
 
-#: templates/about.html:48
+#: templates/about.html:52
 msgid "you@example.com"
 msgstr ""
 
-#: templates/about.html:56
+#: templates/about.html:60
 msgid "What do you do, what would you like to contribute?"
 msgstr ""
 
-#: templates/about.html:64
+#: templates/about.html:68
 msgid "Send"
 msgstr ""
 

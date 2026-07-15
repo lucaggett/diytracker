@@ -482,6 +482,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "No unclaimed upcoming events right now.": "Gerade keine unbeanspruchten kommenden Events.",
         "This event already belongs to a label.": "Dieser Event gehört bereits zu einem Label.",
         "Event claimed for %(label)s!": "Event für %(label)s beansprucht!",
+        "Contact": "Kontakt",
     },
     "fr": {
         "Invalid email or password.": "E-mail ou mot de passe invalide.",
@@ -941,6 +942,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "No unclaimed upcoming events right now.": "Aucun événement à venir non revendiqué pour le moment.",
         "This event already belongs to a label.": "Cet événement appartient déjà à un label.",
         "Event claimed for %(label)s!": "Événement revendiqué pour %(label)s !",
+        "Contact": "Contact",
     },
     "it": {
         "Invalid email or password.": "E-mail o password non validi.",
@@ -1400,6 +1402,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "This event already belongs to a label.": "Questo evento appartiene già a un'etichetta.",
         "Event claimed for %(label)s!": "Evento rivendicato per %(label)s!",
         "Optional. The show will appear on the label's page.": "Facoltativo. Il concerto apparirà sulla pagina dell'etichetta.",
+        "Contact": "Contatto",
     },
 }
 

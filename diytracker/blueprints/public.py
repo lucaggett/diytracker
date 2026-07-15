@@ -179,12 +179,14 @@ def about():
     return render_template("about.html", form=form)
 
 
-# Placeholder until the drafts in templates/legal/ pass legal review; then
-# switch to render_template("legal.html", doc=doc).
+# AGB is still a placeholder until its draft passes review; impressum and
+# datenschutz are live minimal versions (see templates/legal/).
 @bp.route("/<lang>/<any(impressum, agb, datenschutz):doc>")
 def legal(lang, doc):
     validate_lang(lang)
-    return "WIP"
+    if doc == "agb":
+        return "WIP"
+    return render_template("legal.html", doc=doc)
 
 
 @bp.route("/accessibility/<token>", methods=["GET", "POST"])
@@ -450,12 +452,26 @@ def archive_month(year, month):
 @bp.route("/sitemap.xml")
 @cache.cached()
 def sitemap():
-    # (loc, changefreq, lastmod ISO date or None). Legal pages are excluded
-    # while their routes still return "WIP" placeholders.
+    # (loc, changefreq, lastmod ISO date or None). agb is excluded while its
+    # route still returns a "WIP" placeholder.
     pages = [
         (canonical_url(url_for("public.calendar_view")), "daily", None),
         (canonical_url(url_for("public.about")), "monthly", None),
         (canonical_url(url_for("public.venue_map")), "weekly", None),
+        (
+            canonical_url(
+                url_for("public.legal", lang=DEFAULT_LOCALE, doc="impressum")
+            ),
+            "yearly",
+            None,
+        ),
+        (
+            canonical_url(
+                url_for("public.legal", lang=DEFAULT_LOCALE, doc="datenschutz")
+            ),
+            "yearly",
+            None,
+        ),
     ]
 
     for slug in sorted(canton_directory()):

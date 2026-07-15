@@ -315,8 +315,11 @@ class TestSitemap:
         assert resp.status_code == 200
         assert resp.mimetype == "application/xml"
         assert f"/events/{ev.id}/".encode() in resp.data
-        # Legal pages are placeholder "WIP" routes and deliberately excluded.
-        assert b"/de/impressum" not in resp.data
+        # Impressum/datenschutz are live pages and included; agb is still a
+        # WIP placeholder and deliberately excluded.
+        assert b"/de/impressum" in resp.data
+        assert b"/de/datenschutz" in resp.data
+        assert b"/de/agb" not in resp.data
         assert b"<urlset" in resp.data
 
     def test_sitemap_includes_only_venues_with_accessibility_info(

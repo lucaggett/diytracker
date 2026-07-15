@@ -7,6 +7,13 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.35.1] - 2026-07-15
+- Hotfix: `/admin/edit_event/<id>` 500'd (`AttributeError: 'NoneType' object has no attribute 'name'`) for events whose `venue_id` points at a venue that no longer exists — SQLite doesn't enforce the FK here, so a dangling reference can slip through. The edit page now detects this, flashes a message asking the admin to re-pick a venue, and leaves the venue fields blank instead of crashing.
+- The admin dashboard now surfaces these events proactively: a "Events with missing venue" panel (hidden when empty) lists every event whose venue was deleted out from under it, each with a direct link to the edit page to fix it — no more finding out via a crash report.
+
+## [0.35.0] - 2026-07-15
+- Impressum and Datenschutzerklärung are live again (minimal versions) at `/<lang>/impressum` and `/<lang>/datenschutz` — previously placeholder routes returning "WIP". Impressum now lists only first name and a dedicated `info@diytracker.ch` contact address (no street address, consistent with a non-commercial CH hobby project having no Impressumspflicht); Datenschutz was trimmed from the earlier draft down to what actually needs disclosing under revDSG (account data, submitted content, and the scrape-detector's IP/user-agent/timestamp logging), dropping unused placeholder sections. AGB stays a WIP placeholder. Sitemap now includes both pages; the About page also shows the `info@diytracker.ch` contact address. DE/FR/IT/EN catalogs stay at 100% (one new string: "Contact").
+
 ## [0.34.0] - 2026-07-15
 - Event JSON-LD is more complete for SEO: events without a free-text description now get one inferred from genre and lineup (e.g. "Doom Metal, Punk · Band A, Band B"); `endDate` defaults to `startDate` when no explicit end date is set (previously omitted for single-day events); and a `validFrom` date is now included, inferred from `created_at` (falling back to `updated_at` for the handful of pre-migration rows without one).
 

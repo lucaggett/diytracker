@@ -100,6 +100,44 @@
   </div>
 </section>
 
+{% if orphaned_venue_events %}
+{# Data-integrity warning: events whose venue_id points at a venue that no
+   longer exists (SQLite doesn't enforce the FK here, so this can happen). #}
+<section class="border-2 border-bleed bg-paper p-4 mb-6">
+  <p class="text-xs uppercase tracking-widest text-bleed mb-3">
+    {{ _('Events with missing venue') }} ({{ orphaned_venue_events|length }})
+  </p>
+  <p class="text-xs text-smudge mb-3">
+    {{ _('These events point at a venue that no longer exists. Edit each one to pick or create a venue.') }}
+  </p>
+  <div class="overflow-x-auto border-2 border-ink">
+    <table class="min-w-full text-sm">
+      <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
+        <tr>
+          <th class="px-3 py-2 text-left">{{ _('ID') }}</th>
+          <th class="px-3 py-2 text-left">{{ _('Name') }}</th>
+          <th class="px-3 py-2 text-left">{{ _('Date') }}</th>
+          <th class="px-3 py-2 text-right">{{ _('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in orphaned_venue_events %}
+        <tr class="border-t border-ink/30 hover:bg-ink/5">
+          <td class="px-3 py-2 text-smudge">{{ event.id }}</td>
+          <td class="px-3 py-2 font-semibold">{{ event.name }}</td>
+          <td class="px-3 py-2">{{ event.date.strftime('%Y-%m-%d') }}</td>
+          <td class="px-3 py-2 text-right whitespace-nowrap">
+            <a href="{{ url_for('admin.edit_event', event_id=event.id) }}"
+               class="text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Fix') }}</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
 {# Events table — data-dense, 1px ink borders. #}
 <div class="overflow-x-auto border-2 border-ink">
   <table class="min-w-full text-sm">

@@ -80,6 +80,12 @@ def admin():
     events = (
         Event.query.filter(Event.date >= today_start).order_by(Event.date.asc()).all()
     )
+    orphaned_venue_events = (
+        Event.query.outerjoin(Venue, Event.venue_id == Venue.id)
+        .filter(Venue.id.is_(None))
+        .order_by(Event.date.desc())
+        .all()
+    )
     delete_form = DeleteEventForm()
     last_scrape = get_last_scrape_time()
     next_scrape = (
@@ -98,6 +104,7 @@ def admin():
     return render_template(
         "admin.html",
         events=events,
+        orphaned_venue_events=orphaned_venue_events,
         delete_form=delete_form,
         last_scrape=last_scrape,
         next_scrape=next_scrape,
@@ -126,12 +133,27 @@ def edit_event(event_id):
     if request.method == "GET":
         form.label_id.data = str(event.label_id) if event.label_id else ""
         form.venue_id.data = str(event.venue_id)
-        form.venue_name.data = event.venue.name
-        form.venue_address.data = event.venue.address
-        form.venue_city.data = event.venue.city
-        form.venue_canton.data = event.venue.canton
-        form.venue_plz.data = event.venue.plz
-        form.venue_coords.data = event.venue.coords or ""
+        if event.venue is None:
+            # Dangling venue_id (venue was deleted out from under this event).
+            flash(
+                _(
+                    "This event's venue no longer exists. Please select or "
+                    "create a venue below."
+                )
+            )
+            form.venue_name.data = ""
+            form.venue_address.data = ""
+            form.venue_city.data = ""
+            form.venue_canton.data = ""
+            form.venue_plz.data = ""
+            form.venue_coords.data = ""
+        else:
+            form.venue_name.data = event.venue.name
+            form.venue_address.data = event.venue.address
+            form.venue_city.data = event.venue.city
+            form.venue_canton.data = event.venue.canton
+            form.venue_plz.data = event.venue.plz
+            form.venue_coords.data = event.venue.coords or ""
         form.genre.data = [
             g.strip() for g in (event.genre or "").split(",") if g.strip()
         ]

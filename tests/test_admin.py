@@ -57,9 +57,40 @@ class TestEventManagement:
         assert resp.status_code == 302
         assert Event.query.get(ev.id) is None
 
+    def test_edit_event_with_dangling_venue_id(self, client, admin, login, make_event):
+        # Simulate an event whose venue was deleted out from under it (SQLite
+        # doesn't enforce the FK here) — the edit page must not crash.
+        login(admin)
+        ev = make_event()
+        Event.query.filter_by(id=ev.id).update({"venue_id": 999999})
+        db.session.commit()
+        resp = client.get(f"/admin/edit_event/{ev.id}")
+        assert resp.status_code == 200
+
     def test_edit_missing_event_404(self, client, admin, login):
         login(admin)
         assert client.get("/admin/edit_event/9999").status_code == 404
+
+    def test_admin_dashboard_flags_events_with_missing_venue(
+        self, client, admin, login, make_event
+    ):
+        login(admin)
+        ev = make_event()
+        Event.query.filter_by(id=ev.id).update({"venue_id": 999999})
+        db.session.commit()
+        resp = client.get("/admin")
+        assert resp.status_code == 200
+        assert b"Events with missing venue" in resp.data
+        assert ev.name.encode() in resp.data
+
+    def test_admin_dashboard_hides_missing_venue_section_when_clean(
+        self, client, admin, login, make_event
+    ):
+        login(admin)
+        make_event()
+        resp = client.get("/admin")
+        assert resp.status_code == 200
+        assert b"Events with missing venue" not in resp.data
 
     def test_edit_event_legacy_url_redirects(self, client, admin, login, make_event):
         login(admin)
