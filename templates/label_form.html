@@ -1,9 +1,11 @@
-{% extends 'base_public.html' %}
+{% extends 'base_backstage.html' %}
+{% set nav_active = 'promoter.dashboard' %}
+{% from '_partials/forms.html' import field, form_errors, submit_row with context %}
 
 {% block title %}{% if label %}{{ _('Edit label') }}{% else %}{{ _('New label') }}{% endif %} · diytracker.ch{% endblock %}
 
 {% block content %}
-<div class="max-w-xl mx-auto px-4 py-10">
+<div class="max-w-xl">
 
   <header class="mb-6">
     <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Promoter') }}</p>
@@ -12,37 +14,16 @@
     </h1>
   </header>
 
-  {% if form.errors %}
-    <div class="border-2 border-bleed bg-paper p-4 mb-6">
-      <p class="text-xs uppercase tracking-widest text-bleed mb-2">{{ _('Validation') }}</p>
-      <ul class="list-disc pl-5 text-sm">
-        {% for field, errors in form.errors.items() %}
-          {% for error in errors %}
-            <li><strong>{{ form[field].label.text }}:</strong> {{ error }}</li>
-          {% endfor %}
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
+  {{ form_errors(form) }}
 
   <form method="POST" enctype="multipart/form-data" class="border-2 border-ink bg-paper p-6">
     {{ form.hidden_tag() }}
 
-    {% set lbl = "block text-xs uppercase tracking-widest text-smudge mb-1" %}
-    {% set inp = "border-2 border-ink bg-paper px-3 py-2 w-full text-sm focus:outline-hidden focus:border-bleed" %}
+    {{ field(form.name,
+             hint=_('Renaming changes the label page address; the old link stops working.') if label else none,
+             placeholder=_('Enter the label name')) }}
 
-    <div class="mb-4">
-      {{ form.name.label(class=lbl) }}
-      {{ form.name(class=inp, placeholder=_('Enter the label name')) }}
-      {% if label %}
-        <small class="text-xs text-smudge">{{ _('Renaming changes the label page address; the old link stops working.') }}</small>
-      {% endif %}
-    </div>
-
-    <div class="mb-4">
-      {{ form.logo.label(class=lbl) }}
-      {{ form.logo(class=inp) }}
-      <small class="text-xs text-smudge">{{ _('Optional. JPG or PNG formats only.') }}</small>
+    {% call field(form.logo, hint=_('Optional. JPG or PNG formats only.')) %}
       {% if label and label.logo %}
         <div class="mt-2 flex items-center gap-3">
           <img src="/{{ label.logo.lstrip('/') }}" alt="{{ label.name }}"
@@ -50,16 +31,9 @@
           <small class="text-xs text-smudge">{{ _('Current logo — uploading a new file replaces it.') }}</small>
         </div>
       {% endif %}
-    </div>
+    {% endcall %}
 
-    <div class="flex items-center gap-4 mt-6">
-      <button type="submit"
-              class="bg-ink text-paper text-xs uppercase tracking-widest px-6 py-3 hover:bg-bleed transition-colors">
-        {% if label %}{{ _('Save') }}{% else %}{{ _('Create') }}{% endif %} →
-      </button>
-      <a href="{{ url_for('promoter.dashboard') }}"
-         class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('Cancel') }}</a>
-    </div>
+    {{ submit_row(_('Save') if label else _('Create'), cancel_url=url_for('promoter.dashboard')) }}
   </form>
 </div>
 {% endblock %}

@@ -1,4 +1,4 @@
-{% extends 'base_admin.html' %}
+{% extends 'base_backstage.html' %}
 
 {% block title %}{{ _('Queue') }} · diytracker.ch{% endblock %}
 
@@ -107,8 +107,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="scraped_id" value="{{ event._scraped_id }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {% set lbl = "block text-xs uppercase tracking-widest text-smudge mb-1" %}
-              {% set inp = "border-2 border-ink bg-paper px-2 py-1 w-full text-sm focus:outline-hidden focus:border-bleed" %}
+              {% from '_partials/forms.html' import LBL as lbl, INP_COMPACT as inp with context %}
               <div>
                 <label class="{{ lbl }}">{{ _('Event Name') }}</label>
                 <input type="text" name="override_name" value="{{ event.title or event.performers or '' }}" class="{{ inp }}">

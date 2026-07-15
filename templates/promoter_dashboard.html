@@ -1,9 +1,9 @@
-{% extends 'base_public.html' %}
+{% extends 'base_backstage.html' %}
 
 {% block title %}{{ _('Promoter dashboard') }} · diytracker.ch{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 py-10">
+<div class="max-w-3xl">
 
   <header class="mb-6">
     <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Promoter') }}</p>
@@ -95,9 +95,6 @@
     {% endif %}
   </section>
 
-  {% set back_url = url_for('public.calendar_view') %}
-  {% set back_label = _('Back to calendar') %}
-  {% include '_partials/back_link.html' %}
 </div>
 {% endblock %}
 

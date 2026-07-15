@@ -8,7 +8,7 @@ class TestEventManagement:
         login(admin)
         ev = make_event(name="Before")
         resp = client.post(
-            f"/edit_event/{ev.id}",
+            f"/admin/edit_event/{ev.id}",
             data={
                 "name": "After",
                 "date": ev.date.strftime("%Y-%m-%d"),
@@ -30,7 +30,7 @@ class TestEventManagement:
         ev = make_event()
         assert ev.status == "scheduled"
         resp = client.post(
-            f"/edit_event/{ev.id}",
+            f"/admin/edit_event/{ev.id}",
             data={
                 "name": ev.name,
                 "date": ev.date.strftime("%Y-%m-%d"),
@@ -48,18 +48,25 @@ class TestEventManagement:
     def test_edit_requires_admin(self, client, make_user, login, make_event):
         ev = make_event()
         login(make_user(is_admin=False))
-        assert client.get(f"/edit_event/{ev.id}").status_code == 403
+        assert client.get(f"/admin/edit_event/{ev.id}").status_code == 403
 
     def test_delete_event(self, client, admin, login, make_event):
         login(admin)
         ev = make_event()
-        resp = client.post(f"/delete_event/{ev.id}")
+        resp = client.post(f"/admin/delete_event/{ev.id}")
         assert resp.status_code == 302
         assert Event.query.get(ev.id) is None
 
     def test_edit_missing_event_404(self, client, admin, login):
         login(admin)
-        assert client.get("/edit_event/9999").status_code == 404
+        assert client.get("/admin/edit_event/9999").status_code == 404
+
+    def test_edit_event_legacy_url_redirects(self, client, admin, login, make_event):
+        login(admin)
+        ev = make_event()
+        resp = client.get(f"/edit_event/{ev.id}")
+        assert resp.status_code == 301
+        assert resp.headers["Location"].endswith(f"/admin/edit_event/{ev.id}")
 
 
 class TestVenueManagement:
@@ -232,10 +239,12 @@ class TestEditEventLabel:
             "ticket_price": ev.ticket_price,
             "venue_id": str(ev.venue_id),
         }
-        client.post(f"/edit_event/{ev.id}", data={**base, "label_id": str(label.id)})
+        client.post(
+            f"/admin/edit_event/{ev.id}", data={**base, "label_id": str(label.id)}
+        )
         db.session.refresh(ev)
         assert ev.label_id == label.id
-        client.post(f"/edit_event/{ev.id}", data={**base, "label_id": ""})
+        client.post(f"/admin/edit_event/{ev.id}", data={**base, "label_id": ""})
         db.session.refresh(ev)
         assert ev.label_id is None
 

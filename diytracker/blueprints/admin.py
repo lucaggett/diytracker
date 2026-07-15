@@ -112,7 +112,13 @@ def admin():
     )
 
 
-@bp.route("/edit_event/<int:event_id>", methods=["GET", "POST"])
+@bp.route("/edit_event/<int:event_id>")
+def edit_event_legacy(event_id):
+    # Pre-0.31 URL; kept for old bookmarks.
+    return redirect(url_for("admin.edit_event", event_id=event_id), code=301)
+
+
+@bp.route("/admin/edit_event/<int:event_id>", methods=["GET", "POST"])
 @admin_required
 def edit_event(event_id):
     event = Event.query.get_or_404(event_id)
@@ -144,9 +150,7 @@ def edit_event(event_id):
             event.ticket_link = form.ticket_link.data
             event.status = form.status.data
             event.genre = clean_genre_string(form.genre.data or [])
-            event.label_id = (
-                int(form.label_id.data) if form.label_id.data else None
-            )
+            event.label_id = int(form.label_id.data) if form.label_id.data else None
 
             venue, _created, error = resolve_venue_from_form(form)
             if error:
@@ -168,7 +172,7 @@ def edit_event(event_id):
     return render_template("edit_event.html", form=form, event=event)
 
 
-@bp.route("/delete_event/<int:event_id>", methods=["POST"])
+@bp.route("/admin/delete_event/<int:event_id>", methods=["POST"])
 @admin_required
 def delete_event(event_id):
     form = DeleteEventForm()
@@ -288,7 +292,9 @@ def toggle_promoter(user_id):
     user.is_promoter = not user.is_promoter
     db.session.commit()
     status = _("granted") if user.is_promoter else _("revoked")
-    flash(_("Promoter status %(status)s for %(email)s.", status=status, email=user.email))
+    flash(
+        _("Promoter status %(status)s for %(email)s.", status=status, email=user.email)
+    )
     return redirect(url_for("admin.users"))
 
 

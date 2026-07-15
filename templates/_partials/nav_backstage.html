@@ -1,0 +1,62 @@
+{# Backstage top bar — utilitarian, mono-only. No grain, no flourishes.
+   Role-gated: each link renders only if the current user may use it.
+   Sub-pages highlight their parent link by setting nav_active to its endpoint. #}
+{% set _user = current_user() %}
+{% set _is_admin = _user and _user.is_admin %}
+{% set _is_promoter = _user and (_user.is_promoter or _user.is_admin) %}
+{% set _active = nav_active if nav_active is defined else request.endpoint %}
+{% set shared_links = [
+    ('submissions.submit_event_link', _('Submit')),
+    ('submissions.event_queue', _('Queue')),
+  ] + ([('promoter.dashboard', _('Labels'))] if _is_promoter else []) %}
+{% set admin_links = [
+    ('admin.admin', _('Events')),
+    ('admin.venues', _('Venues')),
+    ('admin.users', _('Users')),
+    ('admin.analytics', _('Analytics')),
+    ('admin.statistics', _('Statistics')),
+    ('admin.scrape_suspects', _('Suspects')),
+  ] if _is_admin else [] %}
+{% macro nav_item(endpoint, label, active) -%}
+  <a href="{{ url_for(endpoint) }}"{% if active %} aria-current="page"{% endif %}
+     class="{{ 'text-bleed underline underline-offset-4' if active else 'hover:text-bleed' }}">{{ label }}</a>
+{%- endmacro %}
+{% macro logout_form() -%}
+  <form method="post" action="{{ url_for('auth.logout') }}" class="ml-auto inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="hover:text-bleed font-mono text-xs uppercase tracking-wider cursor-pointer">{{ _('Logout') }}</button>
+  </form>
+{%- endmacro %}
+<nav class="bg-ink text-paper font-mono text-xs uppercase tracking-wider border-b border-bleed">
+  <div class="max-w-6xl mx-auto px-4 py-2">
+
+    {# Desktop: one row, shared tools ┊ admin tools #}
+    <div class="hidden md:flex flex-wrap gap-4 items-center">
+      <a href="{{ url_for('public.calendar_view') }}" class="hover:text-bleed">← {{ _('Calendar') }}</a>
+      <span class="text-smudge">|</span>
+      {% for ep, label in shared_links %}{{ nav_item(ep, label, _active == ep) }}{% endfor %}
+      {% if admin_links %}
+        <span class="text-smudge">┊</span>
+        {% for ep, label in admin_links %}{{ nav_item(ep, label, _active == ep) }}{% endfor %}
+      {% endif %}
+      {{ logout_form() }}
+    </div>
+
+    {# Mobile: Calendar and Logout stay visible, the rest collapses (no JS) #}
+    <div class="md:hidden flex items-center gap-4">
+      <a href="{{ url_for('public.calendar_view') }}" class="hover:text-bleed">← {{ _('Calendar') }}</a>
+      <details class="relative">
+        <summary class="cursor-pointer hover:text-bleed list-none select-none">{{ _('Menu') }} ▾</summary>
+        <div class="absolute left-0 top-full mt-2 z-50 bg-ink border border-bleed p-4 flex flex-col gap-3 min-w-40 whitespace-nowrap">
+          {% for ep, label in shared_links %}{{ nav_item(ep, label, _active == ep) }}{% endfor %}
+          {% if admin_links %}
+            <span class="border-t border-smudge" aria-hidden="true"></span>
+            {% for ep, label in admin_links %}{{ nav_item(ep, label, _active == ep) }}{% endfor %}
+          {% endif %}
+        </div>
+      </details>
+      {{ logout_form() }}
+    </div>
+
+  </div>
+</nav>

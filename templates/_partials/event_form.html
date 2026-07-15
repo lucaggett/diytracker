@@ -10,40 +10,20 @@
    The behaviour (genre autocomplete, datepickers, venue dropdown) lives in
    static/js/event_form.js; the page sets window.EVENT_FORM_CONFIG first. #}
 
-{% if form.errors %}
-  <div class="border-2 border-bleed bg-paper p-4 mb-6">
-    <p class="text-xs uppercase tracking-widest text-bleed mb-2">{{ _('Validation') }}</p>
-    <ul class="list-disc pl-5 text-sm">
-      {% for field, errors in form.errors.items() %}
-        {% for error in errors %}
-          <li><strong>{{ form[field].label.text }}:</strong> {{ error }}</li>
-        {% endfor %}
-      {% endfor %}
-    </ul>
-  </div>
-{% endif %}
+{% from '_partials/forms.html' import field, form_errors, submit_row, LBL, INP with context %}
+
+{{ form_errors(form) }}
 
 <form method="POST" enctype="multipart/form-data" class="border-2 border-ink bg-paper p-6">
   {{ form.hidden_tag() }}
 
-  {% set lbl = "block text-xs uppercase tracking-widest text-smudge mb-1" %}
-  {% set inp = "border-2 border-ink bg-paper px-3 py-2 w-full text-sm focus:outline-hidden focus:border-bleed" %}
-
   <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4">{{ _('Event Details') }}</h3>
 
-  <div class="mb-4">
-    {{ form.name.label(class=lbl) }}
-    {{ form.name(class=inp, placeholder=_('Enter the event name')) }}
-    <small class="text-xs text-smudge">{{ _('Optional if Acts are provided.') }}</small>
-  </div>
+  {{ field(form.name, hint=_('Optional if Acts are provided.'), placeholder=_('Enter the event name')) }}
+  {{ field(form.date, placeholder=_('Select the event date')) }}
 
   <div class="mb-4">
-    {{ form.date.label(class=lbl) }}
-    {{ form.date(class=inp, placeholder=_('Select the event date')) }}
-  </div>
-
-  <div class="mb-4">
-    <label for="{{ form.end_date.id }}" id="end-date-label" class="{{ lbl }}">
+    <label for="{{ form.end_date.id }}" id="end-date-label" class="{{ LBL }}">
       {{ _('End Date') }}
       {% if form.is_festival.data %}
         <span class="normal-case text-bleed">{{ _('(required for festivals)') }}</span>
@@ -51,7 +31,7 @@
         <span class="normal-case text-smudge">{{ _('(optional)') }}</span>
       {% endif %}
     </label>
-    {{ form.end_date(class=inp, placeholder=_('Select the end date')) }}
+    {{ form.end_date(class=INP, placeholder=_('Select the end date')) }}
   </div>
 
   <div class="mb-4 flex items-center gap-3">
@@ -60,117 +40,60 @@
     <small class="text-xs text-smudge">{{ _('Festivals require an end date.') }}</small>
   </div>
 
-  <div class="mb-4">
-    {{ form.doors.label(class=lbl) }}
-    {{ form.doors(class=inp, placeholder=_('Select the doors open time')) }}
-  </div>
+  {{ field(form.doors, placeholder=_('Select the doors open time')) }}
 
   {% if show_status %}
-    <div class="mb-4">
-      {{ form.status.label(class=lbl) }}
-      {{ form.status(class=inp) }}
-    </div>
+    {{ field(form.status) }}
   {% endif %}
 
-  <div class="mb-4">
-    {{ form.genre.label(class=lbl) }}
-    {{ form.genre(class=inp) }}
-    <small class="text-xs text-smudge">{{ _('Type a genre and press Enter to add it.') }}</small>
-  </div>
-
-  <div class="mb-4">
-    {{ form.acts.label(class=lbl) }}
-    {{ form.acts(class=inp, placeholder=_('List the acts performing')) }}
-    <small class="text-xs text-smudge">{{ _('Optional if Event Name is provided.') }}</small>
-  </div>
+  {{ field(form.genre, hint=_('Type a genre and press Enter to add it.')) }}
+  {{ field(form.acts, hint=_('Optional if Event Name is provided.'), placeholder=_('List the acts performing')) }}
 
   {# Only rendered once at least one label exists ("" is always a choice). #}
   {% if form.label_id.choices|length > 1 %}
-    <div class="mb-4">
-      {{ form.label_id.label(class=lbl) }}
-      {{ form.label_id(class=inp) }}
-      <small class="text-xs text-smudge">{{ _("Optional. The show will appear on the label's page.") }}</small>
-    </div>
+    {{ field(form.label_id, hint=_("Optional. The show will appear on the label's page.")) }}
   {% endif %}
 
   <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4 mt-6">{{ _('Ticket Details') }}</h3>
 
-  <div class="mb-4">
-    {{ form.ticket_price.label(class=lbl) }}
-    {{ form.ticket_price(class=inp, placeholder=_('Enter the ticket price')) }}
-  </div>
-
-  <div class="mb-4">
-    {{ form.ticket_link.label(class=lbl) }}
-    {{ form.ticket_link(class=inp, placeholder=_('Enter the ticket purchase link')) }}
-    <small class="text-xs text-smudge">{{ _('Optional.') }}</small>
-  </div>
+  {{ field(form.ticket_price, placeholder=_('Enter the ticket price')) }}
+  {{ field(form.ticket_link, hint=_('Optional.'), placeholder=_('Enter the ticket purchase link')) }}
 
   <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4 mt-6">{{ _('Venue Details') }}</h3>
 
   <div class="mb-4">
-    <label for="venue-select" class="{{ lbl }}">{{ _('Select Venue') }}</label>
+    <label for="venue-select" class="{{ LBL }}">{{ _('Select Venue') }}</label>
     {# Nameless on purpose: the JS mirrors the selection into the hidden
        venue_id input rendered by form.hidden_tag() above, so only one
        venue_id value is ever posted. #}
-    <select id="venue-select" class="{{ inp }}">
+    <select id="venue-select" class="{{ INP }}">
       <option value="new" selected>{{ _('New Venue') }}</option>
     </select>
   </div>
 
-  <div class="mb-4">
-    {{ form.venue_name.label(class=lbl) }}
-    {{ form.venue_name(id="venue_name", class=inp, placeholder=_('Enter the venue name')) }}
-  </div>
-
-  <div class="mb-4">
-    {{ form.venue_address.label(class=lbl) }}
-    {{ form.venue_address(id="venue_address", class=inp, placeholder=_('Enter the venue address')) }}
-    <small class="text-xs text-smudge">{{ _('Optional.') }}</small>
-  </div>
+  {{ field(form.venue_name, id="venue_name", placeholder=_('Enter the venue name')) }}
+  {{ field(form.venue_address, id="venue_address", hint=_('Optional.'), placeholder=_('Enter the venue address')) }}
 
   <div class="flex mb-4 space-x-4">
     <div class="w-1/2">
-      {{ form.venue_city.label(class=lbl) }}
-      {{ form.venue_city(id="venue_city", class=inp, placeholder=_('Enter the city')) }}
+      {{ field(form.venue_city, id="venue_city", wrapper='', placeholder=_('Enter the city')) }}
     </div>
     <div class="w-1/2">
-      {{ form.venue_plz.label(class=lbl) }}
-      {{ form.venue_plz(id="venue_plz", class=inp, placeholder=_('Enter ZIP code')) }}
+      {{ field(form.venue_plz, id="venue_plz", wrapper='', placeholder=_('Enter ZIP code')) }}
     </div>
   </div>
 
-  <div class="mb-4">
-    {{ form.venue_canton.label(class=lbl) }}
-    {{ form.venue_canton(id="venue_canton", class=inp) }}
-  </div>
-
-  <div class="mb-4">
-    {{ form.venue_coords.label(class=lbl) }}
-    {{ form.venue_coords(id="venue_coords", class=inp, placeholder=_('Enter coordinates')) }}
-    <small class="text-xs text-smudge">{{ _('Optional.') }}</small>
-  </div>
+  {{ field(form.venue_canton, id="venue_canton") }}
+  {{ field(form.venue_coords, id="venue_coords", hint=_('Optional.'), placeholder=_('Enter coordinates')) }}
 
   <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4 mt-6">{{ _('Flyer') }}</h3>
 
-  <div class="mb-4">
-    {{ form.flyer.label(class=lbl) }}
-    {{ form.flyer(class=inp) }}
-    <small class="text-xs text-smudge">{{ _('Optional. JPG or PNG formats only.') }}</small>
+  {% call field(form.flyer, hint=_('Optional. JPG or PNG formats only.')) %}
     {% if event is defined and event.flyer %}
       <p class="text-xs text-smudge mt-1">{{ _('Current:') }} {{ event.flyer }}</p>
     {% endif %}
     <div id="flyer-preview" class="mt-2"></div>
-  </div>
+  {% endcall %}
 
-  <div class="flex items-center gap-4 mt-6">
-    <button type="submit"
-            class="bg-ink text-paper text-xs uppercase tracking-widest px-6 py-3 hover:bg-bleed transition-colors">
-      {{ submit_label }} →
-    </button>
-    {% if cancel_url %}
-      <a href="{{ cancel_url }}"
-         class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('Cancel') }}</a>
-    {% endif %}
-  </div>
+  {{ submit_row(submit_label, cancel_url=cancel_url if cancel_url is defined else none) }}
 </form>

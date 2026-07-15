@@ -1,0 +1,54 @@
+{# Shared form styling — single source of truth for field classes and the
+   common blocks (validation errors, submit row) duplicated across forms.
+
+   Usage:
+     {% from '_partials/forms.html' import field, form_errors, submit_row with context %}
+   Bespoke markup (raw inputs, checkboxes, custom labels) imports the class
+   strings instead:
+     {% from '_partials/forms.html' import LBL, INP, INP_COMPACT with context %}
+
+   field() forwards extra keyword arguments (placeholder, rows, id, …) to the
+   WTForms field call. Trailing extras (image previews, etc.) can be attached
+   via {% call field(...) %} … {% endcall %}. #}
+
+{% set LBL = "block text-xs uppercase tracking-widest text-smudge mb-1" %}
+{% set INP = "border-2 border-ink bg-paper px-3 py-2 w-full text-sm focus:outline-hidden focus:border-bleed" %}
+{% set INP_COMPACT = "border-2 border-ink bg-paper px-2 py-1 w-full text-sm focus:outline-hidden focus:border-bleed" %}
+
+{% macro form_errors(form) %}
+  {% if form.errors %}
+    <div class="border-2 border-bleed bg-paper p-4 mb-6">
+      <p class="text-xs uppercase tracking-widest text-bleed mb-2">{{ _('Validation') }}</p>
+      <ul class="list-disc pl-5 text-sm">
+        {% for name, errors in form.errors.items() %}
+          {% for error in errors %}
+            <li><strong>{{ form[name].label.text }}:</strong> {{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{% macro field(f, hint=none, hint_above=false, compact=false, class_extra='', wrapper=none) %}
+  <div class="{{ wrapper if wrapper is not none else ('mb-2' if compact else 'mb-4') }}">
+    {{ f.label(class=LBL) }}
+    {% if hint and hint_above %}<small class="block text-xs text-smudge mb-1">{{ hint }}</small>{% endif %}
+    {{ f(class=(INP_COMPACT if compact else INP) ~ ((' ' ~ class_extra) if class_extra else ''), **kwargs) }}
+    {% if hint and not hint_above %}<small class="text-xs text-smudge">{{ hint }}</small>{% endif %}
+    {% if caller %}{{ caller() }}{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro submit_row(label, cancel_url=none, cancel_label=none, arrow=true) %}
+  <div class="flex items-center gap-4 mt-6">
+    <button type="submit"
+            class="bg-ink text-paper text-xs uppercase tracking-widest px-6 py-3 hover:bg-bleed transition-colors cursor-pointer">
+      {{ label }}{% if arrow %} →{% endif %}
+    </button>
+    {% if cancel_url %}
+      <a href="{{ cancel_url }}"
+         class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ cancel_label or _('Cancel') }}</a>
+    {% endif %}
+  </div>
+{% endmacro %}

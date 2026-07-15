@@ -1,13 +1,9 @@
 {% extends 'base_public.html' %}
+{% from '_partials/forms.html' import field, form_errors, submit_row with context %}
 
 {% block title %}{{ _('Accessibility') }} · {{ venue.name }} · diytracker.ch{% endblock %}
 
 {% block content %}
-{% set lbl = "block text-xs uppercase tracking-widest text-smudge mb-1" %}
-{% set inp = "border-2 border-ink bg-paper px-3 py-2 w-full text-sm focus:outline-hidden focus:border-bleed" %}
-{% set sel = "border-2 border-ink bg-paper px-3 py-2 w-full text-sm focus:outline-hidden focus:border-bleed" %}
-{% set txt = "border-2 border-ink bg-paper px-3 py-2 w-full text-sm focus:outline-hidden focus:border-bleed resize-y" %}
-
 <div class="max-w-2xl mx-auto px-4 py-10">
 
   <header class="mb-8">
@@ -21,18 +17,7 @@
 
   <p class="text-sm mb-6">{{ _('Please fill in as much as you know. Leave fields blank if you are unsure — partial information is still helpful.') }}</p>
 
-  {% if form.errors %}
-  <div class="border-2 border-bleed bg-paper p-4 mb-6">
-    <p class="text-xs uppercase tracking-widest text-bleed mb-2">{{ _('Validation') }}</p>
-    <ul class="list-disc pl-5 text-sm">
-      {% for field, errors in form.errors.items() %}
-        {% for error in errors %}
-          <li><strong>{{ form[field].label.text }}:</strong> {{ error }}</li>
-        {% endfor %}
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
+  {{ form_errors(form) }}
 
   <form method="POST">
     {{ form.hidden_tag() }}
@@ -40,166 +25,59 @@
     {# ── MOBILITY & WHEELCHAIR ─────────────────────────────────────────────── #}
     <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-4 mt-8">{{ _('Mobility & Wheelchair') }}</h2>
 
-    <div class="mb-4">
-      {{ form.step_free_entrance.label(class=lbl) }}
-      {{ form.step_free_entrance(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.step_free_entrance_notes.label(class=lbl) }}
-      {{ form.step_free_entrance_notes(class=txt, rows=2, placeholder=_('e.g. ramp at side entrance, ask staff')) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.step_free_interior.label(class=lbl) }}
-      {{ form.step_free_interior(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.accessible_toilet.label(class=lbl) }}
-      {{ form.accessible_toilet(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.accessible_toilet_notes.label(class=lbl) }}
-      {{ form.accessible_toilet_notes(class=txt, rows=2, placeholder=_('e.g. located near main bar, key required from staff')) }}
-    </div>
+    {{ field(form.step_free_entrance) }}
+    {{ field(form.step_free_entrance_notes, class_extra='resize-y', rows=2, placeholder=_('e.g. ramp at side entrance, ask staff')) }}
+    {{ field(form.step_free_interior) }}
+    {{ field(form.accessible_toilet) }}
+    {{ field(form.accessible_toilet_notes, class_extra='resize-y', rows=2, placeholder=_('e.g. located near main bar, key required from staff')) }}
 
     <div class="flex mb-4 space-x-4">
       <div class="w-1/2">
-        {{ form.wheelchair_spaces.label(class=lbl) }}
-        {{ form.wheelchair_spaces(class=sel) }}
+        {{ field(form.wheelchair_spaces, wrapper='') }}
       </div>
       <div class="w-1/2">
-        {{ form.wheelchair_spaces_count.label(class=lbl) }}
-        {{ form.wheelchair_spaces_count(class=inp, placeholder='e.g. 4') }}
+        {{ field(form.wheelchair_spaces_count, wrapper='', placeholder='e.g. 4') }}
       </div>
     </div>
 
-    <div class="mb-4">
-      {{ form.floor_surface.label(class=lbl) }}
-      {{ form.floor_surface(class=sel) }}
-    </div>
+    {{ field(form.floor_surface) }}
 
     {# ── SENSORY, EPILEPSY & AUTISM ────────────────────────────────────────── #}
     <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-4 mt-8">{{ _('Sensory, Epilepsy & Autism') }}</h2>
 
-    <div class="mb-4">
-      {{ form.strobe_lights.label(class=lbl) }}
-      {{ form.strobe_lights(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.strobe_warning.label(class=lbl) }}
-      <small class="block text-xs text-smudge mb-1">{{ _('Is a verbal or visual warning given before strobes are used?') }}</small>
-      {{ form.strobe_warning(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.smoke_machines.label(class=lbl) }}
-      {{ form.smoke_machines(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.sound_level.label(class=lbl) }}
-      {{ form.sound_level(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.quiet_space.label(class=lbl) }}
-      <small class="block text-xs text-smudge mb-1">{{ _('A calm room away from the main space where people can decompress') }}</small>
-      {{ form.quiet_space(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.earplugs_available.label(class=lbl) }}
-      {{ form.earplugs_available(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.sensory_friendly_events.label(class=lbl) }}
-      <small class="block text-xs text-smudge mb-1">{{ _('Events with reduced lights, lower volume, and a relaxed atmosphere') }}</small>
-      {{ form.sensory_friendly_events(class=sel) }}
-    </div>
+    {{ field(form.strobe_lights) }}
+    {{ field(form.strobe_warning, hint=_('Is a verbal or visual warning given before strobes are used?'), hint_above=true) }}
+    {{ field(form.smoke_machines) }}
+    {{ field(form.sound_level) }}
+    {{ field(form.quiet_space, hint=_('A calm room away from the main space where people can decompress'), hint_above=true) }}
+    {{ field(form.earplugs_available) }}
+    {{ field(form.sensory_friendly_events, hint=_('Events with reduced lights, lower volume, and a relaxed atmosphere'), hint_above=true) }}
 
     {# ── HEARING ───────────────────────────────────────────────────────────── #}
     <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-4 mt-8">{{ _('Hearing') }}</h2>
 
-    <div class="mb-4">
-      {{ form.hearing_loop.label(class=lbl) }}
-      <small class="block text-xs text-smudge mb-1">{{ _('An induction loop that transmits sound directly to hearing aids') }}</small>
-      {{ form.hearing_loop(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.sign_language.label(class=lbl) }}
-      {{ form.sign_language(class=sel) }}
-    </div>
+    {{ field(form.hearing_loop, hint=_('An induction loop that transmits sound directly to hearing aids'), hint_above=true) }}
+    {{ field(form.sign_language) }}
 
     {# ── MEDICAL ───────────────────────────────────────────────────────────── #}
     <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-4 mt-8">{{ _('Medical') }}</h2>
 
-    <div class="mb-4">
-      {{ form.medication_fridge.label(class=lbl) }}
-      <small class="block text-xs text-smudge mb-1">{{ _('For insulin, EpiPens, or other temperature-sensitive medication') }}</small>
-      {{ form.medication_fridge(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.first_aid_kit.label(class=lbl) }}
-      {{ form.first_aid_kit(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.aed_on_site.label(class=lbl) }}
-      <small class="block text-xs text-smudge mb-1">{{ _('Automated External Defibrillator') }}</small>
-      {{ form.aed_on_site(class=sel) }}
-    </div>
+    {{ field(form.medication_fridge, hint=_('For insulin, EpiPens, or other temperature-sensitive medication'), hint_above=true) }}
+    {{ field(form.first_aid_kit) }}
+    {{ field(form.aed_on_site, hint=_('Automated External Defibrillator'), hint_above=true) }}
 
     {# ── GENERAL / SOCIAL ──────────────────────────────────────────────────── #}
     <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-4 mt-8">{{ _('General & Social') }}</h2>
 
-    <div class="mb-4">
-      {{ form.accessible_parking.label(class=lbl) }}
-      {{ form.accessible_parking(class=sel) }}
-    </div>
+    {{ field(form.accessible_parking) }}
+    {{ field(form.public_transport_notes, class_extra='resize-y', rows=2, placeholder=_('e.g. 50 m to tram stop, level access from platform')) }}
+    {{ field(form.gender_neutral_toilets) }}
+    {{ field(form.seating_areas, hint=_('Seating available for people who cannot stand for long periods'), hint_above=true) }}
+    {{ field(form.guide_dogs_welcome) }}
+    {{ field(form.quiet_entrance, hint=_('An alternative entrance that avoids crowded queues or loud lobby areas'), hint_above=true) }}
+    {{ field(form.additional_notes, wrapper='mb-6', class_extra='resize-y', rows=4, placeholder=_('Anything else visitors with disabilities should know')) }}
 
-    <div class="mb-4">
-      {{ form.public_transport_notes.label(class=lbl) }}
-      {{ form.public_transport_notes(class=txt, rows=2, placeholder=_('e.g. 50 m to tram stop, level access from platform')) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.gender_neutral_toilets.label(class=lbl) }}
-      {{ form.gender_neutral_toilets(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.seating_areas.label(class=lbl) }}
-      <small class="block text-xs text-smudge mb-1">{{ _('Seating available for people who cannot stand for long periods') }}</small>
-      {{ form.seating_areas(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.guide_dogs_welcome.label(class=lbl) }}
-      {{ form.guide_dogs_welcome(class=sel) }}
-    </div>
-
-    <div class="mb-4">
-      {{ form.quiet_entrance.label(class=lbl) }}
-      <small class="block text-xs text-smudge mb-1">{{ _('An alternative entrance that avoids crowded queues or loud lobby areas') }}</small>
-      {{ form.quiet_entrance(class=sel) }}
-    </div>
-
-    <div class="mb-6">
-      {{ form.additional_notes.label(class=lbl) }}
-      {{ form.additional_notes(class=txt, rows=4, placeholder=_('Anything else visitors with disabilities should know')) }}
-    </div>
-
-    <button type="submit"
-            class="bg-ink text-paper px-6 py-3 text-sm uppercase tracking-widest hover:bg-bleed transition-colors">
-      {{ _('Save accessibility info') }}
-    </button>
+    {{ submit_row(_('Save accessibility info'), arrow=false) }}
   </form>
 </div>
 {% endblock %}
