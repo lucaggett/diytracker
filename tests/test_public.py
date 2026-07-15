@@ -416,9 +416,7 @@ class TestLabelPage:
         assert b"Unrelated Show" not in resp.data
         assert label.name.encode() in resp.data
 
-    def test_label_page_without_events_stays_live(
-        self, client, make_user, make_label
-    ):
+    def test_label_page_without_events_stays_live(self, client, make_user, make_label):
         label = make_label(make_user(is_promoter=True))
         resp = client.get(f"/label/{label.slug}/")
         assert resp.status_code == 200

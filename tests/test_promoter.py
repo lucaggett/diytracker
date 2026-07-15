@@ -73,20 +73,18 @@ class TestLabelCrud:
         promoter = make_user(is_promoter=True)
         label = make_label(promoter, name="Old Name")
         login(promoter)
-        client.post(
-            f"/promoter/labels/{label.id}/edit", data={"name": "New Name"}
-        )
+        client.post(f"/promoter/labels/{label.id}/edit", data={"name": "New Name"})
         assert db.session.get(Label, label.id).slug == "new-name"
 
-    def test_non_owner_promoter_forbidden(
-        self, client, make_user, make_label, login
-    ):
+    def test_non_owner_promoter_forbidden(self, client, make_user, make_label, login):
         owner = make_user(email="owner@example.com", is_promoter=True)
         label = make_label(owner)
         login(make_user(email="other@example.com", is_promoter=True))
         assert client.get(f"/promoter/labels/{label.id}/edit").status_code == 403
 
-    def test_admin_may_edit_any_label(self, client, make_user, make_label, admin, login):
+    def test_admin_may_edit_any_label(
+        self, client, make_user, make_label, admin, login
+    ):
         label = make_label(make_user(is_promoter=True))
         login(admin)
         assert client.get(f"/promoter/labels/{label.id}/edit").status_code == 200
@@ -114,9 +112,7 @@ class TestDashboard:
         yesterday = date.today() - timedelta(days=1)
         db.session.add_all(
             [
-                EventDailyViews(
-                    event_id=event.id, date=yesterday, hits=7, visitors=3
-                ),
+                EventDailyViews(event_id=event.id, date=yesterday, hits=7, visitors=3),
                 EventDailyViews(
                     event_id=event.id, date=date.today(), hits=5, visitors=2
                 ),
