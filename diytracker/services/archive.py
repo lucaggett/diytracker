@@ -67,7 +67,8 @@ def adjacent_months(year, month):
     """((prev_year, prev_month), (next_year, next_month)) among the months
     that actually have past events; None on either side when at the edge."""
     months = sorted(
-        (y, m) for y, month_counts in archive_directory().items()
+        (y, m)
+        for y, month_counts in archive_directory().items()
         for m, _count in month_counts
     )
     try:

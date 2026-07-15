@@ -102,9 +102,7 @@ def persist_event_day_counts(counts, chunk_size=500):
             index_elements=["event_id", "date"],
             set_={
                 "hits": func.max(EventDailyViews.hits, stmt.excluded.hits),
-                "visitors": func.max(
-                    EventDailyViews.visitors, stmt.excluded.visitors
-                ),
+                "visitors": func.max(EventDailyViews.visitors, stmt.excluded.visitors),
             },
         )
         db.session.execute(stmt)

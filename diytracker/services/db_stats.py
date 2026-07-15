@@ -106,9 +106,7 @@ def ticket_price_stats():
     ranges → lower bound, unparseable → None). Aggregates (mean/median/…)
     and buckets cover paid events only; free and unparseable are counted
     separately."""
-    prices = [
-        parse_price(raw) for (raw,) in db.session.query(Event.ticket_price).all()
-    ]
+    prices = [parse_price(raw) for (raw,) in db.session.query(Event.ticket_price).all()]
     total = len(prices)
     unparsed = sum(1 for p in prices if p is None)
     free = sum(1 for p in prices if p == 0)
