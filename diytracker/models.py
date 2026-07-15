@@ -185,9 +185,7 @@ class Label(db.Model):
     # so collisions get -2/-3 suffixes at write time. Regenerated on rename.
     slug = db.Column(db.String(120), nullable=False, unique=True, index=True)
     logo = db.Column(db.String(200), nullable=True)  # same convention as Event.flyer
-    promoter_id = db.Column(
-        db.Integer, db.ForeignKey("submitter.id"), nullable=False
-    )
+    promoter_id = db.Column(db.Integer, db.ForeignKey("submitter.id"), nullable=False)
     promoter = db.relationship("Submitter", backref=db.backref("labels", lazy=True))
     created_at = db.Column(db.DateTime, nullable=True, default=utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)

@@ -144,9 +144,7 @@ def edit_event(event_id):
             event.ticket_link = form.ticket_link.data
             event.status = form.status.data
             event.genre = clean_genre_string(form.genre.data or [])
-            event.label_id = (
-                int(form.label_id.data) if form.label_id.data else None
-            )
+            event.label_id = int(form.label_id.data) if form.label_id.data else None
 
             venue, _created, error = resolve_venue_from_form(form)
             if error:
@@ -288,7 +286,9 @@ def toggle_promoter(user_id):
     user.is_promoter = not user.is_promoter
     db.session.commit()
     status = _("granted") if user.is_promoter else _("revoked")
-    flash(_("Promoter status %(status)s for %(email)s.", status=status, email=user.email))
+    flash(
+        _("Promoter status %(status)s for %(email)s.", status=status, email=user.email)
+    )
     return redirect(url_for("admin.users"))
 
 

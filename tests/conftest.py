@@ -157,9 +157,7 @@ def make_label(app):
     from diytracker.services.labels import unique_slug
 
     def _make(promoter, name="Cool Label", **kw):
-        label = Label(
-            name=name, slug=unique_slug(name), promoter_id=promoter.id, **kw
-        )
+        label = Label(name=name, slug=unique_slug(name), promoter_id=promoter.id, **kw)
         db.session.add(label)
         db.session.commit()
         return label
