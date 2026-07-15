@@ -7,6 +7,10 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.33.0] - 2026-07-15
+- `manage_interactive.py`, a menu-driven wrapper around `manage.py`: numbered menus and prompts for every existing command (logs, user, venue, event, stats, db) so you don't need to remember subcommands or flags — it calls the exact same `cmd_*` functions manage.py's argparse dispatch would, so behavior (confirmation prompts, dry-run defaults, output) is identical.
+- New `manage.py event dedup` command and backing `services/event_dedup.py`: finds events on the same date whose names share more than two words 1:1 (case/diacritic-insensitive) and offers to merge them one pair at a time (dry-run by default, `--apply` to confirm each merge). Merging repoints any scrape-queue approval link to the survivor, drops the losers' per-day view rows (can't be folded in without double-counting shared days), and deletes the losers — mirroring the existing venue-dedup command's shape (`find_dedup_candidates`/`select_survivor`/`merge_group` → `find_event_dedup_candidates`/`select_survivor`/`merge_events`).
+
 ## [0.32.1] - 2026-07-15
 - Hotfix: `/events/397/` (a widely shared event deleted by mistake) 301-redirects to its recreated event `/events/557/` instead of 404ing.
 

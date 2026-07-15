@@ -10,7 +10,7 @@ Commands:
     logs     Tail the access or error log
     user     Manage users (list / add / passwd / admin / invite / delete)
     venue    Manage venues (dedup)
-    event    Manage events (list / status / delete)
+    event    Manage events (list / status / delete / dedup)
     stats    App statistics (leaderboard / overview)
     db       Database maintenance (backup / vacuum)
 
@@ -473,6 +473,66 @@ def cmd_event_delete(args):
     return 0
 
 
+def cmd_event_dedup(args):
+    app, db, _submitter = _load_app()
+    with app.app_context():
+        from diytracker.models import Event, utcnow
+        from diytracker.services.cache import bust_cache
+        from diytracker.services.event_dedup import (
+            find_event_dedup_candidates,
+            merge_events,
+            select_survivor,
+        )
+
+        q = Event.query
+        if not args.all:
+            q = q.filter(Event.date >= utcnow())
+        events = q.all()
+
+        mode = "APPLY" if args.apply else "DRY RUN (rerun with --apply to merge)"
+        print(f"\n  Database: {db.engine.url.database}")
+        print(f"  {len(events)} event(s) scanned · {mode}\n")
+
+        pairs = find_event_dedup_candidates(events)
+        if not pairs:
+            print("  No candidate duplicates found.\n")
+            return 0
+
+        print(f"  {len(pairs)} pair(s) need confirmation:")
+        merged = 0
+        declined = 0
+        for event_a, event_b, shared in pairs:
+            event_a = db.session.get(Event, event_a.id)
+            event_b = db.session.get(Event, event_b.id)
+            if event_a is None or event_b is None:
+                continue  # already merged away earlier in this run
+            print(f"\n  [shared words: {', '.join(sorted(shared))}]")
+            print(_event_line(event_a))
+            print(_event_line(event_b))
+            if not args.apply:
+                continue
+            survivor, losers = select_survivor([event_a, event_b])
+            answer = input(f"    Merge into #{survivor.id}? [y/N]: ").strip().lower()
+            if answer not in ("y", "yes"):
+                declined += 1
+                print("    skipped")
+                continue
+            stats = merge_events(survivor, losers)
+            db.session.commit()
+            bust_cache()
+            print(f"    {green('merged')}, {stats['events_deleted']} event(s) removed")
+            merged += 1
+
+        print()
+        if args.apply:
+            print(
+                f"  {green('Done.')} {merged} merge(s), {declined} pair(s) declined."
+            )
+        else:
+            print("  Dry run: rerun with --apply to merge.")
+    return 0
+
+
 # ── statistics ────────────────────────────────────────────────────────────────
 
 
@@ -760,6 +820,20 @@ def build_parser():
     sp.add_argument("event_id", type=int)
     sp.add_argument("--yes", action="store_true", help="Skip the confirmation prompt")
     sp.set_defaults(func=cmd_event_delete)
+
+    sp = esub.add_parser(
+        "dedup",
+        help="Find and merge events whose names share 3+ words on the same date",
+    )
+    sp.add_argument(
+        "--apply", action="store_true", help="Actually merge (default: dry run)"
+    )
+    sp.add_argument(
+        "--all",
+        action="store_true",
+        help="Scan past events too, instead of upcoming only",
+    )
+    sp.set_defaults(func=cmd_event_dedup)
 
     stp = sub.add_parser("stats", help="App statistics")
     ssub = stp.add_subparsers(dest="stats_command", required=True)

@@ -11,6 +11,11 @@ from diytracker.models import (
     VenueAccessibility,
     utcnow,
 )
+from diytracker.services.event_dedup import (
+    find_event_dedup_candidates,
+    merge_events,
+    select_survivor as select_event_survivor,
+)
 from diytracker.services.events import compute_event_hash
 from diytracker.services.venue import (
     find_dedup_candidates,
@@ -417,6 +422,96 @@ class TestMergeGroup:
         rows = VenueAccessibility.query.all()
         assert [r.id for r in rows] == [keep.id]
         assert any("accessibility data" in w for w in stats["warnings"])
+
+
+# ── event deduplication ───────────────────────────────────────────────────────
+
+
+class TestFindEventDedupCandidates:
+    def test_three_shared_words_same_date_is_a_pair(self, app, make_event):
+        a = make_event(name="Punk Rock Night Show", days_from_now=5)
+        b = make_event(name="Punk Rock Night Party", days_from_now=5)
+        pairs = find_event_dedup_candidates([a, b])
+        assert [(p[0], p[1]) for p in pairs] == [(a, b)]
+        assert pairs[0][2] == {"punk", "rock", "night"}
+
+    def test_two_shared_words_is_not_enough(self, app, make_event):
+        a = make_event(name="Punk Rock Night", days_from_now=5)
+        b = make_event(name="Punk Rock Party", days_from_now=5)
+        assert find_event_dedup_candidates([a, b]) == []
+
+    def test_different_dates_never_pair(self, app, make_event):
+        a = make_event(name="Punk Rock Night Show", days_from_now=5)
+        b = make_event(name="Punk Rock Night Show", days_from_now=6)
+        assert find_event_dedup_candidates([a, b]) == []
+
+    def test_matching_is_diacritic_and_case_insensitive(self, app, make_event):
+        a = make_event(name="Château Metal Night Öl", days_from_now=5)
+        b = make_event(name="chateau metal night ol", days_from_now=5)
+        pairs = find_event_dedup_candidates([a, b])
+        assert [(p[0], p[1]) for p in pairs] == [(a, b)]
+
+
+class TestSelectEventSurvivor:
+    def test_most_complete_wins(self, app, make_event):
+        bare = make_event(name="Show", genre="", acts="", ticket_link="")
+        full = make_event(
+            name="Show 2", genre="Punk", acts="Band A", ticket_link="http://x"
+        )
+        survivor, losers = select_event_survivor([bare, full])
+        assert survivor is full
+        assert losers == [bare]
+
+    def test_tie_broken_by_id(self, app, make_event):
+        a = make_event(name="Show A")
+        b = make_event(name="Show B")
+        survivor, _ = select_event_survivor([b, a])
+        assert survivor is a
+
+
+class TestMergeEvents:
+    def test_deletes_losers(self, app, make_event):
+        survivor = make_event(name="Show 1")
+        loser = make_event(name="Show 2")
+        stats = merge_events(survivor, [loser])
+        db.session.commit()
+        assert stats["events_deleted"] == 1
+        assert db.session.get(Event, loser.id) is None
+        assert Event.query.count() == 1
+
+    def test_repoints_scraped_event_approval(self, app, make_event):
+        from diytracker.models import ScrapedEvent
+
+        survivor = make_event(name="Show 1")
+        loser = make_event(name="Show 2")
+        scraped = ScrapedEvent(
+            title="Show 2",
+            start_date=loser.date.date(),
+            venue_name="V",
+            city="C",
+            approved=True,
+            approved_event_id=loser.id,
+        )
+        db.session.add(scraped)
+        db.session.commit()
+        stats = merge_events(survivor, [loser])
+        db.session.commit()
+        assert stats["scraped_events_repointed"] == 1
+        assert db.session.get(ScrapedEvent, scraped.id).approved_event_id == survivor.id
+
+    def test_drops_losers_daily_views(self, app, make_event):
+        from diytracker.models import EventDailyViews
+        from datetime import date
+
+        survivor = make_event(name="Show 1")
+        loser = make_event(name="Show 2")
+        views = EventDailyViews(event_id=loser.id, date=date.today(), hits=5, visitors=2)
+        db.session.add(views)
+        db.session.commit()
+        stats = merge_events(survivor, [loser])
+        db.session.commit()
+        assert stats["views_dropped"] == 1
+        assert EventDailyViews.query.count() == 0
 
 
 class TestArchiveDirectory:
