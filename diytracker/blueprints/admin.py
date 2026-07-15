@@ -264,40 +264,6 @@ def generate_accessibility_link(venue_id):
     flash(link, "accessibility_link")
     return redirect(url_for("admin.venues"))
 
-
-@bp.route("/admin/users", methods=["GET"])
-@admin_required
-def users():
-    all_users = Submitter.query.order_by(Submitter.email.asc()).all()
-    label_counts = dict(
-        db.session.query(Label.promoter_id, func.count(Label.id)).group_by(
-            Label.promoter_id
-        )
-    )
-    return render_template(
-        "admin_users.html",
-        users=all_users,
-        label_counts=label_counts,
-        toggle_form=TogglePromoterForm(),
-    )
-
-
-@bp.route("/admin/users/<int:user_id>/toggle-promoter", methods=["POST"])
-@admin_required
-def toggle_promoter(user_id):
-    form = TogglePromoterForm()
-    if not form.validate_on_submit():
-        abort(400)
-    user = Submitter.query.get_or_404(user_id)
-    user.is_promoter = not user.is_promoter
-    db.session.commit()
-    status = _("granted") if user.is_promoter else _("revoked")
-    flash(
-        _("Promoter status %(status)s for %(email)s.", status=status, email=user.email)
-    )
-    return redirect(url_for("admin.users"))
-
-
 @bp.route("/admin/scrape-status")
 @admin_required
 def scrape_status():
