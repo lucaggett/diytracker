@@ -6,9 +6,12 @@
 # siblings are kept next to it as *.corrupt.<timestamp>; the rebuilt file
 # only replaces the original after it passes PRAGMA integrity_check.
 #
-# Usage: scripts/recover_db.sh [--no-service] [--force] [path/to/events.db]
+# Usage: scripts/recover_db.sh [--no-service] [--force] [--salvage] [path/to/events.db]
 #   --no-service  don't touch diytracker.service (local/dev copies)
 #   --force       rebuild even if integrity_check already reports ok
+#   --salvage     skip .recover, go straight to the table-copy fallback
+#                 (pre-3.40 sqlite3 has a .recover that fails on this
+#                 corruption class with "SQL logic error")
 
 set -euo pipefail
 
@@ -16,11 +19,13 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 manage_service=1
 force=0
+salvage_only=0
 db=""
 for arg in "$@"; do
     case "$arg" in
         --no-service) manage_service=0 ;;
         --force) force=1 ;;
+        --salvage) salvage_only=1 ;;
         -*) echo "unknown option: $arg" >&2; exit 1 ;;
         *) db="$arg" ;;
     esac
@@ -69,9 +74,38 @@ for sibling in "$db-wal" "$db-shm"; do
     [[ -f "$sibling" ]] && cp "$sibling" "$sibling.corrupt.$stamp"
 done
 
-echo "==> recovering into $new_db"
-sqlite3 "$db" .recover > "$workdir/recovered.sql"
-sqlite3 "$new_db" < "$workdir/recovered.sql"
+# Salvage without .recover: recreate the schema, then copy every table row
+# by row via full scans. Corruption that breaks keyed lookups (rowids out of
+# order) still lets full scans see all rows — just some of them twice, which
+# INSERT OR IGNORE dedupes on the primary key. Indexes and triggers are
+# recreated afterwards so they're rebuilt from the copied data.
+salvage() {
+    sqlite3 "$db" \
+        "SELECT sql || ';' FROM sqlite_master
+         WHERE type = 'table' AND name NOT LIKE 'sqlite_%'" | sqlite3 "$new_db"
+    for table in $(sqlite3 "$new_db" "SELECT name FROM sqlite_master WHERE type='table';"); do
+        sqlite3 "$new_db" \
+            "ATTACH '$db' AS corrupt;
+             INSERT OR IGNORE INTO \"$table\" SELECT DISTINCT * FROM corrupt.\"$table\";"
+    done
+    sqlite3 "$db" \
+        "SELECT sql || ';' FROM sqlite_master
+         WHERE type IN ('index', 'trigger', 'view') AND sql IS NOT NULL" | sqlite3 "$new_db"
+}
+
+echo "==> recovering into $new_db (sqlite3 $(sqlite3 --version | cut -d' ' -f1))"
+if [[ "$salvage_only" -eq 0 ]] \
+    && sqlite3 "$db" .recover > "$workdir/recovered.sql" 2>"$workdir/recover.err" \
+    && sqlite3 "$new_db" < "$workdir/recovered.sql"; then
+    :
+else
+    if [[ "$salvage_only" -eq 0 ]]; then
+        sed 's/^/    /' "$workdir/recover.err" 2>/dev/null || true
+        echo "==> .recover failed (old sqlite3?); falling back to table-copy salvage"
+        rm -f "$new_db"
+    fi
+    salvage
+fi
 
 echo "==> verifying rebuilt database"
 new_check="$(sqlite3 "$new_db" 'PRAGMA integrity_check;')"
