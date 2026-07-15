@@ -140,6 +140,10 @@ class EventForm(FlaskForm):
         default="scheduled",
     )
 
+    # Optional label attribution. Choices must be set by every view that
+    # instantiates the form (before validate_on_submit), "" means no label.
+    label_id = SelectField(_l("Label"), choices=[], validators=[Optional()])
+
     # Ticket Details
     ticket_price = StringField(_l("Ticket Price"), validators=[DataRequired()])
     ticket_link = StringField(_l("Ticket Link"), validators=[Optional()])
@@ -170,6 +174,19 @@ class DeleteEventForm(FlaskForm):
 
 
 class DeleteScrapedEventForm(FlaskForm):
+    pass
+
+
+class LabelForm(FlaskForm):
+    name = StringField(_l("Label Name"), validators=[DataRequired(), Length(max=100)])
+    logo = FileField(_l("Logo"), validators=[Optional()])
+
+
+class DeleteLabelForm(FlaskForm):
+    pass
+
+
+class TogglePromoterForm(FlaskForm):
     pass
 
 

@@ -45,3 +45,17 @@ def admin_required(f):
         return f(*args, **kwargs)
 
     return decorated
+
+
+def promoter_required(f):
+    # Admins pass too, so they can inspect any promoter flow.
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("auth.login", next=request.path))
+        user = db.session.get(Submitter, session["user_id"])
+        if not user or not (user.is_promoter or user.is_admin):
+            abort(403)
+        return f(*args, **kwargs)
+
+    return decorated

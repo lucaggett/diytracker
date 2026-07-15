@@ -215,3 +215,47 @@ class TestStatisticsPage:
         resp = client.get("/admin/statistics")
         assert b"Viewed Show" in resp.data
         assert f'href="/events/{ev.id}/"'.encode() in resp.data
+
+
+class TestEditEventLabel:
+    def test_edit_event_assigns_and_clears_label(
+        self, client, admin, login, make_event, make_user, make_label
+    ):
+        label = make_label(make_user(email="promo@example.com", is_promoter=True))
+        login(admin)
+        ev = make_event()
+        base = {
+            "name": ev.name,
+            "date": ev.date.strftime("%Y-%m-%d"),
+            "doors": "19:00",
+            "acts": ev.acts,
+            "ticket_price": ev.ticket_price,
+            "venue_id": str(ev.venue_id),
+        }
+        client.post(f"/edit_event/{ev.id}", data={**base, "label_id": str(label.id)})
+        db.session.refresh(ev)
+        assert ev.label_id == label.id
+        client.post(f"/edit_event/{ev.id}", data={**base, "label_id": ""})
+        db.session.refresh(ev)
+        assert ev.label_id is None
+
+
+class TestAdminUsers:
+    def test_users_page_lists_accounts(self, client, admin, make_user, login):
+        make_user(email="plain@example.com")
+        login(admin)
+        resp = client.get("/admin/users")
+        assert resp.status_code == 200
+        assert b"plain@example.com" in resp.data
+
+    def test_toggle_promoter(self, client, admin, make_user, login):
+        user = make_user(email="plain@example.com")
+        login(admin)
+        resp = client.post(f"/admin/users/{user.id}/toggle-promoter")
+        assert resp.status_code == 302
+        db.session.refresh(user)
+        assert user.is_promoter is True
+
+    def test_users_page_requires_admin(self, client, make_user, login):
+        login(make_user())
+        assert client.get("/admin/users").status_code == 403

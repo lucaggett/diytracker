@@ -128,12 +128,15 @@ def cmd_user_list(args):
             print("No users.")
             return 0
         print()
-        print(f"  {'':>3}  {'ADMIN':<6}  {'PW':<6}  email")
+        print(f"  {'':>3}  {'ADMIN':<6}  {'PROMO':<6}  {'PW':<6}  email")
         print(f"  {'-' * 50}")
         for i, user in enumerate(users, 1):
             admin_flag = "admin" if user.is_admin else ""
+            promo_flag = "promo" if user.is_promoter else ""
             pw_flag = "set" if user.password_hash else "NO PW"
-            print(f"  {i:>3}  {admin_flag:<6}  {pw_flag:<6}  {user.email}")
+            print(
+                f"  {i:>3}  {admin_flag:<6}  {promo_flag:<6}  {pw_flag:<6}  {user.email}"
+            )
         print()
     return 0
 
@@ -176,6 +179,17 @@ def cmd_user_admin(args):
         db.session.commit()
         status = "granted" if args.grant else "revoked"
         print(f"{green('Admin ' + status)} for {user.email}.")
+    return 0
+
+
+def cmd_user_promoter(args):
+    app, db, Submitter = _load_app()
+    with app.app_context():
+        user = _find_user(Submitter, args.email)
+        user.is_promoter = args.grant
+        db.session.commit()
+        status = "granted" if args.grant else "revoked"
+        print(f"{green('Promoter ' + status)} for {user.email}.")
     return 0
 
 
@@ -683,6 +697,17 @@ def build_parser():
         "--revoke", dest="grant", action="store_false", help="Revoke admin"
     )
     sp.set_defaults(func=cmd_user_admin)
+
+    sp = usub.add_parser("promoter", help="Grant or revoke a user's promoter status")
+    sp.add_argument("email")
+    group = sp.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "--grant", dest="grant", action="store_true", help="Grant promoter"
+    )
+    group.add_argument(
+        "--revoke", dest="grant", action="store_false", help="Revoke promoter"
+    )
+    sp.set_defaults(func=cmd_user_promoter)
 
     sp = usub.add_parser("invite", help="Resend an invite email to a user")
     sp.add_argument("email")

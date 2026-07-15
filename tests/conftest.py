@@ -79,9 +79,15 @@ def client(app):
 
 @pytest.fixture
 def make_user(app):
-    def _make(email="user@example.com", password="password123", is_admin=False):
+    def _make(
+        email="user@example.com",
+        password="password123",
+        is_admin=False,
+        is_promoter=False,
+    ):
         user = Submitter(email=email)
         user.is_admin = is_admin
+        user.is_promoter = is_promoter
         if password:
             user.set_password(password)
         db.session.add(user)
@@ -141,6 +147,22 @@ def make_event(app, make_venue):
         db.session.add(ev)
         db.session.commit()
         return ev
+
+    return _make
+
+
+@pytest.fixture
+def make_label(app):
+    from diytracker.models import Label
+    from diytracker.services.labels import unique_slug
+
+    def _make(promoter, name="Cool Label", **kw):
+        label = Label(
+            name=name, slug=unique_slug(name), promoter_id=promoter.id, **kw
+        )
+        db.session.add(label)
+        db.session.commit()
+        return label
 
     return _make
 

@@ -1,0 +1,120 @@
+{% extends 'base_public.html' %}
+
+{% block title %}{{ _('Promoter dashboard') }} · diytracker.ch{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-10">
+
+  <header class="mb-6">
+    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Promoter') }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('YOUR LABELS') }}</h1>
+  </header>
+
+  <section class="border-2 border-ink bg-paper p-4 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+      <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Labels') }}</p>
+      <a href="{{ url_for('promoter.new_label') }}"
+         class="btn-press inline-flex items-center gap-1.5 border-2 border-ink bg-ink text-paper px-3 py-1.5 uppercase tracking-widest text-xs hover:bg-bleed transition-colors">
+        + {{ _('New label') }}
+      </a>
+    </div>
+    {% if labels %}
+    <ul class="space-y-3">
+      {% for label in labels %}
+      <li class="flex items-center gap-3 border border-ink/30 p-3">
+        {% if label.logo %}
+          <img src="/{{ label.logo.lstrip('/') }}" alt="{{ label.name }}"
+               class="w-12 h-12 object-contain border border-ink bg-paper shrink-0">
+        {% endif %}
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-sm truncate">{{ label.name }}</p>
+          <a href="{{ url_for('public.label_page', label_slug=label.slug) }}"
+             class="font-mono text-xs text-bleed hover:underline">/label/{{ label.slug }}/</a>
+        </div>
+        <a href="{{ url_for('promoter.edit_label', label_id=label.id) }}"
+           class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('Edit') }}</a>
+        <form method="post" action="{{ url_for('promoter.delete_label', label_id=label.id) }}"
+              onsubmit="return confirm({{ _('Delete this label? Its events stay on the calendar without a label.')|tojson }});">
+          {{ delete_form.hidden_tag() }}
+          <button type="submit"
+                  class="text-xs uppercase tracking-widest text-smudge hover:text-bleed cursor-pointer">{{ _('Delete') }}</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-sm text-smudge">{{ _('No labels yet — create your first one to get a public label page.') }}</p>
+    {% endif %}
+  </section>
+
+  {# Traffic per event — counts from the same nginx-log pipeline as the admin
+     statistics page (EventDailyViews): trend indicators, not a census. #}
+  <section class="border-2 border-ink bg-paper p-4">
+    <p class="text-xs uppercase tracking-widest text-smudge mb-3">{{ _('Your events') }}</p>
+    {% if stats %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
+          <tr>
+            <th class="px-3 py-2 text-left">{{ _('Event') }}</th>
+            <th class="px-3 py-2 text-left">{{ _('Date') }}</th>
+            <th class="px-3 py-2 text-left">{{ _('Label') }}</th>
+            <th class="px-3 py-2 text-right">{{ _('Views') }}</th>
+            <th class="px-3 py-2 text-right">{{ _('Visitors') }}</th>
+            <th class="px-3 py-2 text-right">{{ _('Link') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in stats %}
+          <tr class="border-t border-ink/30 hover:bg-ink/5">
+            <td class="px-3 py-2 font-semibold">
+              <a href="{{ url_for('public.event_page', event_id=row.event.id) }}"
+                 class="text-bleed hover:underline">{{ row.event.name or row.event.acts }}</a>
+              {% if row.event.date < now %}<span class="text-xs text-smudge uppercase tracking-widest ml-1">{{ _('past') }}</span>{% endif %}
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap">{{ row.event.date.strftime('%Y-%m-%d') }}</td>
+            <td class="px-3 py-2">{{ row.label.name }}</td>
+            <td class="px-3 py-2 text-right font-bold">{{ row.hits }}</td>
+            <td class="px-3 py-2 text-right">{{ row.visitors }}</td>
+            <td class="px-3 py-2 text-right">
+              <button type="button"
+                      class="copy-link-btn btn-press inline-flex items-center gap-1.5 border-2 border-ink bg-paper text-ink px-2 py-1 uppercase tracking-widest text-xs hover:bg-ink hover:text-paper transition-colors cursor-pointer"
+                      data-link="{{ share_urls[row.event.id] }}"
+                      data-copied-label="{{ _('Copied!') }}">
+                <span class="copy-label">{{ _('Copy link') }}</span>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-smudge mt-3">{{ _('Views count opens of the event page — for example when someone follows a link you shared. Crawlers are filtered out; visitors are daily unique IPs. A trend, not a census.') }}</p>
+    {% else %}
+    <p class="text-sm text-smudge">{{ _('No events with your labels yet. Tag a show with your label when submitting it.') }}</p>
+    {% endif %}
+  </section>
+
+  {% set back_url = url_for('public.calendar_view') %}
+  {% set back_label = _('Back to calendar') %}
+  {% include '_partials/back_link.html' %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('.copy-link-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!(navigator.clipboard && navigator.clipboard.writeText)) return;
+        navigator.clipboard.writeText(btn.dataset.link).then(function () {
+          const label = btn.querySelector('.copy-label');
+          const original = label.textContent;
+          label.textContent = btn.dataset.copiedLabel;
+          setTimeout(function () { label.textContent = original; }, 1500);
+        });
+      });
+    });
+  });
+</script>
+{% endblock %}

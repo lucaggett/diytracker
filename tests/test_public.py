@@ -401,3 +401,39 @@ class TestArchive:
         from diytracker.services.seo import RESERVED_SLUGS
 
         assert "archive" in RESERVED_SLUGS
+
+
+class TestLabelPage:
+    def test_label_page_lists_upcoming_event(
+        self, client, make_user, make_label, make_event
+    ):
+        label = make_label(make_user(is_promoter=True))
+        make_event(name="Label Show", label_id=label.id)
+        make_event(name="Unrelated Show")
+        resp = client.get(f"/label/{label.slug}/")
+        assert resp.status_code == 200
+        assert b"Label Show" in resp.data
+        assert b"Unrelated Show" not in resp.data
+        assert label.name.encode() in resp.data
+
+    def test_label_page_without_events_stays_live(
+        self, client, make_user, make_label
+    ):
+        label = make_label(make_user(is_promoter=True))
+        resp = client.get(f"/label/{label.slug}/")
+        assert resp.status_code == 200
+        assert b"No upcoming shows yet" in resp.data
+
+    def test_unknown_label_404s(self, client):
+        assert client.get("/label/nope/").status_code == 404
+
+    def test_sitemap_includes_label_pages(self, client, make_user, make_label):
+        label = make_label(make_user(is_promoter=True))
+        resp = client.get("/sitemap.xml")
+        assert f"/label/{label.slug}/".encode() in resp.data
+
+    def test_label_slug_is_reserved_for_cantons(self):
+        from diytracker.services.seo import RESERVED_SLUGS
+
+        assert "label" in RESERVED_SLUGS
+        assert "promoter" in RESERVED_SLUGS

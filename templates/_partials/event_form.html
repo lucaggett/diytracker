@@ -84,6 +84,15 @@
     <small class="text-xs text-smudge">{{ _('Optional if Event Name is provided.') }}</small>
   </div>
 
+  {# Only rendered once at least one label exists ("" is always a choice). #}
+  {% if form.label_id.choices|length > 1 %}
+    <div class="mb-4">
+      {{ form.label_id.label(class=lbl) }}
+      {{ form.label_id(class=inp) }}
+      <small class="text-xs text-smudge">{{ _("Optional. The show will appear on the label's page.") }}</small>
+    </div>
+  {% endif %}
+
   <h3 class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1 mb-4 mt-6">{{ _('Ticket Details') }}</h3>
 
   <div class="mb-4">

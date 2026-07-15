@@ -20,7 +20,7 @@ from flask import (
 from diytracker.forms import AccessibilityForm, CollaboratorRequestForm
 from sqlalchemy.orm import joinedload
 
-from diytracker.models import Event, Venue, VenueAccessibility, db, utcnow
+from diytracker.models import Event, Label, Venue, VenueAccessibility, db, utcnow
 from diytracker.services.auth import safe_redirect_target
 from diytracker.services.cache import cache
 from diytracker.services.contact import build_contact_logger, send_contact_email
@@ -84,6 +84,25 @@ def _public_cache_headers(response):
     return response.make_conditional(request)
 
 
+def _months_data(months):
+    """[(year, month)] -> the months_data structure calendar.html iterates."""
+    return [
+        {
+            "year": year,
+            "month": month,
+            "last_day_of_month": calendar.monthrange(year, month)[1],
+        }
+        for year, month in months
+    ]
+
+
+def _group_events_by_date(events):
+    grouped_events = defaultdict(list)
+    for event in events:
+        grouped_events[event.date.date()].append(event)
+    return grouped_events
+
+
 @bp.route("/")
 @cache.cached(make_cache_key=_calendar_cache_key, unless=_skip_calendar_cache)
 def calendar_view():
@@ -106,26 +125,10 @@ def calendar_view():
         .all()
     )
 
-    grouped_events = defaultdict(list)
-    for event in events:
-        event_date = event.date.date()
-        grouped_events[event_date].append(event)
-
-    months_data = []
-    for year, month in months:
-        last_day_of_month = calendar.monthrange(year, month)[1]
-        months_data.append(
-            {
-                "year": year,
-                "month": month,
-                "last_day_of_month": last_day_of_month,
-            }
-        )
-
     return render_template(
         "calendar.html",
-        grouped_events=grouped_events,
-        months_data=months_data,
+        grouped_events=_group_events_by_date(events),
+        months_data=_months_data(months),
         datetime=datetime,
     )
 
@@ -373,14 +376,45 @@ def genre_page(genre_slug):
     )
 
 
-def _archive_cache_key(*_args, **_kwargs):
-    # flask-caching passes the view args (year, month) through; the request
-    # path already encodes them, so the key only needs path + locale.
-    return f"archive:{request.path}:{getattr(g, 'locale', DEFAULT_LOCALE)}"
+def _path_locale_cache_key(*_args, **_kwargs):
+    # flask-caching passes the view args through; the request path already
+    # encodes them, so the key only needs path + locale. Shared by the
+    # archive and label pages.
+    return f"page:{request.path}:{getattr(g, 'locale', DEFAULT_LOCALE)}"
+
+
+@bp.route("/label/<label_slug>/")
+@cache.cached(make_cache_key=_path_locale_cache_key, unless=_skip_calendar_cache)
+def label_page(label_slug):
+    # Label pages stay live even with no upcoming events (unlike genre
+    # pages): promoters share the URL before their first show is posted.
+    label = Label.query.filter_by(slug=label_slug).first_or_404()
+    events = (
+        Event.query.options(joinedload(Event.venue))
+        .filter(Event.label_id == label.id, Event.date >= datetime.now())
+        .order_by(Event.date.asc())
+        .all()
+    )
+    # All upcoming shows, so the month span follows the events rather than
+    # the calendar's fixed 3-month window.
+    months = []
+    if events:
+        cursor = events[0].date.date().replace(day=1)
+        last = events[-1].date.date().replace(day=1)
+        while cursor <= last:
+            months.append((cursor.year, cursor.month))
+            cursor += relativedelta(months=1)
+    return render_template(
+        "label_page.html",
+        label=label,
+        grouped_events=_group_events_by_date(events),
+        months_data=_months_data(months),
+        datetime=datetime,
+    )
 
 
 @bp.route("/archive/")
-@cache.cached(make_cache_key=_archive_cache_key, unless=_skip_calendar_cache)
+@cache.cached(make_cache_key=_path_locale_cache_key, unless=_skip_calendar_cache)
 def archive_index():
     # Not to be confused with /events/archive/, the scrape-detection
     # honeypot below — this is the real, visible archive.
@@ -390,7 +424,7 @@ def archive_index():
 
 
 @bp.route("/archive/<int:year>/<int:month>/")
-@cache.cached(make_cache_key=_archive_cache_key, unless=_skip_calendar_cache)
+@cache.cached(make_cache_key=_path_locale_cache_key, unless=_skip_calendar_cache)
 def archive_month(year, month):
     months = dict(archive_directory().get(year, []))
     if month not in months:
@@ -435,6 +469,15 @@ def sitemap():
                 canonical_url(url_for("public.genre_page", genre_slug=slug)),
                 "daily",
                 None,
+            )
+        )
+
+    for label in Label.query.order_by(Label.slug.asc()).all():
+        pages.append(
+            (
+                canonical_url(url_for("public.label_page", label_slug=label.slug)),
+                "daily",
+                label.updated_at.date().isoformat() if label.updated_at else None,
             )
         )
 

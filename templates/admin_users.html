@@ -1,0 +1,47 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}{{ _('Users') }} · diytracker.ch{% endblock %}
+
+{% block content %}
+<header class="mb-6">
+  <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Admin console') }}</p>
+  <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('USERS') }}</h1>
+</header>
+
+{# Account creation and admin rights stay CLI-only (manage.py user ...); this
+   page only manages the promoter flag. #}
+<section class="border-2 border-ink bg-paper p-4">
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
+        <tr>
+          <th class="px-3 py-2 text-left">{{ _('Email') }}</th>
+          <th class="px-3 py-2 text-left">{{ _('Admin') }}</th>
+          <th class="px-3 py-2 text-left">{{ _('Promoter') }}</th>
+          <th class="px-3 py-2 text-right">{{ _('Labels') }}</th>
+          <th class="px-3 py-2 text-right"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr class="border-t border-ink/30 hover:bg-ink/5">
+          <td class="px-3 py-2 font-semibold">{{ user.email }}</td>
+          <td class="px-3 py-2">{% if user.is_admin %}<span class="text-bleed uppercase tracking-widest text-xs">{{ _('admin') }}</span>{% endif %}</td>
+          <td class="px-3 py-2">{% if user.is_promoter %}<span class="text-bleed uppercase tracking-widest text-xs">{{ _('promoter') }}</span>{% endif %}</td>
+          <td class="px-3 py-2 text-right">{{ label_counts.get(user.id, 0) }}</td>
+          <td class="px-3 py-2 text-right">
+            <form method="post" action="{{ url_for('admin.toggle_promoter', user_id=user.id) }}" class="inline">
+              {{ toggle_form.hidden_tag() }}
+              <button type="submit"
+                      class="border-2 border-ink bg-paper text-ink px-2 py-1 uppercase tracking-widest text-xs hover:bg-ink hover:text-paper transition-colors cursor-pointer">
+                {% if user.is_promoter %}{{ _('Revoke promoter') }}{% else %}{{ _('Make promoter') }}{% endif %}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

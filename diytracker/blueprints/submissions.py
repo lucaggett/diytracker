@@ -24,6 +24,7 @@ from diytracker.services.events import (
 )
 from diytracker.services.i18n import gettext as _
 from diytracker.services.ingest import parse_time
+from diytracker.services.labels import all_label_choices
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 from diytracker.services.venue import get_or_create_venue
 from diytracker.utils import resolve_canton
@@ -225,6 +226,7 @@ def delete_scraped_event(scraped_id):
 @login_required
 def submit_event_link():
     form = EventForm()
+    form.label_id.choices = all_label_choices()
     submitter = db.session.get(Submitter, session["user_id"])
 
     if form.validate_on_submit():
@@ -257,6 +259,7 @@ def submit_event_link():
             ticket_price=form.ticket_price.data,
             venue_id=venue.id,
             submitter_id=submitter.id,
+            label_id=int(form.label_id.data) if form.label_id.data else None,
         )
         db.session.commit()
         bust_cache()

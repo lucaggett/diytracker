@@ -108,6 +108,24 @@ def create_app(config: Config | None = None) -> Flask:
     def _inject_locale():
         return {"current_locale": getattr(g, "locale", DEFAULT_LOCALE)}
 
+    @app.context_processor
+    def _inject_current_user():
+        # Templates only see the session; the header needs the promoter/admin
+        # flags to decide which nav links to render.
+        from flask import session
+
+        from diytracker.models import Submitter
+
+        def _lookup():
+            if "_current_user" not in g:
+                user_id = session.get("user_id")
+                g._current_user = (
+                    db.session.get(Submitter, user_id) if user_id else None
+                )
+            return g._current_user
+
+        return {"current_user": _lookup}
+
     @app.errorhandler(404)
     def _handle_404(_err):
         return render_template("errors/404.html"), 404
@@ -124,12 +142,14 @@ def create_app(config: Config | None = None) -> Flask:
     from diytracker.blueprints.submissions import bp as submissions_bp
     from diytracker.blueprints.admin import bp as admin_bp
     from diytracker.blueprints.api import bp as api_bp
+    from diytracker.blueprints.promoter import bp as promoter_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(public_bp)
     app.register_blueprint(submissions_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(promoter_bp)
 
     # /api/ingest authenticates with a bearer token, not a session cookie, so
     # browser CSRF doesn't apply (and external pushers can't obtain a CSRF token).

@@ -10,6 +10,8 @@
     <a href="{{ url_for('admin.analytics') }}" class="hover:text-bleed">{{ _('Analytics') }}</a>
     <a href="{{ url_for('admin.statistics') }}" class="hover:text-bleed">{{ _('Statistics') }}</a>
     <a href="{{ url_for('admin.scrape_suspects') }}" class="hover:text-bleed">{{ _('Suspects') }}</a>
+    <a href="{{ url_for('admin.users') }}" class="hover:text-bleed">{{ _('Users') }}</a>
+    <a href="{{ url_for('promoter.dashboard') }}" class="hover:text-bleed">{{ _('Labels') }}</a>
     <form method="post" action="{{ url_for('auth.logout') }}" class="ml-auto inline">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="hover:text-bleed font-mono text-xs uppercase tracking-wider cursor-pointer">{{ _('Logout') }}</button>

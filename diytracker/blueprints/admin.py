@@ -20,10 +20,11 @@ from diytracker.forms import (
     DeleteEventForm,
     DeleteVenueForm,
     EventEditForm,
+    TogglePromoterForm,
     VenueForm,
     get_canton_choices,
 )
-from diytracker.models import db, Event, ScrapeSuspect, Venue
+from diytracker.models import db, Event, Label, ScrapeSuspect, Submitter, Venue
 from diytracker.services.analytics import (
     REPORT_PATH,
     STATS_INTERVAL_MINUTES,
@@ -40,6 +41,7 @@ from diytracker.services.cache import bust_cache
 from diytracker.services.calendar_image import generate_weekly_calendar_image
 from diytracker.services.events import clean_genre_string, resolve_venue_from_form
 from diytracker.services.i18n import gettext as _
+from diytracker.services.labels import all_label_choices
 from diytracker.services.scraper import (
     SCRAPE_INTERVAL_HOURS,
     get_last_scrape_time,
@@ -115,7 +117,9 @@ def admin():
 def edit_event(event_id):
     event = Event.query.get_or_404(event_id)
     form = EventEditForm(obj=event)
+    form.label_id.choices = all_label_choices()
     if request.method == "GET":
+        form.label_id.data = str(event.label_id) if event.label_id else ""
         form.venue_id.data = str(event.venue_id)
         form.venue_name.data = event.venue.name
         form.venue_address.data = event.venue.address
@@ -140,6 +144,9 @@ def edit_event(event_id):
             event.ticket_link = form.ticket_link.data
             event.status = form.status.data
             event.genre = clean_genre_string(form.genre.data or [])
+            event.label_id = (
+                int(form.label_id.data) if form.label_id.data else None
+            )
 
             venue, _created, error = resolve_venue_from_form(form)
             if error:
@@ -252,6 +259,37 @@ def generate_accessibility_link(venue_id):
     )
     flash(link, "accessibility_link")
     return redirect(url_for("admin.venues"))
+
+
+@bp.route("/admin/users", methods=["GET"])
+@admin_required
+def users():
+    all_users = Submitter.query.order_by(Submitter.email.asc()).all()
+    label_counts = dict(
+        db.session.query(Label.promoter_id, func.count(Label.id)).group_by(
+            Label.promoter_id
+        )
+    )
+    return render_template(
+        "admin_users.html",
+        users=all_users,
+        label_counts=label_counts,
+        toggle_form=TogglePromoterForm(),
+    )
+
+
+@bp.route("/admin/users/<int:user_id>/toggle-promoter", methods=["POST"])
+@admin_required
+def toggle_promoter(user_id):
+    form = TogglePromoterForm()
+    if not form.validate_on_submit():
+        abort(400)
+    user = Submitter.query.get_or_404(user_id)
+    user.is_promoter = not user.is_promoter
+    db.session.commit()
+    status = _("granted") if user.is_promoter else _("revoked")
+    flash(_("Promoter status %(status)s for %(email)s.", status=status, email=user.email))
+    return redirect(url_for("admin.users"))
 
 
 @bp.route("/admin/scrape-status")

@@ -218,3 +218,44 @@ class TestEventQueue:
         resp = client.get("/queue")
         assert resp.status_code == 302
         assert "/login" in resp.headers["Location"]
+
+
+class TestSubmitWithLabel:
+    def test_submit_with_label_sets_label_id(
+        self, client, make_user, make_label, make_venue, login
+    ):
+        label = make_label(make_user(email="promo@example.com", is_promoter=True))
+        login(make_user())
+        venue = make_venue()
+        client.post(
+            "/submit",
+            data={
+                "name": "Labelled Show",
+                "date": _future(),
+                "doors": "20:00",
+                "ticket_price": "15",
+                "venue_id": str(venue.id),
+                "label_id": str(label.id),
+            },
+        )
+        ev = Event.query.filter_by(name="Labelled Show").one()
+        assert ev.label_id == label.id
+
+    def test_submit_without_label_leaves_it_null(
+        self, client, make_user, make_venue, login
+    ):
+        login(make_user())
+        venue = make_venue()
+        client.post(
+            "/submit",
+            data={
+                "name": "Plain Show",
+                "date": _future(),
+                "doors": "20:00",
+                "ticket_price": "15",
+                "venue_id": str(venue.id),
+                "label_id": "",
+            },
+        )
+        ev = Event.query.filter_by(name="Plain Show").one()
+        assert ev.label_id is None

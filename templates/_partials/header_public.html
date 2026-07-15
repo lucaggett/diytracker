@@ -16,7 +16,16 @@
       <a href="{{ url_for('public.calendar_view') }}" class="hover:text-bleed underline-offset-4 hover:underline transition-colors duration-150">{{ _('Calendar') }}</a>
       <a href="{{ url_for('public.venue_map') }}" class="hover:text-bleed underline-offset-4 hover:underline transition-colors duration-150">{{ _('Map') }}</a>
       {% if session.get('user_id') %}
-        <a href="{{ url_for('admin.admin') }}" class="hover:text-bleed underline-offset-4 hover:underline transition-colors duration-150">{{ _('Admin') }}</a>
+        {% set _user = current_user() %}
+        {% if _user and _user.is_admin %}
+          <a href="{{ url_for('admin.admin') }}" class="hover:text-bleed underline-offset-4 hover:underline transition-colors duration-150">{{ _('Admin') }}</a>
+        {% endif %}
+        {% if _user and (_user.is_promoter or _user.is_admin) %}
+          <a href="{{ url_for('promoter.dashboard') }}" class="hover:text-bleed underline-offset-4 hover:underline transition-colors duration-150">{{ _('Labels') }}</a>
+        {% endif %}
+        {% if _user and not _user.is_admin %}
+          <a href="{{ url_for('submissions.submit_event_link') }}" class="hover:text-bleed underline-offset-4 hover:underline transition-colors duration-150">{{ _('Submit') }}</a>
+        {% endif %}
         <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="hover:text-bleed underline-offset-4 hover:underline transition-colors duration-150 font-mono text-xs uppercase tracking-wider cursor-pointer">{{ _('Logout') }}</button>

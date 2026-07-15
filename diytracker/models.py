@@ -54,6 +54,10 @@ class Event(db.Model):
     flyer = db.Column(db.String(200), nullable=True)  # File path to the uploaded flyer
     submitter_id = db.Column(db.Integer, db.ForeignKey("submitter.id"), nullable=True)
     submitter = db.relationship("Submitter", backref=db.backref("events", lazy=True))
+    label_id = db.Column(
+        db.Integer, db.ForeignKey("label.id"), nullable=True, index=True
+    )
+    label = db.relationship("Label", backref=db.backref("events", lazy=True))
     # scheduled/cancelled/postponed — drives schema.org eventStatus and the
     # visible badge on the event page.
     status = db.Column(db.String(20), nullable=False, default="scheduled")
@@ -142,6 +146,7 @@ class Submitter(db.Model):
     submission_code = db.Column(db.String(100), unique=True, nullable=True)
     password_hash = db.Column(db.String(256), nullable=True)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
+    is_promoter = db.Column(db.Boolean, nullable=False, default=False)
     invite_token = db.Column(db.String(64), nullable=True, unique=True)
     invite_token_expiry = db.Column(db.DateTime, nullable=True)
 
@@ -168,6 +173,27 @@ class Submitter(db.Model):
 
     def __repr__(self):
         return f"{self.email} ({self.submission_code})"
+
+
+class Label(db.Model):
+    """A record label / collective owned by a promoter account. Events can
+    optionally carry a label; each label gets a public /label/<slug>/ page."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    # Stored (not derived like genre slugs): names are arbitrary user input,
+    # so collisions get -2/-3 suffixes at write time. Regenerated on rename.
+    slug = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    logo = db.Column(db.String(200), nullable=True)  # same convention as Event.flyer
+    promoter_id = db.Column(
+        db.Integer, db.ForeignKey("submitter.id"), nullable=False
+    )
+    promoter = db.relationship("Submitter", backref=db.backref("labels", lazy=True))
+    created_at = db.Column(db.DateTime, nullable=True, default=utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+    def __repr__(self):
+        return f"<Label {self.id}: {self.name} ({self.slug})>"
 
 
 class ScrapedEvent(db.Model):

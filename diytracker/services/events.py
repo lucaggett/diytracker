@@ -76,6 +76,7 @@ def create_event(
     source_url=None,
     flyer=None,
     submitter_id=None,
+    label_id=None,
     reject_duplicate=False,
 ):
     """Build an Event with its dedup hash and add it to the session.
@@ -105,6 +106,7 @@ def create_event(
         venue_id=venue_id,
         event_hash=event_hash,
         submitter_id=submitter_id,
+        label_id=label_id,
     )
     db.session.add(event)
     return event
