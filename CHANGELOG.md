@@ -7,6 +7,9 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.32.1] - 2026-07-15
+- Hotfix: `/events/397/` (a widely shared event deleted by mistake) 301-redirects to its recreated event `/events/557/` instead of 404ing.
+
 ## [0.32.0] - 2026-07-15
 - Promoters can claim events already on the calendar: a new "Claim an event" page (`/promoter/claim`, linked from the dashboard's events section and its empty state) lists upcoming events that carry no label yet, each with a label picker and a Claim button that tags the event with one of the promoter's own labels — after which it appears on the label page and in the dashboard stats like any labelled event. The claim form's choices are restricted to labels the promoter owns (admins: all labels), so claiming with someone else's label fails validation; events that already belong to a label can't be claimed away (the race between two promoters resolves to first-commit-wins, the loser gets a flash message). Claiming busts the page cache like other label writes. DE/FR/IT catalogs stay at 100% (ten new strings).
 

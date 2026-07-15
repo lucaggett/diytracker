@@ -215,6 +215,10 @@ def venue_accessibility(venue_id):
 
 @bp.route("/events/<int:event_id>/")
 def event_page(event_id):
+    # Event 397 was deleted by mistake; forward its (widely shared) URL to
+    # the recreated event.
+    if event_id == 397:
+        return redirect(url_for("public.event_page", event_id=557), code=301)
     event = (
         Event.query.options(joinedload(Event.venue))
         .filter_by(id=event_id)
