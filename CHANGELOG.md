@@ -7,6 +7,9 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.36.0] - 2026-07-16
+- New `scripts/recover_db.sh`: rebuilds a corrupted SQLite database in place via `sqlite3 .recover` (written after prod's `events.db` developed a b-tree with out-of-order rowids, making venue #108 invisible to primary-key lookups — edit-venue 404'd and event assignment failed while the venue still appeared in list views). The script refuses to touch a healthy database (`--force` overrides), stops/starts `diytracker.service` around the swap (`--no-service` for local copies), keeps the corrupt file and its `-wal`/`-shm` siblings as timestamped `.corrupt.*` backups, and only swaps the rebuilt file in after it passes `PRAGMA integrity_check`, printing before/after row counts and any pre-existing dangling foreign-key references.
+
 ## [0.35.1] - 2026-07-15
 - Hotfix: `/admin/edit_event/<id>` 500'd (`AttributeError: 'NoneType' object has no attribute 'name'`) for events whose `venue_id` points at a venue that no longer exists — SQLite doesn't enforce the FK here, so a dangling reference can slip through. The edit page now detects this, flashes a message asking the admin to re-pick a venue, and leaves the venue fields blank instead of crashing.
 - The admin dashboard now surfaces these events proactively: a "Events with missing venue" panel (hidden when empty) lists every event whose venue was deleted out from under it, each with a direct link to the edit page to fix it — no more finding out via a crash report.
