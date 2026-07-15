@@ -192,10 +192,6 @@ class ClaimEventForm(FlaskForm):
     label_id = SelectField(_l("Label"), choices=[], validators=[DataRequired()])
 
 
-class TogglePromoterForm(FlaskForm):
-    pass
-
-
 class SetPasswordForm(FlaskForm):
     password = PasswordField(_l("Password"), validators=[DataRequired(), Length(min=8)])
     confirm_password = PasswordField(

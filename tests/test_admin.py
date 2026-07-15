@@ -247,24 +247,3 @@ class TestEditEventLabel:
         client.post(f"/admin/edit_event/{ev.id}", data={**base, "label_id": ""})
         db.session.refresh(ev)
         assert ev.label_id is None
-
-
-class TestAdminUsers:
-    def test_users_page_lists_accounts(self, client, admin, make_user, login):
-        make_user(email="plain@example.com")
-        login(admin)
-        resp = client.get("/admin/users")
-        assert resp.status_code == 200
-        assert b"plain@example.com" in resp.data
-
-    def test_toggle_promoter(self, client, admin, make_user, login):
-        user = make_user(email="plain@example.com")
-        login(admin)
-        resp = client.post(f"/admin/users/{user.id}/toggle-promoter")
-        assert resp.status_code == 302
-        db.session.refresh(user)
-        assert user.is_promoter is True
-
-    def test_users_page_requires_admin(self, client, make_user, login):
-        login(make_user())
-        assert client.get("/admin/users").status_code == 403
