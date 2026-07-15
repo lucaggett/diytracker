@@ -11,7 +11,9 @@ from flask import (
     url_for,
 )
 
-from diytracker.forms import DeleteLabelForm, LabelForm
+from sqlalchemy.orm import joinedload
+
+from diytracker.forms import ClaimEventForm, DeleteLabelForm, LabelForm
 from diytracker.models import db, Event, Label, Submitter
 from diytracker.services.auth import promoter_required
 from diytracker.services.cache import bust_cache
@@ -58,6 +60,56 @@ def dashboard():
         delete_form=DeleteLabelForm(),
         now=datetime.now(),
     )
+
+
+def _own_labels(user):
+    """The labels *user* may claim events for (admins: all labels)."""
+    query = Label.query
+    if not user.is_admin:
+        query = query.filter_by(promoter_id=user.id)
+    return query.order_by(Label.name.asc()).all()
+
+
+def _claim_form(user):
+    form = ClaimEventForm()
+    form.label_id.choices = [(str(label.id), label.name) for label in _own_labels(user)]
+    return form
+
+
+@bp.route("/claim")
+@promoter_required
+def claim_events():
+    user = _current_user()
+    form = _claim_form(user)
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    events = (
+        Event.query.options(joinedload(Event.venue))
+        .filter(Event.label_id.is_(None), Event.date >= today)
+        .order_by(Event.date.asc())
+        .all()
+    )
+    return render_template("promoter_claim.html", events=events, form=form)
+
+
+@bp.route("/events/<int:event_id>/claim", methods=["POST"])
+@promoter_required
+def claim_event(event_id):
+    user = _current_user()
+    event = Event.query.get_or_404(event_id)
+    form = _claim_form(user)
+    if not form.validate_on_submit():
+        abort(400)
+    # Choices are restricted to the user's own labels, so a passing
+    # validation already implies ownership; fetch for the flash message.
+    label = db.session.get(Label, int(form.label_id.data))
+    if event.label_id is not None:
+        flash(_("This event already belongs to a label."))
+        return redirect(url_for("promoter.claim_events"))
+    event.label_id = label.id
+    db.session.commit()
+    bust_cache()
+    flash(_("Event claimed for %(label)s!", label=label.name))
+    return redirect(url_for("promoter.dashboard"))
 
 
 def _duplicate_name(name, exclude_id=None):

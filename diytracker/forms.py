@@ -186,6 +186,12 @@ class DeleteLabelForm(FlaskForm):
     pass
 
 
+class ClaimEventForm(FlaskForm):
+    # Choices must be set to the claiming promoter's labels by every view
+    # that instantiates the form (before validate_on_submit).
+    label_id = SelectField(_l("Label"), choices=[], validators=[DataRequired()])
+
+
 class TogglePromoterForm(FlaskForm):
     pass
 

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-15 17:20+0200\n"
+"POT-Creation-Date: 2026-07-15 17:47+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -71,8 +71,8 @@ msgstr "Cancelled"
 msgid "Postponed"
 msgstr "Postponed"
 
-#: diytracker/forms.py:145 templates/label_page.html:11
-#: templates/promoter_dashboard.html:61
+#: diytracker/forms.py:145 diytracker/forms.py:192 templates/label_page.html:11
+#: templates/promoter_dashboard.html:67
 msgid "Label"
 msgstr "Label"
 
@@ -91,39 +91,39 @@ msgstr "Ticket URL"
 msgid "Venue"
 msgstr "Venue"
 
-#: diytracker/forms.py:156 diytracker/forms.py:201
+#: diytracker/forms.py:156 diytracker/forms.py:207
 #: templates/event_queue.html:132
 msgid "Venue Name"
 msgstr "Venue Name"
 
-#: diytracker/forms.py:157 diytracker/forms.py:202
+#: diytracker/forms.py:157 diytracker/forms.py:208
 msgid "Venue Address"
 msgstr "Street Address"
 
-#: diytracker/forms.py:158 diytracker/forms.py:203
+#: diytracker/forms.py:158 diytracker/forms.py:209
 #: templates/event_queue.html:136 templates/venues.html:40
 msgid "City"
 msgstr "City"
 
-#: diytracker/forms.py:159 diytracker/forms.py:204 templates/calendar.html:248
+#: diytracker/forms.py:159 diytracker/forms.py:210 templates/calendar.html:248
 #: templates/canton.html:10 templates/venues.html:41
 msgid "Canton"
 msgstr "Canton"
 
-#: diytracker/forms.py:160 diytracker/forms.py:205 templates/venues.html:42
+#: diytracker/forms.py:160 diytracker/forms.py:211 templates/venues.html:42
 msgid "ZIP Code"
 msgstr "ZIP Code"
 
-#: diytracker/forms.py:161 diytracker/forms.py:206
+#: diytracker/forms.py:161 diytracker/forms.py:212
 msgid "Coordinates"
 msgstr "Enter coordinates"
 
-#: diytracker/forms.py:168 diytracker/forms.py:350
+#: diytracker/forms.py:168 diytracker/forms.py:356
 #: templates/admin_users.html:18
 msgid "Email"
 msgstr "Email"
 
-#: diytracker/forms.py:169 diytracker/forms.py:194
+#: diytracker/forms.py:169 diytracker/forms.py:200
 msgid "Password"
 msgstr "SET PASSWORD"
 
@@ -135,123 +135,123 @@ msgstr "Label Name"
 msgid "Logo"
 msgstr "Logo"
 
-#: diytracker/forms.py:196
+#: diytracker/forms.py:202
 msgid "Confirm Password"
 msgstr "SET PASSWORD"
 
-#: diytracker/forms.py:251 templates/venue_accessibility.html:71
+#: diytracker/forms.py:257 templates/venue_accessibility.html:71
 msgid "Step-free entrance"
 msgstr "Step-free entrance"
 
-#: diytracker/forms.py:254
+#: diytracker/forms.py:260
 msgid "Entrance notes"
 msgstr "Entrance notes"
 
-#: diytracker/forms.py:257 templates/venue_accessibility.html:72
+#: diytracker/forms.py:263 templates/venue_accessibility.html:72
 msgid "Step-free throughout interior"
 msgstr "Step-free throughout interior"
 
-#: diytracker/forms.py:260 templates/venue_accessibility.html:73
+#: diytracker/forms.py:266 templates/venue_accessibility.html:73
 msgid "Accessible toilet"
 msgstr "Accessible toilet"
 
-#: diytracker/forms.py:263
+#: diytracker/forms.py:269
 msgid "Toilet notes"
 msgstr "Toilet notes"
 
-#: diytracker/forms.py:266 templates/venue_accessibility.html:76
+#: diytracker/forms.py:272 templates/venue_accessibility.html:76
 msgid "Dedicated wheelchair spaces"
 msgstr "Dedicated wheelchair spaces"
 
-#: diytracker/forms.py:269
+#: diytracker/forms.py:275
 msgid "Number of wheelchair spaces"
 msgstr "Dedicated wheelchair spaces"
 
-#: diytracker/forms.py:272 templates/venue_accessibility.html:83
+#: diytracker/forms.py:278 templates/venue_accessibility.html:83
 msgid "Floor surface"
 msgstr "Floor surface"
 
-#: diytracker/forms.py:277 templates/venue_accessibility.html:93
+#: diytracker/forms.py:283 templates/venue_accessibility.html:93
 msgid "Strobe / flashing lights"
 msgstr "Strobe / flashing lights"
 
-#: diytracker/forms.py:280
+#: diytracker/forms.py:286
 msgid "Warning given before strobes"
 msgstr "Warning before strobes"
 
-#: diytracker/forms.py:283 templates/venue_accessibility.html:95
+#: diytracker/forms.py:289 templates/venue_accessibility.html:95
 msgid "Smoke / haze machines"
 msgstr "Smoke / haze machines"
 
-#: diytracker/forms.py:286 templates/venue_accessibility.html:96
+#: diytracker/forms.py:292 templates/venue_accessibility.html:96
 msgid "Typical sound level"
 msgstr "Typical sound level"
 
-#: diytracker/forms.py:289
+#: diytracker/forms.py:295
 msgid "Quiet / low-stimulation room available"
 msgstr "Quiet / low-stimulation room"
 
-#: diytracker/forms.py:294
+#: diytracker/forms.py:300
 msgid "Free earplugs provided"
 msgstr "Free earplugs"
 
-#: diytracker/forms.py:297
+#: diytracker/forms.py:303
 msgid "Sensory-friendly events / nights"
 msgstr "Sensory-friendly events"
 
-#: diytracker/forms.py:302
+#: diytracker/forms.py:308
 msgid "Hearing loop (induction loop)"
 msgstr "Hearing loop (induction loop)"
 
-#: diytracker/forms.py:305
+#: diytracker/forms.py:311
 msgid "Sign language interpretation at events"
 msgstr "Sign language interpretation"
 
-#: diytracker/forms.py:312 templates/venue_accessibility.html:112
+#: diytracker/forms.py:318 templates/venue_accessibility.html:112
 msgid "Refrigerator for medication"
 msgstr "Refrigerator for medication"
 
-#: diytracker/forms.py:315
+#: diytracker/forms.py:321
 msgid "First aid kit on site"
 msgstr "First and last name"
 
-#: diytracker/forms.py:318
+#: diytracker/forms.py:324
 msgid "AED (defibrillator) on site"
 msgstr "AED (defibrillator)"
 
-#: diytracker/forms.py:323 templates/venue_accessibility.html:125
+#: diytracker/forms.py:329 templates/venue_accessibility.html:125
 msgid "Accessible parking"
 msgstr "Accessible parking"
 
-#: diytracker/forms.py:326
+#: diytracker/forms.py:332
 msgid "Public transport access"
 msgstr "Public transport"
 
-#: diytracker/forms.py:329 templates/venue_accessibility.html:132
+#: diytracker/forms.py:335 templates/venue_accessibility.html:132
 msgid "Gender-neutral toilets"
 msgstr "Gender-neutral toilets"
 
-#: diytracker/forms.py:332
+#: diytracker/forms.py:338
 msgid "Rest / seating areas inside"
 msgstr "Rest / seating areas"
 
-#: diytracker/forms.py:335
+#: diytracker/forms.py:341
 msgid "Guide dogs & assistance animals welcome"
 msgstr "Guide dogs welcome"
 
-#: diytracker/forms.py:340
+#: diytracker/forms.py:346
 msgid "Quiet / alternative entrance option"
 msgstr "Quiet / alternative entrance"
 
-#: diytracker/forms.py:343
+#: diytracker/forms.py:349
 msgid "Additional accessibility notes"
 msgstr "Additional notes"
 
-#: diytracker/forms.py:348 templates/admin.html:109 templates/venues.html:39
+#: diytracker/forms.py:354 templates/admin.html:109 templates/venues.html:39
 msgid "Name"
 msgstr "Name"
 
-#: diytracker/forms.py:353
+#: diytracker/forms.py:359
 msgid "Message"
 msgstr "Message"
 
@@ -359,32 +359,32 @@ msgstr "Zug"
 msgid "Zürich"
 msgstr "Zürich"
 
-#: diytracker/blueprints/admin.py:159 diytracker/blueprints/submissions.py:244
+#: diytracker/blueprints/admin.py:157 diytracker/blueprints/submissions.py:244
 msgid "Selected venue does not exist."
 msgstr "Selected venue does not exist."
 
-#: diytracker/blueprints/admin.py:171
+#: diytracker/blueprints/admin.py:169
 msgid "Event updated successfully!"
 msgstr "Event updated successfully!"
 
-#: diytracker/blueprints/admin.py:187
+#: diytracker/blueprints/admin.py:185
 msgid "Event deleted successfully!"
 msgstr "Event deleted successfully!"
 
-#: diytracker/blueprints/admin.py:209
+#: diytracker/blueprints/admin.py:207
 msgid "— none —"
 msgstr "— none —"
 
-#: diytracker/blueprints/admin.py:218
+#: diytracker/blueprints/admin.py:216
 msgid "Venue updated successfully!"
 msgstr "Venue updated successfully!"
 
-#: diytracker/blueprints/admin.py:239
+#: diytracker/blueprints/admin.py:237
 #, python-format
 msgid " and %(k)d more"
 msgstr " and %(k)d more"
 
-#: diytracker/blueprints/admin.py:242
+#: diytracker/blueprints/admin.py:240
 #, python-format
 msgid ""
 "Cannot delete venue \"%(venue)s\": it still has %(n)d event(s) "
@@ -393,19 +393,19 @@ msgstr ""
 "Cannot delete venue \"%(venue)s\": it still has %(n)d event(s) "
 "(%(names)s%(more)s). Reassign or delete those events first."
 
-#: diytracker/blueprints/admin.py:253
+#: diytracker/blueprints/admin.py:251
 msgid "Venue deleted."
 msgstr "Venue deleted."
 
-#: diytracker/blueprints/admin.py:296
+#: diytracker/blueprints/admin.py:294
 msgid "granted"
 msgstr "granted"
 
-#: diytracker/blueprints/admin.py:296
+#: diytracker/blueprints/admin.py:294
 msgid "revoked"
 msgstr "revoked"
 
-#: diytracker/blueprints/admin.py:297
+#: diytracker/blueprints/admin.py:296
 #, python-format
 msgid "Promoter status %(status)s for %(email)s."
 msgstr "Promoter status %(status)s for %(email)s."
@@ -427,19 +427,28 @@ msgstr "Invalid email or password."
 msgid "This invite link is invalid or has expired."
 msgstr "This invite link is invalid or has expired."
 
-#: diytracker/blueprints/promoter.py:77 diytracker/blueprints/promoter.py:104
+#: diytracker/blueprints/promoter.py:106
+msgid "This event already belongs to a label."
+msgstr "This event already belongs to a label."
+
+#: diytracker/blueprints/promoter.py:111
+#, python-format
+msgid "Event claimed for %(label)s!"
+msgstr "Event claimed for %(label)s!"
+
+#: diytracker/blueprints/promoter.py:129 diytracker/blueprints/promoter.py:156
 msgid "A label with this name already exists."
 msgstr "A label with this name already exists."
 
-#: diytracker/blueprints/promoter.py:91
+#: diytracker/blueprints/promoter.py:143
 msgid "Label created!"
 msgstr "Label created!"
 
-#: diytracker/blueprints/promoter.py:116
+#: diytracker/blueprints/promoter.py:168
 msgid "Label updated!"
 msgstr "Label updated!"
 
-#: diytracker/blueprints/promoter.py:133
+#: diytracker/blueprints/promoter.py:185
 msgid "Label deleted."
 msgstr "Label deleted."
 
@@ -744,7 +753,7 @@ msgstr "ID"
 #: templates/admin.html:110 templates/admin_statistics.html:22
 #: templates/calendar.html:97 templates/event_page.html:73
 #: templates/event_queue.html:48 templates/label_page.html:79
-#: templates/promoter_dashboard.html:60
+#: templates/promoter_dashboard.html:66
 msgid "Date"
 msgstr "Date"
 
@@ -826,7 +835,7 @@ msgstr "Most viewed events"
 
 #: templates/admin_statistics.html:21 templates/edit_event.html:14
 #: templates/event_page.html:3 templates/event_page.html:58
-#: templates/event_queue.html:49 templates/promoter_dashboard.html:59
+#: templates/event_queue.html:49 templates/promoter_dashboard.html:65
 msgid "Event"
 msgstr "Event"
 
@@ -834,11 +843,11 @@ msgstr "Event"
 msgid "Hits"
 msgstr "Hits"
 
-#: templates/admin_statistics.html:25 templates/promoter_dashboard.html:63
+#: templates/admin_statistics.html:25 templates/promoter_dashboard.html:69
 msgid "Visitors"
 msgstr "Visitors"
 
-#: templates/admin_statistics.html:36 templates/promoter_dashboard.html:73
+#: templates/admin_statistics.html:36 templates/promoter_dashboard.html:79
 msgid "past"
 msgstr "past"
 
@@ -929,7 +938,7 @@ msgid "USERS"
 msgstr "USERS"
 
 #: templates/admin_users.html:20 templates/label_form.html:11
-#: templates/promoter_dashboard.html:9
+#: templates/promoter_claim.html:10 templates/promoter_dashboard.html:9
 msgid "Promoter"
 msgstr "Promoter"
 
@@ -1412,6 +1421,38 @@ msgstr "upcoming events"
 msgid "Venue page"
 msgstr "Venue page"
 
+#: templates/promoter_claim.html:4 templates/promoter_dashboard.html:57
+msgid "Claim an event"
+msgstr "Claim an event"
+
+#: templates/promoter_claim.html:11
+msgid "CLAIM AN EVENT"
+msgstr "CLAIM AN EVENT"
+
+#: templates/promoter_claim.html:15
+msgid ""
+"Upcoming events without a label. Claiming one tags it with your label — "
+"it shows up on your label page and in your dashboard stats."
+msgstr ""
+"Upcoming events without a label. Claiming one tags it with your label — "
+"it shows up on your label page and in your dashboard stats."
+
+#: templates/promoter_claim.html:19
+msgid "You need a label before you can claim events."
+msgstr "You need a label before you can claim events."
+
+#: templates/promoter_claim.html:20
+msgid "Create one first."
+msgstr "Create one first."
+
+#: templates/promoter_claim.html:46
+msgid "Claim"
+msgstr "Claim"
+
+#: templates/promoter_claim.html:53
+msgid "No unclaimed upcoming events right now."
+msgstr "No unclaimed upcoming events right now."
+
 #: templates/promoter_dashboard.html:3
 msgid "Promoter dashboard"
 msgstr "Promoter dashboard"
@@ -1428,27 +1469,27 @@ msgstr "Delete this label? Its events stay on the calendar without a label."
 msgid "No labels yet — create your first one to get a public label page."
 msgstr "No labels yet — create your first one to get a public label page."
 
-#: templates/promoter_dashboard.html:53
+#: templates/promoter_dashboard.html:54
 msgid "Your events"
 msgstr "Your events"
 
-#: templates/promoter_dashboard.html:62
+#: templates/promoter_dashboard.html:68
 msgid "Views"
 msgstr "Views"
 
-#: templates/promoter_dashboard.html:64 templates/venues.html:71
+#: templates/promoter_dashboard.html:70 templates/venues.html:71
 msgid "Link"
 msgstr "Link"
 
-#: templates/promoter_dashboard.html:83
+#: templates/promoter_dashboard.html:89
 msgid "Copied!"
 msgstr "Copied!"
 
-#: templates/promoter_dashboard.html:84
+#: templates/promoter_dashboard.html:90
 msgid "Copy link"
 msgstr "Copy link"
 
-#: templates/promoter_dashboard.html:92
+#: templates/promoter_dashboard.html:98
 msgid ""
 "Views count opens of the event page — for example when someone follows a "
 "link you shared. Crawlers are filtered out; visitors are daily unique "
@@ -1458,13 +1499,13 @@ msgstr ""
 "link you shared. Crawlers are filtered out; visitors are daily unique "
 "IPs. A trend, not a census."
 
-#: templates/promoter_dashboard.html:94
+#: templates/promoter_dashboard.html:100
 msgid ""
 "No events with your labels yet. Tag a show with your label when "
-"submitting it."
+"submitting it, or claim one already on the calendar."
 msgstr ""
 "No events with your labels yet. Tag a show with your label when "
-"submitting it."
+"submitting it, or claim one already on the calendar."
 
 #: templates/set_password.html:3
 msgid "Set password"

@@ -50,7 +50,13 @@
   {# Traffic per event — counts from the same nginx-log pipeline as the admin
      statistics page (EventDailyViews): trend indicators, not a census. #}
   <section class="border-2 border-ink bg-paper p-4">
-    <p class="text-xs uppercase tracking-widest text-smudge mb-3">{{ _('Your events') }}</p>
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+      <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Your events') }}</p>
+      <a href="{{ url_for('promoter.claim_events') }}"
+         class="btn-press inline-flex items-center gap-1.5 border-2 border-ink bg-paper text-ink px-3 py-1.5 uppercase tracking-widest text-xs hover:bg-ink hover:text-paper transition-colors">
+        {{ _('Claim an event') }}
+      </a>
+    </div>
     {% if stats %}
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">
@@ -91,7 +97,7 @@
     </div>
     <p class="text-xs text-smudge mt-3">{{ _('Views count opens of the event page — for example when someone follows a link you shared. Crawlers are filtered out; visitors are daily unique IPs. A trend, not a census.') }}</p>
     {% else %}
-    <p class="text-sm text-smudge">{{ _('No events with your labels yet. Tag a show with your label when submitting it.') }}</p>
+    <p class="text-sm text-smudge">{{ _('No events with your labels yet. Tag a show with your label when submitting it, or claim one already on the calendar.') }}</p>
     {% endif %}
   </section>
 

@@ -102,6 +102,90 @@ class TestLabelCrud:
         assert db.session.get(Event, event.id).label_id is None
 
 
+class TestClaim:
+    def test_plain_user_forbidden(self, client, make_user, login):
+        login(make_user())
+        assert client.get("/promoter/claim").status_code == 403
+
+    def test_lists_only_unclaimed_upcoming_events(
+        self, client, make_user, make_label, make_event, login
+    ):
+        promoter = make_user(is_promoter=True)
+        label = make_label(promoter)
+        make_event(name="Unclaimed Show")
+        make_event(name="Claimed Show", label_id=label.id)
+        make_event(name="Past Show", days_from_now=-10)
+        login(promoter)
+        resp = client.get("/promoter/claim")
+        assert b"Unclaimed Show" in resp.data
+        assert b"Claimed Show" not in resp.data
+        assert b"Past Show" not in resp.data
+
+    def test_no_labels_shows_hint(self, client, make_user, make_event, login):
+        make_event()
+        login(make_user(is_promoter=True))
+        resp = client.get("/promoter/claim")
+        assert b"You need a label" in resp.data
+
+    def test_claim_assigns_label(
+        self, client, make_user, make_label, make_event, login
+    ):
+        promoter = make_user(is_promoter=True)
+        label = make_label(promoter)
+        event = make_event()
+        login(promoter)
+        resp = client.post(
+            f"/promoter/events/{event.id}/claim",
+            data={"label_id": str(label.id)},
+            follow_redirects=True,
+        )
+        assert resp.status_code == 200
+        assert b"Event claimed" in resp.data
+        assert db.session.get(Event, event.id).label_id == label.id
+
+    def test_cannot_claim_with_foreign_label(
+        self, client, make_user, make_label, make_event, login
+    ):
+        owner = make_user(email="owner@example.com", is_promoter=True)
+        foreign_label = make_label(owner)
+        event = make_event()
+        login(make_user(email="other@example.com", is_promoter=True))
+        resp = client.post(
+            f"/promoter/events/{event.id}/claim",
+            data={"label_id": str(foreign_label.id)},
+        )
+        assert resp.status_code == 400
+        assert db.session.get(Event, event.id).label_id is None
+
+    def test_cannot_claim_already_labelled_event(
+        self, client, make_user, make_label, make_event, login
+    ):
+        owner = make_user(email="owner@example.com", is_promoter=True)
+        their_label = make_label(owner, name="Theirs")
+        event = make_event(label_id=their_label.id)
+        me = make_user(email="me@example.com", is_promoter=True)
+        my_label = make_label(me, name="Mine")
+        login(me)
+        resp = client.post(
+            f"/promoter/events/{event.id}/claim",
+            data={"label_id": str(my_label.id)},
+            follow_redirects=True,
+        )
+        assert b"already belongs to a label" in resp.data
+        assert db.session.get(Event, event.id).label_id == their_label.id
+
+    def test_admin_may_claim_with_any_label(
+        self, client, make_user, make_label, make_event, admin, login
+    ):
+        label = make_label(make_user(is_promoter=True))
+        event = make_event()
+        login(admin)
+        client.post(
+            f"/promoter/events/{event.id}/claim", data={"label_id": str(label.id)}
+        )
+        assert db.session.get(Event, event.id).label_id == label.id
+
+
 class TestDashboard:
     def test_shows_view_counts_for_label_events(
         self, client, make_user, make_label, make_event, login
