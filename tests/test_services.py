@@ -505,7 +505,9 @@ class TestMergeEvents:
 
         survivor = make_event(name="Show 1")
         loser = make_event(name="Show 2")
-        views = EventDailyViews(event_id=loser.id, date=date.today(), hits=5, visitors=2)
+        views = EventDailyViews(
+            event_id=loser.id, date=date.today(), hits=5, visitors=2
+        )
         db.session.add(views)
         db.session.commit()
         stats = merge_events(survivor, [loser])

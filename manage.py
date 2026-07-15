@@ -525,9 +525,7 @@ def cmd_event_dedup(args):
 
         print()
         if args.apply:
-            print(
-                f"  {green('Done.')} {merged} merge(s), {declined} pair(s) declined."
-            )
+            print(f"  {green('Done.')} {merged} merge(s), {declined} pair(s) declined.")
         else:
             print("  Dry run: rerun with --apply to merge.")
     return 0
