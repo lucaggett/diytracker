@@ -264,6 +264,7 @@ def generate_accessibility_link(venue_id):
     flash(link, "accessibility_link")
     return redirect(url_for("admin.venues"))
 
+
 @bp.route("/admin/scrape-status")
 @admin_required
 def scrape_status():
