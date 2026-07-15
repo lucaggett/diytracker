@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-15 17:47+0200\n"
+"POT-Creation-Date: 2026-07-15 21:59+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -91,39 +91,38 @@ msgstr "Ticket URL"
 msgid "Venue"
 msgstr "Venue"
 
-#: diytracker/forms.py:156 diytracker/forms.py:207
+#: diytracker/forms.py:156 diytracker/forms.py:203
 #: templates/event_queue.html:132
 msgid "Venue Name"
 msgstr "Venue Name"
 
-#: diytracker/forms.py:157 diytracker/forms.py:208
+#: diytracker/forms.py:157 diytracker/forms.py:204
 msgid "Venue Address"
 msgstr "Street Address"
 
-#: diytracker/forms.py:158 diytracker/forms.py:209
+#: diytracker/forms.py:158 diytracker/forms.py:205
 #: templates/event_queue.html:136 templates/venues.html:40
 msgid "City"
 msgstr "City"
 
-#: diytracker/forms.py:159 diytracker/forms.py:210 templates/calendar.html:248
+#: diytracker/forms.py:159 diytracker/forms.py:206 templates/calendar.html:248
 #: templates/canton.html:10 templates/venues.html:41
 msgid "Canton"
 msgstr "Canton"
 
-#: diytracker/forms.py:160 diytracker/forms.py:211 templates/venues.html:42
+#: diytracker/forms.py:160 diytracker/forms.py:207 templates/venues.html:42
 msgid "ZIP Code"
 msgstr "ZIP Code"
 
-#: diytracker/forms.py:161 diytracker/forms.py:212
+#: diytracker/forms.py:161 diytracker/forms.py:208
 msgid "Coordinates"
 msgstr "Enter coordinates"
 
-#: diytracker/forms.py:168 diytracker/forms.py:356
-#: templates/admin_users.html:18
+#: diytracker/forms.py:168 diytracker/forms.py:352
 msgid "Email"
 msgstr "Email"
 
-#: diytracker/forms.py:169 diytracker/forms.py:200
+#: diytracker/forms.py:169 diytracker/forms.py:196
 msgid "Password"
 msgstr "SET PASSWORD"
 
@@ -135,123 +134,123 @@ msgstr "Label Name"
 msgid "Logo"
 msgstr "Logo"
 
-#: diytracker/forms.py:202
+#: diytracker/forms.py:198
 msgid "Confirm Password"
 msgstr "SET PASSWORD"
 
-#: diytracker/forms.py:257 templates/venue_accessibility.html:71
+#: diytracker/forms.py:253 templates/venue_accessibility.html:71
 msgid "Step-free entrance"
 msgstr "Step-free entrance"
 
-#: diytracker/forms.py:260
+#: diytracker/forms.py:256
 msgid "Entrance notes"
 msgstr "Entrance notes"
 
-#: diytracker/forms.py:263 templates/venue_accessibility.html:72
+#: diytracker/forms.py:259 templates/venue_accessibility.html:72
 msgid "Step-free throughout interior"
 msgstr "Step-free throughout interior"
 
-#: diytracker/forms.py:266 templates/venue_accessibility.html:73
+#: diytracker/forms.py:262 templates/venue_accessibility.html:73
 msgid "Accessible toilet"
 msgstr "Accessible toilet"
 
-#: diytracker/forms.py:269
+#: diytracker/forms.py:265
 msgid "Toilet notes"
 msgstr "Toilet notes"
 
-#: diytracker/forms.py:272 templates/venue_accessibility.html:76
+#: diytracker/forms.py:268 templates/venue_accessibility.html:76
 msgid "Dedicated wheelchair spaces"
 msgstr "Dedicated wheelchair spaces"
 
-#: diytracker/forms.py:275
+#: diytracker/forms.py:271
 msgid "Number of wheelchair spaces"
 msgstr "Dedicated wheelchair spaces"
 
-#: diytracker/forms.py:278 templates/venue_accessibility.html:83
+#: diytracker/forms.py:274 templates/venue_accessibility.html:83
 msgid "Floor surface"
 msgstr "Floor surface"
 
-#: diytracker/forms.py:283 templates/venue_accessibility.html:93
+#: diytracker/forms.py:279 templates/venue_accessibility.html:93
 msgid "Strobe / flashing lights"
 msgstr "Strobe / flashing lights"
 
-#: diytracker/forms.py:286
+#: diytracker/forms.py:282
 msgid "Warning given before strobes"
 msgstr "Warning before strobes"
 
-#: diytracker/forms.py:289 templates/venue_accessibility.html:95
+#: diytracker/forms.py:285 templates/venue_accessibility.html:95
 msgid "Smoke / haze machines"
 msgstr "Smoke / haze machines"
 
-#: diytracker/forms.py:292 templates/venue_accessibility.html:96
+#: diytracker/forms.py:288 templates/venue_accessibility.html:96
 msgid "Typical sound level"
 msgstr "Typical sound level"
 
-#: diytracker/forms.py:295
+#: diytracker/forms.py:291
 msgid "Quiet / low-stimulation room available"
 msgstr "Quiet / low-stimulation room"
 
-#: diytracker/forms.py:300
+#: diytracker/forms.py:296
 msgid "Free earplugs provided"
 msgstr "Free earplugs"
 
-#: diytracker/forms.py:303
+#: diytracker/forms.py:299
 msgid "Sensory-friendly events / nights"
 msgstr "Sensory-friendly events"
 
-#: diytracker/forms.py:308
+#: diytracker/forms.py:304
 msgid "Hearing loop (induction loop)"
 msgstr "Hearing loop (induction loop)"
 
-#: diytracker/forms.py:311
+#: diytracker/forms.py:307
 msgid "Sign language interpretation at events"
 msgstr "Sign language interpretation"
 
-#: diytracker/forms.py:318 templates/venue_accessibility.html:112
+#: diytracker/forms.py:314 templates/venue_accessibility.html:112
 msgid "Refrigerator for medication"
 msgstr "Refrigerator for medication"
 
-#: diytracker/forms.py:321
+#: diytracker/forms.py:317
 msgid "First aid kit on site"
 msgstr "First and last name"
 
-#: diytracker/forms.py:324
+#: diytracker/forms.py:320
 msgid "AED (defibrillator) on site"
 msgstr "AED (defibrillator)"
 
-#: diytracker/forms.py:329 templates/venue_accessibility.html:125
+#: diytracker/forms.py:325 templates/venue_accessibility.html:125
 msgid "Accessible parking"
 msgstr "Accessible parking"
 
-#: diytracker/forms.py:332
+#: diytracker/forms.py:328
 msgid "Public transport access"
 msgstr "Public transport"
 
-#: diytracker/forms.py:335 templates/venue_accessibility.html:132
+#: diytracker/forms.py:331 templates/venue_accessibility.html:132
 msgid "Gender-neutral toilets"
 msgstr "Gender-neutral toilets"
 
-#: diytracker/forms.py:338
+#: diytracker/forms.py:334
 msgid "Rest / seating areas inside"
 msgstr "Rest / seating areas"
 
-#: diytracker/forms.py:341
+#: diytracker/forms.py:337
 msgid "Guide dogs & assistance animals welcome"
 msgstr "Guide dogs welcome"
 
-#: diytracker/forms.py:346
+#: diytracker/forms.py:342
 msgid "Quiet / alternative entrance option"
 msgstr "Quiet / alternative entrance"
 
-#: diytracker/forms.py:349
+#: diytracker/forms.py:345
 msgid "Additional accessibility notes"
 msgstr "Additional notes"
 
-#: diytracker/forms.py:354 templates/admin.html:109 templates/venues.html:39
+#: diytracker/forms.py:350 templates/admin.html:109 templates/venues.html:39
 msgid "Name"
 msgstr "Name"
 
-#: diytracker/forms.py:359
+#: diytracker/forms.py:355
 msgid "Message"
 msgstr "Message"
 
@@ -359,32 +358,32 @@ msgstr "Zug"
 msgid "Zürich"
 msgstr "Zürich"
 
-#: diytracker/blueprints/admin.py:157 diytracker/blueprints/submissions.py:244
+#: diytracker/blueprints/admin.py:156 diytracker/blueprints/submissions.py:244
 msgid "Selected venue does not exist."
 msgstr "Selected venue does not exist."
 
-#: diytracker/blueprints/admin.py:169
+#: diytracker/blueprints/admin.py:168
 msgid "Event updated successfully!"
 msgstr "Event updated successfully!"
 
-#: diytracker/blueprints/admin.py:185
+#: diytracker/blueprints/admin.py:184
 msgid "Event deleted successfully!"
 msgstr "Event deleted successfully!"
 
-#: diytracker/blueprints/admin.py:207
+#: diytracker/blueprints/admin.py:206
 msgid "— none —"
 msgstr "— none —"
 
-#: diytracker/blueprints/admin.py:216
+#: diytracker/blueprints/admin.py:215
 msgid "Venue updated successfully!"
 msgstr "Venue updated successfully!"
 
-#: diytracker/blueprints/admin.py:237
+#: diytracker/blueprints/admin.py:236
 #, python-format
 msgid " and %(k)d more"
 msgstr " and %(k)d more"
 
-#: diytracker/blueprints/admin.py:240
+#: diytracker/blueprints/admin.py:239
 #, python-format
 msgid ""
 "Cannot delete venue \"%(venue)s\": it still has %(n)d event(s) "
@@ -393,28 +392,15 @@ msgstr ""
 "Cannot delete venue \"%(venue)s\": it still has %(n)d event(s) "
 "(%(names)s%(more)s). Reassign or delete those events first."
 
-#: diytracker/blueprints/admin.py:251
+#: diytracker/blueprints/admin.py:250
 msgid "Venue deleted."
 msgstr "Venue deleted."
 
-#: diytracker/blueprints/admin.py:294
-msgid "granted"
-msgstr "granted"
-
-#: diytracker/blueprints/admin.py:294
-msgid "revoked"
-msgstr "revoked"
-
-#: diytracker/blueprints/admin.py:296
-#, python-format
-msgid "Promoter status %(status)s for %(email)s."
-msgstr "Promoter status %(status)s for %(email)s."
-
-#: diytracker/blueprints/admin.py:444
+#: diytracker/blueprints/admin.py:410
 msgid "No report has been generated yet. Use the form to create one."
 msgstr "No report has been generated yet. Use the form to create one."
 
-#: diytracker/blueprints/admin.py:503
+#: diytracker/blueprints/admin.py:469
 #, python-format
 msgid "Cleared %(n)d suspect(s)."
 msgstr "Cleared %(n)d suspect(s)."
@@ -645,12 +631,11 @@ msgid "Save accessibility info"
 msgstr "Save accessibility info"
 
 #: templates/_partials/header_public.html:21 templates/admin.html:3
-#: templates/admin_users.html:19
 msgid "Admin"
 msgstr "Admin"
 
 #: templates/admin.html:8 templates/admin_statistics.html:7
-#: templates/admin_users.html:7 templates/venues.html:28
+#: templates/venues.html:28
 msgid "Admin console"
 msgstr "Admin console"
 
@@ -821,7 +806,7 @@ msgstr "Scraping…"
 msgid "left"
 msgstr "left"
 
-#: templates/_partials/nav_backstage.html:17 templates/admin_statistics.html:3
+#: templates/_partials/nav_backstage.html:16 templates/admin_statistics.html:3
 msgid "Statistics"
 msgstr "Statistics"
 
@@ -928,41 +913,6 @@ msgid ""
 msgstr ""
 "Parsed from the free-text price field — ranges count their lower bound, "
 "so treat these as approximate."
-
-#: templates/_partials/nav_backstage.html:15 templates/admin_users.html:3
-msgid "Users"
-msgstr "Users"
-
-#: templates/admin_users.html:8
-msgid "USERS"
-msgstr "USERS"
-
-#: templates/admin_users.html:20 templates/label_form.html:11
-#: templates/promoter_claim.html:10 templates/promoter_dashboard.html:9
-msgid "Promoter"
-msgstr "Promoter"
-
-#: templates/_partials/header_public.html:24
-#: templates/_partials/nav_backstage.html:11 templates/admin_users.html:21
-#: templates/promoter_dashboard.html:15
-msgid "Labels"
-msgstr "Labels"
-
-#: templates/admin_users.html:29
-msgid "admin"
-msgstr "admin"
-
-#: templates/admin_users.html:30
-msgid "promoter"
-msgstr "promoter"
-
-#: templates/admin_users.html:37
-msgid "Revoke promoter"
-msgstr "Revoke promoter"
-
-#: templates/admin_users.html:37
-msgid "Make promoter"
-msgstr "Make promoter"
 
 #: templates/_partials/footer_public.html:31 templates/archive_index.html:3
 #: templates/archive_month.html:3
@@ -1323,6 +1273,11 @@ msgstr "Edit label"
 msgid "New label"
 msgstr "New label"
 
+#: templates/label_form.html:11 templates/promoter_claim.html:10
+#: templates/promoter_dashboard.html:9
+msgid "Promoter"
+msgstr "Promoter"
+
 #: templates/label_form.html:13
 msgid "EDIT LABEL"
 msgstr "EDIT LABEL"
@@ -1460,6 +1415,12 @@ msgstr "Promoter dashboard"
 #: templates/promoter_dashboard.html:10
 msgid "YOUR LABELS"
 msgstr "YOUR LABELS"
+
+#: templates/_partials/header_public.html:24
+#: templates/_partials/nav_backstage.html:11
+#: templates/promoter_dashboard.html:15
+msgid "Labels"
+msgstr "Labels"
 
 #: templates/promoter_dashboard.html:37
 msgid "Delete this label? Its events stay on the calendar without a label."
@@ -1891,8 +1852,8 @@ msgid "Validation"
 msgstr "Validation"
 
 #: templates/_partials/header_public.html:16
-#: templates/_partials/nav_backstage.html:35
-#: templates/_partials/nav_backstage.html:47
+#: templates/_partials/nav_backstage.html:34
+#: templates/_partials/nav_backstage.html:46
 msgid "Calendar"
 msgstr "Calendar"
 
@@ -1906,19 +1867,19 @@ msgid "Submit"
 msgstr "SUBMIT EVENT"
 
 #: templates/_partials/header_public.html:31
-#: templates/_partials/nav_backstage.html:27
+#: templates/_partials/nav_backstage.html:26
 msgid "Logout"
 msgstr "Logout"
 
-#: templates/_partials/nav_backstage.html:16
+#: templates/_partials/nav_backstage.html:15
 msgid "Analytics"
 msgstr "Analytics"
 
-#: templates/_partials/nav_backstage.html:18
+#: templates/_partials/nav_backstage.html:17
 msgid "Suspects"
 msgstr "Suspects"
 
-#: templates/_partials/nav_backstage.html:49
+#: templates/_partials/nav_backstage.html:48
 msgid "Menu"
 msgstr "Menu"
 
@@ -1969,223 +1930,4 @@ msgstr "Something went wrong on the server side."
 #: templates/errors/500.html:16
 msgid "Fuse blown, cable busted, something between stage and mixing desk."
 msgstr "Fuse blown, cable busted, something between stage and mixing desk."
-
-#~ msgid "Invalid email or password."
-#~ msgstr "Invalid email or password."
-
-#~ msgid "This invite link is invalid or has expired."
-#~ msgstr "This invite link is invalid or has expired."
-
-#~ msgid ""
-#~ "Your message could not be sent —"
-#~ " please write to us directly at "
-#~ "kontakt@diytracker.ch."
-#~ msgstr ""
-#~ "Your message could not be sent —"
-#~ " please write to us directly at "
-#~ "kontakt@diytracker.ch."
-
-#~ msgid "Thanks! We will get back to you as soon as possible."
-#~ msgstr "Thanks! We will get back to you as soon as possible."
-
-#~ msgid "Invalid event selection."
-#~ msgstr "Invalid event selection."
-
-#~ msgid "This event already exists."
-#~ msgstr "This event already exists."
-
-#~ msgid "Event approved and added to calendar!"
-#~ msgstr "Event approved and added to calendar!"
-
-#~ msgid "Please provide all required venue details for a new venue."
-#~ msgstr "Please provide all required venue details for a new venue."
-
-#~ msgid "Venue already exists. Using existing venue."
-#~ msgstr "Venue already exists. Using existing venue."
-
-#~ msgid "Selected venue does not exist."
-#~ msgstr "Selected venue does not exist."
-
-#~ msgid "Event submitted successfully!"
-#~ msgstr "Event submitted successfully!"
-
-#~ msgid "Event updated successfully!"
-#~ msgstr "Event updated successfully!"
-
-#~ msgid "Event deleted successfully!"
-#~ msgstr "Event deleted successfully!"
-
-#~ msgid "no events"
-#~ msgstr "no events"
-
-#~ msgid "Update accessibility info"
-#~ msgstr "Update accessibility info"
-
-#~ msgid "Fill out accessibility info"
-#~ msgstr "Fill out accessibility info"
-
-#~ msgid "All DIY venues in Switzerland on one map."
-#~ msgstr "All DIY venues in Switzerland on one map."
-
-#~ msgid "%(num)d venues on the map"
-#~ msgstr "%(num)d venues on the map"
-
-#~ msgid "no upcoming events"
-#~ msgstr "no upcoming events"
-
-#~ msgid "Event Date"
-#~ msgstr "Event Date"
-
-#~ msgid "Doors Open Time"
-#~ msgstr "Doors Open Time"
-
-#~ msgid "Ticket Link"
-#~ msgstr "Ticket Link"
-
-#~ msgid "Venue Address"
-#~ msgstr "Venue Address"
-
-#~ msgid "Coordinates"
-#~ msgstr "Coordinates"
-
-#~ msgid "Email"
-#~ msgstr "Email"
-
-#~ msgid "Password"
-#~ msgstr "Password"
-
-#~ msgid "Confirm Password"
-#~ msgstr "Confirm Password"
-
-#~ msgid "Entrance notes"
-#~ msgstr "Entrance notes"
-
-#~ msgid "Toilet notes"
-#~ msgstr "Toilet notes"
-
-#~ msgid "Number of wheelchair spaces"
-#~ msgstr "Number of wheelchair spaces"
-
-#~ msgid "Warning given before strobes"
-#~ msgstr "Warning given before strobes"
-
-#~ msgid "Quiet / low-stimulation room available"
-#~ msgstr "Quiet / low-stimulation room available"
-
-#~ msgid "Free earplugs provided"
-#~ msgstr "Free earplugs provided"
-
-#~ msgid "Sensory-friendly events / nights"
-#~ msgstr "Sensory-friendly events / nights"
-
-#~ msgid "Hearing loop (induction loop)"
-#~ msgstr "Hearing loop (induction loop)"
-
-#~ msgid "Sign language interpretation at events"
-#~ msgstr "Sign language interpretation at events"
-
-#~ msgid "First aid kit on site"
-#~ msgstr "First and last name"
-
-#~ msgid "AED (defibrillator) on site"
-#~ msgstr "AED (defibrillator) on site"
-
-#~ msgid "Public transport access"
-#~ msgstr "Public transport access"
-
-#~ msgid "Rest / seating areas inside"
-#~ msgstr "Rest / seating areas inside"
-
-#~ msgid "Guide dogs & assistance animals welcome"
-#~ msgstr "Guide dogs & assistance animals welcome"
-
-#~ msgid "Quiet / alternative entrance option"
-#~ msgstr "Quiet / alternative entrance option"
-
-#~ msgid "Additional accessibility notes"
-#~ msgstr "Additional accessibility notes"
-
-#~ msgid "Message"
-#~ msgstr "Message"
-
-#~ msgid "Where the shows happen"
-#~ msgstr "Where the shows happen"
-
-#~ msgid "MAP"
-#~ msgstr "MAP"
-
-#~ msgid "Underground. Non-commercial. Hand-curated."
-#~ msgstr "Underground. Non-commercial. Hand-curated."
-
-#~ msgid "Legal"
-#~ msgstr "Legal"
-
-#~ msgid "Imprint"
-#~ msgstr "Imprint"
-
-#~ msgid "Terms"
-#~ msgstr "Terms"
-
-#~ msgid "Privacy"
-#~ msgstr "Privacy"
-
-#~ msgid "Language"
-#~ msgstr "Language"
-
-#~ msgid "Calendar"
-#~ msgstr "Calendar"
-
-#~ msgid "Logout"
-#~ msgstr "Logout"
-
-#~ msgid "Submit"
-#~ msgstr "Submit"
-
-#~ msgid "Analytics"
-#~ msgstr "Analytics"
-
-#~ msgid "%(num)d venues"
-#~ msgstr "%(num)d venues"
-
-#~ msgid "Only venues with shows"
-#~ msgstr "Only venues with shows"
-
-#~ msgid "DIY & punk concerts in %(city)s"
-#~ msgstr "DIY & punk concerts in %(city)s"
-
-#~ msgid ""
-#~ "%(num)d upcoming DIY, punk and "
-#~ "underground shows in %(city)s — dates,"
-#~ " venues, prices and accessibility info."
-#~ msgstr ""
-#~ "%(num)d upcoming DIY, punk and "
-#~ "underground shows in %(city)s — dates,"
-#~ " venues, prices and accessibility info."
-
-#~ msgid "DIY concerts in %(city)s"
-#~ msgstr "DIY concerts in %(city)s"
-
-#~ msgid ""
-#~ "Upcoming DIY, punk, hardcore and "
-#~ "underground shows in %(city)s. Hand-"
-#~ "curated, non-commercial, updated continuously."
-#~ msgstr ""
-#~ "Upcoming DIY, punk, hardcore and "
-#~ "underground shows in %(city)s. Hand-"
-#~ "curated, non-commercial, updated continuously."
-
-#~ msgid "More events in %(city)s"
-#~ msgstr "More events in %(city)s"
-
-#~ msgid "Cities"
-#~ msgstr "Cities"
-
-#~ msgid "What diytracker.ch is — and how you can contribute."
-#~ msgstr "What diytracker.ch is — and how you can contribute."
-
-#~ msgid "diytracker.ch · Swiss DIY concerts"
-#~ msgstr "diytracker.ch · Swiss DIY concerts"
-
-#~ msgid "Venues with upcoming shows in the next three months."
-#~ msgstr "Venues with upcoming shows in the next three months."
 
