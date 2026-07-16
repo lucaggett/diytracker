@@ -531,6 +531,51 @@ def cmd_event_dedup(args):
     return 0
 
 
+def cmd_event_genre_dedup(args):
+    app, db, _submitter = _load_app()
+    with app.app_context():
+        from diytracker.models import Event
+        from diytracker.services.cache import bust_cache
+        from diytracker.services.genre_dedup import (
+            find_genre_dedup_groups,
+            merge_genre_tokens,
+            pick_canonical,
+        )
+
+        events = Event.query.all()
+        mode = "APPLY" if args.apply else "DRY RUN (rerun with --apply to merge)"
+        print(f"\n  Database: {db.engine.url.database}")
+        print(f"  {len(events)} event(s) scanned · {mode}\n")
+
+        groups = find_genre_dedup_groups(events)
+        if not groups:
+            print("  No duplicate genre spellings found.\n")
+            return 0
+
+        mapping = {}
+        print(f"  {len(groups)} genre(s) with inconsistent spelling:\n")
+        for key, spellings in groups.items():
+            canonical = pick_canonical(spellings)
+            variants = ", ".join(
+                f"{spelling!r} x{count}" for spelling, count in spellings.items()
+            )
+            print(f"    {variants} -> {canonical!r}")
+            for spelling in spellings:
+                if spelling != canonical:
+                    mapping[spelling] = canonical
+
+        print()
+        if not args.apply:
+            print("  Dry run: rerun with --apply to merge.")
+            return 0
+
+        changed = merge_genre_tokens(events, mapping)
+        db.session.commit()
+        bust_cache()
+        print(f"  {green('Done.')} {changed} event(s) updated.")
+    return 0
+
+
 # ── statistics ────────────────────────────────────────────────────────────────
 
 
@@ -832,6 +877,15 @@ def build_parser():
         help="Scan past events too, instead of upcoming only",
     )
     sp.set_defaults(func=cmd_event_dedup)
+
+    sp = esub.add_parser(
+        "genre-dedup",
+        help="Normalize genre spellings that differ only by case/whitespace",
+    )
+    sp.add_argument(
+        "--apply", action="store_true", help="Actually merge (default: dry run)"
+    )
+    sp.set_defaults(func=cmd_event_genre_dedup)
 
     stp = sub.add_parser("stats", help="App statistics")
     ssub = stp.add_subparsers(dest="stats_command", required=True)

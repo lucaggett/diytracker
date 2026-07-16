@@ -73,6 +73,8 @@ def get_genre_choices():
         "Mathcore",
         "Shoegaze",
         "Gabber",
+        "Goregrind",
+        "Psycore",
     ]
     return [(genre, genre) for genre in genres]
 
@@ -359,3 +361,13 @@ class CollaboratorRequestForm(FlaskForm):
     )
     # Honeypot — hidden via CSS, real users never fill it.
     website = StringField("Website", validators=[Optional(), Length(max=0)])
+
+
+class GenreSuggestionForm(FlaskForm):
+    genre = StringField(
+        _l("Genre"), validators=[DataRequired(), Length(max=100)]
+    )
+    note = TextAreaField(
+        _l("Why should this genre be added? (optional)"),
+        validators=[Optional(), Length(max=2000)],
+    )

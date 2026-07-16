@@ -490,6 +490,18 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "This event's venue no longer exists. Please select or create a venue below.": "Das Venue dieses Events existiert nicht mehr. Bitte unten ein Venue auswählen oder neu anlegen.",
         # Label description
         "Optional. Shown on your public label page.": "Optional. Wird auf deiner öffentlichen Labelseite angezeigt.",
+        # Genre submissions page
+        "Suggest a genre": "Genre vorschlagen",
+        "Suggest genre": "Genre vorschlagen",
+        "Help us grow": "Hilf uns zu wachsen",
+        "SUGGEST A GENRE": "GENRE VORSCHLAGEN",
+        "Missing a genre on diytracker.ch? Suggest it here and we will take a look.": "Fehlt ein Genre auf diytracker.ch? Schlag es hier vor, wir schauen es uns an.",
+        "Think we're missing a genre? Tell us what it's called and, if you like, why it matters — we curate the list by hand.": "Denkst du, uns fehlt ein Genre? Sag uns, wie es heisst, und wenn du magst, warum es wichtig ist — wir pflegen die Liste von Hand.",
+        "Why should this genre be added? (optional)": "Warum sollte dieses Genre hinzugefügt werden? (optional)",
+        "Any bands or events that fit this genre?": "Gibt es Bands oder Events, die zu diesem Genre passen?",
+        "e.g. Goregrind": "z.B. Goregrind",
+        "Thanks! We will take a look at your genre suggestion.": "Danke! Wir schauen uns deinen Genre-Vorschlag an.",
+        "Your suggestion could not be sent — please write to us directly at kontakt@diytracker.ch.": "Vorschlag konnte nicht gesendet werden — bitte schreib uns direkt an kontakt@diytracker.ch.",
     },
     "fr": {
         "Invalid email or password.": "E-mail ou mot de passe invalide.",
@@ -957,6 +969,18 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "This event's venue no longer exists. Please select or create a venue below.": "Le lieu de cet événement n'existe plus. Sélectionne ou crée un lieu ci-dessous.",
         # Label description
         "Optional. Shown on your public label page.": "Optionnel. Affiché sur ta page de label publique.",
+        # Genre submissions page
+        "Suggest a genre": "Proposer un genre",
+        "Suggest genre": "Proposer un genre",
+        "Help us grow": "Aide-nous à grandir",
+        "SUGGEST A GENRE": "PROPOSER UN GENRE",
+        "Missing a genre on diytracker.ch? Suggest it here and we will take a look.": "Un genre manque sur diytracker.ch ? Propose-le ici, on y jettera un œil.",
+        "Think we're missing a genre? Tell us what it's called and, if you like, why it matters — we curate the list by hand.": "Tu penses qu'il nous manque un genre ? Dis-nous comment il s'appelle et, si tu veux, pourquoi il compte — la liste est tenue à la main.",
+        "Why should this genre be added? (optional)": "Pourquoi ce genre devrait-il être ajouté ? (optionnel)",
+        "Any bands or events that fit this genre?": "Des groupes ou événements qui correspondent à ce genre ?",
+        "e.g. Goregrind": "p.ex. Goregrind",
+        "Thanks! We will take a look at your genre suggestion.": "Merci ! On va regarder ta proposition de genre.",
+        "Your suggestion could not be sent — please write to us directly at kontakt@diytracker.ch.": "La proposition n'a pas pu être envoyée — écris-nous directement à kontakt@diytracker.ch.",
     },
     "it": {
         "Invalid email or password.": "E-mail o password non validi.",
@@ -1424,6 +1448,18 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "This event's venue no longer exists. Please select or create a venue below.": "Il locale di questo evento non esiste più. Seleziona o crea un locale qui sotto.",
         # Label description
         "Optional. Shown on your public label page.": "Facoltativo. Mostrato sulla tua pagina pubblica dell'etichetta.",
+        # Genre submissions page
+        "Suggest a genre": "Proponi un genere",
+        "Suggest genre": "Proponi un genere",
+        "Help us grow": "Aiutaci a crescere",
+        "SUGGEST A GENRE": "PROPONI UN GENERE",
+        "Missing a genre on diytracker.ch? Suggest it here and we will take a look.": "Manca un genere su diytracker.ch? Proponilo qui, gli daremo un'occhiata.",
+        "Think we're missing a genre? Tell us what it's called and, if you like, why it matters — we curate the list by hand.": "Pensi che ci manchi un genere? Dicci come si chiama e, se vuoi, perché è importante — la lista è curata a mano.",
+        "Why should this genre be added? (optional)": "Perché questo genere dovrebbe essere aggiunto? (facoltativo)",
+        "Any bands or events that fit this genre?": "Ci sono band o eventi che rientrano in questo genere?",
+        "e.g. Goregrind": "es. Goregrind",
+        "Thanks! We will take a look at your genre suggestion.": "Grazie! Daremo un'occhiata al tuo suggerimento di genere.",
+        "Your suggestion could not be sent — please write to us directly at kontakt@diytracker.ch.": "Il suggerimento non è stato inviato — scrivici direttamente a kontakt@diytracker.ch.",
     },
 }
 

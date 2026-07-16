@@ -445,6 +445,7 @@ _GENRE_PARENT_MAP = {
     "metalcore": "Hardcore",
     "deathcore": "Hardcore",
     "grindcore": "Hardcore",
+    "goregrind": "Hardcore",
     "post hardcore": "Hardcore",
     "post-hardcore": "Hardcore",
     "beatdown": "Hardcore",
@@ -502,6 +503,7 @@ _GENRE_PARENT_MAP = {
     "noise": "Electronic",
     "hyperpop": "Electronic",
     "gabber": "Electronic",
+    "psycore": "Electronic",
     # Hip-Hop
     "hip-hop": "Hip-Hop",
     "hip hop": "Hip-Hop",

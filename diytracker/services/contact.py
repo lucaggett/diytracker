@@ -40,3 +40,25 @@ def send_contact_email(name, sender_email, message):
     with smtplib.SMTP_SSL(server_host, 465, context=context) as server:
         server.login(username, password)
         server.send_message(msg)
+
+
+def send_genre_suggestion_email(genre, note, submitter_email):
+    """Send a genre-suggestion email from a logged-in submitter. Raises on
+    misconfig or SMTP failure."""
+    server_host = os.environ["EMAIL_SERVER"]
+    username = os.environ["EMAIL_USERNAME"]
+    password = os.environ["EMAIL_PASSWORD"]
+
+    msg = EmailMessage()
+    msg["Subject"] = f"[diytracker] Genre suggestion: {genre}"
+    msg["From"] = "info@diytracker.ch"
+    msg["To"] = CONTACT_RECIPIENT
+    msg["Reply-To"] = submitter_email
+    msg.set_content(
+        f"Genre:      {genre}\nSubmitted by: {submitter_email}\n\nNote:\n{note or '(none)'}\n"
+    )
+
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(server_host, 465, context=context) as server:
+        server.login(username, password)
+        server.send_message(msg)

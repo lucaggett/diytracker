@@ -7,6 +7,12 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.38.0] - 2026-07-16
+- Added "Goregrind" (→ Hardcore) and "Psycore" (→ Electronic) to the genre autocomplete seed list and the sub-genre → parent-genre map.
+- New `/genres/submit` page ("Suggest a genre"), gated behind login like `/submit` (any registered account, not just admins): a small form (genre + optional note) that emails the suggestion, tagged with the submitter's account email, to the same inbox as the About page's collaborator form — no DB table or moderation queue involved. Linked from the backstage nav bar.
+- New `manage.py event genre-dedup` command: since `Event.genre` is a free-text comma-joined string rather than a table, genres can end up stored under inconsistent spellings (e.g. "Post-punk" vs "post punk" vs "Post-Punk"). The command groups genre tokens in use by a case/whitespace-insensitive key, picks a canonical spelling per group (preferring the seed genre-list spelling, else the most-used one), and rewrites every event's genre string onto the canonical spellings. Dry-run by default; `--apply` to actually merge.
+- Translation catalogs re-extracted and re-populated for the new genre-submission strings; DE/FR/IT/EN stay at 100%.
+
 ## [0.37.0] - 2026-07-16
 - Canton (`/<canton>/`), genre (`/genre/<slug>/`) and label (`/label/<slug>/`) pages now look like the main calendar: the same expandable date-cards (flyer, doors, address, accessibility link, tickets/share buttons) instead of flat link lists. The card markup and its toggle/share JS were extracted into shared partials (`_partials/event_cards.html`, `_partials/event_cards_js.html`) used by all four pages, ending the calendar/label-page duplication. Venue (and genre-page canton) link lists stay below the cards; no filter modal on the sub-pages.
 - On those three pages the site banner is replaced by a hero on the same dark zone: a "← Back to calendar" link, an eyebrow (Canton/Genre/Label), and the page name in large display type — with the label's logo for label pages. When a description exists the hero switches to a compact-title layout with the blurb underneath (canton/genre reuse their existing translated blurbs). The torn-edge divider and nav bar stay; the banner preload is skipped on hero pages. The old `_partials/header_public.html` was split into `header_banner.html` + `header_nav.html` with a `header_hero` block in `base_public.html`.
