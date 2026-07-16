@@ -18,23 +18,22 @@ DEFAULT_INVITE_LANG = "gsw"
 
 INVITE_MESSAGES = {
     "gsw": {
-        "subject": "Dis Passwort für diytracker.ch",
+        "subject": "Willkomme bim diytracker!",
         "body": (
-            "Hoi!\n\n"
-            "Du bisch iglade worde uf diytracker.ch – de Kaländer für "
+            "Sali!\n\n"
+            "Du chasch jetzt im diytracker dis konto aalege."
             "DIY-Konzärt und -Events i de Schwiiz.\n\n"
-            "Do chasch dis Passwort setze (de Link isch 7 Täg gültig):\n"
+            "Unter em folgende link chasch dis passwort setze (de Link isch 7 Täg gültig):\n"
             "https://diytracker.ch/set-password/{token}\n\n"
             "Wenn öppis nöd klappt oder du Frage hesch, "
-            "schriib em Luc: luc@aggett.com\n\n"
-            "Bis gli am nächschte Gig!"
+            "antworte eifach uf das mail.\n\n"
+            "Grüessli, de diytracker applikations-server!"
         ),
     },
     "en": {
         "subject": "Set your diytracker.ch password",
         "body": (
-            "You've been invited to diytracker.ch – the calendar for DIY "
-            "shows and events in Switzerland!\n\n"
+            "You've been invited to diytracker.ch\n\n"
             "Set your password using this link (valid for 7 days):\n"
             "https://diytracker.ch/set-password/{token}\n\n"
             "If you have any questions, contact Luc at luc@aggett.com\n\n"
