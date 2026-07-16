@@ -364,9 +364,7 @@ class CollaboratorRequestForm(FlaskForm):
 
 
 class GenreSuggestionForm(FlaskForm):
-    genre = StringField(
-        _l("Genre"), validators=[DataRequired(), Length(max=100)]
-    )
+    genre = StringField(_l("Genre"), validators=[DataRequired(), Length(max=100)])
     note = TextAreaField(
         _l("Why should this genre be added? (optional)"),
         validators=[Optional(), Length(max=2000)],

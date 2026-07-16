@@ -17,7 +17,10 @@ from diytracker.forms import DeleteScrapedEventForm, EventForm, GenreSuggestionF
 from diytracker.models import db, ScrapedEvent, Submitter
 from diytracker.services.auth import login_required
 from diytracker.services.cache import bust_cache
-from diytracker.services.contact import build_contact_logger, send_genre_suggestion_email
+from diytracker.services.contact import (
+    build_contact_logger,
+    send_genre_suggestion_email,
+)
 from diytracker.services.events import (
     clean_genre_string,
     create_event,
