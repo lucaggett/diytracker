@@ -41,6 +41,7 @@ RESERVED_SLUGS = frozenset(
         "impressum",
         "kyuubi",
         "label",
+        "llms.txt",
         "login",
         "logout",
         "map",
@@ -327,6 +328,33 @@ def venue_json_ld(venue, coords=None):
             ld["amenityFeature"] = features
 
     return ld
+
+
+def collection_json_ld(name, description, url, events):
+    """CollectionPage + ItemList JSON-LD for genre/canton/label landing pages:
+    a list of the upcoming events shown on that page, each pointing back at
+    its own event page (which carries the full MusicEvent JSON-LD)."""
+    return {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": name,
+        "description": description,
+        "url": url,
+        "mainEntity": {
+            "@type": "ItemList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": i,
+                    "url": canonical_url(
+                        url_for("public.event_page", event_id=event.id)
+                    ),
+                    "name": event.name or event.acts or "Event",
+                }
+                for i, event in enumerate(events, start=1)
+            ],
+        },
+    }
 
 
 def website_json_ld():

@@ -3,6 +3,10 @@
 {% block title %}{{ _('DIY & punk concerts in %(canton)s', canton=_(canton)) }} · diytracker.ch{% endblock %}
 {% block meta_description %}{{ _('%(num)d upcoming DIY, punk and underground shows in %(canton)s — dates, venues, prices and accessibility info.', num=events|length, canton=_(canton)) }}{% endblock %}
 
+{% block json_ld %}
+  <script type="application/ld+json">{{ canton_ld | tojson }}</script>
+{% endblock %}
+
 {% block banner_preload %}{% endblock %}
 {% block header_hero %}
   {% set hero_eyebrow = _('Canton') %}

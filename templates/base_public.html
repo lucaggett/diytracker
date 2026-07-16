@@ -18,6 +18,8 @@
   <meta property="og:image" content="{{ url_for('static', filename='img/banner.webp', _external=True) }}">
   {%- endblock %}
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ self.title() }}">
+  <meta name="twitter:description" content="{{ self.meta_description() }}">
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/MISPROJECT.woff2') }}" crossorigin>
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/JetBrainsMono-Regular.woff2') }}" crossorigin>

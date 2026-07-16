@@ -389,7 +389,26 @@ class TestCrawlerSafety:
             for _ in range(60):
                 client.get("/sitemap.xml")
                 client.get("/robots.txt")
+                client.get("/llms.txt")
             assert ScrapeSuspect.query.count() == 0
         finally:
             detector.enabled = False
             detector.reset()
+
+
+class TestLlmsTxt:
+    def test_llms_txt_lists_cantons_and_genres(self, client, make_venue, make_event):
+        make_event(genre="Hardcore", venue=make_venue(city="Winterthur", canton="ZH"))
+        resp = client.get("/llms.txt")
+        assert resp.status_code == 200
+        assert resp.mimetype == "text/plain"
+        body = resp.data.decode()
+        assert "diytracker.ch" in body
+        assert "http://localhost/genre/hardcore/" in body
+        assert "http://localhost/zuerich/" in body
+        assert "http://localhost/sitemap.xml" in body
+
+    def test_llms_txt_not_swallowed_by_canton_route(self, client):
+        resp = client.get("/llms.txt")
+        assert resp.status_code == 200
+        assert resp.mimetype == "text/plain"

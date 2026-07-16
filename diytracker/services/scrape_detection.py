@@ -116,9 +116,9 @@ class ScrapeDetector:
         # is not meaningful either way; logged-in users are trusted.
         if request.endpoint == "static" or "user_id" in session:
             return
-        # Sitemap and robots.txt exist for crawlers; hitting them must never
-        # contribute to a scraper score.
-        if request.endpoint in ("public.sitemap", "public.robots"):
+        # Sitemap, robots.txt and llms.txt exist for crawlers; hitting them
+        # must never contribute to a scraper score.
+        if request.endpoint in ("public.sitemap", "public.robots", "public.llms_txt"):
             return
         # Audit marker only (UA is self-declared, so no scoring exemption):
         # makes search-engine crawl activity greppable in the logs.

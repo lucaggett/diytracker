@@ -41,6 +41,7 @@ from diytracker.services.page_texts import get_page_text
 from diytracker.services.scrape_detection import HONEYPOT_PATH
 from diytracker.services.seo import (
     canonical_url,
+    collection_json_ld,
     event_json_ld,
     hreflang_entries,
     localized_paths,
@@ -417,6 +418,17 @@ def canton_page(canton_slug):
         months_data=_months_data(_months_spanning(events)),
         datetime=datetime,
         intro_text=get_page_text("canton", canton_slug),
+        canton_ld=collection_json_ld(
+            _("DIY & punk concerts in %(canton)s", canton=_(info["name"])),
+            _(
+                "%(num)d upcoming DIY, punk and underground shows in %(canton)s — "
+                "dates, venues, prices and accessibility info.",
+                num=len(events),
+                canton=_(info["name"]),
+            ),
+            canonical_url(),
+            events,
+        ),
     )
 
 
@@ -457,6 +469,17 @@ def genre_page(genre_slug):
         months_data=_months_data(_months_spanning(events)),
         datetime=datetime,
         intro_text=get_page_text("genre", genre_slug),
+        genre_ld=collection_json_ld(
+            _("%(genre)s concerts in Switzerland", genre=info["name"]),
+            _(
+                "%(num)d upcoming %(genre)s shows in Switzerland — dates, "
+                "venues, prices and accessibility info.",
+                num=len(events),
+                genre=info["name"],
+            ),
+            canonical_url(),
+            events,
+        ),
     )
 
 
@@ -485,6 +508,12 @@ def label_page(label_slug):
         grouped_events=_group_events_by_date(events),
         months_data=_months_data(_months_spanning(events)),
         datetime=datetime,
+        label_ld=collection_json_ld(
+            label.name,
+            _("Upcoming shows by %(label)s.", label=label.name),
+            canonical_url(),
+            events,
+        ),
     )
 
 
@@ -644,6 +673,19 @@ def robots():
             "",
         ]
     )
+    return Response(body, mimetype="text/plain")
+
+
+@bp.route("/llms.txt")
+@cache.cached()
+def llms_txt():
+    # Curated Markdown index for LLM crawlers/agents (https://llmstxt.org):
+    # unlike the sitemap, this lists only the site's bounded, stable
+    # sections — individual events churn too fast to belong here.
+    cantons = sorted(canton_directory().items(), key=lambda kv: kv[1]["name"])
+    genres = sorted(genre_directory().items(), key=lambda kv: kv[1]["name"])
+    labels = Label.query.order_by(Label.name.asc()).all()
+    body = render_template("llms.txt", cantons=cantons, genres=genres, labels=labels)
     return Response(body, mimetype="text/plain")
 
 

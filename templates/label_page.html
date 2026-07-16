@@ -4,6 +4,10 @@
 {% block title %}{{ label.name }} · diytracker.ch{% endblock %}
 {% block meta_description %}{{ _('Upcoming shows by %(label)s — dates, venues, prices and accessibility info.', label=label.name) }}{% endblock %}
 
+{% block json_ld %}
+  <script type="application/ld+json">{{ label_ld | tojson }}</script>
+{% endblock %}
+
 {% block banner_preload %}{% endblock %}
 {% block header_hero %}
   {% set hero_eyebrow = _('Label') %}

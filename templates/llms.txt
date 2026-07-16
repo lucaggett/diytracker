@@ -1,0 +1,38 @@
+# diytracker.ch
+
+> DIY, punk and underground concerts in Switzerland — shows, festivals and venues.
+
+Hand-curated, non-commercial listings of DIY, punk, hardcore and underground
+shows across Switzerland. Updated continuously. Available in German, French,
+Italian and English (URLs are prefixed with /fr/, /it/, /en/; German is the
+default, unprefixed locale).
+
+## Browse
+
+- [Calendar]({{ canonical_url(url_for('public.calendar_view', lang_prefix=None)) }}): upcoming shows, all cantons and genres.
+- [About]({{ canonical_url(url_for('public.about', lang_prefix=None)) }}): what diytracker.ch is and who runs it.
+- [Venue map]({{ canonical_url(url_for('public.venue_map', lang_prefix=None)) }}): every venue, plotted.
+- [Archive]({{ canonical_url(url_for('public.archive_index', lang_prefix=None)) }}): past shows by month.
+
+## Cantons
+
+{% for slug, info in cantons -%}
+- [{{ info.name }}]({{ canonical_url(url_for('public.canton_page', canton_slug=slug, lang_prefix=None)) }})
+{% endfor %}
+## Genres
+
+{% for slug, info in genres -%}
+- [{{ info.name }}]({{ canonical_url(url_for('public.genre_page', genre_slug=slug, lang_prefix=None)) }})
+{% endfor %}
+{% if labels %}
+## Labels
+
+{% for label in labels -%}
+- [{{ label.name }}]({{ canonical_url(url_for('public.label_page', label_slug=label.slug, lang_prefix=None)) }})
+{% endfor %}
+{% endif %}
+## Full listings
+
+Individual events and venues change too often for a curated index — see the
+full, machine-readable [sitemap]({{ canonical_url(url_for('public.sitemap')) }})
+for every event, venue and accessibility page.
