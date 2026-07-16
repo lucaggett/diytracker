@@ -82,7 +82,7 @@ def admin():
     )
     orphaned_venue_events = (
         Event.query.outerjoin(Venue, Event.venue_id == Venue.id)
-        .filter(Venue.id.is_(None))
+        .filter(Venue.id.is_(None), Event.date >= today_start)
         .order_by(Event.date.desc())
         .all()
     )

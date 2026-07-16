@@ -7,6 +7,9 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.39.1] - 2026-07-16
+- The "Events with missing venue" warning on the admin dashboard no longer lists past events with a dangling venue reference — only current/upcoming ones, matching the main event list's date filter.
+
 ## [0.39.0] - 2026-07-16
 - The genre list is now a database table (`genre`) instead of the hardcoded list in `forms.get_genre_choices()`, and the "Suggest a genre" page became a genre management page at `/genres` ("Genres" in the backstage nav): any logged-in user can add a genre (it appears in the event form's autocomplete immediately, no email/moderation round-trip) and delete genres they added themselves; admins can delete any. The old hardcoded entries are seeded at startup with no owner (`added_by` NULL), so regular users can't delete the curated baseline. Deleting a genre never touches existing events — `Event.genre` stays a free-text string. `/genres/submit` redirects to `/genres`; the suggestion-email helper and form were removed. No manual migration: `db.create_all()` creates the table and the idempotent startup seeding fills it.
 - `/get_genres` now combines the genre table with genres in use on events (previously seed list + events); `manage.py event genre-dedup` prefers the table's spelling as canonical (previously the seed list's).
