@@ -63,9 +63,7 @@ def _since(timeframe):
 
 
 def leaderboard(timeframe="all"):
-    require_schema(
-        db, (Event,), "Run migrations/migrate_add_created_at.py first."
-    )
+    require_schema(db, (Event,), "Run migrations/migrate_add_created_at.py first.")
     since = _since(timeframe)
     ranked = (
         db.session.query(Submitter.email, func.count(Event.id).label("n"))

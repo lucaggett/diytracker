@@ -93,7 +93,11 @@ class UsersScreen(AdminScreen):
             )
 
     async def _pick_language(self, title, with_link_option):
-        checkbox = "Don't send an email — just show the invite link" if with_link_option else None
+        checkbox = (
+            "Don't send an email — just show the invite link"
+            if with_link_option
+            else None
+        )
         result = await self.app.push_screen_wait(
             ChoiceModal(title, LANG_CHOICES, checkbox_label=checkbox)
         )
@@ -194,9 +198,7 @@ class UsersScreen(AdminScreen):
         if not email:
             return
         confirmed = await self.app.push_screen_wait(
-            ConfirmModal(
-                f"Delete {email}? This cannot be undone.", yes_label="Delete"
-            )
+            ConfirmModal(f"Delete {email}? This cannot be undone.", yes_label="Delete")
         )
         if not confirmed:
             return
@@ -240,7 +242,9 @@ class EventsScreen(AdminScreen):
 
     @work(exclusive=True)
     async def action_refresh(self):
-        self.sub_title = "Events — all (newest first)" if self.include_past else "Events — upcoming"
+        self.sub_title = (
+            "Events — all (newest first)" if self.include_past else "Events — upcoming"
+        )
         rows = await self.run_db(events.list_events, self.include_past, 200)
         table = self.query_one(DataTable)
         table.clear()
@@ -335,9 +339,7 @@ class VenueDedupScreen(DedupScreen):
     plan = None
 
     def controls(self):
-        yield Input(
-            placeholder="Alternate DB path (blank = app DB)", id="db-path"
-        )
+        yield Input(placeholder="Alternate DB path (blank = app DB)", id="db-path")
         yield Button("Scan", id="scan", variant="primary")
         yield Button("Apply auto merges", id="auto", disabled=True)
         yield Button("Review pairs", id="pairs", disabled=True)
@@ -485,9 +487,7 @@ class EventDedupScreen(DedupScreen):
     async def action_scan(self):
         self.busy(True)
         include_past = self.query_one("#include-past", Checkbox).value
-        n_scanned, self.pairs = await self.run_db(
-            events.scan_event_dups, include_past
-        )
+        n_scanned, self.pairs = await self.run_db(events.scan_event_dups, include_past)
         self.log_line(f"{n_scanned} event(s) scanned.")
         if not self.pairs:
             self.log_line("No candidate duplicates found.")

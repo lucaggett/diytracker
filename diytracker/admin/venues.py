@@ -119,8 +119,12 @@ def scan():
         result.pairs.append(
             PairCandidate(
                 reason=reason,
-                a=VenueInfo(venue_a.id, venue_summary(venue_a, counts.get(venue_a.id, 0))),
-                b=VenueInfo(venue_b.id, venue_summary(venue_b, counts.get(venue_b.id, 0))),
+                a=VenueInfo(
+                    venue_a.id, venue_summary(venue_a, counts.get(venue_a.id, 0))
+                ),
+                b=VenueInfo(
+                    venue_b.id, venue_summary(venue_b, counts.get(venue_b.id, 0))
+                ),
                 survivor_id=survivor.id,
                 loser_ids=[loser.id for loser in losers],
             )
