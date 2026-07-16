@@ -1,0 +1,68 @@
+#menu {
+    margin: 1 2;
+    max-width: 40;
+    border: round $primary;
+}
+
+.controls {
+    height: 3;
+    margin: 0 1;
+}
+
+.controls Input {
+    width: 1fr;
+    margin-right: 1;
+}
+
+.controls Button {
+    margin-right: 1;
+}
+
+.controls Checkbox {
+    margin-right: 1;
+}
+
+#log {
+    margin: 0 1 1 1;
+    border: round $surface-lighten-2;
+}
+
+#overview, #db-info {
+    margin: 1 2;
+}
+
+ModalScreen {
+    align: center middle;
+}
+
+.modal-box {
+    width: 70;
+    max-width: 90%;
+    height: auto;
+    padding: 1 2;
+    border: thick $primary;
+    background: $surface;
+}
+
+.modal-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.modal-message {
+    margin-bottom: 1;
+}
+
+.modal-error {
+    color: $error;
+}
+
+.modal-buttons {
+    height: 3;
+    align-horizontal: right;
+    margin-top: 1;
+}
+
+.modal-buttons Button {
+    margin-left: 1;
+}

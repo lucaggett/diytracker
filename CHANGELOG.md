@@ -7,6 +7,11 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.42.0] - 2026-07-16
+- `manage.py` and `manage_interactive.py` merged into one admin tool: running `manage.py` with no arguments now opens a full-screen Textual TUI (users, events, venue/event/genre dedup — the latter was missing from the old menu wrapper — stats, database maintenance, live log view). `manage_interactive.py` is gone. All business logic moved out of the CLI into a new `diytracker/admin/` package (plain functions raising `AdminError` and returning dataclasses), shared by both frontends and now covered by tests.
+- The scripted CLI surface was deliberately reduced to what's documented and cron-able: `logs`, `user ...`, and `db backup|vacuum` keep working exactly as before; `venue dedup`, `event ...` and `stats ...` are TUI-only now (re-adding a CLI wrapper is trivial if ever needed). `venue dedup --db-path` became an input field on the TUI's venue-dedup screen.
+- Invite emails are trilingual: Schwiizerdütsch (the new default), English, and French. Pick per invite with `--lang gsw|en|fr` on `user add`/`user invite`, or via the language dialog the TUI shows when sending; the language is not stored on the user. New dependency: `textual` (run `uv sync` on the server after deploying).
+
 ## [0.41.0] - 2026-07-16
 - New `/llms.txt`: a curated Markdown index (per the [llmstxt.org](https://llmstxt.org) convention) listing the site's bounded, stable sections — calendar, about, map, archive, every canton/genre/label landing page — plus a pointer to `/sitemap.xml` for exhaustive event/venue data. Cached and exempted from scrape-detection scoring like `robots.txt`/`sitemap.xml`; `llms.txt` is now a reserved slug so it can never be swallowed by the canton-page catch-all route.
 - Canton, genre and label landing pages now emit `CollectionPage`/`ItemList` JSON-LD (previously only event and venue pages had structured data), and `base_public.html` gained `twitter:title`/`twitter:description` meta tags alongside the existing Open Graph ones — closing the remaining structured-data gaps for AI crawlers and answer engines.

@@ -19,6 +19,7 @@ dependencies = [
     "requests>=2.28",
     "beautifulsoup4>=4.12",
     "flask-limiter>=4.1.1",
+    "textual>=1.0",
 ]
 
 [tool.uv]

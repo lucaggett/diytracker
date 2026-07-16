@@ -95,16 +95,23 @@ On the production server the app runs under systemd; see
 [`deploy/README.md`](deploy/README.md) for the unit file, the login MOTD,
 and install steps. Use `systemctl {status,restart} diytracker` there.
 
-`manage.py` is a small CLI for tailing logs and managing users. Run it
-through uv:
+`manage.py` is the admin tool. Run it with no arguments for the
+interactive TUI (users, events, venue/event/genre dedup, stats, database
+maintenance, logs), or with a subcommand for scripted usage:
 
 ```bash
+uv run python manage.py                # interactive TUI
 uv run python manage.py logs -f        # tail the access log (--error for the error log)
 ```
 
+The logic lives in `diytracker/admin/`; the CLI keeps only the commands
+worth scripting (`logs`, `user`, `db`) — everything else moved into the
+TUI.
+
 ### Managing users
 
-There is no signup. Use the `user` subcommands of `manage.py`:
+There is no signup. Use the Users screen in the TUI, or the `user`
+subcommands of `manage.py`:
 
 ```bash
 uv run python manage.py user list
@@ -114,6 +121,10 @@ uv run python manage.py user admin alice@example.com --grant   # or --revoke
 uv run python manage.py user invite alice@example.com     # resend the invite email
 uv run python manage.py user delete alice@example.com     # --yes to skip confirmation
 ```
+
+Invite emails are sent in Schwiizerdütsch by default; pass
+`--lang gsw|en|fr` on `user add`/`user invite` (the TUI asks when
+sending) to pick the language per invite.
 
 ## Ingest
 
