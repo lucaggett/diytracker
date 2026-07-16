@@ -6,6 +6,9 @@
   <title>{% block title %}diytracker.ch{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}{{ _('DIY, punk and underground concerts in Switzerland — shows, festivals and venues.') }}{% endblock %}">
   <link rel="canonical" href="{% block canonical %}{{ canonical_url() }}{% endblock %}">
+  {%- for code, href in hreflang_entries() %}
+  <link rel="alternate" hreflang="{{ code }}" href="{{ href }}">
+  {%- endfor %}
   <meta property="og:site_name" content="diytracker.ch">
   <meta property="og:type" content="website">
   <meta property="og:title" content="{{ self.title() }}">

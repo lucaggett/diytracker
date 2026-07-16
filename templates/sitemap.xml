@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{%- for loc, changefreq, lastmod in pages %}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+{%- for page in pages %}
   <url>
-    <loc>{{ loc }}</loc>
-    <changefreq>{{ changefreq }}</changefreq>
-    {%- if lastmod %}
-    <lastmod>{{ lastmod }}</lastmod>
+    <loc>{{ page.loc }}</loc>
+    <changefreq>{{ page.changefreq }}</changefreq>
+    {%- if page.lastmod %}
+    <lastmod>{{ page.lastmod }}</lastmod>
     {%- endif %}
+    {%- for hreflang, href in page.alternates %}
+    <xhtml:link rel="alternate" hreflang="{{ hreflang }}" href="{{ href }}"/>
+    {%- endfor %}
   </url>
 {%- endfor %}
 </urlset>

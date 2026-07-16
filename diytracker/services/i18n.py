@@ -19,6 +19,12 @@ def gettext(s, **kwargs):
 
 
 def select_locale():
+    # A locale carried in the URL (/fr/..., set by the public blueprint's
+    # url_value_preprocessor) always wins over the session and headers, so
+    # each localized URL renders its own language regardless of cookies.
+    url_locale = g.get("url_locale")
+    if url_locale in SUPPORTED_LOCALES:
+        return url_locale
     lang = session.get("lang")
     if lang in SUPPORTED_LOCALES:
         return lang
@@ -29,4 +35,5 @@ def select_locale():
 def validate_lang(lang):
     if lang not in SUPPORTED_LOCALES:
         abort(404)
+    g.url_locale = lang
     g.locale = lang

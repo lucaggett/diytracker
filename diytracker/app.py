@@ -29,7 +29,13 @@ from diytracker.services.i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES, select_l
 from diytracker.services.cache import cache
 from diytracker.services.limits import limiter
 from diytracker.services.scrape_detection import detector
-from diytracker.services.seo import CantonSlugConverter, canonical_url, website_json_ld
+from diytracker.services.seo import (
+    CantonSlugConverter,
+    canonical_url,
+    hreflang_entries,
+    localized_paths,
+    website_json_ld,
+)
 from diytracker.utils import normalise_canton, parent_genres
 
 
@@ -77,6 +83,8 @@ def create_app(config: Config | None = None) -> Flask:
     app.jinja_env.globals["parent_genres"] = parent_genres
     app.jinja_env.globals["normalise_canton"] = normalise_canton
     app.jinja_env.globals["canonical_url"] = canonical_url
+    app.jinja_env.globals["hreflang_entries"] = hreflang_entries
+    app.jinja_env.globals["localized_paths"] = localized_paths
     app.jinja_env.globals["website_json_ld"] = website_json_ld
 
     @app.context_processor

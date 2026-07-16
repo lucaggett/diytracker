@@ -196,6 +196,26 @@ class Label(db.Model):
         return f"<Label {self.id}: {self.name} ({self.slug})>"
 
 
+class PageText(db.Model):
+    """Admin-editable intro paragraph for a landing page, one row per locale.
+    kind is 'canton' or 'genre'; key is the page slug (zuerich, metal, ...).
+    Lookup falls back to the default locale; no row means no paragraph."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    kind = db.Column(db.String(20), nullable=False)
+    key = db.Column(db.String(120), nullable=False)
+    locale = db.Column(db.String(5), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint("kind", "key", "locale", name="ux_page_text"),
+    )
+
+    def __repr__(self):
+        return f"<PageText {self.kind}/{self.key} [{self.locale}]>"
+
+
 class Genre(db.Model):
     """One selectable genre in the event form's picker. Replaces the old
     hardcoded list in forms.py: rows with added_by_id NULL are the curated

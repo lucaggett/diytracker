@@ -1,0 +1,29 @@
+{% extends 'base_backstage.html' %}
+{% set nav_active = 'admin.page_texts' %}
+
+{% block title %}{{ _('Edit Page Text') }} · diytracker.ch{% endblock %}
+
+{% block content %}
+<header class="mb-6 flex items-end justify-between">
+  <div>
+    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Page text') }} · {{ kind }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none uppercase">{{ key }}</h1>
+  </div>
+  <a href="{{ url_for('admin.page_texts') }}" class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">← {{ _('back to page texts') }}</a>
+</header>
+
+{% from '_partials/forms.html' import field, form_errors, submit_row with context %}
+
+{{ form_errors(form) }}
+
+<form method="POST" class="border-2 border-ink bg-paper p-6">
+  {{ form.hidden_tag() }}
+
+  {{ field(form.text_de, rows=5, hint=_('Fallback for locales without their own text. Leave a field empty to delete that translation.')) }}
+  {{ field(form.text_fr, rows=5) }}
+  {{ field(form.text_it, rows=5) }}
+  {{ field(form.text_en, rows=5) }}
+
+  {{ submit_row(_('Save'), cancel_url=url_for('admin.page_texts')) }}
+</form>
+{% endblock %}

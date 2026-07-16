@@ -20,10 +20,11 @@ from diytracker.forms import (
     DeleteEventForm,
     DeleteVenueForm,
     EventEditForm,
+    PageTextForm,
     VenueForm,
     get_canton_choices,
 )
-from diytracker.models import db, Event, ScrapeSuspect, Venue
+from diytracker.models import db, Event, PageText, ScrapeSuspect, Venue
 from diytracker.services.analytics import (
     REPORT_PATH,
     STATS_INTERVAL_MINUTES,
@@ -517,3 +518,63 @@ def weekly_calendar_image():
         as_attachment=True,
         download_name=f"events_week_{monday.strftime('%Y-%m-%d')}{suffix}.png",
     )
+
+
+# --- Landing-page intro texts ------------------------------------------------
+
+
+@bp.route("/admin/page-texts")
+@admin_required
+def page_texts():
+    from diytracker.services.genres import GENRE_SLUGS
+    from diytracker.services.seo import slugify
+    from diytracker.utils import CANTONS
+
+    # Which locales already have a text, per page: {(kind, key): {locales}}.
+    locales_by_page = {}
+    for row in PageText.query.all():
+        locales_by_page.setdefault((row.kind, row.key), set()).add(row.locale)
+    cantons = sorted((slugify(name), name) for name in CANTONS.values())
+    genres = sorted(GENRE_SLUGS.items())
+    return render_template(
+        "page_texts.html",
+        cantons=cantons,
+        genres=genres,
+        locales_by_page=locales_by_page,
+    )
+
+
+@bp.route("/admin/page-texts/<kind>/<key>", methods=["GET", "POST"])
+@admin_required
+def edit_page_text(kind, key):
+    from diytracker.services.i18n import SUPPORTED_LOCALES
+    from diytracker.services.page_texts import valid_page_text_keys
+
+    if kind not in ("canton", "genre") or key not in valid_page_text_keys()[kind]:
+        abort(404)
+
+    rows = {row.locale: row for row in PageText.query.filter_by(kind=kind, key=key)}
+    form = PageTextForm()
+    if request.method == "POST" and form.validate_on_submit():
+        for locale in SUPPORTED_LOCALES:
+            text = (getattr(form, f"text_{locale}").data or "").strip()
+            row = rows.get(locale)
+            if text:
+                if row is None:
+                    db.session.add(
+                        PageText(kind=kind, key=key, locale=locale, text=text)
+                    )
+                elif row.text != text:
+                    row.text = text
+            elif row is not None:
+                # Blanking a locale deletes its row so the de-fallback applies.
+                db.session.delete(row)
+        db.session.commit()
+        bust_cache()
+        flash(_("Page text saved."))
+        return redirect(url_for("admin.page_texts"))
+    if request.method == "GET":
+        for locale in SUPPORTED_LOCALES:
+            if locale in rows:
+                getattr(form, f"text_{locale}").data = rows[locale].text
+    return render_template("edit_page_text.html", form=form, kind=kind, key=key)

@@ -211,8 +211,8 @@ class TestCantonPages:
         html = resp.data.decode()
         assert resp.status_code == 200
         assert "<h1" in html and "Zürich" in html
-        assert f'href="/events/{ev.id}/"' in html
-        assert f'href="/venues/{ev.venue_id}/"' in html
+        assert f'href="/en/events/{ev.id}/"' in html
+        assert f'href="/en/venues/{ev.venue_id}/"' in html
 
     def test_canton_page_uses_calendar_cards(self, client, make_event):
         make_event(name="Doom Night")
@@ -262,7 +262,7 @@ class TestCantonPages:
 
     def test_footer_links_canton_pages(self, client, make_event):
         make_event()
-        assert 'href="/zuerich/"' in client.get("/").data.decode()
+        assert 'href="/en/zuerich/"' in client.get("/").data.decode()
 
     def test_sitemap_lists_canton_not_city(self, client, make_venue, make_event):
         make_event(venue=make_venue(city="Winterthur", canton="ZH"))
@@ -286,8 +286,8 @@ class TestGenrePages:
         html = resp.data.decode()
         assert resp.status_code == 200
         assert "<h1" in html and "Metal" in html
-        assert f'href="/events/{ev.id}/"' in html
-        assert f'href="/venues/{ev.venue_id}/"' in html
+        assert f'href="/en/events/{ev.id}/"' in html
+        assert f'href="/en/venues/{ev.venue_id}/"' in html
         # The second parent genre gets its own page too.
         assert client.get("/genre/punk/").status_code == 200
 
@@ -301,7 +301,7 @@ class TestGenrePages:
     def test_genre_page_links_cantons(self, client, make_event):
         make_event(genre="Punk")  # default venue is in ZH
         html = client.get("/genre/punk/").data.decode()
-        assert 'href="/zuerich/"' in html
+        assert 'href="/en/zuerich/"' in html
 
     def test_unknown_genre_404(self, client, make_event):
         make_event()
@@ -327,12 +327,12 @@ class TestGenrePages:
 
     def test_footer_links_genre_pages(self, client, make_event):
         make_event(genre="Black Metal")
-        assert 'href="/genre/metal/"' in client.get("/").data.decode()
+        assert 'href="/en/genre/metal/"' in client.get("/").data.decode()
 
     def test_event_page_links_genre(self, client, make_event):
         ev = make_event(genre="Crust Punk")
         html = client.get(f"/events/{ev.id}/").data.decode()
-        assert 'href="/genre/punk/"' in html
+        assert 'href="/en/genre/punk/"' in html
 
 
 class TestPastEventNotice:
@@ -345,7 +345,7 @@ class TestPastEventNotice:
         html = resp.data.decode()
         assert resp.status_code == 200
         assert "This event has already taken place." in html
-        assert f'href="/events/{upcoming.id}/"' in html
+        assert f'href="/en/events/{upcoming.id}/"' in html
 
     def test_upcoming_event_has_no_notice(self, client, make_event):
         ev = make_event(days_from_now=5)

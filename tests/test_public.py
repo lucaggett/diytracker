@@ -184,8 +184,10 @@ class TestEventPage:
         ev = make_event(name="Doom Night", flyer="static/uploads/test.jpg")
         resp = client.get(f"/events/{ev.id}/")
         html = resp.data.decode()
+        date_str = ev.date.strftime("%d.%m.%Y")
         assert (
-            'property="og:title" content="Doom Night · Zürich · diytracker.ch"' in html
+            f'property="og:title" content="Doom Night · Zürich · {date_str} · diytracker.ch"'
+            in html
         )
         assert (
             'property="og:image" content="http://localhost/static/uploads/test.jpg"'
@@ -209,7 +211,7 @@ class TestEventPage:
     def test_calendar_card_links_to_event_page(self, client, make_event):
         ev = make_event()
         resp = client.get("/")
-        assert f'href="/events/{ev.id}/"'.encode() in resp.data
+        assert f'href="/en/events/{ev.id}/"'.encode() in resp.data
 
     def test_event_page_points_to_contact_when_no_accessibility_info(
         self, client, make_event
@@ -217,7 +219,7 @@ class TestEventPage:
         ev = make_event()
         resp = client.get(f"/events/{ev.id}/")
         assert b"No accessibility info for this venue yet." in resp.data
-        assert b'href="/about"' in resp.data
+        assert b'href="/en/about"' in resp.data
 
     def test_event_page_links_accessibility_report_when_info_exists(
         self, client, make_venue, make_event
@@ -254,7 +256,7 @@ class TestVenuePage:
         assert resp.status_code == 200
         assert b"Kasheme" in resp.data
         assert b"Doom Night" in resp.data
-        assert f'href="/events/{ev.id}/"'.encode() in resp.data
+        assert f'href="/en/events/{ev.id}/"'.encode() in resp.data
         assert b"venue-mini-map" in resp.data
         assert b'"MusicVenue"' in resp.data
 
@@ -387,7 +389,7 @@ class TestArchive:
 
     def test_footer_links_the_archive(self, client):
         resp = client.get("/about")
-        assert b'href="/archive/"' in resp.data
+        assert b'href="/en/archive/"' in resp.data
 
     def test_sitemap_includes_archive_pages(self, client, make_event):
         past = make_event(days_from_now=-40)
@@ -405,7 +407,10 @@ class TestArchive:
         assert resp.status_code == 200
         assert b"404" in resp.data
         with app.test_request_context():
-            assert url_for("public.archive_index") == "/archive/"
+            # lang_prefix=None pins the default-locale URL (g.locale may
+            # still be 'en' from the client request in this shared context).
+            assert url_for("public.archive_index", lang_prefix=None) == "/archive/"
+            # The honeypot is never localized, so no prefix regardless of locale.
             assert url_for("public.events_archive") == "/events/archive/"
 
     def test_archive_slug_is_reserved_for_cantons(self):

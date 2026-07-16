@@ -252,7 +252,9 @@ class TestStatisticsPage:
         persist_event_day_counts({(ev.id, date(2026, 7, 1)): (12, 7)})
         resp = client.get("/admin/statistics")
         assert b"Viewed Show" in resp.data
-        assert f'href="/events/{ev.id}/"'.encode() in resp.data
+        # The test client browses in English (Accept-Language), so public
+        # links carry the locale prefix.
+        assert f'href="/en/events/{ev.id}/"'.encode() in resp.data
 
 
 class TestEditEventLabel:

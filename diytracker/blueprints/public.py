@@ -37,10 +37,13 @@ from diytracker.services.archive import (
 )
 from diytracker.services.cantons import canton_directory
 from diytracker.services.genres import genre_directory
+from diytracker.services.page_texts import get_page_text
 from diytracker.services.scrape_detection import HONEYPOT_PATH
 from diytracker.services.seo import (
     canonical_url,
     event_json_ld,
+    hreflang_entries,
+    localized_paths,
     parse_swiss_coords,
     slugify,
     venue_json_ld,
@@ -48,6 +51,53 @@ from diytracker.services.seo import (
 from diytracker.utils import CANTONS, parent_genres, resolve_canton
 
 bp = Blueprint("public", __name__)
+
+# Non-default locales get URL-prefixed twins of the public pages (/fr/about,
+# /it/zuerich/, ...) registered under the SAME endpoint; the default locale
+# keeps the bare URL (canonical + hreflang x-default), so nothing Google has
+# already indexed ever redirects. `de` is deliberately absent: /de/... 404s.
+_LANG_PREFIX = "/<any(fr, it, en):lang_prefix>"
+
+
+def localized_route(rule, **options):
+    """@bp.route plus a locale-prefixed twin under the same endpoint, so
+    url_for picks the right rule from the presence of `lang_prefix`."""
+
+    def decorator(f):
+        endpoint = options.pop("endpoint", f.__name__)
+        bp.add_url_rule(rule, endpoint, f, **options)
+        bp.add_url_rule(_LANG_PREFIX + rule, endpoint, f, **options)
+        return f
+
+    return decorator
+
+
+@bp.url_value_preprocessor
+def _pull_lang_prefix(endpoint, values):
+    if not values:
+        return
+    g.url_locale = values.pop("lang_prefix", None)
+    # Legal pages carry their locale in <lang> instead; mirror it (but leave
+    # it in values — the view still takes it) so Babel translates the page
+    # chrome in the URL's language too.
+    if endpoint == "public.legal":
+        g.url_locale = values.get("lang")
+
+
+@bp.url_defaults
+def _inject_lang_prefix(endpoint, values):
+    if "lang_prefix" in values:
+        # Explicit None means "give me the default-locale URL" (hreflang and
+        # sitemap builders); pop it so it can't leak as a query arg.
+        if values["lang_prefix"] is None:
+            values.pop("lang_prefix")
+        return
+    locale = g.get("locale", DEFAULT_LOCALE)
+    if locale != DEFAULT_LOCALE and current_app.url_map.is_endpoint_expecting(
+        endpoint, "lang_prefix"
+    ):
+        values["lang_prefix"] = locale
+
 
 _contact_logger = None
 
@@ -60,7 +110,10 @@ def _get_contact_logger():
 
 
 def _calendar_cache_key():
-    return f"calendar_view:{getattr(g, 'locale', DEFAULT_LOCALE)}"
+    # Path AND locale: / and /fr/ hit the same endpoint but must not share a
+    # cache entry (their canonical/hreflang self-URLs differ), while the bare
+    # / still varies by session locale.
+    return f"calendar_view:{request.path}:{getattr(g, 'locale', DEFAULT_LOCALE)}"
 
 
 def _skip_calendar_cache():
@@ -117,7 +170,7 @@ def _months_spanning(events):
     return months
 
 
-@bp.route("/")
+@localized_route("/")
 @cache.cached(make_cache_key=_calendar_cache_key, unless=_skip_calendar_cache)
 def calendar_view():
     now = datetime.now()
@@ -147,7 +200,7 @@ def calendar_view():
     )
 
 
-@bp.route("/about", methods=["GET", "POST"])
+@localized_route("/about", methods=["GET", "POST"])
 def about():
     form = CollaboratorRequestForm()
     if form.validate_on_submit():
@@ -229,7 +282,7 @@ def venue_accessibility(venue_id):
     )
 
 
-@bp.route("/events/<int:event_id>/")
+@localized_route("/events/<int:event_id>/")
 def event_page(event_id):
     # Event 397 was deleted by mistake; forward its (widely shared) URL to
     # the recreated event.
@@ -276,7 +329,7 @@ def event_page(event_id):
     )
 
 
-@bp.route("/map")
+@localized_route("/map")
 def venue_map():
     # Same horizon as the calendar: now through three months out.
     now = datetime.now()
@@ -318,7 +371,7 @@ def venue_map():
     return render_template("map.html", markers=markers)
 
 
-@bp.route("/venues/<int:venue_id>/")
+@localized_route("/venues/<int:venue_id>/")
 def venue_page(venue_id):
     venue = Venue.query.get_or_404(venue_id)
     events = (
@@ -336,7 +389,7 @@ def venue_page(venue_id):
     )
 
 
-@bp.route("/<canton_slug:canton_slug>/")
+@localized_route("/<canton_slug:canton_slug>/")
 def canton_page(canton_slug):
     # The canton_slug converter excludes reserved segments at routing time
     # (so /logout etc. keep their behavior), and static rules take
@@ -363,10 +416,11 @@ def canton_page(canton_slug):
         grouped_events=_group_events_by_date(events),
         months_data=_months_data(_months_spanning(events)),
         datetime=datetime,
+        intro_text=get_page_text("canton", canton_slug),
     )
 
 
-@bp.route("/genre/<genre_slug>/")
+@localized_route("/genre/<genre_slug>/")
 def genre_page(genre_slug):
     # Like canton pages, only genres with an upcoming event resolve; the
     # directory maps slugs to canonical parent genre names ("Other" excluded).
@@ -402,6 +456,7 @@ def genre_page(genre_slug):
         grouped_events=_group_events_by_date(events),
         months_data=_months_data(_months_spanning(events)),
         datetime=datetime,
+        intro_text=get_page_text("genre", genre_slug),
     )
 
 
@@ -412,7 +467,7 @@ def _path_locale_cache_key(*_args, **_kwargs):
     return f"page:{request.path}:{getattr(g, 'locale', DEFAULT_LOCALE)}"
 
 
-@bp.route("/label/<label_slug>/")
+@localized_route("/label/<label_slug>/")
 @cache.cached(make_cache_key=_path_locale_cache_key, unless=_skip_calendar_cache)
 def label_page(label_slug):
     # Label pages stay live even with no upcoming events (unlike genre
@@ -433,7 +488,7 @@ def label_page(label_slug):
     )
 
 
-@bp.route("/archive/")
+@localized_route("/archive/")
 @cache.cached(make_cache_key=_path_locale_cache_key, unless=_skip_calendar_cache)
 def archive_index():
     # Not to be confused with /events/archive/, the scrape-detection
@@ -443,7 +498,7 @@ def archive_index():
     )
 
 
-@bp.route("/archive/<int:year>/<int:month>/")
+@localized_route("/archive/<int:year>/<int:month>/")
 @cache.cached(make_cache_key=_path_locale_cache_key, unless=_skip_calendar_cache)
 def archive_month(year, month):
     months = dict(archive_directory().get(year, []))
@@ -463,86 +518,71 @@ def archive_month(year, month):
     )
 
 
+def _sitemap_entries(endpoint, changefreq, lastmod=None, **view_args):
+    """One sitemap entry per locale variant of a localized page, all sharing
+    the same alternate set. Locales are passed explicitly so the (cached)
+    sitemap never inherits the requester's locale."""
+    paths = localized_paths(endpoint, view_args)
+    alternates = hreflang_entries(endpoint, view_args)
+    return [
+        {
+            "loc": canonical_url(paths[loc]),
+            "changefreq": changefreq,
+            "lastmod": lastmod,
+            "alternates": alternates,
+        }
+        for loc in SUPPORTED_LOCALES
+    ]
+
+
 @bp.route("/sitemap.xml")
 @cache.cached()
 def sitemap():
-    # (loc, changefreq, lastmod ISO date or None). agb is excluded while its
-    # route still returns a "WIP" placeholder.
-    pages = [
-        (canonical_url(url_for("public.calendar_view")), "daily", None),
-        (canonical_url(url_for("public.about")), "monthly", None),
-        (canonical_url(url_for("public.venue_map")), "weekly", None),
-        (
-            canonical_url(
-                url_for("public.legal", lang=DEFAULT_LOCALE, doc="impressum")
-            ),
-            "yearly",
-            None,
-        ),
-        (
-            canonical_url(
-                url_for("public.legal", lang=DEFAULT_LOCALE, doc="datenschutz")
-            ),
-            "yearly",
-            None,
-        ),
-    ]
+    # Localized pages appear once per locale, each carrying the full
+    # hreflang alternate set. agb is excluded while its route still returns
+    # a "WIP" placeholder.
+    pages = []
+    pages += _sitemap_entries("public.calendar_view", "daily")
+    pages += _sitemap_entries("public.about", "monthly")
+    pages += _sitemap_entries("public.venue_map", "weekly")
+    for doc in ("impressum", "datenschutz"):
+        pages += _sitemap_entries("public.legal", "yearly", doc=doc)
 
     for slug in sorted(canton_directory()):
-        pages.append(
-            (
-                canonical_url(url_for("public.canton_page", canton_slug=slug)),
-                "daily",
-                None,
-            )
-        )
+        pages += _sitemap_entries("public.canton_page", "daily", canton_slug=slug)
 
     for slug in sorted(genre_directory()):
-        pages.append(
-            (
-                canonical_url(url_for("public.genre_page", genre_slug=slug)),
-                "daily",
-                None,
-            )
-        )
+        pages += _sitemap_entries("public.genre_page", "daily", genre_slug=slug)
 
     for label in Label.query.order_by(Label.slug.asc()).all():
-        pages.append(
-            (
-                canonical_url(url_for("public.label_page", label_slug=label.slug)),
-                "daily",
-                label.updated_at.date().isoformat() if label.updated_at else None,
-            )
+        pages += _sitemap_entries(
+            "public.label_page",
+            "daily",
+            label.updated_at.date().isoformat() if label.updated_at else None,
+            label_slug=label.slug,
         )
 
     # Archive pages follow the same two-year sitemap horizon as past events
     # below; older months stay reachable through the archive index.
     horizon = datetime.now() - relativedelta(years=2)
-    pages.append((canonical_url(url_for("public.archive_index")), "monthly", None))
+    pages += _sitemap_entries("public.archive_index", "monthly")
     for year, month_counts in archive_directory().items():
         for month, _count in month_counts:
             if datetime(year, month, 1) + relativedelta(months=1) < horizon:
                 continue
-            pages.append(
-                (
-                    canonical_url(
-                        url_for("public.archive_month", year=year, month=month)
-                    ),
-                    "monthly",
-                    None,
-                )
+            pages += _sitemap_entries(
+                "public.archive_month", "monthly", year=year, month=month
             )
 
     # Past events stay listed for two years — they keep ranking for band and
     # venue queries — then age out of the sitemap (the pages themselves stay).
     events = Event.query.filter(Event.date >= horizon).order_by(Event.date.asc()).all()
     for event in events:
-        pages.append(
-            (
-                canonical_url(url_for("public.event_page", event_id=event.id)),
-                "weekly",
-                event.updated_at.date().isoformat() if event.updated_at else None,
-            )
+        pages += _sitemap_entries(
+            "public.event_page",
+            "weekly",
+            event.updated_at.date().isoformat() if event.updated_at else None,
+            event_id=event.id,
         )
 
     accessibility = {
@@ -555,24 +595,25 @@ def sitemap():
     for venue in venues:
         lastmod_candidates = [venue.updated_at, accessibility.get(venue.id)]
         lastmod = max((ts for ts in lastmod_candidates if ts), default=None)
-        pages.append(
-            (
-                canonical_url(url_for("public.venue_page", venue_id=venue.id)),
-                "weekly",
-                lastmod.date().isoformat() if lastmod else None,
-            )
+        pages += _sitemap_entries(
+            "public.venue_page",
+            "weekly",
+            lastmod.date().isoformat() if lastmod else None,
+            venue_id=venue.id,
         )
         if venue.id in accessibility:
+            # Accessibility forms are not localized: single entry, no alternates.
             pages.append(
-                (
-                    canonical_url(
+                {
+                    "loc": canonical_url(
                         url_for("public.venue_accessibility", venue_id=venue.id)
                     ),
-                    "monthly",
-                    accessibility[venue.id].date().isoformat()
+                    "changefreq": "monthly",
+                    "lastmod": accessibility[venue.id].date().isoformat()
                     if accessibility[venue.id]
                     else None,
-                )
+                    "alternates": [],
+                }
             )
 
     xml = render_template("sitemap.xml", pages=pages)

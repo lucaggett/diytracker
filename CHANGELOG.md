@@ -7,6 +7,14 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.40.0] - 2026-07-16
+- Locale-prefixed URLs for all public pages: `/fr/...`, `/it/...` and `/en/...` now serve the calendar, about, map, event, venue, canton, genre, label and archive pages in that language, registered as second URL rules on the same endpoints (a blueprint `url_defaults`/`url_value_preprocessor` pair injects/extracts the prefix, so every existing `url_for` call site keeps working and links stay in the visitor's locale). German keeps the bare URLs — nothing Google has already indexed redirects — and `/de/...` deliberately 404s, as do prefixed variants of `robots.txt`, `sitemap.xml` and the scrape honeypot. A URL locale always beats the session cookie; the language switcher now sends visitors to the same page in the target locale. This also fixes `/fr/impressum` rendering its page chrome in the session language instead of French.
+- hreflang support: every localized page emits `<link rel="alternate" hreflang="...">` tags for de/fr/it/en plus `x-default` (= the German URL), and the sitemap lists each localized page once per locale with matching `xhtml:link` alternates — fr/it/en pages are now independently indexable by search engines. Legal pages are listed in all four languages (previously de only). The calendar cache key now includes the request path so `/` and `/fr/` never share an entry.
+- Admin-editable intro texts for canton and genre landing pages: a new `page_text` table (kind/key/locale, admin-only editing under "Page Texts" in the backstage nav) holds per-language intro paragraphs rendered above the event cards — the SEO thin-content fix for those pages. Missing translations fall back to German; blanking a field deletes that translation. No manual migration needed (`db.create_all()` creates the table; `migrations/migrate_add_page_texts.py` exists for the runbook).
+- Event page `<title>` (and `og:title`) now includes the event date (`Name · City · 24.08.2026 · diytracker.ch`) for better query matching and snippet CTR.
+- Map venue popups now link to the venue page in the page's locale (the URL was previously hardcoded).
+- Translation catalogs re-extracted and re-populated for the page-text admin strings; DE/FR/IT/EN stay at 100%.
+
 ## [0.39.1] - 2026-07-16
 - The "Events with missing venue" warning on the admin dashboard no longer lists past events with a dangling venue reference — only current/upcoming ones, matching the main event list's date filter.
 

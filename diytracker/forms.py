@@ -160,6 +160,16 @@ class DeleteVenueForm(FlaskForm):
     pass
 
 
+class PageTextForm(FlaskForm):
+    """Per-locale intro texts for a canton/genre landing page. All fields
+    optional: blanking a locale deletes its row (de then serves as fallback)."""
+
+    text_de = TextAreaField(_l("German"), validators=[Optional()])
+    text_fr = TextAreaField(_l("French"), validators=[Optional()])
+    text_it = TextAreaField(_l("Italian"), validators=[Optional()])
+    text_en = TextAreaField(_l("English"), validators=[Optional()])
+
+
 _YPN = [("", "—"), ("yes", "Yes"), ("partial", "Partial"), ("no", "No")]
 _YN = [("", "—"), ("yes", "Yes"), ("no", "No")]
 _YNU = [("", "—"), ("yes", "Yes"), ("no", "No"), ("unknown", "Unknown")]

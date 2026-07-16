@@ -14,6 +14,10 @@
 {% block content %}
 <div class="container mx-auto px-4 py-6 max-w-2xl">
 
+  {% if intro_text %}
+  <p class="text-sm mb-6 whitespace-pre-line">{{ intro_text }}</p>
+  {% endif %}
+
   {% if grouped_events %}
     {% include '_partials/event_cards.html' %}
   {% else %}

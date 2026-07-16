@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo
 from flask import current_app, request, url_for
 from werkzeug.routing import BaseConverter
 
-from diytracker.services.i18n import SUPPORTED_LOCALES
+from diytracker.services.i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES
 
 ZURICH = ZoneInfo("Europe/Zurich")
 
@@ -24,16 +24,21 @@ _SWISS_TRANSLIT = str.maketrans(
 )
 
 # Slugs that may never become canton landing pages: every static first path
-# segment of the app, plus the locale prefixes used by the legal pages.
+# segment of the app, the locale prefixes used by the legal pages and the
+# localized public routes, and the legal document names (so /fr/impressum
+# can only ever match the legal rule, never a locale-prefixed canton rule).
 RESERVED_SLUGS = frozenset(
     {
         "about",
         "accessibility",
         "admin",
+        "agb",
         "archive",
         "api",
+        "datenschutz",
         "events",
         "genre",
+        "impressum",
         "kyuubi",
         "label",
         "login",
@@ -99,6 +104,48 @@ def canonical_url(path=None):
     if path is None:
         path = request.path
     return base + path
+
+
+def localized_paths(endpoint=None, view_args=None):
+    """{locale: relative URL} for the current (or given) page; {} when the
+    page has no locale variants.
+
+    Passes an explicit lang_prefix/lang per locale so the result never
+    depends on the requester's own locale (the sitemap is cached and must
+    not inherit it)."""
+    if endpoint is None:
+        rule = request.url_rule
+        if rule is None:  # 404/500 pages
+            return {}
+        endpoint, view_args = rule.endpoint, request.view_args
+    args = dict(view_args or {})
+    args.pop("lang_prefix", None)
+    if current_app.url_map.is_endpoint_expecting(endpoint, "lang_prefix"):
+        return {
+            loc: url_for(
+                endpoint,
+                **args,
+                lang_prefix=None if loc == DEFAULT_LOCALE else loc,
+            )
+            for loc in SUPPORTED_LOCALES
+        }
+    # Legal pages carry their locale in <lang> instead of a prefix.
+    if endpoint == "public.legal":
+        return {
+            loc: url_for(endpoint, **{**args, "lang": loc}) for loc in SUPPORTED_LOCALES
+        }
+    return {}
+
+
+def hreflang_entries(endpoint=None, view_args=None):
+    """[(hreflang, absolute URL)] for all locales plus x-default (= the
+    default locale's URL); [] when the page is not localizable."""
+    paths = localized_paths(endpoint, view_args)
+    if not paths:
+        return []
+    entries = [(loc, canonical_url(paths[loc])) for loc in SUPPORTED_LOCALES]
+    entries.append(("x-default", canonical_url(paths[DEFAULT_LOCALE])))
+    return entries
 
 
 def parse_price(raw):

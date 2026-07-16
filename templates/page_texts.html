@@ -1,0 +1,31 @@
+{% extends 'base_backstage.html' %}
+{% set nav_active = 'admin.page_texts' %}
+
+{% block title %}{{ _('Page Texts') }} · diytracker.ch{% endblock %}
+
+{% block content %}
+<header class="mb-6">
+  <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Admin console') }}</p>
+  <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('PAGE TEXTS') }}</h1>
+  <p class="text-sm text-smudge mt-2">{{ _('Intro paragraphs shown at the top of the canton and genre landing pages. Missing translations fall back to German.') }}</p>
+</header>
+
+{% macro text_table(title, kind, rows) %}
+<h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-3 mt-8">{{ title }}</h2>
+<ul class="space-y-1 text-sm">
+  {% for slug, name in rows %}
+  {% set locales = locales_by_page.get((kind, slug), []) %}
+  <li class="flex items-center gap-3">
+    <a href="{{ url_for('admin.edit_page_text', kind=kind, key=slug) }}"
+       class="text-bleed underline">{{ _(name) if kind == 'canton' else name }}</a>
+    <span class="text-xs text-smudge uppercase tracking-widest">
+      {% if locales %}{{ locales | sort | join(' ') }}{% else %}—{% endif %}
+    </span>
+  </li>
+  {% endfor %}
+</ul>
+{% endmacro %}
+
+{{ text_table(_('Cantons'), 'canton', cantons) }}
+{{ text_table(_('Genres'), 'genre', genres) }}
+{% endblock %}
