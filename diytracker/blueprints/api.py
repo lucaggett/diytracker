@@ -3,9 +3,9 @@ import json
 
 from flask import Blueprint, current_app, jsonify, request
 
-from diytracker.forms import get_genre_choices
 from diytracker.models import Event, Venue
 from diytracker.services.cache import cache
+from diytracker.services.genre_catalog import all_genre_names
 from diytracker.services.ingest import ingest_event
 from diytracker.services.limits import limiter
 
@@ -15,7 +15,7 @@ bp = Blueprint("api", __name__)
 @bp.route("/get_genres")
 @cache.cached()
 def get_genres():
-    seed = [g for g, _ in get_genre_choices()]
+    catalog = all_genre_names()
     db_genres = []
     for event in (
         Event.query.with_entities(Event.genre).filter(Event.genre != None).all()  # noqa: E711 (SQLAlchemy needs `!= None` for IS NOT NULL, not `is not None`)
@@ -24,7 +24,7 @@ def get_genres():
             g = g.strip()
             if g:
                 db_genres.append(g)
-    combined = sorted(set(seed + db_genres), key=str.lower)
+    combined = sorted(set(catalog + db_genres), key=str.lower)
     return jsonify({"genres": combined})
 
 

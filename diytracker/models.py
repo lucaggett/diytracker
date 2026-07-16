@@ -196,6 +196,25 @@ class Label(db.Model):
         return f"<Label {self.id}: {self.name} ({self.slug})>"
 
 
+class Genre(db.Model):
+    """One selectable genre in the event form's picker. Replaces the old
+    hardcoded list in forms.py: rows with added_by_id NULL are the curated
+    seed set (only admins may delete them); user-added rows may be deleted
+    by their creator or an admin. Event.genre stays a free-text string, so
+    deleting a row never touches existing events."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    added_by_id = db.Column(db.Integer, db.ForeignKey("submitter.id"), nullable=True)
+    added_by = db.relationship(
+        "Submitter", backref=db.backref("genres_added", lazy=True)
+    )
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+
+    def __repr__(self):
+        return f"<Genre {self.id}: {self.name}>"
+
+
 class ScrapedEvent(db.Model):
     """Database model storing events scraped from external sources."""
 

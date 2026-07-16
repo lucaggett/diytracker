@@ -7,6 +7,11 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.39.0] - 2026-07-16
+- The genre list is now a database table (`genre`) instead of the hardcoded list in `forms.get_genre_choices()`, and the "Suggest a genre" page became a genre management page at `/genres` ("Genres" in the backstage nav): any logged-in user can add a genre (it appears in the event form's autocomplete immediately, no email/moderation round-trip) and delete genres they added themselves; admins can delete any. The old hardcoded entries are seeded at startup with no owner (`added_by` NULL), so regular users can't delete the curated baseline. Deleting a genre never touches existing events — `Event.genre` stays a free-text string. `/genres/submit` redirects to `/genres`; the suggestion-email helper and form were removed. No manual migration: `db.create_all()` creates the table and the idempotent startup seeding fills it.
+- `/get_genres` now combines the genre table with genres in use on events (previously seed list + events); `manage.py event genre-dedup` prefers the table's spelling as canonical (previously the seed list's).
+- Translation catalogs re-extracted and re-populated for the management-page strings; DE/FR/IT/EN stay at 100%.
+
 ## [0.38.0] - 2026-07-16
 - Added "Goregrind" (→ Hardcore) and "Psycore" (→ Electronic) to the genre autocomplete seed list and the sub-genre → parent-genre map.
 - New `/genres/submit` page ("Suggest a genre"), gated behind login like `/submit` (any registered account, not just admins): a small form (genre + optional note) that emails the suggestion, tagged with the submitter's account email, to the same inbox as the About page's collaborator form — no DB table or moderation queue involved. Linked from the backstage nav bar.

@@ -67,6 +67,10 @@ def create_app(config: Config | None = None) -> Flask:
     # has no Alembic); column additions live in migrations/.
     with app.app_context():
         db.create_all()
+        # Lazy import: genre_catalog needs the models, which need an initialized db.
+        from diytracker.services.genre_catalog import seed_genres
+
+        seed_genres()
 
     app.jinja_env.globals["format_date"] = format_date
     app.jinja_env.globals["SUPPORTED_LOCALES"] = SUPPORTED_LOCALES

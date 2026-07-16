@@ -1,0 +1,62 @@
+{% extends 'base_backstage.html' %}
+
+{% block title %}{{ _('Manage genres') }} · diytracker.ch{% endblock %}
+
+{% block content %}
+<header class="mb-6">
+  <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Help us grow') }}</p>
+  <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('MANAGE GENRES') }}</h1>
+</header>
+
+<p class="leading-relaxed mb-6 max-w-xl">
+  {{ _("These genres feed the picker on the event form. Missing one? Add it below — it becomes available immediately. You can remove genres you added yourself; removing one never changes existing events.") }}
+</p>
+
+<form method="POST" class="max-w-xl mb-10">
+  {{ form.hidden_tag() }}
+  {{ form.name.label(class="block text-xs uppercase tracking-widest text-smudge mb-1") }}
+  <div class="flex gap-2">
+    {{ form.name(class="border-2 border-ink bg-paper px-3 py-2 w-full text-sm focus:outline-hidden focus:border-bleed", placeholder=_('e.g. Goregrind')) }}
+    <button type="submit"
+            class="bg-ink text-paper uppercase tracking-widest text-sm px-6 py-2 hover:bg-bleed transition-colors whitespace-nowrap cursor-pointer">
+      {{ _('Add') }} →
+    </button>
+  </div>
+  {% if form.name.errors %}
+    <p class="text-bleed text-xs mt-1">{{ form.name.errors[0] }}</p>
+  {% endif %}
+</form>
+
+<section class="max-w-xl">
+  <h2 class="text-xs uppercase tracking-widest text-smudge mb-3">
+    {{ _('Current genres') }} ({{ genres|length }})
+  </h2>
+  <ul class="divide-y divide-smudge border-2 border-ink">
+    {% for genre in genres %}
+      {% set own = genre.added_by_id == submitter.id %}
+      <li class="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+        <span>
+          {{ genre.name }}
+          {% if own %}
+            <span class="text-xs text-smudge">· {{ _('added by you') }}</span>
+          {% elif genre.added_by %}
+            <span class="text-xs text-smudge">· {{ _('added by a user') }}</span>
+          {% endif %}
+        </span>
+        {% if own or submitter.is_admin %}
+          <form method="POST" action="{{ url_for('submissions.delete_genre', genre_id=genre.id) }}"
+                onsubmit="return confirm('{{ _('Remove this genre from the list?') }}');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                    class="text-xs uppercase tracking-widest text-bleed hover:underline cursor-pointer">
+              {{ _('Delete') }}
+            </button>
+          </form>
+        {% endif %}
+      </li>
+    {% else %}
+      <li class="px-3 py-2 text-sm text-smudge">{{ _('No genres yet.') }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

@@ -22,63 +22,6 @@ except ImportError:  # pragma: no cover - defensive fallback
         return s
 
 
-def get_genre_choices():
-    genres = [
-        "Hardcore",
-        "Punk",
-        "Metal",
-        "Post-punk",
-        "EBM",
-        "Industrial",
-        "Synthpop",
-        "Darkwave",
-        "Goth",
-        "New Wave",
-        "Alternative",
-        "Indie",
-        "Rock",
-        "Pop",
-        "Hip Hop",
-        "Reggae",
-        "Dub",
-        "Dancehall",
-        "Drum & Bass",
-        "Dubstep",
-        "Techno",
-        "House",
-        "Trance",
-        "Electro",
-        "Ambient",
-        "Experimental",
-        "Noise",
-        "Wave",
-        "NDW",
-        "Folk",
-        "Neofolk",
-        "Jazz",
-        "Blues",
-        "Ska",
-        "Garage",
-        "Hyperpop",
-        "Emo",
-        "Metalcore",
-        "Synth",
-        "Beatdown",
-        "Doom",
-        "Sludge",
-        "Stoner",
-        "Crustpunk",
-        "Screamo",
-        "Powerviolence",
-        "Mathcore",
-        "Shoegaze",
-        "Gabber",
-        "Goregrind",
-        "Psycore",
-    ]
-    return [(genre, genre) for genre in genres]
-
-
 def get_canton_choices():
     """
     Get list of Swiss cantons for SelectField
@@ -363,11 +306,5 @@ class CollaboratorRequestForm(FlaskForm):
     website = StringField("Website", validators=[Optional(), Length(max=0)])
 
 
-class GenreSuggestionForm(FlaskForm):
-    genre = StringField(
-        _l("Genre"), validators=[DataRequired(), Length(max=100)]
-    )
-    note = TextAreaField(
-        _l("Why should this genre be added? (optional)"),
-        validators=[Optional(), Length(max=2000)],
-    )
+class GenreForm(FlaskForm):
+    name = StringField(_l("Genre"), validators=[DataRequired(), Length(max=100)])

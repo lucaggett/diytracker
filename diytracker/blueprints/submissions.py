@@ -13,32 +13,22 @@ from flask import (
     url_for,
 )
 
-from diytracker.forms import DeleteScrapedEventForm, EventForm, GenreSuggestionForm
-from diytracker.models import db, ScrapedEvent, Submitter
+from diytracker.forms import DeleteScrapedEventForm, EventForm, GenreForm
+from diytracker.models import db, Genre, ScrapedEvent, Submitter
 from diytracker.services.auth import login_required
 from diytracker.services.cache import bust_cache
-from diytracker.services.contact import build_contact_logger, send_genre_suggestion_email
 from diytracker.services.events import (
     clean_genre_string,
     create_event,
     resolve_venue_from_form,
 )
+from diytracker.services.genre_catalog import find_genre
 from diytracker.services.i18n import gettext as _
 from diytracker.services.ingest import parse_time
 from diytracker.services.labels import all_label_choices
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 from diytracker.services.venue import get_or_create_venue
 from diytracker.utils import resolve_canton
-
-_contact_logger = None
-
-
-def _get_contact_logger():
-    global _contact_logger
-    if _contact_logger is None:
-        _contact_logger = build_contact_logger()
-    return _contact_logger
-
 
 bp = Blueprint("submissions", __name__)
 
@@ -281,39 +271,50 @@ def submit_event_link():
     return render_template("submit_event.html", form=form)
 
 
-@bp.route("/genres/submit", methods=["GET", "POST"])
+@bp.route("/genres", methods=["GET", "POST"])
+@login_required
+def manage_genres():
+    """The genre catalog page: any logged-in user can add a genre (it shows
+    up in the event form's picker immediately) and delete genres they added
+    themselves. Seed genres (added_by NULL) are deletable by admins only."""
+    submitter = db.session.get(Submitter, session["user_id"])
+    form = GenreForm()
+    if form.validate_on_submit():
+        name = " ".join(form.name.data.split())
+        existing = find_genre(name)
+        if existing:
+            flash(_("'%(name)s' is already in the list.", name=existing.name))
+        elif name:
+            db.session.add(Genre(name=name, added_by_id=submitter.id))
+            db.session.commit()
+            bust_cache()
+            flash(_("Genre '%(name)s' added.", name=name))
+        return redirect(url_for("submissions.manage_genres"))
+    genres = sorted(Genre.query.all(), key=lambda g: g.name.lower())
+    return render_template(
+        "genre_manage.html", form=form, genres=genres, submitter=submitter
+    )
+
+
+@bp.route("/genres/submit")
 @login_required
 def genre_submissions():
-    form = GenreSuggestionForm()
-    if form.validate_on_submit():
-        submitter = db.session.get(Submitter, session["user_id"])
-        genre = form.genre.data.strip()
-        note = (form.note.data or "").strip()
-        single_line_note = note.replace("\n", " \\n ")
-        logger = _get_contact_logger()
-        try:
-            send_genre_suggestion_email(genre, note, submitter.email)
-        except Exception as exc:
-            logger.exception(
-                "send_failed genre=%r submitter=%r note=%r error=%s",
-                genre,
-                submitter.email,
-                single_line_note,
-                exc,
-            )
-            current_app.logger.exception("Failed to send genre suggestion email")
-            flash(
-                _(
-                    "Your suggestion could not be sent — please write to us directly at kontakt@diytracker.ch."
-                )
-            )
-            return redirect(url_for("submissions.genre_submissions"))
-        logger.info(
-            "sent genre=%r submitter=%r note=%r",
-            genre,
-            submitter.email,
-            single_line_note,
-        )
-        flash(_("Thanks! We will take a look at your genre suggestion."))
-        return redirect(url_for("submissions.genre_submissions"))
-    return render_template("genre_submissions.html", form=form)
+    """Old 'suggest a genre' URL — genres are user-managed now."""
+    return redirect(url_for("submissions.manage_genres"))
+
+
+@bp.route("/genres/<int:genre_id>/delete", methods=["POST"])
+@login_required
+def delete_genre(genre_id):
+    submitter = db.session.get(Submitter, session["user_id"])
+    genre = db.session.get(Genre, genre_id)
+    if genre is None:
+        abort(404)
+    if not submitter.is_admin and genre.added_by_id != submitter.id:
+        abort(403)
+    name = genre.name
+    db.session.delete(genre)
+    db.session.commit()
+    bust_cache()
+    flash(_("Genre '%(name)s' removed.", name=name))
+    return redirect(url_for("submissions.manage_genres"))

@@ -54,6 +54,11 @@ def app(tmp_path):
     with flask_app.app_context():
         db.drop_all()
         db.create_all()
+        # The app factory seeds at startup; per-test schema rebuilds need to
+        # re-seed so the genre catalog matches a real boot.
+        from diytracker.services.genre_catalog import seed_genres
+
+        seed_genres()
         try:
             yield flask_app
         finally:

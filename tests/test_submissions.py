@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, time, timedelta
 
-from diytracker.models import db, Event, ScrapedEvent, Venue
+from diytracker.models import db, Event, Genre, ScrapedEvent, Venue
 
 
 def _future(days=14):
@@ -259,3 +259,73 @@ class TestSubmitWithLabel:
         )
         ev = Event.query.filter_by(name="Plain Show").one()
         assert ev.label_id is None
+
+
+class TestManageGenres:
+    def test_requires_login(self, client):
+        assert client.get("/genres").status_code == 302
+
+    def test_lists_seeded_genres(self, client, make_user, login):
+        login(make_user())
+        resp = client.get("/genres")
+        assert resp.status_code == 200
+        assert b"Crustpunk" in resp.data
+
+    def test_old_suggest_url_redirects(self, client, make_user, login):
+        login(make_user())
+        resp = client.get("/genres/submit")
+        assert resp.status_code == 302
+        assert resp.headers["Location"].endswith("/genres")
+
+    def test_add_genre(self, client, make_user, login):
+        user = login(make_user())
+        resp = client.post("/genres", data={"name": "  Zeuhl  "}, follow_redirects=True)
+        assert b"added" in resp.data
+        genre = Genre.query.filter_by(name="Zeuhl").one()
+        assert genre.added_by_id == user.id
+        # Immediately available in the event form's autocomplete source.
+        assert "Zeuhl" in client.get("/get_genres").get_json()["genres"]
+
+    def test_add_duplicate_is_rejected_case_insensitively(
+        self, client, make_user, login
+    ):
+        login(make_user())
+        resp = client.post("/genres", data={"name": "crustpunk"}, follow_redirects=True)
+        assert b"already in the list" in resp.data
+        assert Genre.query.filter_by(name="crustpunk").first() is None
+
+    def test_delete_own_genre(self, client, make_user, login):
+        user = login(make_user())
+        genre = Genre(name="Zeuhl", added_by_id=user.id)
+        db.session.add(genre)
+        db.session.commit()
+        resp = client.post(f"/genres/{genre.id}/delete", follow_redirects=True)
+        assert b"removed" in resp.data
+        assert db.session.get(Genre, genre.id) is None
+
+    def test_cannot_delete_other_users_genre(self, client, make_user, login):
+        other = make_user(email="other@example.com")
+        genre = Genre(name="Zeuhl", added_by_id=other.id)
+        db.session.add(genre)
+        db.session.commit()
+        login(make_user(email="me@example.com"))
+        assert client.post(f"/genres/{genre.id}/delete").status_code == 403
+        assert db.session.get(Genre, genre.id) is not None
+
+    def test_cannot_delete_seed_genre(self, client, make_user, login):
+        login(make_user())
+        genre = Genre.query.filter_by(name="Punk").one()  # seeded, added_by NULL
+        assert client.post(f"/genres/{genre.id}/delete").status_code == 403
+
+    def test_admin_can_delete_any_genre(self, client, make_user, admin, login):
+        other = make_user(email="other@example.com")
+        genre = Genre(name="Zeuhl", added_by_id=other.id)
+        db.session.add(genre)
+        db.session.commit()
+        login(admin)
+        client.post(f"/genres/{genre.id}/delete")
+        assert db.session.get(Genre, genre.id) is None
+
+    def test_delete_missing_genre_404s(self, client, make_user, login):
+        login(make_user())
+        assert client.post("/genres/99999/delete").status_code == 404

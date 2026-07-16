@@ -7,8 +7,7 @@ spelling per group."""
 
 from collections import defaultdict
 
-from diytracker.forms import get_genre_choices
-from diytracker.models import db
+from diytracker.models import Genre, db
 
 
 def _split_tokens(raw):
@@ -36,15 +35,17 @@ def find_genre_dedup_groups(events):
     }
 
 
-_SEED_SPELLINGS = {name.lower(): name for name, _label in get_genre_choices()}
+def _catalog_spellings():
+    return {g.name.lower(): g.name for g in Genre.query.all()}
 
 
 def pick_canonical(spellings):
     """Pick the canonical spelling for a group of {spelling: count}: prefer
-    the seed genre-list spelling if one of the variants matches it exactly,
+    the genre-catalog spelling if one of the variants matches it exactly,
     else the most-used spelling, tie-broken alphabetically."""
+    catalog = _catalog_spellings()
     for spelling in spellings:
-        if _SEED_SPELLINGS.get(spelling.lower()) == spelling:
+        if catalog.get(spelling.lower()) == spelling:
             return spelling
     return sorted(spellings.items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
 

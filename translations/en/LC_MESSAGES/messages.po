@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 12:02+0200\n"
+"POT-Creation-Date: 2026-07-16 12:38+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -16,253 +16,249 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: diytracker/forms.py:119 templates/event_queue.html:112
+#: diytracker/forms.py:62 templates/event_queue.html:112
 msgid "Event Name"
 msgstr "Event Name"
 
-#: diytracker/forms.py:121
+#: diytracker/forms.py:64
 msgid "Event Date"
 msgstr "Event Name"
 
-#: diytracker/forms.py:123 templates/_partials/event_form.html:27
+#: diytracker/forms.py:66 templates/_partials/event_form.html:27
 #: templates/_partials/event_form_scripts.html:12
 msgid "End Date"
 msgstr "End Date"
 
-#: diytracker/forms.py:124 templates/event_page.html:58
+#: diytracker/forms.py:67 templates/event_page.html:58
 #: templates/venue_page.html:60
 msgid "Festival"
 msgstr "Festival"
 
-#: diytracker/forms.py:126
+#: diytracker/forms.py:69
 msgid "Doors Open Time"
 msgstr "Select the doors open time"
 
-#: diytracker/forms.py:129 diytracker/forms.py:368
+#: diytracker/forms.py:72 diytracker/forms.py:310
 #: templates/_partials/event_cards.html:95 templates/admin.html:86
 #: templates/calendar.html:116 templates/event_page.html:94
 #: templates/event_queue.html:124 templates/genre.html:10
 msgid "Genre"
 msgstr "Genre"
 
-#: diytracker/forms.py:131 templates/_partials/event_cards.html:95
+#: diytracker/forms.py:74 templates/_partials/event_cards.html:95
 #: templates/event_queue.html:128
 msgid "Acts"
 msgstr "Acts"
 
-#: diytracker/forms.py:132 templates/_partials/event_form.html:89
+#: diytracker/forms.py:75 templates/_partials/event_form.html:89
 #: templates/event_queue.html:63
 msgid "Flyer"
 msgstr "Flyer"
 
-#: diytracker/forms.py:136
+#: diytracker/forms.py:79
 msgid "Status"
 msgstr "Status"
 
-#: diytracker/forms.py:138
+#: diytracker/forms.py:81
 msgid "Scheduled"
 msgstr "Scheduled"
 
-#: diytracker/forms.py:139
+#: diytracker/forms.py:82
 msgid "Cancelled"
 msgstr "Cancelled"
 
-#: diytracker/forms.py:140
+#: diytracker/forms.py:83
 msgid "Postponed"
 msgstr "Postponed"
 
-#: diytracker/forms.py:147 diytracker/forms.py:197 templates/label_page.html:9
+#: diytracker/forms.py:90 diytracker/forms.py:140 templates/label_page.html:9
 #: templates/promoter_dashboard.html:67
 msgid "Label"
 msgstr "Label"
 
-#: diytracker/forms.py:150 templates/event_queue.html:148
+#: diytracker/forms.py:93 templates/event_queue.html:148
 msgid "Ticket Price"
 msgstr "Ticket Price"
 
-#: diytracker/forms.py:151
+#: diytracker/forms.py:94
 msgid "Ticket Link"
 msgstr "Ticket URL"
 
-#: diytracker/forms.py:154 templates/admin.html:149
+#: diytracker/forms.py:97 templates/admin.html:149
 #: templates/admin_statistics.html:23 templates/edit_venue.html:9
 #: templates/event_page.html:79 templates/event_queue.html:50
 #: templates/venue_page.html:24
 msgid "Venue"
 msgstr "Venue"
 
-#: diytracker/forms.py:158 diytracker/forms.py:208
+#: diytracker/forms.py:101 diytracker/forms.py:151
 #: templates/event_queue.html:132
 msgid "Venue Name"
 msgstr "Venue Name"
 
-#: diytracker/forms.py:159 diytracker/forms.py:209
+#: diytracker/forms.py:102 diytracker/forms.py:152
 msgid "Venue Address"
 msgstr "Street Address"
 
-#: diytracker/forms.py:160 diytracker/forms.py:210
+#: diytracker/forms.py:103 diytracker/forms.py:153
 #: templates/event_queue.html:136 templates/venues.html:40
 msgid "City"
 msgstr "City"
 
-#: diytracker/forms.py:161 diytracker/forms.py:211 templates/calendar.html:115
+#: diytracker/forms.py:104 diytracker/forms.py:154 templates/calendar.html:115
 #: templates/canton.html:8 templates/venues.html:41
 msgid "Canton"
 msgstr "Canton"
 
-#: diytracker/forms.py:162 diytracker/forms.py:212 templates/venues.html:42
+#: diytracker/forms.py:105 diytracker/forms.py:155 templates/venues.html:42
 msgid "ZIP Code"
 msgstr "ZIP Code"
 
-#: diytracker/forms.py:163 diytracker/forms.py:213
+#: diytracker/forms.py:106 diytracker/forms.py:156
 msgid "Coordinates"
 msgstr "Enter coordinates"
 
-#: diytracker/forms.py:170 diytracker/forms.py:357
+#: diytracker/forms.py:113 diytracker/forms.py:300
 msgid "Email"
 msgstr "Email"
 
-#: diytracker/forms.py:171 diytracker/forms.py:201
+#: diytracker/forms.py:114 diytracker/forms.py:144
 msgid "Password"
 msgstr "SET PASSWORD"
 
-#: diytracker/forms.py:183
+#: diytracker/forms.py:126
 msgid "Label Name"
 msgstr "Label Name"
 
-#: diytracker/forms.py:185 templates/event_page.html:121
+#: diytracker/forms.py:128 templates/event_page.html:121
 #: templates/event_queue.html:160
 msgid "Description"
 msgstr "Description"
 
-#: diytracker/forms.py:187
+#: diytracker/forms.py:130
 msgid "Logo"
 msgstr "Logo"
 
-#: diytracker/forms.py:203
+#: diytracker/forms.py:146
 msgid "Confirm Password"
 msgstr "SET PASSWORD"
 
-#: diytracker/forms.py:258 templates/venue_accessibility.html:71
+#: diytracker/forms.py:201 templates/venue_accessibility.html:71
 msgid "Step-free entrance"
 msgstr "Step-free entrance"
 
-#: diytracker/forms.py:261
+#: diytracker/forms.py:204
 msgid "Entrance notes"
 msgstr "Entrance notes"
 
-#: diytracker/forms.py:264 templates/venue_accessibility.html:72
+#: diytracker/forms.py:207 templates/venue_accessibility.html:72
 msgid "Step-free throughout interior"
 msgstr "Step-free throughout interior"
 
-#: diytracker/forms.py:267 templates/venue_accessibility.html:73
+#: diytracker/forms.py:210 templates/venue_accessibility.html:73
 msgid "Accessible toilet"
 msgstr "Accessible toilet"
 
-#: diytracker/forms.py:270
+#: diytracker/forms.py:213
 msgid "Toilet notes"
 msgstr "Toilet notes"
 
-#: diytracker/forms.py:273 templates/venue_accessibility.html:76
+#: diytracker/forms.py:216 templates/venue_accessibility.html:76
 msgid "Dedicated wheelchair spaces"
 msgstr "Dedicated wheelchair spaces"
 
-#: diytracker/forms.py:276
+#: diytracker/forms.py:219
 msgid "Number of wheelchair spaces"
 msgstr "Dedicated wheelchair spaces"
 
-#: diytracker/forms.py:279 templates/venue_accessibility.html:83
+#: diytracker/forms.py:222 templates/venue_accessibility.html:83
 msgid "Floor surface"
 msgstr "Floor surface"
 
-#: diytracker/forms.py:284 templates/venue_accessibility.html:93
+#: diytracker/forms.py:227 templates/venue_accessibility.html:93
 msgid "Strobe / flashing lights"
 msgstr "Strobe / flashing lights"
 
-#: diytracker/forms.py:287
+#: diytracker/forms.py:230
 msgid "Warning given before strobes"
 msgstr "Warning before strobes"
 
-#: diytracker/forms.py:290 templates/venue_accessibility.html:95
+#: diytracker/forms.py:233 templates/venue_accessibility.html:95
 msgid "Smoke / haze machines"
 msgstr "Smoke / haze machines"
 
-#: diytracker/forms.py:293 templates/venue_accessibility.html:96
+#: diytracker/forms.py:236 templates/venue_accessibility.html:96
 msgid "Typical sound level"
 msgstr "Typical sound level"
 
-#: diytracker/forms.py:296
+#: diytracker/forms.py:239
 msgid "Quiet / low-stimulation room available"
 msgstr "Quiet / low-stimulation room"
 
-#: diytracker/forms.py:301
+#: diytracker/forms.py:244
 msgid "Free earplugs provided"
 msgstr "Free earplugs"
 
-#: diytracker/forms.py:304
+#: diytracker/forms.py:247
 msgid "Sensory-friendly events / nights"
 msgstr "Sensory-friendly events"
 
-#: diytracker/forms.py:309
+#: diytracker/forms.py:252
 msgid "Hearing loop (induction loop)"
 msgstr "Hearing loop (induction loop)"
 
-#: diytracker/forms.py:312
+#: diytracker/forms.py:255
 msgid "Sign language interpretation at events"
 msgstr "Sign language interpretation"
 
-#: diytracker/forms.py:319 templates/venue_accessibility.html:112
+#: diytracker/forms.py:262 templates/venue_accessibility.html:112
 msgid "Refrigerator for medication"
 msgstr "Refrigerator for medication"
 
-#: diytracker/forms.py:322
+#: diytracker/forms.py:265
 msgid "First aid kit on site"
 msgstr "First and last name"
 
-#: diytracker/forms.py:325
+#: diytracker/forms.py:268
 msgid "AED (defibrillator) on site"
 msgstr "AED (defibrillator)"
 
-#: diytracker/forms.py:330 templates/venue_accessibility.html:125
+#: diytracker/forms.py:273 templates/venue_accessibility.html:125
 msgid "Accessible parking"
 msgstr "Accessible parking"
 
-#: diytracker/forms.py:333
+#: diytracker/forms.py:276
 msgid "Public transport access"
 msgstr "Public transport"
 
-#: diytracker/forms.py:336 templates/venue_accessibility.html:132
+#: diytracker/forms.py:279 templates/venue_accessibility.html:132
 msgid "Gender-neutral toilets"
 msgstr "Gender-neutral toilets"
 
-#: diytracker/forms.py:339
+#: diytracker/forms.py:282
 msgid "Rest / seating areas inside"
 msgstr "Rest / seating areas"
 
-#: diytracker/forms.py:342
+#: diytracker/forms.py:285
 msgid "Guide dogs & assistance animals welcome"
 msgstr "Guide dogs welcome"
 
-#: diytracker/forms.py:347
+#: diytracker/forms.py:290
 msgid "Quiet / alternative entrance option"
 msgstr "Quiet / alternative entrance"
 
-#: diytracker/forms.py:350
+#: diytracker/forms.py:293
 msgid "Additional accessibility notes"
 msgstr "Additional notes"
 
-#: diytracker/forms.py:355 templates/admin.html:118 templates/admin.html:147
+#: diytracker/forms.py:298 templates/admin.html:118 templates/admin.html:147
 #: templates/venues.html:39
 msgid "Name"
 msgstr "Name"
 
-#: diytracker/forms.py:360
+#: diytracker/forms.py:303
 msgid "Message"
 msgstr "Message"
-
-#: diytracker/forms.py:371
-msgid "Why should this genre be added? (optional)"
-msgstr "Why should this genre be added? (optional)"
 
 #: diytracker/utils.py:49
 msgid "Aargau"
@@ -376,7 +372,7 @@ msgstr ""
 "This event's venue no longer exists. Please select or create a venue "
 "below."
 
-#: diytracker/blueprints/admin.py:178 diytracker/blueprints/submissions.py:254
+#: diytracker/blueprints/admin.py:178 diytracker/blueprints/submissions.py:245
 msgid "Selected venue does not exist."
 msgstr "Selected venue does not exist."
 
@@ -472,45 +468,48 @@ msgstr "Thanks! We will get back to you as soon as possible."
 msgid "Accessibility info saved — thank you!"
 msgstr "Accessibility info saved — thank you!"
 
-#: diytracker/blueprints/submissions.py:131
+#: diytracker/blueprints/submissions.py:122
 msgid "Invalid event selection."
 msgstr "Invalid event selection."
 
-#: diytracker/blueprints/submissions.py:200
+#: diytracker/blueprints/submissions.py:191
 msgid "This event already exists."
 msgstr "This event already exists."
 
-#: diytracker/blueprints/submissions.py:208
+#: diytracker/blueprints/submissions.py:199
 msgid "Event approved and added to calendar!"
 msgstr "Event approved and added to calendar!"
 
-#: diytracker/blueprints/submissions.py:231
+#: diytracker/blueprints/submissions.py:222
 msgid "Event removed from queue."
 msgstr "Event removed from queue."
 
-#: diytracker/blueprints/submissions.py:251
+#: diytracker/blueprints/submissions.py:242
 msgid "Please provide all required venue details for a new venue."
 msgstr "Please provide all required venue details for a new venue."
 
-#: diytracker/blueprints/submissions.py:257
+#: diytracker/blueprints/submissions.py:248
 msgid "Venue already exists. Using existing venue."
 msgstr "Venue already exists. Using existing venue."
 
-#: diytracker/blueprints/submissions.py:277
+#: diytracker/blueprints/submissions.py:268
 msgid "Event submitted successfully!"
 msgstr "Event submitted successfully!"
 
-#: diytracker/blueprints/submissions.py:306
-msgid ""
-"Your suggestion could not be sent — please write to us directly at "
-"kontakt@diytracker.ch."
-msgstr ""
-"Your suggestion could not be sent — please write to us directly at "
-"kontakt@diytracker.ch."
+#: diytracker/blueprints/submissions.py:286
+#, python-format
+msgid "'%(name)s' is already in the list."
+msgstr "'%(name)s' is already in the list."
 
-#: diytracker/blueprints/submissions.py:316
-msgid "Thanks! We will take a look at your genre suggestion."
-msgstr "Thanks! We will take a look at your genre suggestion."
+#: diytracker/blueprints/submissions.py:291
+#, python-format
+msgid "Genre '%(name)s' added."
+msgstr "Genre '%(name)s' added."
+
+#: diytracker/blueprints/submissions.py:319
+#, python-format
+msgid "Genre '%(name)s' removed."
+msgstr "Genre '%(name)s' removed."
 
 #: templates/_partials/header_nav.html:29 templates/about.html:3
 msgid "About"
@@ -568,7 +567,7 @@ msgstr "you@example.com"
 msgid "What do you do, what would you like to contribute?"
 msgstr "What do you do, what would you like to contribute?"
 
-#: templates/about.html:68 templates/genre_submissions.html:36
+#: templates/about.html:68
 msgid "Send"
 msgstr "Send"
 
@@ -807,8 +806,8 @@ msgid "Delete this event?"
 msgstr "Delete this event?"
 
 #: templates/admin.html:167 templates/event_queue.html:100
-#: templates/promoter_dashboard.html:40 templates/venues.html:79
-#: templates/venues.html:85
+#: templates/genre_manage.html:52 templates/promoter_dashboard.html:40
+#: templates/venues.html:79 templates/venues.html:85
 msgid "Delete"
 msgstr "Delete"
 
@@ -1184,7 +1183,8 @@ msgstr "Filter"
 msgid "Reset"
 msgstr "Reset"
 
-#: templates/_partials/footer_public.html:23 templates/event_queue.html:51
+#: templates/_partials/footer_public.html:23
+#: templates/_partials/nav_backstage.html:11 templates/event_queue.html:51
 msgid "Genres"
 msgstr "Genres"
 
@@ -1268,33 +1268,55 @@ msgstr ""
 msgid "Cantons"
 msgstr "Cantons"
 
-#: templates/genre_submissions.html:3
-msgid "Suggest a genre"
-msgstr "Suggest a genre"
+#: templates/genre_manage.html:3
+msgid "Manage genres"
+msgstr "Manage genres"
 
-#: templates/genre_submissions.html:7
+#: templates/genre_manage.html:7
 msgid "Help us grow"
 msgstr "Help us grow"
 
-#: templates/genre_submissions.html:8
-msgid "SUGGEST A GENRE"
-msgstr "SUGGEST A GENRE"
+#: templates/genre_manage.html:8
+msgid "MANAGE GENRES"
+msgstr "MANAGE GENRES"
 
-#: templates/genre_submissions.html:12
+#: templates/genre_manage.html:12
 msgid ""
-"Think we're missing a genre? Tell us what it's called and, if you like, "
-"why it matters — we curate the list by hand."
+"These genres feed the picker on the event form. Missing one? Add it below"
+" — it becomes available immediately. You can remove genres you added "
+"yourself; removing one never changes existing events."
 msgstr ""
-"Think we're missing a genre? Tell us what it's called and, if you like, "
-"why it matters — we curate the list by hand."
+"These genres feed the picker on the event form. Missing one? Add it below"
+" — it becomes available immediately. You can remove genres you added "
+"yourself; removing one never changes existing events."
 
-#: templates/genre_submissions.html:20
+#: templates/genre_manage.html:19
 msgid "e.g. Goregrind"
 msgstr "e.g. Goregrind"
 
-#: templates/genre_submissions.html:28
-msgid "Any bands or events that fit this genre?"
-msgstr "Any bands or events that fit this genre?"
+#: templates/genre_manage.html:22
+msgid "Add"
+msgstr "Add"
+
+#: templates/genre_manage.html:32
+msgid "Current genres"
+msgstr "Current genres"
+
+#: templates/genre_manage.html:41
+msgid "added by you"
+msgstr "added by you"
+
+#: templates/genre_manage.html:43
+msgid "added by a user"
+msgstr "added by a user"
+
+#: templates/genre_manage.html:48
+msgid "Remove this genre from the list?"
+msgstr "Remove this genre from the list?"
+
+#: templates/genre_manage.html:58
+msgid "No genres yet."
+msgstr "No genres yet."
 
 #: templates/label_form.html:5
 msgid "Edit label"
@@ -1930,10 +1952,6 @@ msgstr "SUBMIT EVENT"
 msgid "Logout"
 msgstr "Logout"
 
-#: templates/_partials/nav_backstage.html:11
-msgid "Suggest genre"
-msgstr "Suggest genre"
-
 #: templates/_partials/nav_backstage.html:16
 msgid "Analytics"
 msgstr "Analytics"
@@ -2029,4 +2047,39 @@ msgstr "Fuse blown, cable busted, something between stage and mixing desk."
 #~ "Missing a genre on diytracker.ch? "
 #~ "Suggest it here and we will take"
 #~ " a look."
+
+#~ msgid "Why should this genre be added? (optional)"
+#~ msgstr "Why should this genre be added? (optional)"
+
+#~ msgid ""
+#~ "Your suggestion could not be sent "
+#~ "— please write to us directly at"
+#~ " kontakt@diytracker.ch."
+#~ msgstr ""
+#~ "Your suggestion could not be sent "
+#~ "— please write to us directly at"
+#~ " kontakt@diytracker.ch."
+
+#~ msgid "Thanks! We will take a look at your genre suggestion."
+#~ msgstr "Thanks! We will take a look at your genre suggestion."
+
+#~ msgid "Suggest a genre"
+#~ msgstr "Suggest a genre"
+
+#~ msgid "SUGGEST A GENRE"
+#~ msgstr "SUGGEST A GENRE"
+
+#~ msgid ""
+#~ "Think we're missing a genre? Tell "
+#~ "us what it's called and, if you"
+#~ " like, why it matters — we "
+#~ "curate the list by hand."
+#~ msgstr ""
+#~ "Think we're missing a genre? Tell "
+#~ "us what it's called and, if you"
+#~ " like, why it matters — we "
+#~ "curate the list by hand."
+
+#~ msgid "Any bands or events that fit this genre?"
+#~ msgstr "Any bands or events that fit this genre?"
 
