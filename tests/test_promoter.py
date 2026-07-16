@@ -47,6 +47,36 @@ class TestLabelCrud:
         assert label.slug == "cool-label"
         assert label.logo
 
+    def test_create_label_with_description(self, client, make_user, login):
+        login(make_user(is_promoter=True))
+        client.post(
+            "/promoter/labels/new",
+            data={"name": "Descriptive", "description": "  DIY since day one.  "},
+        )
+        label = Label.query.filter_by(name="Descriptive").one()
+        assert label.description == "DIY since day one."
+
+    def test_edit_label_description_round_trips(
+        self, client, make_user, make_label, login
+    ):
+        promoter = make_user(is_promoter=True)
+        label = make_label(promoter)
+        login(promoter)
+        client.post(
+            f"/promoter/labels/{label.id}/edit",
+            data={"name": label.name, "description": "Basement shows."},
+        )
+        assert db.session.get(Label, label.id).description == "Basement shows."
+        # The edit form pre-fills the saved description...
+        html = client.get(f"/promoter/labels/{label.id}/edit").data.decode()
+        assert "Basement shows." in html
+        # ...and clearing the field stores NULL, not an empty string.
+        client.post(
+            f"/promoter/labels/{label.id}/edit",
+            data={"name": label.name, "description": ""},
+        )
+        assert db.session.get(Label, label.id).description is None
+
     def test_duplicate_name_rejected_case_insensitive(
         self, client, make_user, make_label, login
     ):

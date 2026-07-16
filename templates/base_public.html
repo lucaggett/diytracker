@@ -19,7 +19,9 @@
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/MISPROJECT.woff2') }}" crossorigin>
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/JetBrainsMono-Regular.woff2') }}" crossorigin>
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/JetBrainsMono-Bold.woff2') }}" crossorigin>
+  {% block banner_preload -%}
   <link rel="preload" as="image" href="{{ url_for('static', filename='img/banner.webp') }}" type="image/webp">
+  {%- endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}?v={{ css_version }}">
   {% block json_ld %}{% endblock %}
   {% block head_extra %}{% endblock %}
@@ -36,7 +38,12 @@
     </svg>
   </div>
 
-  {% include '_partials/header_public.html' %}
+  {# The header_hero block holds the dark zone above the torn edge: the
+     banner image by default, or a page-specific hero (canton/genre/label). #}
+  <header class="relative">
+    {% block header_hero %}{% include '_partials/header_banner.html' %}{% endblock %}
+    {% include '_partials/header_nav.html' %}
+  </header>
 
   {% with variant = 'public' %}{% include '_partials/flash.html' %}{% endwith %}
 

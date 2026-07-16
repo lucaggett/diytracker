@@ -179,6 +179,9 @@ class DeleteScrapedEventForm(FlaskForm):
 
 class LabelForm(FlaskForm):
     name = StringField(_l("Label Name"), validators=[DataRequired(), Length(max=100)])
+    description = TextAreaField(
+        _l("Description"), validators=[Optional(), Length(max=1000)]
+    )
     logo = FileField(_l("Logo"), validators=[Optional()])
 
 

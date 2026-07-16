@@ -12,6 +12,14 @@ class TestCalendar:
         assert resp.status_code == 200
         assert b"Upcoming Gig" in resp.data
 
+    def test_calendar_event_items_carry_filter_tags(self, client, make_event):
+        # The filter modal reads data-tags off every .event-item; the shared
+        # event-cards partial must keep emitting them.
+        make_event(name="Tagged Gig", genre="Punk", days_from_now=5)
+        html = client.get("/").data.decode()
+        assert "data-tags=" in html
+        assert 'class="event-item' in html
+
     def test_calendar_sets_cache_headers_for_anonymous(self, client):
         resp = client.get("/")
         assert "public" in resp.headers.get("Cache-Control", "")
@@ -418,6 +426,22 @@ class TestLabelPage:
         assert b"Label Show" in resp.data
         assert b"Unrelated Show" not in resp.data
         assert label.name.encode() in resp.data
+
+    def test_label_page_uses_calendar_cards(
+        self, client, make_user, make_label, make_event
+    ):
+        label = make_label(make_user(is_promoter=True))
+        make_event(name="Label Show", label_id=label.id)
+        html = client.get(f"/label/{label.slug}/").data.decode()
+        assert 'class="date-card' in html
+        assert 'class="event-item' in html
+
+    def test_label_page_renders_description(self, client, make_user, make_label):
+        label = make_label(make_user(is_promoter=True))
+        label.description = "Basement shows since 2019."
+        db.session.commit()
+        html = client.get(f"/label/{label.slug}/").data.decode()
+        assert "Basement shows since 2019." in html
 
     def test_label_page_without_events_stays_live(self, client, make_user, make_label):
         label = make_label(make_user(is_promoter=True))

@@ -23,6 +23,10 @@
              hint=_('Renaming changes the label page address; the old link stops working.') if label else none,
              placeholder=_('Enter the label name')) }}
 
+    {{ field(form.description,
+             hint=_('Optional. Shown on your public label page.'),
+             rows=4) }}
+
     {% call field(form.logo, hint=_('Optional. JPG or PNG formats only.')) %}
       {% if label and label.logo %}
         <div class="mt-2 flex items-center gap-3">

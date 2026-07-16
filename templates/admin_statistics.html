@@ -47,7 +47,6 @@
       </tbody>
     </table>
   </div>
-  <p class="text-xs text-smudge mt-3">{{ _('Counted from event page requests in the nginx logs, crawlers filtered out. Visitors are sums of daily unique IPs — a trend, not a census. History accumulates from July 2026 onward.') }}</p>
   {% else %}
   <p class="text-sm text-smudge">{{ _('Collecting view data…') }}</p>
   {% endif %}
@@ -161,6 +160,5 @@
     </li>
     {% endfor %}
   </ul>
-  <p class="text-xs text-smudge mt-3">{{ _('Parsed from the free-text price field — ranges count their lower bound, so treat these as approximate.') }}</p>
 </section>
 {% endblock %}

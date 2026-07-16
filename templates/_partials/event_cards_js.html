@@ -1,0 +1,29 @@
+{# Behavior for _partials/event_cards.html: expand/collapse + share buttons.
+   Include once in the page's scripts block. #}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        window.toggleEventDetails = function (element) {
+            element.classList.toggle('is-open');
+        }
+
+        // Share buttons: native share sheet where available, clipboard copy
+        // otherwise. Without JS the anchor simply navigates to the event page.
+        document.querySelectorAll('.share-event-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation(); // keep the card from collapsing
+                if (navigator.share) {
+                    e.preventDefault();
+                    navigator.share({ title: btn.dataset.shareTitle, url: btn.href }).catch(function () {});
+                } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                    e.preventDefault();
+                    navigator.clipboard.writeText(btn.href).then(function () {
+                        const label = btn.querySelector('.share-label');
+                        const original = label.textContent;
+                        label.textContent = btn.dataset.copiedLabel;
+                        setTimeout(function () { label.textContent = original; }, 1500);
+                    });
+                }
+            });
+        });
+    });
+</script>

@@ -1,0 +1,10 @@
+{# Default header art: the banner image (dark, so the torn edge below blends
+   in) doubling as a link back to the calendar. Pages that want a hero instead
+   override the header_hero block in base_public.html. #}
+<a href="{{ url_for('public.calendar_view') }}" class="block">
+  <img src="{{ url_for('static', filename='img/banner.webp') }}"
+       alt="diytracker — DIY concerts in Switzerland"
+       width="1600" height="407"
+       class="block w-full h-auto"
+       fetchpriority="high">
+</a>

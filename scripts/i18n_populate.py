@@ -483,6 +483,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "This event already belongs to a label.": "Dieser Event gehört bereits zu einem Label.",
         "Event claimed for %(label)s!": "Event für %(label)s beansprucht!",
         "Contact": "Kontakt",
+        # Missing-venue admin panel
+        "Events with missing venue": "Events mit fehlendem Venue",
+        "Fix": "Beheben",
+        "These events point at a venue that no longer exists. Edit each one to pick or create a venue.": "Diese Events verweisen auf ein Venue, das nicht mehr existiert. Bearbeite sie einzeln, um ein Venue auszuwählen oder neu anzulegen.",
+        "This event's venue no longer exists. Please select or create a venue below.": "Das Venue dieses Events existiert nicht mehr. Bitte unten ein Venue auswählen oder neu anlegen.",
+        # Label description
+        "Optional. Shown on your public label page.": "Optional. Wird auf deiner öffentlichen Labelseite angezeigt.",
     },
     "fr": {
         "Invalid email or password.": "E-mail ou mot de passe invalide.",
@@ -943,6 +950,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "This event already belongs to a label.": "Cet événement appartient déjà à un label.",
         "Event claimed for %(label)s!": "Événement revendiqué pour %(label)s !",
         "Contact": "Contact",
+        # Missing-venue admin panel
+        "Events with missing venue": "Événements sans lieu",
+        "Fix": "Corriger",
+        "These events point at a venue that no longer exists. Edit each one to pick or create a venue.": "Ces événements pointent vers un lieu qui n'existe plus. Modifie chacun pour sélectionner ou créer un lieu.",
+        "This event's venue no longer exists. Please select or create a venue below.": "Le lieu de cet événement n'existe plus. Sélectionne ou crée un lieu ci-dessous.",
+        # Label description
+        "Optional. Shown on your public label page.": "Optionnel. Affiché sur ta page de label publique.",
     },
     "it": {
         "Invalid email or password.": "E-mail o password non validi.",
@@ -1403,6 +1417,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Event claimed for %(label)s!": "Evento rivendicato per %(label)s!",
         "Optional. The show will appear on the label's page.": "Facoltativo. Il concerto apparirà sulla pagina dell'etichetta.",
         "Contact": "Contatto",
+        # Missing-venue admin panel
+        "Events with missing venue": "Eventi senza locale",
+        "Fix": "Correggi",
+        "These events point at a venue that no longer exists. Edit each one to pick or create a venue.": "Questi eventi puntano a un locale che non esiste più. Modificali uno per uno per selezionare o creare un locale.",
+        "This event's venue no longer exists. Please select or create a venue below.": "Il locale di questo evento non esiste più. Seleziona o crea un locale qui sotto.",
+        # Label description
+        "Optional. Shown on your public label page.": "Facoltativo. Mostrato sulla tua pagina pubblica dell'etichetta.",
     },
 }
 

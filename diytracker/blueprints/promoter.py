@@ -135,6 +135,7 @@ def new_label():
             name=name,
             slug=unique_slug(name),
             logo=logo,
+            description=(form.description.data or "").strip() or None,
             promoter_id=session["user_id"],
         )
         db.session.add(label)
@@ -163,6 +164,7 @@ def edit_label(label_id):
         )
         if logo:
             label.logo = logo
+        label.description = (form.description.data or "").strip() or None
         db.session.commit()
         bust_cache()
         flash(_("Label updated!"))

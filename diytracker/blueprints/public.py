@@ -103,6 +103,20 @@ def _group_events_by_date(events):
     return grouped_events
 
 
+def _months_spanning(events):
+    """[(year, month)] covering first..last event (events sorted by date) —
+    the month span follows the events rather than the calendar's fixed
+    3-month window."""
+    months = []
+    if events:
+        cursor = events[0].date.date().replace(day=1)
+        last = events[-1].date.date().replace(day=1)
+        while cursor <= last:
+            months.append((cursor.year, cursor.month))
+            cursor += relativedelta(months=1)
+    return months
+
+
 @bp.route("/")
 @cache.cached(make_cache_key=_calendar_cache_key, unless=_skip_calendar_cache)
 def calendar_view():
@@ -342,7 +356,13 @@ def canton_page(canton_slug):
         .all()
     )
     return render_template(
-        "canton.html", canton=info["name"], events=events, venues=venues
+        "canton.html",
+        canton=info["name"],
+        events=events,
+        venues=venues,
+        grouped_events=_group_events_by_date(events),
+        months_data=_months_data(_months_spanning(events)),
+        datetime=datetime,
     )
 
 
@@ -379,6 +399,9 @@ def genre_page(genre_slug):
         events=events,
         venues=venues,
         cantons=cantons,
+        grouped_events=_group_events_by_date(events),
+        months_data=_months_data(_months_spanning(events)),
+        datetime=datetime,
     )
 
 
@@ -401,20 +424,11 @@ def label_page(label_slug):
         .order_by(Event.date.asc())
         .all()
     )
-    # All upcoming shows, so the month span follows the events rather than
-    # the calendar's fixed 3-month window.
-    months = []
-    if events:
-        cursor = events[0].date.date().replace(day=1)
-        last = events[-1].date.date().replace(day=1)
-        while cursor <= last:
-            months.append((cursor.year, cursor.month))
-            cursor += relativedelta(months=1)
     return render_template(
         "label_page.html",
         label=label,
         grouped_events=_group_events_by_date(events),
-        months_data=_months_data(months),
+        months_data=_months_data(_months_spanning(events)),
         datetime=datetime,
     )
 

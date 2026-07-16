@@ -1,0 +1,140 @@
+{# Calendar-style event cards, shared by the calendar and the canton/genre/
+   label pages. Iterates months_data/grouped_events from the including page's
+   context (datetime must also be in context).
+
+   Nesting (.date-card > .event-container > .event-item) is what the toggle
+   and filter JS key on — include _partials/event_cards_js.html in the page's
+   scripts block. The data-* attributes feed the calendar's filter modal; on
+   pages without it they are inert. #}
+{% set today = datetime.utcnow().date() %}
+<div class="space-y-6">
+  {% for month in months_data %}
+    {% for day in range(1, month.last_day_of_month + 1) %}
+      {% set current_date = datetime(month.year, month.month, day).date() %}
+      {% if current_date >= today and current_date in grouped_events %}
+        {% set is_today = (current_date == today) %}
+
+        <article class="date-card flyer-card scroll-jitter relative {% if is_today %}border-bleed{% endif %} p-4 pt-5">
+
+            <svg class="absolute -top-2 left-5 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+            <svg class="absolute -top-2 right-5 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
+
+          {# Date header — uppercase mono, bleed accent. Today gets the HEUTE stamp. #}
+          <header class="flex flex-wrap justify-between items-baseline gap-x-3 gap-y-2 border-b border-ink/40 pb-2 mb-3">
+            <div class="font-mono text-xs uppercase tracking-widest {% if is_today %}text-bleed{% else %}text-ink{% endif %}">
+              {{ format_date(current_date, "EEE '·' dd.MM.yyyy") }}
+            </div>
+            {% if is_today %}
+              <span class="today-stamp inline-block font-mono font-bold text-xs sm:text-base uppercase tracking-[0.15em] sm:tracking-[0.2em] text-bleed px-2 sm:px-3 py-1 border-double border-4 sm:border-[5px] border-current leading-none">
+                {{ _('TODAY') }}
+              </span>
+            {% endif %}
+          </header>
+
+          <div class="event-container space-y-2">
+            {% for event in grouped_events[current_date] %}
+                <div class="event-item bg-paper border border-ink p-3 cursor-pointer"
+                     data-event-id="{{ event.id }}"
+                     data-event-name="{{ event.name|e }}"
+                     data-event-date="{{ event.date.strftime('%Y-%m-%d') }}"
+                     data-event-doors="{{ event.doors.strftime('%H:%M') }}"
+                     data-venue-name="{{ event.venue.name|e }}"
+                     data-venue-address="{{ event.venue.address|e }}"
+                     data-venue-city="{{ event.venue.city|e }}"
+                     data-venue-canton="{{ event.venue.canton|e }}"
+                     data-venue-plz="{{ event.venue.plz|e }}"
+                     data-ticket-price="{{ event.ticket_price|e }}"
+                     data-ticket-link="{{ event.ticket_link|e }}"
+                     data-venue-coords="{{ event.venue.coords|e }}"
+                     data-genre="{{ event.genre|e }}"
+                     data-acts="{{ event.acts|e }}"
+                     data-flyer="{{ event.flyer|e }}"
+                     data-tags="canton:{{ normalise_canton(event.venue.canton)|e }}{% set _parents = parent_genres(event.genre) %}{% if _parents %},genre:{{ ';'.join(_parents)|e }}{% endif %}{% if event.other_tags %},{% for tag in event.other_tags.split(',') %}various:{{ tag.strip()|e }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}"
+                     onclick="toggleEventDetails(this)">
+
+                  <div class="flex justify-between items-start gap-3">
+                    <div class="min-w-0 flex-1">
+                      <p class="font-richEatin text-lg leading-tight text-ink truncate">{{ event.name or event.acts }}</p>
+                      <p class="font-mono text-xs text-smudge mt-0.5 truncate">
+                        {{ event.venue.name }}, {{ event.venue.city }}
+                        {% if event.venue.canton %}<span class="text-ink/40">·</span> {{ event.venue.canton }}{% endif %}
+                      </p>
+                    </div>
+                    <svg class="event-chevron shrink-0 mt-1"
+                         style="width:14px;height:14px;color:var(--ink);"
+                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+
+                  <div class="event-details-wrap">
+                    <div class="event-details pt-3 border-t border-ink/30 text-sm font-mono text-ink space-y-1.5">
+                      {# Flyer paths are stored root-relative without a leading
+                         slash; resolved as-is they would break under subpaths
+                         like /label/<slug>/ or /genre/<slug>/. #}
+                      {% if event.flyer %}
+                        <img src="{{ '/' ~ event.flyer.lstrip('/') if '://' not in event.flyer else event.flyer }}" loading="lazy"
+                             alt="{{ event.name }}"
+                             class="w-full h-auto border border-ink mb-3">
+                      {% endif %}
+                      {# Compact icon rows: the collapsed header already shows
+                         name + venue/city/canton, so only what's new appears here. #}
+                      <p class="flex items-start gap-2">
+                        <svg class="w-3.5 h-3.5 mt-0.5 shrink-0 text-smudge" aria-hidden="true"><use href="#sym-clock"/></svg>
+                        <span class="sr-only">{{ _('Date') }}</span>
+                        <span>{{ event.date.strftime('%Y-%m-%d') }} <span class="text-ink/40">·</span> {{ _('doors') }} {{ event.doors.strftime('%H:%M') }}</span>
+                      </p>
+                      <p class="flex items-start gap-2">
+                        <svg class="w-3.5 h-3.5 mt-0.5 shrink-0 text-smudge" aria-hidden="true"><use href="#sym-pin"/></svg>
+                        <span class="sr-only">{{ _('Address') }}</span>
+                        <span>{% if event.venue.address %}{{ event.venue.address }}, {% endif %}{{ event.venue.plz }} {{ event.venue.city }}</span>
+                      </p>
+                      {% if event.genre or event.acts %}
+                        <p class="flex items-start gap-2">
+                          <svg class="w-3.5 h-3.5 mt-0.5 shrink-0 text-smudge" aria-hidden="true"><use href="#sym-tag"/></svg>
+                          <span class="sr-only">{{ _('Genre') }} / {{ _('Acts') }}</span>
+                          <span>{{ event.genre }}{% if event.genre and event.acts %} <span class="text-ink/40">·</span> {% endif %}{{ event.acts }}</span>
+                        </p>
+                      {% endif %}
+                      {% if event.venue.accessibility %}
+                        <p class="flex items-start gap-2">
+                          <svg class="w-3.5 h-3.5 mt-0.5 shrink-0 text-smudge" aria-hidden="true"><use href="#sym-access"/></svg>
+                          <a href="{{ url_for('public.venue_accessibility', venue_id=event.venue.id) }}"
+                             class="text-bleed underline">{{ _('Accessibility info') }}</a>
+                        </p>
+                      {% endif %}
+                      <div class="pt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+                        {% if event.ticket_link %}
+                          <a href="{{ event.ticket_link }}" target="_blank" rel="noopener"
+                             onclick="event.stopPropagation()"
+                             class="btn-press inline-flex items-center gap-1.5 border-2 border-ink bg-ink text-paper px-3 py-1.5 uppercase tracking-widest text-xs hover:bg-bleed transition-colors">
+                            <svg class="w-3.5 h-3.5 shrink-0" aria-hidden="true"><use href="#sym-ticket"/></svg>
+                            {{ _('Tickets') }}{% if event.ticket_price %} · {{ event.ticket_price }}{% endif %}
+                          </a>
+                        {% elif event.ticket_price %}
+                          <span class="inline-flex items-center gap-1.5 uppercase tracking-widest text-xs">
+                            <svg class="w-3.5 h-3.5 shrink-0 text-smudge" aria-hidden="true"><use href="#sym-ticket"/></svg>
+                            {{ event.ticket_price }}
+                          </span>
+                        {% endif %}
+                        <a href="{{ url_for('public.event_page', event_id=event.id) }}"
+                           class="share-event-btn btn-press inline-flex items-center gap-1.5 border-2 border-ink bg-paper text-ink px-3 py-1.5 uppercase tracking-widest text-xs hover:bg-ink hover:text-paper transition-colors"
+                           data-share-title="{{ (event.name or event.acts)|e }}"
+                           data-copied-label="{{ _('Link copied!') }}">
+                          <svg class="w-3.5 h-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M8.684 13.342a3 3 0 100-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684zm0-9.316a3 3 0 105.368-2.684 3 3 0 00-5.368 2.684z"/>
+                          </svg>
+                          <span class="share-label">{{ _('Share') }}</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            {% endfor %}
+          </div>
+        </article>
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+</div>

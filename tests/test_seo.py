@@ -214,6 +214,16 @@ class TestCantonPages:
         assert f'href="/events/{ev.id}/"' in html
         assert f'href="/venues/{ev.venue_id}/"' in html
 
+    def test_canton_page_uses_calendar_cards(self, client, make_event):
+        make_event(name="Doom Night")
+        html = client.get("/zuerich/").data.decode()
+        assert 'class="date-card' in html
+        assert 'class="event-item' in html
+        # The hero replaces the banner image and its preload (the og:image
+        # meta still points at the banner — that's fine).
+        assert '<img src="/static/img/banner.webp"' not in html
+        assert 'rel="preload" as="image"' not in html
+
     def test_unknown_canton_404(self, client, make_event):
         make_event()
         assert client.get("/atlantis/").status_code == 404
@@ -280,6 +290,13 @@ class TestGenrePages:
         assert f'href="/venues/{ev.venue_id}/"' in html
         # The second parent genre gets its own page too.
         assert client.get("/genre/punk/").status_code == 200
+
+    def test_genre_page_uses_calendar_cards(self, client, make_event):
+        make_event(name="Doom Night", genre="Doom Metal")
+        html = client.get("/genre/metal/").data.decode()
+        assert 'class="date-card' in html
+        assert 'class="event-item' in html
+        assert '<img src="/static/img/banner.webp"' not in html
 
     def test_genre_page_links_cantons(self, client, make_event):
         make_event(genre="Punk")  # default venue is in ZH
