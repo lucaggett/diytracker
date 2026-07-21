@@ -11,7 +11,22 @@
 {# Most viewed events — per-day counts distilled from nginx logs by
    services/event_views.py on the analytics schedule. #}
 <section class="border-2 border-ink bg-paper p-4 mb-6">
-  <p class="text-xs uppercase tracking-widest text-smudge mb-3">{{ _('Most viewed events') }}</p>
+  {# Fixed-size switch, same pattern as the map's "show all venues": the label
+     never changes width, only the knob moves. Past events are filtered in SQL
+     rather than hidden in the markup, so the list stays a full top 25. #}
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Most viewed events') }}</p>
+    <div class="flex items-center gap-3">
+      <span id="past-toggle-label" class="font-mono text-xs uppercase tracking-widest text-ink">
+        {{ _('Show past events') }}
+      </span>
+      <a id="past-toggle" role="switch" aria-checked="{{ 'true' if show_past else 'false' }}"
+         aria-labelledby="past-toggle-label" class="toggle-switch inline-block"
+         href="{{ url_for('admin.statistics', past=None if show_past else 1) }}">
+        <span class="toggle-knob" aria-hidden="true"></span>
+      </a>
+    </div>
+  </div>
   {% if popularity %}
   <div class="overflow-x-auto">
     <table class="min-w-full text-sm">
@@ -47,8 +62,10 @@
       </tbody>
     </table>
   </div>
-  {% else %}
+  {% elif show_past %}
   <p class="text-sm text-smudge">{{ _('Collecting view data…') }}</p>
+  {% else %}
+  <p class="text-sm text-smudge">{{ _('No upcoming events with view data yet.') }}</p>
   {% endif %}
 </section>
 

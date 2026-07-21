@@ -128,19 +128,27 @@ def generate_event_view_stats() -> tuple[bool, str]:
     return True, f"Event view counts updated for {len(counts)} event-day(s)"
 
 
-def event_popularity(limit=25):
+def event_popularity(limit=25, include_past=True):
     """Events ranked by total recorded hits, most viewed first.
 
     Returns [{"event_id", "event" (None when deleted), "hits", "visitors"}].
     Visitors are sums of daily uniques, like the Traffic panel.
+
+    With include_past=False only events still to come are ranked, so the list
+    stays `limit` long instead of thinning out — deleted events drop out too,
+    since there's no date left to judge them by.
     """
-    rows = (
-        db.session.query(
-            EventDailyViews.event_id,
-            func.sum(EventDailyViews.hits).label("hits"),
-            func.sum(EventDailyViews.visitors).label("visitors"),
+    q = db.session.query(
+        EventDailyViews.event_id,
+        func.sum(EventDailyViews.hits).label("hits"),
+        func.sum(EventDailyViews.visitors).label("visitors"),
+    )
+    if not include_past:
+        q = q.join(Event, Event.id == EventDailyViews.event_id).filter(
+            Event.date >= datetime.now()
         )
-        .group_by(EventDailyViews.event_id)
+    rows = (
+        q.group_by(EventDailyViews.event_id)
         .order_by(func.sum(EventDailyViews.hits).desc())
         .limit(limit)
         .all()

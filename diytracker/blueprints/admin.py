@@ -454,9 +454,11 @@ def analytics_stats():
 @admin_required
 def statistics():
     now = datetime.now()
+    show_past = request.args.get("past") == "1"
     return render_template(
         "admin_statistics.html",
-        popularity=event_popularity(),
+        popularity=event_popularity(include_past=show_past),
+        show_past=show_past,
         monthly=db_stats.monthly_series(),
         yearly=db_stats.events_per_year(),
         by_genre=db_stats.events_by_parent_genre(),

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-21 15:35+0200\n"
+"POT-Creation-Date: 2026-07-21 16:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -86,7 +86,7 @@ msgid "Ticket Link"
 msgstr ""
 
 #: diytracker/forms.py:97 templates/admin.html:149
-#: templates/admin_statistics.html:23 templates/edit_venue.html:9
+#: templates/admin_statistics.html:38 templates/edit_venue.html:9
 #: templates/event_page.html:79 templates/event_queue.html:50
 #: templates/venue_page.html:24
 msgid "Venue"
@@ -427,12 +427,12 @@ msgstr ""
 msgid "No report has been generated yet. Use the form to create one."
 msgstr ""
 
-#: diytracker/blueprints/admin.py:492
+#: diytracker/blueprints/admin.py:494
 #, python-format
 msgid "Cleared %(n)d suspect(s)."
 msgstr ""
 
-#: diytracker/blueprints/admin.py:574
+#: diytracker/blueprints/admin.py:576
 msgid "Page text saved."
 msgstr ""
 
@@ -816,7 +816,7 @@ msgid "ID"
 msgstr ""
 
 #: templates/_partials/event_cards.html:84 templates/admin.html:119
-#: templates/admin.html:148 templates/admin_statistics.html:22
+#: templates/admin.html:148 templates/admin_statistics.html:37
 #: templates/event_page.html:73 templates/event_queue.html:48
 #: templates/promoter_dashboard.html:66
 msgid "Date"
@@ -899,85 +899,93 @@ msgstr ""
 msgid "STATISTICS"
 msgstr ""
 
-#: templates/admin_statistics.html:14
+#: templates/admin_statistics.html:18
 msgid "Most viewed events"
 msgstr ""
 
-#: templates/admin_statistics.html:21 templates/edit_event.html:14
+#: templates/admin_statistics.html:21
+msgid "Show past events"
+msgstr ""
+
+#: templates/admin_statistics.html:36 templates/edit_event.html:14
 #: templates/event_page.html:3 templates/event_page.html:58
 #: templates/event_queue.html:49 templates/promoter_dashboard.html:65
 msgid "Event"
 msgstr ""
 
-#: templates/admin_statistics.html:24
+#: templates/admin_statistics.html:39
 msgid "Hits"
 msgstr ""
 
-#: templates/admin_statistics.html:25 templates/promoter_dashboard.html:69
+#: templates/admin_statistics.html:40 templates/promoter_dashboard.html:69
 msgid "Visitors"
 msgstr ""
 
-#: templates/admin_statistics.html:36 templates/promoter_dashboard.html:79
+#: templates/admin_statistics.html:51 templates/promoter_dashboard.html:79
 msgid "past"
 msgstr ""
 
-#: templates/admin_statistics.html:38
+#: templates/admin_statistics.html:53
 msgid "Deleted event"
 msgstr ""
 
-#: templates/admin_statistics.html:51
+#: templates/admin_statistics.html:66
 msgid "Collecting view data…"
 msgstr ""
 
-#: templates/admin_statistics.html:57
+#: templates/admin_statistics.html:68
+msgid "No upcoming events with view data yet."
+msgstr ""
+
+#: templates/admin_statistics.html:74
 msgid "Events over time"
 msgstr ""
 
-#: templates/admin_statistics.html:60 templates/admin_statistics.html:61
+#: templates/admin_statistics.html:77 templates/admin_statistics.html:78
 msgid "Events / month, last 24 months"
 msgstr ""
 
-#: templates/admin_statistics.html:71
+#: templates/admin_statistics.html:88
 msgid "Events / year"
 msgstr ""
 
-#: templates/admin_statistics.html:89
+#: templates/admin_statistics.html:106
 msgid "By genre"
 msgstr ""
 
-#: templates/admin_statistics.html:90
+#: templates/admin_statistics.html:107
 msgid "By canton"
 msgstr ""
 
-#: templates/admin_statistics.html:91
+#: templates/admin_statistics.html:108
 msgid "Top venues"
 msgstr ""
 
-#: templates/admin_statistics.html:114 templates/venue_accessibility.html:11
+#: templates/admin_statistics.html:131 templates/venue_accessibility.html:11
 msgid "Unknown"
 msgstr ""
 
-#: templates/admin_statistics.html:128
+#: templates/admin_statistics.html:145
 msgid "Ticket prices"
 msgstr ""
 
-#: templates/admin_statistics.html:131
+#: templates/admin_statistics.html:148
 msgid "Median (CHF)"
 msgstr ""
 
-#: templates/admin_statistics.html:133
+#: templates/admin_statistics.html:150
 msgid "mean:"
 msgstr ""
 
-#: templates/admin_statistics.html:136
+#: templates/admin_statistics.html:153
 msgid "Paid events"
 msgstr ""
 
-#: templates/admin_statistics.html:141
+#: templates/admin_statistics.html:158
 msgid "Free / donation"
 msgstr ""
 
-#: templates/admin_statistics.html:146
+#: templates/admin_statistics.html:163
 msgid "Unparseable"
 msgstr ""
 

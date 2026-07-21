@@ -241,20 +241,36 @@ class TestStatisticsPage:
         assert b"Top venues" in resp.data
         assert b"Ticket prices" in resp.data
         # No view data yet — the popularity table shows its empty state.
-        assert "Collecting view data…".encode() in resp.data
+        assert b"No upcoming events with view data yet." in resp.data
 
     def test_shows_popularity_rows(self, client, admin, login, make_event):
         from datetime import date
         from diytracker.services.event_views import persist_event_day_counts
 
         login(admin)
-        ev = make_event(name="Viewed Show", days_from_now=-5)
+        ev = make_event(name="Viewed Show", days_from_now=5)
         persist_event_day_counts({(ev.id, date(2026, 7, 1)): (12, 7)})
         resp = client.get("/admin/statistics")
         assert b"Viewed Show" in resp.data
         # The test client browses in English (Accept-Language), so public
         # links carry the locale prefix.
         assert f'href="/en/events/{ev.id}/"'.encode() in resp.data
+
+    def test_past_events_only_with_toggle(self, client, admin, login, make_event):
+        from datetime import date
+        from diytracker.services.event_views import persist_event_day_counts
+
+        login(admin)
+        ev = make_event(name="Bygone Show", days_from_now=-5)
+        persist_event_day_counts({(ev.id, date(2026, 7, 1)): (12, 7)})
+
+        resp = client.get("/admin/statistics")
+        assert b"Bygone Show" not in resp.data
+        assert b'aria-checked="false"' in resp.data
+
+        resp = client.get("/admin/statistics?past=1")
+        assert b"Bygone Show" in resp.data
+        assert b'aria-checked="true"' in resp.data
 
 
 class TestEditEventLabel:
