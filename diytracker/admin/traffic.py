@@ -128,6 +128,13 @@ class EventTrafficRow:
     hits: int
     visitors: int
     sparkline: str
+    # detail fields, empty when the event was deleted
+    venue: str = ""
+    status: str = ""
+    genre: str = ""
+    submitter: str = ""
+    # (iso date, hits, visitors) for days with recorded views, newest first
+    recent_days: list = field(default_factory=list)
 
 
 @dataclass
@@ -135,6 +142,24 @@ class EventsResult:
     timeframe_label: str
     spark_days: int
     rows: list = field(default_factory=list)
+
+
+@dataclass
+class ErrorPathRow:
+    path: str
+    count: int
+    statuses: dict = field(default_factory=dict)  # "502" -> n
+    unique_ips: int = 0
+    last_seen: str = ""
+
+
+@dataclass
+class ErrorsReport:
+    timeframe_label: str
+    total_requests: int
+    total_5xx: int
+    statuses: dict = field(default_factory=dict)  # "502" -> n, all paths
+    rows: list = field(default_factory=list)  # ErrorPathRow, most 5xx first
 
 
 def _log_files():
@@ -377,6 +402,74 @@ def analyze(timeframe="7d", limit=50):
     )
 
 
+class _PathErrors:
+    __slots__ = ("statuses", "ips", "last_seen")
+
+    def __init__(self):
+        self.statuses = Counter()
+        self.ips = set()
+        self.last_seen = None
+
+
+def server_errors(timeframe="7d", limit=50):
+    """Paths ranked by 5xx responses in the window.
+
+    Same log scan as analyze(), but no per-IP scoring — just which paths the
+    app is failing on and with which status codes. Empty `rows` means the
+    window had traffic but no 5xx at all, which is the good outcome, not an
+    error. Needs no app context.
+    """
+    if timeframe not in TIMEFRAMES:
+        raise AdminError(f"Unknown timeframe {timeframe!r}.")
+    files = _log_files()
+    valid_dates = _build_valid_dates(*_date_range(timeframe))
+
+    total = 0
+    status_totals = Counter()
+    per_path = {}
+    for line in _iter_filtered_lines(files, valid_dates):
+        parsed = _parse_line(line)
+        if parsed is None:
+            continue
+        ip, ts, path, status, _ref, _ua = parsed
+        if path == "/admin" or path.startswith("/admin/"):
+            continue
+        total += 1
+        if status[0] != "5":
+            continue
+        status_totals[status] += 1
+        s = per_path.setdefault(path, _PathErrors())
+        s.statuses[status] += 1
+        s.ips.add(ip)
+        if s.last_seen is None or ts > s.last_seen:
+            s.last_seen = ts
+
+    if total == 0:
+        raise AdminError(
+            f"No log entries found for {TIMEFRAMES[timeframe]} "
+            f"({len(files)} log file(s) checked)."
+        )
+
+    rows = [
+        ErrorPathRow(
+            path=path,
+            count=sum(s.statuses.values()),
+            statuses=dict(sorted(s.statuses.items())),
+            unique_ips=len(s.ips),
+            last_seen=s.last_seen.isoformat(sep=" ", timespec="seconds"),
+        )
+        for path, s in per_path.items()
+    ]
+    rows.sort(key=lambda r: (-r.count, r.path))
+    return ErrorsReport(
+        timeframe_label=TIMEFRAMES[timeframe],
+        total_requests=total,
+        total_5xx=sum(status_totals.values()),
+        statuses=dict(sorted(status_totals.items())),
+        rows=rows[:limit],
+    )
+
+
 def _spark(values):
     peak = max(values) if values else 0
     if peak == 0:
@@ -425,19 +518,29 @@ def events(timeframe="30d", limit=25):
     if start is not None:
         spark_start = max(spark_start, start)
     n_days = (today - spark_start).days + 1
-    daily = {}  # (event_id, date) -> hits, only inside the spark window
+    daily = {}  # (event_id, date) -> (hits, visitors), inside the spark window
     for row in EventDailyViews.query.filter(
         EventDailyViews.event_id.in_(ids), EventDailyViews.date >= spark_start
     ):
-        daily[(row.event_id, row.date)] = row.hits
+        daily[(row.event_id, row.date)] = (row.hits, row.visitors)
 
     rows = []
     for row in ranked:
         event = events_by_id.get(row.event_id)
         series = [
-            daily.get((row.event_id, spark_start + timedelta(days=i)), 0)
+            daily.get((row.event_id, spark_start + timedelta(days=i)), (0, 0))[0]
             for i in range(n_days)
         ]
+        recent = [
+            (day.isoformat(), hits, visitors)
+            for (event_id, day), (hits, visitors) in sorted(daily.items(), reverse=True)
+            if event_id == row.event_id
+        ]
+        venue = ""
+        if event and event.venue:
+            venue = event.venue.name
+            if event.venue.city:
+                venue += f", {event.venue.city}"
         rows.append(
             EventTrafficRow(
                 event_id=row.event_id,
@@ -446,6 +549,11 @@ def events(timeframe="30d", limit=25):
                 hits=row.hits,
                 visitors=row.visitors,
                 sparkline=_spark(series),
+                venue=venue,
+                status=event.status if event else "",
+                genre=event.genre or "" if event else "",
+                submitter=event.submitter.email if event and event.submitter else "",
+                recent_days=recent,
             )
         )
     return EventsResult(

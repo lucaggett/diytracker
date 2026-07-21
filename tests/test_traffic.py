@@ -379,6 +379,83 @@ class TestSuspectCrossReference:
         assert not profile_for(report, "5.5.5.5").suspect
 
 
+class TestServerErrors:
+    def test_paths_ranked_by_5xx_count(self, app, log_dir):
+        now = datetime.now()
+        log_dir(
+            [
+                nginx_line("1.1.1.1", now, "/", status=200),
+                nginx_line("1.1.1.1", now, "/events/1/", status=500),
+                nginx_line("2.2.2.2", now, "/events/1/", status=502),
+                gunicorn_line("3.3.3.3", now, "/map", status=500),
+            ]
+        )
+        report = traffic.server_errors("7d")
+        assert report.total_requests == 4
+        assert report.total_5xx == 3
+        assert report.statuses == {"500": 2, "502": 1}
+        assert [(r.path, r.count) for r in report.rows] == [
+            ("/events/1/", 2),
+            ("/map", 1),
+        ]
+        top = report.rows[0]
+        assert top.statuses == {"500": 1, "502": 1}
+        assert top.unique_ips == 2
+        assert top.last_seen.startswith(now.strftime("%Y-%m-%d"))
+
+    def test_query_strings_collapse_onto_one_path(self, app, log_dir):
+        now = datetime.now()
+        log_dir(
+            [
+                nginx_line("1.1.1.1", now, "/search?q=a", status=500),
+                nginx_line("1.1.1.1", now, "/search?q=b", status=500),
+            ]
+        )
+        report = traffic.server_errors("7d")
+        assert [(r.path, r.count) for r in report.rows] == [("/search", 2)]
+
+    def test_admin_errors_are_skipped(self, app, log_dir):
+        now = datetime.now()
+        log_dir(
+            [
+                nginx_line("1.1.1.1", now, "/", status=200),
+                nginx_line("1.1.1.1", now, "/admin/statistics", status=500),
+            ]
+        )
+        report = traffic.server_errors("7d")
+        assert report.total_requests == 1
+        assert report.rows == []
+
+    def test_no_5xx_is_empty_not_an_error(self, app, log_dir):
+        log_dir([nginx_line("1.1.1.1", datetime.now(), "/", status=404)])
+        report = traffic.server_errors("7d")
+        assert report.total_5xx == 0
+        assert report.rows == []
+
+    def test_timeframe_excludes_old_lines(self, app, log_dir):
+        now = datetime.now()
+        log_dir(
+            [
+                nginx_line("1.1.1.1", now - timedelta(days=20), "/old", status=500),
+                nginx_line("1.1.1.1", now, "/new", status=500),
+            ]
+        )
+        assert [r.path for r in traffic.server_errors("7d").rows] == ["/new"]
+        assert [r.path for r in traffic.server_errors("30d").rows] == [
+            "/new",
+            "/old",
+        ]
+
+    def test_empty_window_raises(self, app, log_dir):
+        log_dir([nginx_line("1.1.1.1", datetime.now() - timedelta(days=30), "/")])
+        with pytest.raises(AdminError, match="No log entries"):
+            traffic.server_errors("7d")
+
+    def test_unknown_timeframe_raises(self, app):
+        with pytest.raises(AdminError, match="timeframe"):
+            traffic.server_errors("fortnight")
+
+
 class TestEvents:
     def _seed(self, event_id, day_hits):
         for offset, hits in day_hits.items():
@@ -404,12 +481,29 @@ class TestEvents:
         assert result.rows[0].sparkline.strip()  # non-empty trend
         assert len(result.rows[0].sparkline) == result.spark_days
 
+    def test_detail_fields_filled_from_event(self, app, make_event):
+        with app.app_context():
+            event = make_event(name="Big Show")
+            self._seed(event.id, {0: 30, 1: 20})
+            expected_venue = f"{event.venue.name}, {event.venue.city}"
+            result = traffic.events("30d")
+        row = result.rows[0]
+        assert row.venue == expected_venue
+        assert row.status == "scheduled"
+        assert row.genre == "Punk"
+        assert row.recent_days == [
+            ((date.today() - timedelta(days=0)).isoformat(), 30, 15),
+            ((date.today() - timedelta(days=1)).isoformat(), 20, 10),
+        ]
+
     def test_deleted_event_still_listed(self, app):
         with app.app_context():
             self._seed(4242, {0: 12})
             result = traffic.events("30d")
         assert result.rows[0].name == "(deleted event #4242)"
         assert result.rows[0].date_label == ""
+        assert result.rows[0].venue == ""
+        assert result.rows[0].recent_days == [(date.today().isoformat(), 12, 6)]
 
     def test_timeframe_excludes_old_rows(self, app, make_event):
         with app.app_context():

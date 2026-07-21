@@ -659,14 +659,17 @@ class StatsScreen(AdminScreen):
 class TrafficScreen(AdminScreen):
     """Access-log traffic analysis: per-IP bot inference + event view trends.
 
-    Two views share one table: `v` toggles Users (per-IP behavioural
-    classification) and Events (view counts over time). Selecting a row in
-    the Users view opens the IP's full profile.
+    Three views share one table: `v` cycles Users (per-IP behavioural
+    classification), Events (view counts over time) and Errors (paths ranked
+    by 5xx responses). Selecting a row opens the IP's full profile in the
+    Users view and the event's view history in the Events view.
     """
+
+    VIEWS = ("users", "events", "errors")
 
     BINDINGS = AdminScreen.BINDINGS + [
         Binding("t", "cycle_timeframe", "Timeframe"),
-        Binding("v", "toggle_view", "Users/Events"),
+        Binding("v", "toggle_view", "Users/Events/Errors"),
         Binding("r", "refresh", "Refresh"),
     ]
 
@@ -682,6 +685,7 @@ class TrafficScreen(AdminScreen):
 
     def on_mount(self):
         self._profiles = {}
+        self._event_rows = {}
         self.action_refresh()
 
     def action_cycle_timeframe(self):
@@ -690,7 +694,7 @@ class TrafficScreen(AdminScreen):
         self.action_refresh()
 
     def action_toggle_view(self):
-        self.view = "events" if self.view == "users" else "users"
+        self.view = self.VIEWS[(self.VIEWS.index(self.view) + 1) % len(self.VIEWS)]
         self.action_refresh()
 
     @work(exclusive=True)
@@ -700,11 +704,14 @@ class TrafficScreen(AdminScreen):
         table = self.query_one("#traffic-table", DataTable)
         table.clear(columns=True)
         self._profiles = {}
+        self._event_rows = {}
         try:
             if self.view == "users":
                 await self._show_users()
-            else:
+            elif self.view == "events":
                 await self._show_events()
+            else:
+                await self._show_errors()
         except AdminError as exc:
             self.query_one("#traffic-summary", Static).update(str(exc))
             self.show_error(exc)
@@ -748,20 +755,79 @@ class TrafficScreen(AdminScreen):
         self.query_one("#traffic-summary", Static).update(
             f"Event views ({result.timeframe_label}), from recorded daily "
             f"counts — trend spans the last {result.spark_days} day(s).\n"
-            f"Most viewed first — v for users, t for timeframe:"
+            f"Most viewed first — enter for detail, v for view, t for timeframe:"
         )
         table = self.query_one("#traffic-table", DataTable)
         table.add_columns("HITS", "VISITORS", "TREND", "DATE", "EVENT")
         for row in result.rows:
+            self._event_rows[str(row.event_id)] = row
             table.add_row(
                 str(row.hits),
                 str(row.visitors),
                 row.sparkline,
                 row.date_label,
                 row.name,
+                key=str(row.event_id),
             )
 
+    async def _show_errors(self):
+        report = await self.run_db(traffic.server_errors, self.timeframe)
+        share = (
+            f" ({report.total_5xx / report.total_requests:.2%})"
+            if report.total_5xx
+            else ""
+        )
+        statuses = " · ".join(f"{k} {v}" for k, v in report.statuses.items())
+        verdict = (
+            f"By status: {statuses}\nMost 5xx first"
+            if report.rows
+            else "No server errors in this window"
+        )
+        self.query_one("#traffic-summary", Static).update(
+            f"Server errors ({report.timeframe_label}): {report.total_5xx} 5xx "
+            f"in {report.total_requests} requests{share}\n"
+            f"{verdict} — v for view, t for timeframe:"
+        )
+        table = self.query_one("#traffic-table", DataTable)
+        table.add_columns("5XX", "STATUSES", "IPS", "LAST SEEN", "PATH")
+        for row in report.rows:
+            table.add_row(
+                str(row.count),
+                ", ".join(f"{k}×{v}" for k, v in row.statuses.items()),
+                str(row.unique_ips),
+                row.last_seen,
+                row.path,
+            )
+
+    def _show_event_detail(self, row):
+        days = "\n".join(
+            f"  {day}  {hits:>5} hits  {visitors:>5} visitors"
+            for day, hits, visitors in row.recent_days
+        )
+        if row.date_label:
+            info = (
+                f"Date:      {row.date_label} ({row.status})\n"
+                f"Venue:     {row.venue or '-'}\n"
+                f"Genre:     {row.genre or '-'}\n"
+                f"Submitter: {row.submitter or '-'}\n"
+            )
+        else:
+            info = "The event itself has been deleted; only its view counts remain.\n"
+        self.app.push_screen(
+            MessageModal(
+                f"#{row.event_id} — {row.name}",
+                f"{info}"
+                f"Views:     {row.hits} hits, {row.visitors} visitors "
+                f"in the window\n"
+                f"By day, newest first:\n{days or '  none'}",
+            )
+        )
+
     def on_data_table_row_selected(self, event: DataTable.RowSelected):
+        event_row = self._event_rows.get(event.row_key.value)
+        if event_row is not None:
+            self._show_event_detail(event_row)
+            return
         profile = self._profiles.get(event.row_key.value)
         if profile is None:
             return
