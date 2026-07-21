@@ -22,11 +22,15 @@ def utcnow():
 @sa_event.listens_for(Engine, "connect")
 def _sqlite_pragmas(dbapi_connection, _connection_record):
     # WAL + busy timeout so concurrent gunicorn workers don't hit
-    # "database is locked" on simultaneous writes.
+    # "database is locked" on simultaneous writes. foreign_keys is off by
+    # default in SQLite and must be enabled per connection; without it a
+    # venue delete can orphan events (event.venue becomes None and the
+    # event page 500s).
     if isinstance(dbapi_connection, sqlite3.Connection):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA busy_timeout=15000")
+        cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
 
 

@@ -73,5 +73,10 @@ def reissue_invite(email):
 
 def delete_user(email):
     user = _get_user(email)
+    # label.promoter_id is NOT NULL, so a label owner can't be deleted
+    # without deciding what happens to their labels first.
+    if user.labels:
+        names = ", ".join(label.name for label in user.labels)
+        raise AdminError(f"User owns label(s) {names}; reassign or delete them first.")
     db.session.delete(user)
     db.session.commit()

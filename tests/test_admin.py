@@ -3,6 +3,19 @@
 from diytracker.models import db, Event, Venue
 
 
+def _force_dangling_venue(event_id):
+    """Point an event at a venue id that doesn't exist. FK enforcement
+    rejects this through the ORM, so drop to a raw connection with FKs off —
+    the admin views must still tolerate legacy rows corrupted before
+    enforcement was turned on."""
+    with db.engine.connect() as conn:
+        conn.exec_driver_sql("PRAGMA foreign_keys=OFF")
+        conn.exec_driver_sql("UPDATE event SET venue_id=999999 WHERE id=?", (event_id,))
+        conn.commit()
+        conn.exec_driver_sql("PRAGMA foreign_keys=ON")
+    db.session.expire_all()
+
+
 class TestEventManagement:
     def test_edit_event_updates_fields(self, client, admin, login, make_event):
         login(admin)
@@ -58,12 +71,11 @@ class TestEventManagement:
         assert Event.query.get(ev.id) is None
 
     def test_edit_event_with_dangling_venue_id(self, client, admin, login, make_event):
-        # Simulate an event whose venue was deleted out from under it (SQLite
-        # doesn't enforce the FK here) — the edit page must not crash.
+        # Simulate an event whose venue was deleted out from under it before
+        # FK enforcement existed — the edit page must not crash.
         login(admin)
         ev = make_event()
-        Event.query.filter_by(id=ev.id).update({"venue_id": 999999})
-        db.session.commit()
+        _force_dangling_venue(ev.id)
         resp = client.get(f"/admin/edit_event/{ev.id}")
         assert resp.status_code == 200
 
@@ -76,8 +88,7 @@ class TestEventManagement:
     ):
         login(admin)
         ev = make_event()
-        Event.query.filter_by(id=ev.id).update({"venue_id": 999999})
-        db.session.commit()
+        _force_dangling_venue(ev.id)
         resp = client.get("/admin")
         assert resp.status_code == 200
         assert b"Events with missing venue" in resp.data

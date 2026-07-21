@@ -179,7 +179,7 @@ def delete_label(label_id):
     if not form.validate_on_submit():
         abort(400)
     label = _owned_label_or_403(label_id)
-    # SQLite FK enforcement is off in this app, so detach events explicitly.
+    # Detach events first — FK enforcement would otherwise reject the delete.
     Event.query.filter_by(label_id=label.id).update({"label_id": None})
     db.session.delete(label)
     db.session.commit()

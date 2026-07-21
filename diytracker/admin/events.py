@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from diytracker.admin.core import AdminError
 from diytracker.models import Event, db, utcnow
 from diytracker.services.cache import bust_cache
+from diytracker.services.events import detach_scrape_approvals
 from diytracker.services.event_dedup import (
     find_event_dedup_candidates,
     merge_events,
@@ -92,6 +93,7 @@ def set_status(event_id, status):
 def delete_event(event_id):
     event = _get_event(event_id)
     row = _row(event)
+    detach_scrape_approvals(event.id)
     db.session.delete(event)
     db.session.commit()
     bust_cache()

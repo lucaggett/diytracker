@@ -39,7 +39,11 @@ from diytracker.services import db_stats
 from diytracker.services.event_views import event_popularity
 from diytracker.services.cache import bust_cache
 from diytracker.services.calendar_image import generate_weekly_calendar_image
-from diytracker.services.events import clean_genre_string, resolve_venue_from_form
+from diytracker.services.events import (
+    clean_genre_string,
+    detach_scrape_approvals,
+    resolve_venue_from_form,
+)
 from diytracker.services.i18n import gettext as _
 from diytracker.services.labels import all_label_choices
 from diytracker.services.scraper import (
@@ -201,6 +205,7 @@ def delete_event(event_id):
     if not form.validate_on_submit():
         abort(400)
     event = Event.query.get_or_404(event_id)
+    detach_scrape_approvals(event.id)
     db.session.delete(event)
     db.session.commit()
     bust_cache()
@@ -268,6 +273,10 @@ def delete_venue(venue_id):
             )
         )
         return redirect(url_for("admin.venues"))
+    # The accessibility row goes with the venue — its NOT NULL FK would
+    # otherwise reject the delete.
+    if venue.accessibility:
+        db.session.delete(venue.accessibility)
     db.session.delete(venue)
     db.session.commit()
     flash(_("Venue deleted."))

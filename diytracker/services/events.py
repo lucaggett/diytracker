@@ -2,9 +2,18 @@
 
 import hashlib
 
-from diytracker.models import db, Event, Venue
+from diytracker.models import db, Event, ScrapedEvent, Venue
 from diytracker.services.venue import get_or_create_venue
 from diytracker.utils import clean_genre_tokens
+
+
+def detach_scrape_approvals(event_id):
+    """Null out scrape-queue approval links before deleting an event — the
+    FK on scraped_event.approved_event_id would reject the delete otherwise.
+    Does not commit."""
+    return ScrapedEvent.query.filter_by(approved_event_id=event_id).update(
+        {"approved_event_id": None}
+    )
 
 
 def compute_event_hash(
