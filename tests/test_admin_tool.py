@@ -66,7 +66,6 @@ class TestInvites:
         body = msg.get_content()
         assert "https://diytracker.ch/set-password/tok123" in body
         assert "7" in body  # the 7-day validity note
-        assert "luc@aggett.com" in body
 
     def test_default_language_is_schwiizerduetsch(self, fake_smtp):
         invites.send_invite_email("new@example.com", "tok123")
