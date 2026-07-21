@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 15:44+0200\n"
+"POT-Creation-Date: 2026-07-21 15:35+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: de\n"
@@ -41,7 +41,7 @@ msgstr "Einlasszeit"
 #: diytracker/forms.py:72 diytracker/forms.py:320
 #: templates/_partials/event_cards.html:95 templates/admin.html:86
 #: templates/calendar.html:116 templates/event_page.html:94
-#: templates/event_queue.html:124 templates/genre.html:10
+#: templates/event_queue.html:124 templates/genre.html:14
 msgid "Genre"
 msgstr "Genre"
 
@@ -71,7 +71,7 @@ msgstr "Abgesagt"
 msgid "Postponed"
 msgstr "Verschoben"
 
-#: diytracker/forms.py:90 diytracker/forms.py:140 templates/label_page.html:9
+#: diytracker/forms.py:90 diytracker/forms.py:140 templates/label_page.html:13
 #: templates/promoter_dashboard.html:67
 msgid "Label"
 msgstr "Label"
@@ -106,7 +106,7 @@ msgid "City"
 msgstr "Stadt"
 
 #: diytracker/forms.py:104 diytracker/forms.py:154 templates/calendar.html:115
-#: templates/canton.html:8 templates/venues.html:41
+#: templates/canton.html:12 templates/venues.html:41
 msgid "Canton"
 msgstr "Kanton"
 
@@ -173,7 +173,7 @@ msgstr "Stufenfrei im gesamten Innenbereich"
 
 #: diytracker/forms.py:220 templates/venue_accessibility.html:73
 msgid "Accessible toilet"
-msgstr "Behindertengerechte Toilette"
+msgstr "Rollstuhlgerechte Toilette"
 
 #: diytracker/forms.py:223
 msgid "Toilet notes"
@@ -197,7 +197,7 @@ msgstr "Stroboskop / Blitzlichter"
 
 #: diytracker/forms.py:240
 msgid "Warning given before strobes"
-msgstr "Vorwarnung vor Stroboskop"
+msgstr "Vorwarnung vor Stroboskoplicht"
 
 #: diytracker/forms.py:243 templates/venue_accessibility.html:95
 msgid "Smoke / haze machines"
@@ -209,7 +209,7 @@ msgstr "Typischer Geräuschpegel"
 
 #: diytracker/forms.py:249
 msgid "Quiet / low-stimulation room available"
-msgstr "Ruhe- / Entspannungsraum vorhanden"
+msgstr "Ruhe- / reizarmer Raum vorhanden"
 
 #: diytracker/forms.py:254
 msgid "Free earplugs provided"
@@ -217,7 +217,7 @@ msgstr "Gratis Ohrstöpsel vorhanden"
 
 #: diytracker/forms.py:257
 msgid "Sensory-friendly events / nights"
-msgstr "Sinnesfreundliche Veranstaltungen / Abende"
+msgstr "Reizarme Veranstaltungen / Abende"
 
 #: diytracker/forms.py:262
 msgid "Hearing loop (induction loop)"
@@ -241,7 +241,7 @@ msgstr "AED (Defibrillator) vor Ort"
 
 #: diytracker/forms.py:283 templates/venue_accessibility.html:125
 msgid "Accessible parking"
-msgstr "Behindertengerechter Parkplatz"
+msgstr "Behindertenparkplatz"
 
 #: diytracker/forms.py:286
 msgid "Public transport access"
@@ -257,7 +257,7 @@ msgstr "Ruhebereiche / Sitzgelegenheiten innen"
 
 #: diytracker/forms.py:295
 msgid "Guide dogs & assistance animals welcome"
-msgstr "Blindenhunde & Assistenztiere willkommen"
+msgstr "Blindenführhunde & Assistenztiere willkommen"
 
 #: diytracker/forms.py:300
 msgid "Quiet / alternative entrance option"
@@ -473,7 +473,7 @@ msgstr "Label aktualisiert!"
 msgid "Label deleted."
 msgstr "Label gelöscht."
 
-#: diytracker/blueprints/public.py:234
+#: diytracker/blueprints/public.py:236
 msgid ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
@@ -481,13 +481,47 @@ msgstr ""
 "Nachricht konnte nicht gesendet werden — bitte schreib uns direkt an "
 "kontakt@diytracker.ch."
 
-#: diytracker/blueprints/public.py:244
+#: diytracker/blueprints/public.py:246
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Danke! Wir melden uns sobald wie möglich."
 
-#: diytracker/blueprints/public.py:272
+#: diytracker/blueprints/public.py:274
 msgid "Accessibility info saved — thank you!"
 msgstr "Infos zur Barrierefreiheit gespeichert — danke!"
+
+#: diytracker/blueprints/public.py:423 templates/canton.html:3
+#: templates/canton.html:13
+#, python-format
+msgid "DIY & punk concerts %(in_canton)s"
+msgstr "DIY- & Punk-Konzerte %(in_canton)s"
+
+#: diytracker/blueprints/public.py:425 templates/canton.html:4
+#, python-format
+msgid ""
+"%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, "
+"venues, prices and accessibility info."
+msgstr ""
+"%(num)d kommende DIY-, Punk- und Underground-Shows %(in_canton)s — Daten,"
+" Venues, Preise und Infos zur Barrierefreiheit."
+
+#: diytracker/blueprints/public.py:474 templates/genre.html:5
+#, python-format
+msgid "%(genre)s concerts in Switzerland"
+msgstr "%(genre)s-Konzerte in der Schweiz"
+
+#: diytracker/blueprints/public.py:476 templates/genre.html:6
+#, python-format
+msgid ""
+"%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices "
+"and accessibility info."
+msgstr ""
+"%(num)d kommende %(genre)s-Shows in der Schweiz — Daten, Venues, Preise "
+"und Infos zur Barrierefreiheit."
+
+#: diytracker/blueprints/public.py:514
+#, python-format
+msgid "Upcoming shows by %(label)s."
+msgstr "Kommende Shows von %(label)s."
 
 #: diytracker/blueprints/submissions.py:122
 msgid "Invalid event selection."
@@ -609,8 +643,8 @@ msgid ""
 "Please fill in as much as you know. Leave fields blank if you are unsure "
 "— partial information is still helpful."
 msgstr ""
-"Bitte so viel ausfüllen wie bekannt. Felder offen lassen wenn unsicher — "
-"auch teilweise Angaben sind hilfreich."
+"Fülle so viel aus, wie du weisst. Lass Felder leer, wenn du unsicher bist"
+" — auch teilweise Angaben sind hilfreich."
 
 #: templates/accessibility_form.html:26 templates/venue_accessibility.html:70
 msgid "Mobility & Wheelchair"
@@ -632,7 +666,7 @@ msgstr "Sensorik, Epilepsie & Autismus"
 msgid "Is a verbal or visual warning given before strobes are used?"
 msgstr ""
 "Gibt es eine mündliche oder visuelle Vorwarnung vor dem Einsatz von "
-"Stroboskop?"
+"Stroboskoplicht?"
 
 #: templates/accessibility_form.html:52
 msgid "A calm room away from the main space where people can decompress"
@@ -684,7 +718,7 @@ msgstr ""
 
 #: templates/accessibility_form.html:78
 msgid "Anything else visitors with disabilities should know"
-msgstr "Alles weitere, das Besuchende mit Behinderungen wissen sollten"
+msgstr "Alles Weitere, das Besuchende mit Behinderungen wissen sollten"
 
 #: templates/accessibility_form.html:80
 msgid "Save accessibility info"
@@ -725,14 +759,14 @@ msgstr "Traffic"
 msgid "Visitors today"
 msgstr "Besucher heute"
 
-#: templates/admin.html:24 templates/admin.html:34 templates/admin.html:251
-#: templates/admin.html:255
+#: templates/admin.html:24 templates/admin.html:34 templates/admin.html:255
+#: templates/admin.html:259
 msgid "yesterday:"
 msgstr "gestern:"
 
 #: templates/admin.html:27
 msgid "Visitors 30d"
-msgstr "Besucher 30 T."
+msgstr "Besucher 30 Tage"
 
 #: templates/admin.html:29 templates/admin.html:39 templates/admin.html:218
 msgid "vs previous 30 days"
@@ -744,7 +778,7 @@ msgstr "Hits heute"
 
 #: templates/admin.html:37
 msgid "Hits 30d"
-msgstr "Hits 30 T."
+msgstr "Hits 30 Tage"
 
 #: templates/admin.html:44
 msgid "Visitors / day, last 30 days"
@@ -754,7 +788,7 @@ msgstr "Besucher / Tag, letzte 30 Tage"
 msgid "Hits / day, last 30 days"
 msgstr "Hits / Tag, letzte 30 Tage"
 
-#: templates/admin.html:61 templates/admin.html:261
+#: templates/admin.html:61 templates/admin.html:265
 msgid "Last updated:"
 msgstr "Zuletzt aktualisiert:"
 
@@ -766,12 +800,12 @@ msgstr "aktualisiert alle"
 msgid "min"
 msgstr "Min."
 
-#: templates/admin.html:61 templates/admin.html:271
+#: templates/admin.html:61 templates/admin.html:275
 msgid "Collecting stats…"
 msgstr "Sammle Statistiken…"
 
 #: templates/_partials/nav_backstage.html:15 templates/admin.html:71
-#: templates/canton.html:28 templates/genre.html:30 templates/venues.html:3
+#: templates/canton.html:32 templates/genre.html:34 templates/venues.html:3
 msgid "Venues"
 msgstr "Venues"
 
@@ -866,19 +900,20 @@ msgstr "Melde dich, falls sofort ein Scrape gebraucht wird."
 msgid "just now"
 msgstr "gerade eben"
 
-#: templates/admin.html:224 templates/admin.html:225
-msgid "ago"
-msgstr "her"
+#: templates/admin.html:227
+#, python-format
+msgid "%(t)s ago"
+msgstr "vor %(t)s"
 
-#: templates/admin.html:295
+#: templates/admin.html:299
 msgid "Scrape complete — reloading…"
 msgstr "Scrape abgeschlossen — lade neu…"
 
-#: templates/admin.html:299
+#: templates/admin.html:303
 msgid "Scraping…"
 msgstr "Scrape…"
 
-#: templates/admin.html:305
+#: templates/admin.html:309
 msgid "left"
 msgstr "verbleibend"
 
@@ -892,7 +927,7 @@ msgstr "STATISTIK"
 
 #: templates/admin_statistics.html:14
 msgid "Most viewed events"
-msgstr "Meistbesuchte Events"
+msgstr "Meistaufgerufene Events"
 
 #: templates/admin_statistics.html:21 templates/edit_event.html:14
 #: templates/event_page.html:3 templates/event_page.html:58
@@ -1006,9 +1041,9 @@ msgid "Nothing in the archive yet."
 msgstr "Noch nichts im Archiv."
 
 #: templates/_partials/hero.html:11 templates/archive_index.html:35
-#: templates/canton.html:41 templates/errors/404.html:21
+#: templates/canton.html:45 templates/errors/404.html:21
 #: templates/errors/500.html:21 templates/event_page.html:129
-#: templates/genre.html:55 templates/label_page.html:26
+#: templates/genre.html:59 templates/label_page.html:30
 #: templates/venue_accessibility.html:146
 msgid "Back to calendar"
 msgstr "Zurück zum Kalender"
@@ -1071,30 +1106,16 @@ msgstr "Anwenden"
 msgid "Tags"
 msgstr "Tags"
 
-#: templates/canton.html:3 templates/canton.html:9
-#, python-format
-msgid "DIY & punk concerts in %(canton)s"
-msgstr "DIY- & Punk-Konzerte in %(canton)s"
-
-#: templates/canton.html:4
+#: templates/canton.html:14
 #, python-format
 msgid ""
-"%(num)d upcoming DIY, punk and underground shows in %(canton)s — dates, "
-"venues, prices and accessibility info."
-msgstr ""
-"%(num)d kommende DIY-, Punk- und Underground-Shows in %(canton)s — Daten,"
-" Venues, Preise und Infos zur Barrierefreiheit."
-
-#: templates/canton.html:10
-#, python-format
-msgid ""
-"Upcoming DIY, punk, hardcore and underground shows in %(canton)s. Hand-"
+"Upcoming DIY, punk, hardcore and underground shows %(in_canton)s. Hand-"
 "curated, non-commercial, updated continuously."
 msgstr ""
-"Kommende DIY-, Punk-, Hardcore- und Underground-Shows in %(canton)s. "
+"Kommende DIY-, Punk-, Hardcore- und Underground-Shows %(in_canton)s. "
 "Handkuratiert, nicht-kommerziell, laufend aktualisiert."
 
-#: templates/canton.html:24 templates/genre.html:26
+#: templates/canton.html:28 templates/genre.html:30
 msgid "No upcoming events right now."
 msgstr "Zurzeit keine kommenden Events."
 
@@ -1169,7 +1190,7 @@ msgstr "Dieser Event hat bereits stattgefunden."
 #: templates/event_page.html:38
 #, python-format
 msgid "Upcoming at %(venue)s:"
-msgstr "Demnächst im %(venue)s:"
+msgstr "Demnächst bei %(venue)s:"
 
 #: templates/event_page.html:50
 msgid "See the venue page"
@@ -1177,8 +1198,8 @@ msgstr "Zur Venue-Seite"
 
 #: templates/event_page.html:51
 #, python-format
-msgid "More events in %(canton)s"
-msgstr "Mehr Events in %(canton)s"
+msgid "More events %(in_canton)s"
+msgstr "Mehr Events %(in_canton)s"
 
 #: templates/_partials/event_cards.html:89 templates/event_page.html:84
 #: templates/venue_page.html:31
@@ -1288,26 +1309,12 @@ msgstr "Abbrechen"
 msgid "No events awaiting approval."
 msgstr "Keine Events zur Freigabe."
 
-#: templates/genre.html:5
-#, python-format
-msgid "%(genre)s concerts in Switzerland"
-msgstr "%(genre)s-Konzerte in der Schweiz"
-
-#: templates/genre.html:6
-#, python-format
-msgid ""
-"%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices "
-"and accessibility info."
-msgstr ""
-"%(num)d kommende %(genre)s-Shows in der Schweiz — Daten, Venues, Preise "
-"und Infos zur Barrierefreiheit."
-
-#: templates/genre.html:11
+#: templates/genre.html:15
 #, python-format
 msgid "%(genre)s shows in Switzerland"
 msgstr "%(genre)s-Shows in der Schweiz"
 
-#: templates/genre.html:12
+#: templates/genre.html:16
 #, python-format
 msgid ""
 "Upcoming %(genre)s concerts across Switzerland. Hand-curated, non-"
@@ -1316,7 +1323,7 @@ msgstr ""
 "Kommende %(genre)s-Konzerte in der ganzen Schweiz. Handkuratiert, nicht-"
 "kommerziell, laufend aktualisiert."
 
-#: templates/_partials/footer_public.html:14 templates/genre.html:43
+#: templates/_partials/footer_public.html:14 templates/genre.html:47
 #: templates/page_texts.html:29
 msgid "Cantons"
 msgstr "Kantone"
@@ -1428,7 +1435,7 @@ msgstr ""
 "Kommende Shows von %(label)s — Daten, Venues, Preise und Infos zur "
 "Barrierefreiheit."
 
-#: templates/label_page.html:22
+#: templates/label_page.html:26
 msgid "No upcoming shows yet — check back soon."
 msgstr "Noch keine kommenden Shows — schau bald wieder vorbei."
 
@@ -1702,11 +1709,11 @@ msgstr "Noch keine Angaben zur Barrierefreiheit für dieses Venue vorhanden."
 
 #: templates/venue_accessibility.html:94
 msgid "Warning before strobes"
-msgstr "Vorwarnung vor Stroboskop"
+msgstr "Vorwarnung vor Stroboskoplicht"
 
 #: templates/venue_accessibility.html:97
 msgid "Quiet / low-stimulation room"
-msgstr "Ruhe- / Entspannungsraum"
+msgstr "Ruhe- / reizarmer Raum"
 
 #: templates/venue_accessibility.html:98
 msgid "Free earplugs"
@@ -1714,7 +1721,7 @@ msgstr "Gratis Ohrstöpsel"
 
 #: templates/venue_accessibility.html:99
 msgid "Sensory-friendly events"
-msgstr "Sinnesfreundliche Veranstaltungen"
+msgstr "Reizarme Veranstaltungen"
 
 #: templates/venue_accessibility.html:105
 msgid "Hearing loop"
@@ -1742,7 +1749,7 @@ msgstr "Ruhebereiche / Sitzgelegenheiten"
 
 #: templates/venue_accessibility.html:134
 msgid "Guide dogs welcome"
-msgstr "Blindenhunde willkommen"
+msgstr "Assistenzhunde willkommen"
 
 #: templates/venue_accessibility.html:135
 msgid "Quiet / alternative entrance"
@@ -1769,7 +1776,7 @@ msgstr "nächster am %(date)s"
 
 #: templates/venue_page.html:45
 msgid "Map showing the venue location"
-msgstr "Karte mit dem Standort der Venue"
+msgstr "Karte mit dem Standort des Venues"
 
 #: templates/venue_page.html:51
 msgid "Upcoming events"
@@ -1777,7 +1784,7 @@ msgstr "Kommende Events"
 
 #: templates/venue_page.html:70
 msgid "No upcoming events at this venue."
-msgstr "Keine kommenden Events in dieser Venue."
+msgstr "Keine kommenden Events in diesem Venue."
 
 #: templates/venue_page.html:74
 msgid "Back to the map"
@@ -1805,7 +1812,7 @@ msgstr "Events"
 
 #: templates/venues.html:44
 msgid "Access."
-msgstr "Barr."
+msgstr "Barrierefr."
 
 #: templates/_partials/accessibility_cta.html:6 templates/venues.html:60
 msgid "View accessibility info"
@@ -2049,7 +2056,7 @@ msgstr "VERSCHWUNDEN"
 
 #: templates/errors/404.html:13
 msgid "GONE"
-msgstr "VERSCHWUNDEN"
+msgstr "ABGEHÄNGT"
 
 #: templates/errors/404.html:15
 msgid "This page does not (or no longer) exist."
@@ -2154,4 +2161,32 @@ msgstr "Sicherung raus, Kabel kaputt, irgendwas zwischen Bühne und Mischpult."
 
 #~ msgid "Any bands or events that fit this genre?"
 #~ msgstr "Gibt es Bands oder Events, die zu diesem Genre passen?"
+
+#~ msgid "ago"
+#~ msgstr "her"
+
+#~ msgid "DIY & punk concerts in %(canton)s"
+#~ msgstr "DIY- & Punk-Konzerte in %(canton)s"
+
+#~ msgid ""
+#~ "%(num)d upcoming DIY, punk and "
+#~ "underground shows in %(canton)s — dates,"
+#~ " venues, prices and accessibility info."
+#~ msgstr ""
+#~ "%(num)d kommende DIY-, Punk- und "
+#~ "Underground-Shows in %(canton)s — Daten,"
+#~ " Venues, Preise und Infos zur "
+#~ "Barrierefreiheit."
+
+#~ msgid ""
+#~ "Upcoming DIY, punk, hardcore and "
+#~ "underground shows in %(canton)s. Hand-"
+#~ "curated, non-commercial, updated continuously."
+#~ msgstr ""
+#~ "Kommende DIY-, Punk-, Hardcore- und "
+#~ "Underground-Shows in %(canton)s. Handkuratiert,"
+#~ " nicht-kommerziell, laufend aktualisiert."
+
+#~ msgid "More events in %(canton)s"
+#~ msgstr "Mehr Events in %(canton)s"
 

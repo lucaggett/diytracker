@@ -1,7 +1,7 @@
 {% extends 'base_public.html' %}
 
-{% block title %}{{ _('DIY & punk concerts in %(canton)s', canton=_(canton)) }} · diytracker.ch{% endblock %}
-{% block meta_description %}{{ _('%(num)d upcoming DIY, punk and underground shows in %(canton)s — dates, venues, prices and accessibility info.', num=events|length, canton=_(canton)) }}{% endblock %}
+{% block title %}{{ _('DIY & punk concerts %(in_canton)s', in_canton=canton_in(canton)) }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ _('%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, venues, prices and accessibility info.', num=events|length, in_canton=canton_in(canton)) }}{% endblock %}
 
 {% block json_ld %}
   <script type="application/ld+json">{{ canton_ld | tojson }}</script>
@@ -10,8 +10,8 @@
 {% block banner_preload %}{% endblock %}
 {% block header_hero %}
   {% set hero_eyebrow = _('Canton') %}
-  {% set hero_title = _('DIY & punk concerts in %(canton)s', canton=_(canton)) %}
-  {% set hero_description = _('Upcoming DIY, punk, hardcore and underground shows in %(canton)s. Hand-curated, non-commercial, updated continuously.', canton=_(canton)) %}
+  {% set hero_title = _('DIY & punk concerts %(in_canton)s', in_canton=canton_in(canton)) %}
+  {% set hero_description = _('Upcoming DIY, punk, hardcore and underground shows %(in_canton)s. Hand-curated, non-commercial, updated continuously.', in_canton=canton_in(canton)) %}
   {% include '_partials/hero.html' %}
 {% endblock %}
 

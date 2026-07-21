@@ -118,3 +118,47 @@ class TestSitemapAlternates:
         xml = client.get("/sitemap.xml").data.decode()
         assert "<loc>http://localhost/about</loc>" in xml
         assert "<loc>http://localhost/de/about</loc>" not in xml
+
+
+class TestCatalogIntegrity:
+    """Guards on the compiled catalogs themselves, not on routing."""
+
+    def test_english_catalog_is_the_identity_mapping(self):
+        # English *is* the msgid, so every msgstr must mirror its msgid.
+        # pybabel update fuzzy-matches new ids against old ones, and once
+        # that flag is dropped the wrong string sticks: this is how the
+        # footer's "Privacy" link came to render as "Price".
+        from babel.messages.pofile import read_po
+
+        with open("translations/en/LC_MESSAGES/messages.po", "rb") as f:
+            catalog = read_po(f)
+        wrong = [(m.id, m.string) for m in catalog if m.id and m.string != m.id]
+        assert wrong == []
+
+    def test_every_locale_is_fully_translated(self):
+        from babel.messages.pofile import read_po
+
+        for lang in ("de", "fr", "it", "en"):
+            with open(f"translations/{lang}/LC_MESSAGES/messages.po", "rb") as f:
+                catalog = read_po(f)
+            untranslated = [m.id for m in catalog if m.id and not m.string]
+            fuzzy = [m.id for m in catalog if m.id and m.fuzzy]
+            assert untranslated == [], f"{lang} has untranslated strings"
+            assert fuzzy == [], f"{lang} has fuzzy strings"
+
+    def test_placeholders_survive_translation(self):
+        # A dropped or renamed %(name)s raises at render time, so catch it here.
+        import re
+
+        from babel.messages.pofile import read_po
+
+        placeholder = re.compile(r"%\([a-z_]+\)[sd]")
+        for lang in ("de", "fr", "it", "en"):
+            with open(f"translations/{lang}/LC_MESSAGES/messages.po", "rb") as f:
+                catalog = read_po(f)
+            for m in catalog:
+                if not m.id or not m.string:
+                    continue
+                assert sorted(placeholder.findall(m.id)) == sorted(
+                    placeholder.findall(m.string)
+                ), f"{lang}: placeholder mismatch in {m.id!r}"

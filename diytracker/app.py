@@ -25,7 +25,12 @@ from diytracker.paths import (
     ensure_runtime_dirs,
 )
 from diytracker.models import db
-from diytracker.services.i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES, select_locale
+from diytracker.services.i18n import (
+    DEFAULT_LOCALE,
+    SUPPORTED_LOCALES,
+    canton_in,
+    select_locale,
+)
 from diytracker.services.cache import cache
 from diytracker.services.limits import limiter
 from diytracker.services.scrape_detection import detector
@@ -82,6 +87,7 @@ def create_app(config: Config | None = None) -> Flask:
     app.jinja_env.globals["SUPPORTED_LOCALES"] = SUPPORTED_LOCALES
     app.jinja_env.globals["parent_genres"] = parent_genres
     app.jinja_env.globals["normalise_canton"] = normalise_canton
+    app.jinja_env.globals["canton_in"] = canton_in
     app.jinja_env.globals["canonical_url"] = canonical_url
     app.jinja_env.globals["hreflang_entries"] = hreflang_entries
     app.jinja_env.globals["localized_paths"] = localized_paths

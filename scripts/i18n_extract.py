@@ -11,7 +11,7 @@ import sys
 from babel.messages.catalog import Catalog
 from babel.messages.extract import DEFAULT_KEYWORDS, extract_from_dir
 from babel.messages.frontend import parse_mapping_cfg
-from babel.messages.pofile import write_po
+from babel.messages.pofile import read_po, write_po
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -59,12 +59,38 @@ def build_source_catalog() -> Catalog:
     return catalog
 
 
+def merge_into_catalogs(pot_path: str) -> None:
+    """Merge the fresh .pot into every locale's .po.
+
+    Nothing did this automatically, so the .po files drifted from the .pot and
+    a string could sit untranslated for releases without showing up anywhere.
+    Fuzzy matching stays off on purpose: it guesses a translation from a
+    similarly-spelled msgid, and once the #, fuzzy flag is dropped the wrong
+    string is indistinguishable from a real one (it is how the footer's
+    "Privacy" link came to render as "Price").
+    """
+    with open(pot_path, "rb") as f:
+        template = read_po(f)
+    for lang in sorted(os.listdir(os.path.join(ROOT, "translations"))):
+        po_path = os.path.join(ROOT, "translations", lang, "LC_MESSAGES", "messages.po")
+        if not os.path.exists(po_path):
+            continue
+        with open(po_path, "rb") as f:
+            catalog = read_po(f, locale=lang)
+        catalog.update(template, no_fuzzy_matching=True)
+        with open(po_path, "wb") as f:
+            write_po(f, catalog)
+        print(f"  merged into {lang}")
+
+
 def main() -> int:
     catalog = build_source_catalog()
     out = os.path.join(ROOT, "translations", "messages.pot")
     with open(out, "wb") as f:
         write_po(f, catalog)
     print(f"wrote {out} with {len(catalog)} messages")
+    merge_into_catalogs(out)
+    print("run scripts/i18n_populate.py next to fill in the translations")
     return 0
 
 

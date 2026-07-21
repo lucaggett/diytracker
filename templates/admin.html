@@ -221,8 +221,12 @@
         if (secs == null) return '';
         if (secs < 60) return {{ _('just now')|tojson }};
         const m = Math.round(secs / 60);
-        if (m < 60) return m + 'm ' + {{ _('ago')|tojson }};
-        return Math.floor(m / 60) + 'h ' + (m % 60) + 'm ' + {{ _('ago')|tojson }};
+        // Whole-phrase format string: French needs the "il y a" prefix, which
+        // a suffix-only concatenation can't express. The span is computed here,
+        // so gettext interpolates a token that JS fills in.
+        const ago = {{ _('%(t)s ago', t='{t}')|tojson }};
+        const span = m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+        return ago.replace('{t}', span);
     }
     function renderBars(svgId, daily, key) {
         const svg = document.getElementById(svgId);

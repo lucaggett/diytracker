@@ -74,6 +74,114 @@ CANTONS = {
     "ZH": N_("Zürich"),
 }
 
+# Code → locale → the complete "in <canton>" phrase, preposition included.
+# A single hardcoded preposition can't work: German contracts to "im" for the
+# masculine cantons and takes "in der" for Waadt, French switches between "à"
+# (city cantons), "en", "au" and "dans le(s)", and Italian between "a", "in"
+# and "nel(i)". Consumed by services.i18n.canton_in(); the landing-page strings
+# interpolate the whole phrase as %(in_canton)s.
+CANTON_LOCATIVE = {
+    "AG": {"de": "im Aargau", "fr": "en Argovie", "it": "in Argovia", "en": "in Aargau"},
+    "AI": {
+        "de": "in Appenzell Innerrhoden",
+        "fr": "en Appenzell Rhodes-Intérieures",
+        "it": "in Appenzello Interno",
+        "en": "in Appenzell Innerrhoden",
+    },
+    "AR": {
+        "de": "in Appenzell Ausserrhoden",
+        "fr": "en Appenzell Rhodes-Extérieures",
+        "it": "in Appenzello Esterno",
+        "en": "in Appenzell Ausserrhoden",
+    },
+    "BE": {"de": "in Bern", "fr": "à Berne", "it": "a Berna", "en": "in Bern"},
+    "BL": {
+        "de": "in Basel-Landschaft",
+        "fr": "à Bâle-Campagne",
+        "it": "a Basilea Campagna",
+        "en": "in Basel-Landschaft",
+    },
+    "BS": {
+        "de": "in Basel-Stadt",
+        "fr": "à Bâle-Ville",
+        "it": "a Basilea Città",
+        "en": "in Basel-Stadt",
+    },
+    "FR": {
+        "de": "in Freiburg",
+        "fr": "à Fribourg",
+        "it": "a Friburgo",
+        "en": "in Fribourg",
+    },
+    "GE": {"de": "in Genf", "fr": "à Genève", "it": "a Ginevra", "en": "in Genève"},
+    "GL": {"de": "in Glarus", "fr": "à Glaris", "it": "a Glarona", "en": "in Glarus"},
+    "GR": {
+        "de": "in Graubünden",
+        "fr": "dans les Grisons",
+        "it": "nei Grigioni",
+        "en": "in Graubünden",
+    },
+    "JU": {"de": "im Jura", "fr": "dans le Jura", "it": "nel Giura", "en": "in Jura"},
+    "LU": {"de": "in Luzern", "fr": "à Lucerne", "it": "a Lucerna", "en": "in Luzern"},
+    "NE": {
+        "de": "in Neuenburg",
+        "fr": "à Neuchâtel",
+        "it": "a Neuchâtel",
+        "en": "in Neuchâtel",
+    },
+    "NW": {
+        "de": "in Nidwalden",
+        "fr": "à Nidwald",
+        "it": "a Nidvaldo",
+        "en": "in Nidwalden",
+    },
+    "OW": {
+        "de": "in Obwalden",
+        "fr": "à Obwald",
+        "it": "a Obvaldo",
+        "en": "in Obwalden",
+    },
+    "SG": {
+        "de": "in St. Gallen",
+        "fr": "à Saint-Gall",
+        "it": "a San Gallo",
+        "en": "in St. Gallen",
+    },
+    "SH": {
+        "de": "in Schaffhausen",
+        "fr": "à Schaffhouse",
+        "it": "a Sciaffusa",
+        "en": "in Schaffhausen",
+    },
+    "SO": {
+        "de": "in Solothurn",
+        "fr": "à Soleure",
+        "it": "a Soletta",
+        "en": "in Solothurn",
+    },
+    "SZ": {"de": "in Schwyz", "fr": "à Schwytz", "it": "a Svitto", "en": "in Schwyz"},
+    "TG": {
+        "de": "im Thurgau",
+        "fr": "en Thurgovie",
+        "it": "in Turgovia",
+        "en": "in Thurgau",
+    },
+    "TI": {"de": "im Tessin", "fr": "au Tessin", "it": "in Ticino", "en": "in Ticino"},
+    "UR": {"de": "in Uri", "fr": "à Uri", "it": "a Uri", "en": "in Uri"},
+    "VD": {
+        "de": "in der Waadt",
+        "fr": "dans le canton de Vaud",
+        "it": "nel Canton Vaud",
+        "en": "in Vaud",
+    },
+    "VS": {"de": "im Wallis", "fr": "en Valais", "it": "in Vallese", "en": "in Valais"},
+    "ZG": {"de": "in Zug", "fr": "à Zoug", "it": "a Zugo", "en": "in Zug"},
+    "ZH": {"de": "in Zürich", "fr": "à Zurich", "it": "a Zurigo", "en": "in Zürich"},
+}
+
+# Canonical CANTONS name → code, for callers that only carry the display name.
+CANTON_CODE_BY_NAME = {name: code for code, name in CANTONS.items()}
+
 # Maps lowercase full/alternative canton names → 2-letter code.
 # Covers German, French, and Italian names plus common variants.
 _CANTON_NAME_TO_CODE = {

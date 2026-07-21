@@ -188,9 +188,9 @@ class TestCliContract:
 
     @pytest.fixture(scope="class")
     def parser(self):
-        import manage
+        import db_admin_cli
 
-        return manage.build_parser()
+        return db_admin_cli.build_parser()
 
     @pytest.mark.parametrize(
         "argv",

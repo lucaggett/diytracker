@@ -27,6 +27,7 @@ from diytracker.services.contact import build_contact_logger, send_contact_email
 from diytracker.services.i18n import (
     DEFAULT_LOCALE,
     SUPPORTED_LOCALES,
+    canton_in,
     gettext as _,
     validate_lang,
 )
@@ -419,12 +420,12 @@ def canton_page(canton_slug):
         datetime=datetime,
         intro_text=get_page_text("canton", canton_slug),
         canton_ld=collection_json_ld(
-            _("DIY & punk concerts in %(canton)s", canton=_(info["name"])),
+            _("DIY & punk concerts %(in_canton)s", in_canton=canton_in(info["name"])),
             _(
-                "%(num)d upcoming DIY, punk and underground shows in %(canton)s — "
+                "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — "
                 "dates, venues, prices and accessibility info.",
                 num=len(events),
-                canton=_(info["name"]),
+                in_canton=canton_in(info["name"]),
             ),
             canonical_url(),
             events,
