@@ -18,7 +18,7 @@ from textual.widgets import (
     Static,
 )
 
-from diytracker.admin import db_tools, events, invites, stats, users, venues
+from diytracker.admin import db_tools, events, invites, stats, traffic, users, venues
 from diytracker.admin.core import ACCESS_LOG, ERROR_LOG, AdminError, fmt_size, load_app
 from diytracker.admin.tui.modals import (
     ChoiceModal,
@@ -651,6 +651,139 @@ class StatsScreen(AdminScreen):
         if board.unattributed:
             table.add_row("", str(board.unattributed), "(no submitter, e.g. scraped)")
         table.add_row("", str(board.total), "total")
+
+
+# ── traffic ───────────────────────────────────────────────────────────────────
+
+
+class TrafficScreen(AdminScreen):
+    """Access-log traffic analysis: per-IP bot inference + event view trends.
+
+    Two views share one table: `v` toggles Users (per-IP behavioural
+    classification) and Events (view counts over time). Selecting a row in
+    the Users view opens the IP's full profile.
+    """
+
+    BINDINGS = AdminScreen.BINDINGS + [
+        Binding("t", "cycle_timeframe", "Timeframe"),
+        Binding("v", "toggle_view", "Users/Events"),
+        Binding("r", "refresh", "Refresh"),
+    ]
+
+    timeframe = "7d"
+    view = "users"
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Vertical():
+            yield Static("", id="traffic-summary")
+            yield DataTable(cursor_type="row", id="traffic-table")
+        yield Footer()
+
+    def on_mount(self):
+        self._profiles = {}
+        self.action_refresh()
+
+    def action_cycle_timeframe(self):
+        keys = list(traffic.TIMEFRAMES)
+        self.timeframe = keys[(keys.index(self.timeframe) + 1) % len(keys)]
+        self.action_refresh()
+
+    def action_toggle_view(self):
+        self.view = "events" if self.view == "users" else "users"
+        self.action_refresh()
+
+    @work(exclusive=True)
+    async def action_refresh(self):
+        label = traffic.TIMEFRAMES[self.timeframe]
+        self.sub_title = f"Traffic — {self.view} · {label}"
+        table = self.query_one("#traffic-table", DataTable)
+        table.clear(columns=True)
+        self._profiles = {}
+        try:
+            if self.view == "users":
+                await self._show_users()
+            else:
+                await self._show_events()
+        except AdminError as exc:
+            self.query_one("#traffic-summary", Static).update(str(exc))
+            self.show_error(exc)
+
+    async def _show_users(self):
+        report = await self.run_db(traffic.analyze, self.timeframe)
+        buckets = " · ".join(
+            f"{report.bucket_counts.get(b, 0)} {b}"
+            for b in ("human", "crawler", "bot", "suspicious", "unclear")
+        )
+        statuses = " · ".join(f"{k} {v}" for k, v in report.status_counts.items())
+        trend = "\n".join(
+            f"  {d.date}  {d.requests:>6} req  {d.unique_ips:>5} ips  "
+            f"~{d.est_humans} human"
+            for d in report.days[-10:]
+        )
+        self.query_one("#traffic-summary", Static).update(
+            f"Traffic ({report.timeframe_label}): {report.total_requests} "
+            f"requests from {report.total_ips} IPs\n"
+            f"Buckets: {buckets}\nStatus:  {statuses}\n{trend}\n\n"
+            f"Worst IPs first — enter for detail, "
+            f"v for events, t for timeframe:"
+        )
+        table = self.query_one("#traffic-table", DataTable)
+        table.add_columns("IP", "BUCKET", "SCORE", "REQS", "LIVE", "SIGNALS", "UA")
+        for p in report.ips:
+            self._profiles[p.ip] = p
+            table.add_row(
+                p.ip,
+                p.bucket,
+                f"{p.score:g}",
+                str(p.requests),
+                "✓" if p.suspect else "",
+                ", ".join(s.split(" ")[0] for s in p.signals) or "—",
+                p.ua_sample[:60],
+                key=p.ip,
+            )
+
+    async def _show_events(self):
+        result = await self.run_db(traffic.events, self.timeframe)
+        self.query_one("#traffic-summary", Static).update(
+            f"Event views ({result.timeframe_label}), from recorded daily "
+            f"counts — trend spans the last {result.spark_days} day(s).\n"
+            f"Most viewed first — v for users, t for timeframe:"
+        )
+        table = self.query_one("#traffic-table", DataTable)
+        table.add_columns("HITS", "VISITORS", "TREND", "DATE", "EVENT")
+        for row in result.rows:
+            table.add_row(
+                str(row.hits),
+                str(row.visitors),
+                row.sparkline,
+                row.date_label,
+                row.name,
+            )
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected):
+        profile = self._profiles.get(event.row_key.value)
+        if profile is None:
+            return
+        paths = "\n".join(f"  {n:>5}  {p}" for p, n in profile.top_paths)
+        signals = "\n".join(f"  {s}" for s in profile.signals) or "  none"
+        live = (
+            f"flagged live (score {profile.suspect_score:g}: "
+            f"{', '.join(profile.suspect_signals) or 'no signals recorded'})"
+            if profile.suspect
+            else "not flagged by the live detector"
+        )
+        self.app.push_screen(
+            MessageModal(
+                f"{profile.ip} — {profile.bucket} (score {profile.score:g})",
+                f"Requests:  {profile.requests} "
+                f"({profile.first_seen} → {profile.last_seen})\n"
+                f"UAs:       {profile.n_uas} distinct, e.g. {profile.ua_sample}\n"
+                f"Live:      {live}\n"
+                f"Signals:\n{signals}\n"
+                f"Top paths:\n{paths}",
+            )
+        )
 
 
 # ── database ──────────────────────────────────────────────────────────────────
