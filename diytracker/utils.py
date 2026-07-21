@@ -81,7 +81,12 @@ CANTONS = {
 # and "nel(i)". Consumed by services.i18n.canton_in(); the landing-page strings
 # interpolate the whole phrase as %(in_canton)s.
 CANTON_LOCATIVE = {
-    "AG": {"de": "im Aargau", "fr": "en Argovie", "it": "in Argovia", "en": "in Aargau"},
+    "AG": {
+        "de": "im Aargau",
+        "fr": "en Argovie",
+        "it": "in Argovia",
+        "en": "in Aargau",
+    },
     "AI": {
         "de": "in Appenzell Innerrhoden",
         "fr": "en Appenzell Rhodes-Intérieures",
