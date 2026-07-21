@@ -7,6 +7,9 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.42.1] - 2026-07-21
+- Analytics no longer count `/admin` traffic: log lines whose request path is `/admin` or below are dropped before goaccess runs, for both the dashboard stats and the HTML report. Previously the admin dashboard's own 60-second `/admin/analytics/stats` polling showed up as thousands of "hits" and (thanks to CGNAT/mobile IP rotation) dozens of phantom "visitors" in the very numbers it displays.
+
 ## [0.42.0] - 2026-07-16
 - `manage.py` and `manage_interactive.py` merged into one admin tool: running `manage.py` with no arguments now opens a full-screen Textual TUI (users, events, venue/event/genre dedup — the latter was missing from the old menu wrapper — stats, database maintenance, live log view). `manage_interactive.py` is gone. All business logic moved out of the CLI into a new `diytracker/admin/` package (plain functions raising `AdminError` and returning dataclasses), shared by both frontends and now covered by tests.
 - The scripted CLI surface was deliberately reduced to what's documented and cron-able: `logs`, `user ...`, and `db backup|vacuum` keep working exactly as before; `venue dedup`, `event ...` and `stats ...` are TUI-only now (re-adding a CLI wrapper is trivial if ever needed). `venue dedup --db-path` became an input field on the TUI's venue-dedup screen.

@@ -104,6 +104,33 @@ class TestExtractLogDate:
         assert analytics._extract_log_date("no brackets here") is None
 
 
+class TestIsAdminRequest:
+    def test_admin_paths_are_flagged(self):
+        for path in ["/admin", "/admin/analytics/stats", "/admin/edit_event/1?x=1"]:
+            line = f'1.2.3.4 - - [03/Jul/2026:12:00:00 +0000] "GET {path} HTTP/2.0" 200 458 "https://diytracker.ch/admin" "Mozilla/5.0"'
+            assert analytics._is_admin_request(line) is True
+
+    def test_public_paths_pass_through(self):
+        for path in ["/", "/about", "/administrivia", "/map?canton=ZH"]:
+            line = f'1.2.3.4 - - [03/Jul/2026:12:00:00 +0000] "GET {path} HTTP/2.0" 200 458 "-" "Mozilla/5.0"'
+            assert analytics._is_admin_request(line) is False
+
+    def test_malformed_line_passes_through(self):
+        assert analytics._is_admin_request("no quotes here") is False
+        assert analytics._is_admin_request('x - - "GARBAGE" 200') is False
+
+    def test_iter_filtered_lines_drops_admin_traffic(self, tmp_path):
+        log = tmp_path / "access.log"
+        log.write_text(
+            'x - - [03/Jul/2026:00:00:00 +0000] "GET / HTTP/1.1" 200 1\n'
+            'x - - [03/Jul/2026:00:01:00 +0000] "GET /admin/analytics/stats HTTP/2.0" 200 458\n'
+            'x - - [03/Jul/2026:00:02:00 +0000] "GET /about HTTP/1.1" 200 1\n'
+        )
+        lines = list(analytics._iter_filtered_lines([log], None))
+        assert len(lines) == 2
+        assert all("/admin" not in line for line in lines)
+
+
 class TestGenerateReport:
     def test_fails_when_goaccess_missing(self, monkeypatch):
         monkeypatch.setattr(analytics.shutil, "which", lambda name: None)

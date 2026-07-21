@@ -77,6 +77,21 @@ def _extract_log_date(line: str) -> str | None:
         return None
 
 
+def _is_admin_request(line: str) -> bool:
+    # Admin dashboard traffic (including its 60s stats polling) must not count
+    # as visitors, or the analytics end up measuring their own dashboard.
+    try:
+        start = line.index('"') + 1
+        request = line[start : line.index('"', start)]
+    except ValueError:
+        return False
+    parts = request.split(" ")
+    if len(parts) < 2:
+        return False
+    path = parts[1].split("?", 1)[0]
+    return path == "/admin" or path.startswith("/admin/")
+
+
 def _iter_filtered_lines(files: list[Path], valid_dates: set[str] | None):
     for path in files:
         try:
@@ -87,6 +102,8 @@ def _iter_filtered_lines(files: list[Path], valid_dates: set[str] | None):
             )
             with opener as f:
                 for line in f:
+                    if _is_admin_request(line):
+                        continue
                     if valid_dates is None or _extract_log_date(line) in valid_dates:
                         yield line
         except OSError:
