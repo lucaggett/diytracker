@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 15:08+0200\n"
+"POT-Creation-Date: 2026-07-22 15:24+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -44,7 +44,7 @@ msgstr "Doors Open Time"
 
 #: diytracker/forms.py:86 diytracker/forms.py:339
 #: templates/_partials/event_cards.html:95 templates/admin.html:86
-#: templates/calendar.html:120 templates/event_page.html:94
+#: templates/calendar.html:135 templates/event_page.html:94
 #: templates/event_queue.html:124 templates/genre.html:14
 msgid "Genre"
 msgstr "Genre"
@@ -109,7 +109,7 @@ msgstr "Venue Address"
 msgid "City"
 msgstr "City"
 
-#: diytracker/forms.py:123 diytracker/forms.py:173 templates/calendar.html:119
+#: diytracker/forms.py:123 diytracker/forms.py:173 templates/calendar.html:134
 #: templates/canton.html:12 templates/venues.html:41
 msgid "Canton"
 msgstr "Canton"
@@ -526,7 +526,7 @@ msgstr ""
 msgid "Upcoming shows by %(label)s."
 msgstr "Upcoming shows by %(label)s."
 
-#: diytracker/blueprints/public.py:603
+#: diytracker/blueprints/public.py:605
 msgid "DIY, punk and underground concerts in Switzerland."
 msgstr "DIY, punk and underground concerts in Switzerland."
 
@@ -1109,15 +1109,28 @@ msgstr "Open filters"
 msgid "FILTER"
 msgstr "FILTER"
 
-#: templates/calendar.html:48
+#: templates/calendar.html:48 templates/search.html:22
+msgid "Search by band, venue or city"
+msgstr "Search by band, venue or city"
+
+#: templates/calendar.html:50 templates/search.html:24
+msgid "Band, venue or city"
+msgstr "Band, venue or city"
+
+#: templates/calendar.html:54 templates/search.html:3 templates/search.html:12
+#: templates/search.html:29
+msgid "Search"
+msgstr "Search"
+
+#: templates/calendar.html:63
 msgid "Close"
 msgstr "Close"
 
-#: templates/calendar.html:51
+#: templates/calendar.html:66
 msgid "Apply"
 msgstr "Apply"
 
-#: templates/calendar.html:121
+#: templates/calendar.html:136
 msgid "Tags"
 msgstr "Tags"
 
@@ -1622,11 +1635,6 @@ msgstr ""
 msgid "Search: %(query)s"
 msgstr "Search: %(query)s"
 
-#: templates/_partials/header_nav.html:41 templates/search.html:3
-#: templates/search.html:12 templates/search.html:29
-msgid "Search"
-msgstr "Search"
-
 #: templates/search.html:4 templates/search.html:14
 msgid ""
 "Search DIY, punk and underground shows in Switzerland by band, venue or "
@@ -1638,14 +1646,6 @@ msgstr ""
 #: templates/search.html:13
 msgid "Find a show"
 msgstr "Find a show"
-
-#: templates/_partials/header_nav.html:35 templates/search.html:22
-msgid "Search by band, venue or city"
-msgstr "Search by band, venue or city"
-
-#: templates/_partials/header_nav.html:37 templates/search.html:24
-msgid "Band, venue or city"
-msgstr "Band, venue or city"
 
 #: templates/search.html:34
 msgid "Type a band, a venue or a city to search the listings."

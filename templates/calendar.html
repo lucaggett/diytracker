@@ -40,6 +40,21 @@
     <svg class="absolute -top-3 right-6 w-4 h-4 text-ink" aria-hidden="true"><use href="#sym-staple"/></svg>
 
     <h2 class="font-richEatin text-3xl mis-reg leading-none mb-4">{{ _('FILTER') }}</h2>
+
+    {# Plain GET form: search works with JS disabled, and the query stays in the
+       URL so a result set can be shared. Leaves the page, so it stays separate
+       from the tag filters below, which are applied client-side. #}
+    <form method="get" action="{{ url_for('public.search') }}" class="flex gap-2 mb-5 pb-5 border-b border-ink">
+      <label for="filter-search" class="sr-only">{{ _('Search by band, venue or city') }}</label>
+      <input type="search" id="filter-search" name="q"
+             placeholder="{{ _('Band, venue or city') }}"
+             class="flex-1 min-w-0 border-2 border-ink bg-paper px-3 py-2 font-mono text-sm focus:outline-none focus:border-bleed">
+      <button type="submit"
+              class="btn-press font-mono text-xs uppercase tracking-widest border-2 border-ink bg-ink text-paper px-4 py-2 hover:bg-bleed transition-colors">
+        {{ _('Search') }}
+      </button>
+    </form>
+
     <div id="filter-categories" class="font-mono text-sm">
       {# Populated via JavaScript below. #}
     </div>

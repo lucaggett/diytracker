@@ -28,17 +28,4 @@
     {% endif %}
     <a href="{{ url_for('public.about') }}" class="hover:text-bleed underline-offset-4 hover:underline transition-colors duration-150">{{ _('About') }}</a>
   </nav>
-
-  {# Plain GET form: search works with JS disabled, and the query stays in the
-     URL so a result set can be shared. #}
-  <form method="get" action="{{ url_for('public.search') }}" class="mt-3 flex justify-center gap-2">
-    <label for="nav-search" class="sr-only">{{ _('Search by band, venue or city') }}</label>
-    <input type="search" id="nav-search" name="q" value="{{ request.args.get('q', '') }}"
-           placeholder="{{ _('Band, venue or city') }}"
-           class="w-full max-w-xs border border-paper/50 bg-transparent text-paper placeholder-paper/50 px-3 py-1.5 font-mono text-xs focus:outline-none focus:border-paper">
-    <button type="submit"
-            class="font-mono text-xs uppercase tracking-wider border border-paper/50 text-paper px-3 py-1.5 hover:bg-paper hover:text-ink transition-colors">
-      {{ _('Search') }}
-    </button>
-  </form>
 </div>
