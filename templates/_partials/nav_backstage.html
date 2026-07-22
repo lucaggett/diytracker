@@ -7,10 +7,10 @@
 {% set _active = nav_active if nav_active is defined else request.endpoint %}
 {% set shared_links = [
     ('submissions.submit_event_link', _('Submit')),
-    ('submissions.event_queue', _('Queue')),
     ('submissions.manage_genres', _('Genres')),
   ] + ([('promoter.dashboard', _('Labels'))] if _is_promoter else []) %}
 {% set admin_links = [
+    ('submissions.event_queue', _('Queue')),
     ('admin.admin', _('Events')),
     ('admin.venues', _('Venues')),
     ('admin.page_texts', _('Page Texts')),

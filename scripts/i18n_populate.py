@@ -17,6 +17,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "de": {
         # Flash / runtime messages
         "Invalid email or password.": "E-Mail oder Passwort ungültig.",
+        "Links must start with http:// or https://.": "Links müssen mit http:// oder https:// beginnen.",
         "This invite link is invalid or has expired.": "Dieser Einladungslink ist ungültig oder abgelaufen.",
         "Your message could not be sent — please write to us directly at kontakt@diytracker.ch.": "Nachricht konnte nicht gesendet werden — bitte schreib uns direkt an kontakt@diytracker.ch.",
         "Thanks! We will get back to you as soon as possible.": "Danke! Wir melden uns sobald wie möglich.",
@@ -543,6 +544,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "fr": {
         "Invalid email or password.": "E-mail ou mot de passe invalide.",
+        "Links must start with http:// or https://.": "Les liens doivent commencer par http:// ou https://.",
         "This invite link is invalid or has expired.": "Ce lien d'invitation est invalide ou a expiré.",
         "Your message could not be sent — please write to us directly at kontakt@diytracker.ch.": "Le message n'a pas pu être envoyé — écris-nous directement à kontakt@diytracker.ch.",
         "Thanks! We will get back to you as soon as possible.": "Merci ! Nous te répondrons dès que possible.",
@@ -1060,6 +1062,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "it": {
         "Invalid email or password.": "E-mail o password non validi.",
+        "Links must start with http:// or https://.": "I link devono iniziare con http:// o https://.",
         "This invite link is invalid or has expired.": "Questo link d'invito non è valido o è scaduto.",
         "Your message could not be sent — please write to us directly at kontakt@diytracker.ch.": "Il messaggio non è stato inviato — scrivici direttamente a kontakt@diytracker.ch.",
         "Thanks! We will get back to you as soon as possible.": "Grazie! Ti risponderemo al più presto.",

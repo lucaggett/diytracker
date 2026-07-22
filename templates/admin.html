@@ -204,7 +204,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function() {
     const url = '{{ url_for("admin.analytics_stats") }}';
     const refreshLabel = {{ (_('refreshes every') ~ ' ' ~ stats_interval_minutes ~ ' ' ~ _('min'))|tojson }};
@@ -282,7 +282,7 @@
 })();
 </script>
 {% if scrape_running %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function() {
     const prog = document.getElementById('scrape-progress');
     function fmtTime(secs) {

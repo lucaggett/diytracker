@@ -25,6 +25,14 @@ def login():
     if form.validate_on_submit():
         user = Submitter.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
+            # Drop whatever was in the pre-login session before elevating it,
+            # so a session cookie an attacker managed to plant can't be
+            # ridden into the authenticated session. The language choice is
+            # a visitor preference, not a credential, so it survives.
+            lang = session.get("lang")
+            session.clear()
+            if lang:
+                session["lang"] = lang
             session["user_id"] = user.id
             session.permanent = True
             next_url = safe_redirect_target(request.args.get("next", ""))
@@ -57,6 +65,10 @@ def set_password(token):
         user.set_password(form.password.data)
         user.clear_invite_token()
         db.session.commit()
+        lang = session.get("lang")
+        session.clear()
+        if lang:
+            session["lang"] = lang
         session["user_id"] = user.id
         session.permanent = True
         return redirect(url_for("submissions.submit_event_link"))

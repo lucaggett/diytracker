@@ -125,7 +125,7 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='js/ch_map.js') }}?v={{ css_version }}"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   const venues = {{ markers|tojson }};
   // url_for keeps popup links on the page's locale (/fr/venues/... on /fr/map).
   const VENUE_URL_TEMPLATE = {{ url_for('public.venue_page', venue_id=0)|tojson }};

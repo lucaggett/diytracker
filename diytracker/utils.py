@@ -684,16 +684,31 @@ _GENERIC_TICKET_URLS = {
 }
 
 
-def clean_ticket_url(url, source):
-    """Return None when *url* is a generic landing page for *source*.
+def is_safe_link(url):
+    """True if *url* is an absolute http(s) URL, i.e. safe to put in an href.
 
-    Returns None for empty input or a matched generic URL; otherwise
-    returns the stripped original.
+    Anything else — most importantly `javascript:` and `data:` — would
+    execute in the visitor's browser when the link is clicked, so links are
+    rendered only when this passes. Leading whitespace and mixed case are
+    stripped first because browsers ignore both when resolving a scheme.
+    """
+    if not url:
+        return False
+    return url.strip().lower().startswith(("http://", "https://"))
+
+
+def clean_ticket_url(url, source):
+    """Return None when *url* is unusable as a ticket link for *source*.
+
+    Returns None for empty input, a non-http(s) URL (see is_safe_link) or a
+    matched generic landing page; otherwise returns the stripped original.
     """
     if not url:
         return None
     trimmed = url.strip()
     if not trimmed:
+        return None
+    if not is_safe_link(trimmed):
         return None
     normalised = trimmed.split("?", 1)[0].split("#", 1)[0].rstrip("/").lower()
     generics = _GENERIC_TICKET_URLS.get((source or "").lower(), set())

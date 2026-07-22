@@ -99,7 +99,7 @@ sudo systemctl start diytracker
 Both are read-only — they report findings and never change anything.
 
 - `security_audit.sh` checks host hardening (updates, sshd, firewall,
-  fail2ban, accounts, …). Run as root for full coverage:
+  accounts, …). Run as root for full coverage:
   `sudo bash deploy/security_audit.sh`.
 - `traffic_audit.sh` analyzes the nginx access logs (rotated + gzipped
   included) to tell legitimate audience growth from bots, scrapers and
@@ -116,6 +116,19 @@ Both are read-only — they report findings and never change anything.
 
 Note that static assets have `access_log off` in the nginx config, so the
 traffic audit sees only real app requests.
+
+## Security headers
+
+Response headers (HSTS, CSP, `X-Content-Type-Options`, `Referrer-Policy`,
+`X-Frame-Options`, `Permissions-Policy`) are set **by the app**, in
+`diytracker/services/security.py`, so they ship with a normal git deploy and
+need no nginx change. Don't add them to the nginx config as well or every
+header goes out twice. The one exception is `/static/`, which nginx serves
+without touching gunicorn — the reference config adds `nosniff` there.
+
+The CSP currently ships as `Content-Security-Policy-Report-Only`. The module
+docstring lists what has to be fixed before it can enforce; flipping
+`CSP_ENFORCE` before then will break the calendar's JavaScript.
 
 ## MOTD (`update-motd.d/50-diytracker`)
 

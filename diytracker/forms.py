@@ -13,6 +13,9 @@ from wtforms import (
 from wtforms.fields.datetime import DateTimeField
 from wtforms.fields.simple import HiddenField, BooleanField
 from wtforms.validators import DataRequired, Optional, Email, EqualTo, Length
+from wtforms.validators import ValidationError
+
+from diytracker.utils import is_safe_link
 
 try:
     from flask_babel import lazy_gettext as _l  # type: ignore
@@ -20,6 +23,17 @@ except ImportError:  # pragma: no cover - defensive fallback
 
     def _l(s):
         return s
+
+
+class SafeLink:
+    """Reject anything that isn't an absolute http(s) URL.
+
+    Empty values pass so the validator can sit behind Optional().
+    """
+
+    def __call__(self, form, field):
+        if field.data and not is_safe_link(field.data):
+            raise ValidationError(_l("Links must start with http:// or https://."))
 
 
 def get_canton_choices():
@@ -91,7 +105,12 @@ class EventForm(FlaskForm):
 
     # Ticket Details
     ticket_price = StringField(_l("Ticket Price"), validators=[DataRequired()])
-    ticket_link = StringField(_l("Ticket Link"), validators=[Optional()])
+    # The link ends up in an href, so the scheme is validated here as well as
+    # at render time: a `javascript:` URL would otherwise run in every
+    # visitor's browser from the event cards on the calendar.
+    ticket_link = StringField(
+        _l("Ticket Link"), validators=[Optional(), SafeLink(), Length(max=200)]
+    )
 
     # Venue Selection Field
     venue_selection = StringField(_l("Venue"), validators=[Optional()])

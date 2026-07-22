@@ -41,7 +41,8 @@ from diytracker.services.seo import (
     localized_paths,
     website_json_ld,
 )
-from diytracker.utils import normalise_canton, parent_genres
+from diytracker.services.security import init_security_headers
+from diytracker.utils import is_safe_link, normalise_canton, parent_genres
 
 
 def create_app(config: Config | None = None) -> Flask:
@@ -73,6 +74,7 @@ def create_app(config: Config | None = None) -> Flask:
     limiter.init_app(app)
     detector.init_app(app)
     Babel(app, locale_selector=select_locale)
+    init_security_headers(app)
 
     # create_all() is idempotent and only creates missing tables (the project
     # has no Alembic); column additions live in migrations/.
@@ -88,6 +90,7 @@ def create_app(config: Config | None = None) -> Flask:
     app.jinja_env.globals["parent_genres"] = parent_genres
     app.jinja_env.globals["normalise_canton"] = normalise_canton
     app.jinja_env.globals["canton_in"] = canton_in
+    app.jinja_env.globals["is_safe_link"] = is_safe_link
     app.jinja_env.globals["canonical_url"] = canonical_url
     app.jinja_env.globals["hreflang_entries"] = hreflang_entries
     app.jinja_env.globals["localized_paths"] = localized_paths

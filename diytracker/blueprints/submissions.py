@@ -15,7 +15,7 @@ from flask import (
 
 from diytracker.forms import DeleteScrapedEventForm, EventForm, GenreForm
 from diytracker.models import db, Genre, ScrapedEvent, Submitter
-from diytracker.services.auth import login_required
+from diytracker.services.auth import admin_required, login_required
 from diytracker.services.cache import bust_cache
 from diytracker.services.events import (
     clean_genre_string,
@@ -28,7 +28,7 @@ from diytracker.services.ingest import parse_time
 from diytracker.services.labels import all_label_choices
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 from diytracker.services.venue import get_or_create_venue
-from diytracker.utils import resolve_canton
+from diytracker.utils import is_safe_link, resolve_canton
 
 bp = Blueprint("submissions", __name__)
 
@@ -92,8 +92,10 @@ def parse_scraped_events(date_from=None, date_to=None, source=None):
     return [_scraped_event_to_dict(rec) for rec in candidates]
 
 
+# Admin-only: approving a queue entry publishes it to the live calendar, and
+# deleting one is permanent. An invite grants /submit, not moderation.
 @bp.route("/queue", methods=["GET", "POST"])
-@login_required
+@admin_required
 def event_queue():
     submitter = db.session.get(Submitter, session["user_id"])
 
@@ -140,10 +142,15 @@ def event_queue():
         genre = clean_genre_string(raw_genre)
         acts = _ov("override_acts", data.get("performers") or "")
         ticket_price = _ov("override_ticket_price", data.get("ticket_price") or "")
+        # This path never goes through EventForm, so the href scheme check
+        # that SafeLink does there has to happen here too — the override
+        # field is free text typed into the queue.
         ticket_link = _ov(
             "override_ticket_url",
             data.get("ticket_url") or data.get("ticket_link") or "",
         )
+        if not is_safe_link(ticket_link):
+            ticket_link = ""
         description = _ov("override_description", data.get("description") or "")
         source_url = _ov("override_source_url", data.get("url") or "")
 
@@ -210,7 +217,7 @@ def event_queue():
 
 
 @bp.route("/queue/<int:scraped_id>/delete", methods=["POST"])
-@login_required
+@admin_required
 def delete_scraped_event(scraped_id):
     form = DeleteScrapedEventForm()
     if not form.validate_on_submit():

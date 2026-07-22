@@ -6,7 +6,7 @@
 {% block meta_description %}{{ _('%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices and accessibility info.', num=events|length, genre=genre) }}{% endblock %}
 
 {% block json_ld %}
-  <script type="application/ld+json">{{ genre_ld | tojson }}</script>
+  <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ genre_ld | tojson }}</script>
 {% endblock %}
 
 {% block banner_preload %}{% endblock %}

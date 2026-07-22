@@ -1,7 +1,7 @@
 {% extends 'base_public.html' %}
 
 {% set display_name = event.name or event.acts or _('Event') %}
-{% set ticket_is_safe = event.ticket_link and (event.ticket_link.startswith('http://') or event.ticket_link.startswith('https://')) %}
+{% set ticket_is_safe = is_safe_link(event.ticket_link) %}
 {# Flyer paths are stored root-relative without a leading slash (e.g.
    'static/uploads/x.png'); resolved as-is they would break under /events/<id>/. #}
 {% set flyer_src = ('/' ~ event.flyer.lstrip('/') if '://' not in event.flyer else event.flyer) if event.flyer else None %}
@@ -19,7 +19,7 @@
 {%- endblock %}
 
 {% block json_ld %}
-  <script type="application/ld+json">{{ event_ld | tojson }}</script>
+  <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ event_ld | tojson }}</script>
 {% endblock %}
 
 {% block content %}

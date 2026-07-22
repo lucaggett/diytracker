@@ -4,7 +4,7 @@
 {% block meta_description %}{{ venue.name }} — {{ venue.plz }} {{ venue.city }}{% if venue.canton %}, {{ venue.canton }}{% endif %} · {{ _('%(num)d upcoming events', num=events|length) }}{% if events %} · {{ _('next on %(date)s', date=events[0].date.strftime('%d.%m.%Y')) }}{% endif %}{% endblock %}
 
 {% block json_ld %}
-  <script type="application/ld+json">{{ venue_ld | tojson }}</script>
+  <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ venue_ld | tojson }}</script>
 {% endblock %}
 
 {% block head_extra %}
@@ -80,7 +80,7 @@
 {% if coords %}
 <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='js/ch_map.js') }}?v={{ css_version }}"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   // Static locator map: same Switzerland cutout as /map, no interaction.
   const map = L.map('venue-mini-map', {
     dragging: false,

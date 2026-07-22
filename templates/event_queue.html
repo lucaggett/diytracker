@@ -186,7 +186,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
   function toggleEdit(id) {
     const row = document.getElementById(id);
     row.style.display = row.style.display === 'none' ? '' : 'none';

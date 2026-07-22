@@ -204,27 +204,27 @@ class TestIngestApi:
 
 
 class TestFlyerApproval:
-    def test_approving_carries_flyer_onto_event(self, client, app, make_user, login):
+    def test_approving_carries_flyer_onto_event(self, client, app, admin, login):
         result = ingest_event(
             _payload(),
             flyer=(_png_bytes(), "flyer.png"),
             upload_folder=app.config["UPLOAD_FOLDER"],
         )
         rec = result.record
-        login(make_user())
+        login(admin)
         resp = client.post("/queue", data={"scraped_id": str(rec.id)})
         assert resp.status_code == 302
         ev = Event.query.one()
         assert ev.flyer == rec.flyer
         assert rec.approved and rec.approved_event_id == ev.id
 
-    def test_queue_shows_flyer_and_submitter(self, client, app, make_user, login):
+    def test_queue_shows_flyer_and_submitter(self, client, app, admin, login):
         ingest_event(
             _payload(),
             flyer=(_png_bytes(), "flyer.png"),
             upload_folder=app.config["UPLOAD_FOLDER"],
         )
-        login(make_user())
+        login(admin)
         resp = client.get("/queue")
         page = resp.data.decode()
         assert "Jonathan Schenker" in page

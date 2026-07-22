@@ -1,6 +1,6 @@
 {# Behavior for _partials/event_cards.html: expand/collapse + share buttons.
    Include once in the page's scripts block. #}
-<script>
+<script nonce="{{ csp_nonce() }}">
     document.addEventListener("DOMContentLoaded", function () {
         window.toggleEventDetails = function (element) {
             element.classList.toggle('is-open');

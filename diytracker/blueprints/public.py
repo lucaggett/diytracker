@@ -38,6 +38,7 @@ from diytracker.services.archive import (
 )
 from diytracker.services.cantons import canton_directory
 from diytracker.services.genres import genre_directory
+from diytracker.services.limits import limiter
 from diytracker.services.page_texts import get_page_text
 from diytracker.services.scrape_detection import HONEYPOT_PATH
 from diytracker.services.seo import (
@@ -203,6 +204,10 @@ def calendar_view():
 
 
 @localized_route("/about", methods=["GET", "POST"])
+# Each POST sends a real email through our SMTP account. The honeypot stops
+# dumb bots; this stops anyone who fills the form correctly from flooding the
+# inbox or getting the sending account throttled.
+@limiter.limit("5 per hour", methods=["POST"])
 def about():
     form = CollaboratorRequestForm()
     if form.validate_on_submit():

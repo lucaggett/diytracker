@@ -4,7 +4,7 @@
 {% block meta_description %}{{ _('%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, venues, prices and accessibility info.', num=events|length, in_canton=canton_in(canton)) }}{% endblock %}
 
 {% block json_ld %}
-  <script type="application/ld+json">{{ canton_ld | tojson }}</script>
+  <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ canton_ld | tojson }}</script>
 {% endblock %}
 
 {% block banner_preload %}{% endblock %}

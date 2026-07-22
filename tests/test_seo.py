@@ -14,8 +14,9 @@ from diytracker.services.seo import parse_acts, parse_price, slugify
 
 def extract_json_ld(html, ld_type):
     """Parse every JSON-LD block on the page; return the one of ld_type."""
+    # Tolerate extra attributes on the tag (it carries a CSP nonce).
     blocks = re.findall(
-        r'<script type="application/ld\+json">(.*?)</script>', html, re.DOTALL
+        r'<script type="application/ld\+json"[^>]*>(.*?)</script>', html, re.DOTALL
     )
     assert blocks, "no JSON-LD script tag found"
     for block in blocks:

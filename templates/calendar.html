@@ -7,7 +7,7 @@
 {% block body_class %}calendar-cursor{% endblock %}
 
 {% block json_ld %}
-  <script type="application/ld+json">{{ website_json_ld() | tojson }}</script>
+  <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ website_json_ld() | tojson }}</script>
 {% endblock %}
 
 {% block content %}
@@ -53,7 +53,7 @@
 
 {% block scripts %}
 {% include '_partials/event_cards_js.html' %}
-<script>
+<script nonce="{{ csp_nonce() }}">
     document.addEventListener("DOMContentLoaded", function () {
         // Collect unique tags from events
         let eventItems = document.querySelectorAll('.event-item');
