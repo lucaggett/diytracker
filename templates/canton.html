@@ -1,7 +1,9 @@
 {% extends 'base_public.html' %}
 
-{% block title %}{{ _('DIY & punk concerts %(in_canton)s', in_canton=canton_in(canton)) }} · diytracker.ch{% endblock %}
-{% block meta_description %}{{ _('%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, venues, prices and accessibility info.', num=events|length, in_canton=canton_in(canton)) }}{% endblock %}
+{# page_title/page_description are built in the view so the <meta> tags and the
+   JSON-LD in canton_ld can't drift apart. #}
+{% block title %}{{ page_title }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ page_description }}{% endblock %}
 
 {% block json_ld %}
   <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ canton_ld | tojson }}</script>
@@ -10,7 +12,7 @@
 {% block banner_preload %}{% endblock %}
 {% block header_hero %}
   {% set hero_eyebrow = _('Canton') %}
-  {% set hero_title = _('DIY & punk concerts %(in_canton)s', in_canton=canton_in(canton)) %}
+  {% set hero_title = page_title %}
   {% set hero_description = _('Upcoming DIY, punk, hardcore and underground shows %(in_canton)s. Hand-curated, non-commercial, updated continuously.', in_canton=canton_in(canton)) %}
   {% include '_partials/hero.html' %}
 {% endblock %}

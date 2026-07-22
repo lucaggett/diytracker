@@ -20,6 +20,27 @@ class TestCalendar:
         assert "data-tags=" in html
         assert 'class="event-item' in html
 
+    def test_calendar_renders_one_date_card_per_populated_date(
+        self, client, make_event
+    ):
+        # The partial iterates grouped_events directly; days with no events
+        # must not produce an empty card. Two events share one date, so three
+        # events across two dates give exactly two cards.
+        make_event(name="Gig One", days_from_now=5)
+        make_event(name="Gig Two", days_from_now=5)
+        make_event(name="Gig Three", days_from_now=12)
+        html = client.get("/").data.decode()
+        assert html.count('class="date-card') == 2
+        assert html.count('class="event-item') == 3
+
+    def test_calendar_omits_days_already_past_this_month(self, client, make_event):
+        # The query window opens on the 1st of the current month, so past days
+        # reach the template and have to be filtered out there.
+        make_event(name="Yesterday Gig", days_from_now=-1)
+        html = client.get("/").data.decode()
+        assert "Yesterday Gig" not in html
+        assert 'class="date-card' not in html
+
     def test_calendar_sets_cache_headers_for_anonymous(self, client):
         resp = client.get("/")
         assert "public" in resp.headers.get("Cache-Control", "")
@@ -456,6 +477,29 @@ class TestLabelPage:
 
     def test_unknown_label_404s(self, client):
         assert client.get("/label/nope/").status_code == 404
+
+    def test_label_meta_description_matches_json_ld(
+        self, client, make_user, make_label, make_event
+    ):
+        # Both used to be written out by hand in two places and had drifted.
+        # They now come from one page_description built in the view.
+        import json
+        import re
+
+        label = make_label(make_user(is_promoter=True))
+        make_event(name="Label Show", label_id=label.id)
+        html = client.get(f"/label/{label.slug}/").data.decode()
+
+        meta = re.search(r'<meta name="description" content="([^"]*)"', html).group(1)
+        ld = json.loads(
+            re.search(
+                r'<script type="application/ld\+json"[^>]*>(.*?)</script>',
+                html,
+                re.S,
+            ).group(1)
+        )
+        assert meta == ld["description"]
+        assert "accessibility info" in meta
 
     def test_sitemap_includes_label_pages(self, client, make_user, make_label):
         label = make_label(make_user(is_promoter=True))

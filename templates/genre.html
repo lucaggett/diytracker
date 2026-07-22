@@ -2,8 +2,11 @@
 
 {# Genre names (Metal, Punk, Hip-Hop, ...) are proper nouns and identical
    across locales, so unlike canton names they are not wrapped in _(). #}
-{% block title %}{{ _('%(genre)s concerts in Switzerland', genre=genre) }} · diytracker.ch{% endblock %}
-{% block meta_description %}{{ _('%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices and accessibility info.', num=events|length, genre=genre) }}{% endblock %}
+{# page_title/page_description are built in the view so the <meta> tags and the
+   JSON-LD in genre_ld can't drift apart. The hero below deliberately uses
+   different wording ("shows" rather than "concerts"). #}
+{% block title %}{{ page_title }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ page_description }}{% endblock %}
 
 {% block json_ld %}
   <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ genre_ld | tojson }}</script>

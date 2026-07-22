@@ -14,8 +14,14 @@ db = SQLAlchemy()
 
 
 def utcnow():
-    """Naive UTC now — DateTime columns store naive values, so all stored
-    timestamps and comparisons must use this instead of datetime.now()."""
+    """Naive UTC now — for *audit* columns (created_at, updated_at, first_seen,
+    last_seen, token expiries), which store UTC.
+
+    Not for wall-clock columns. Event.date/Event.doors/Event.end_date hold the
+    local Swiss time a show actually starts, exactly as entered, and must be
+    compared against datetime.now() — comparing them to this would treat every
+    event as ending an hour or two late.
+    """
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
@@ -283,7 +289,9 @@ class ScrapedEvent(db.Model):
     approved_at = db.Column(db.DateTime, nullable=True)
     approved_event_id = db.Column(db.Integer, db.ForeignKey("event.id"), nullable=True)
 
-    # Metadata
+    # Metadata. server_default rather than default=utcnow because these rows are
+    # also written by bulk inserts that bypass the ORM; SQLite's now() is UTC
+    # too, so the stored value means the same thing either way.
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
 
     def __repr__(self):

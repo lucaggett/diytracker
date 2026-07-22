@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 15:24+0200\n"
+"POT-Creation-Date: 2026-07-22 16:49+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -43,13 +43,13 @@ msgid "Doors Open Time"
 msgstr "Doors Open Time"
 
 #: diytracker/forms.py:86 diytracker/forms.py:339
-#: templates/_partials/event_cards.html:95 templates/admin.html:86
+#: templates/_partials/event_cards.html:96 templates/admin.html:86
 #: templates/calendar.html:135 templates/event_page.html:94
-#: templates/event_queue.html:124 templates/genre.html:14
+#: templates/event_queue.html:124 templates/genre.html:17
 msgid "Genre"
 msgstr "Genre"
 
-#: diytracker/forms.py:88 templates/_partials/event_cards.html:95
+#: diytracker/forms.py:88 templates/_partials/event_cards.html:96
 #: templates/event_queue.html:128
 msgid "Acts"
 msgstr "Acts"
@@ -75,7 +75,7 @@ msgstr "Cancelled"
 msgid "Postponed"
 msgstr "Postponed"
 
-#: diytracker/forms.py:104 diytracker/forms.py:159 templates/label_page.html:13
+#: diytracker/forms.py:104 diytracker/forms.py:159 templates/label_page.html:15
 #: templates/promoter_dashboard.html:67
 msgid "Label"
 msgstr "Label"
@@ -110,7 +110,7 @@ msgid "City"
 msgstr "City"
 
 #: diytracker/forms.py:123 diytracker/forms.py:173 templates/calendar.html:134
-#: templates/canton.html:12 templates/venues.html:41
+#: templates/canton.html:14 templates/venues.html:41
 msgid "Canton"
 msgstr "Canton"
 
@@ -476,7 +476,7 @@ msgstr "Label updated!"
 msgid "Label deleted."
 msgstr "Label deleted."
 
-#: diytracker/blueprints/public.py:247
+#: diytracker/blueprints/public.py:228
 msgid ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
@@ -484,21 +484,20 @@ msgstr ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
 
-#: diytracker/blueprints/public.py:257
+#: diytracker/blueprints/public.py:238
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Thanks! We will get back to you as soon as possible."
 
-#: diytracker/blueprints/public.py:285
+#: diytracker/blueprints/public.py:266
 msgid "Accessibility info saved — thank you!"
 msgstr "Accessibility info saved — thank you!"
 
-#: diytracker/blueprints/public.py:435 templates/canton.html:3
-#: templates/canton.html:13
+#: diytracker/blueprints/public.py:408
 #, python-format
 msgid "DIY & punk concerts %(in_canton)s"
 msgstr "DIY & punk concerts %(in_canton)s"
 
-#: diytracker/blueprints/public.py:437 templates/canton.html:4
+#: diytracker/blueprints/public.py:411
 #, python-format
 msgid ""
 "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, "
@@ -507,12 +506,12 @@ msgstr ""
 "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, "
 "venues, prices and accessibility info."
 
-#: diytracker/blueprints/public.py:487 templates/genre.html:5
+#: diytracker/blueprints/public.py:462
 #, python-format
 msgid "%(genre)s concerts in Switzerland"
 msgstr "%(genre)s concerts in Switzerland"
 
-#: diytracker/blueprints/public.py:489 templates/genre.html:6
+#: diytracker/blueprints/public.py:464
 #, python-format
 msgid ""
 "%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices "
@@ -521,12 +520,16 @@ msgstr ""
 "%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices "
 "and accessibility info."
 
-#: diytracker/blueprints/public.py:527
+#: diytracker/blueprints/public.py:510
 #, python-format
-msgid "Upcoming shows by %(label)s."
-msgstr "Upcoming shows by %(label)s."
+msgid ""
+"Upcoming shows by %(label)s — dates, venues, prices and accessibility "
+"info."
+msgstr ""
+"Upcoming shows by %(label)s — dates, venues, prices and accessibility "
+"info."
 
-#: diytracker/blueprints/public.py:605
+#: diytracker/blueprints/public.py:600
 msgid "DIY, punk and underground concerts in Switzerland."
 msgstr "DIY, punk and underground concerts in Switzerland."
 
@@ -806,7 +809,7 @@ msgid "Collecting stats…"
 msgstr "Collecting stats…"
 
 #: templates/_partials/nav_backstage.html:15 templates/admin.html:71
-#: templates/canton.html:35 templates/genre.html:37 templates/search.html:38
+#: templates/canton.html:37 templates/genre.html:40 templates/search.html:38
 #: templates/venues.html:3
 msgid "Venues"
 msgstr "Venues"
@@ -843,7 +846,7 @@ msgstr ""
 msgid "ID"
 msgstr "ID"
 
-#: templates/_partials/event_cards.html:84 templates/admin.html:119
+#: templates/_partials/event_cards.html:85 templates/admin.html:119
 #: templates/admin.html:148 templates/admin_statistics.html:37
 #: templates/event_page.html:73 templates/event_queue.html:48
 #: templates/promoter_dashboard.html:66
@@ -1051,9 +1054,9 @@ msgid "Nothing in the archive yet."
 msgstr "Nothing in the archive yet."
 
 #: templates/_partials/hero.html:11 templates/archive_index.html:35
-#: templates/canton.html:48 templates/errors/404.html:21
+#: templates/canton.html:50 templates/errors/404.html:21
 #: templates/errors/500.html:21 templates/event_page.html:136
-#: templates/genre.html:62 templates/label_page.html:33
+#: templates/genre.html:65 templates/label_page.html:35
 #: templates/search.html:63 templates/search.html:87
 #: templates/venue_accessibility.html:146
 msgid "Back to calendar"
@@ -1134,7 +1137,7 @@ msgstr "Apply"
 msgid "Tags"
 msgstr "Tags"
 
-#: templates/canton.html:14
+#: templates/canton.html:16
 #, python-format
 msgid ""
 "Upcoming DIY, punk, hardcore and underground shows %(in_canton)s. Hand-"
@@ -1143,7 +1146,7 @@ msgstr ""
 "Upcoming DIY, punk, hardcore and underground shows %(in_canton)s. Hand-"
 "curated, non-commercial, updated continuously."
 
-#: templates/canton.html:28 templates/genre.html:30
+#: templates/canton.html:30 templates/genre.html:33
 msgid "No upcoming events right now."
 msgstr "No upcoming events right now."
 
@@ -1229,7 +1232,7 @@ msgstr "See the venue page"
 msgid "More events %(in_canton)s"
 msgstr "More events %(in_canton)s"
 
-#: templates/_partials/event_cards.html:89 templates/event_page.html:84
+#: templates/_partials/event_cards.html:90 templates/event_page.html:84
 #: templates/venue_page.html:31
 msgid "Address"
 msgstr "Address"
@@ -1247,7 +1250,7 @@ msgstr "more %(genre)s shows"
 msgid "Price"
 msgstr "Price"
 
-#: templates/_partials/event_cards.html:114 templates/event_page.html:113
+#: templates/_partials/event_cards.html:115 templates/event_page.html:113
 msgid "Tickets"
 msgstr "Tickets"
 
@@ -1341,12 +1344,12 @@ msgstr "Cancel"
 msgid "No events awaiting approval."
 msgstr "No events awaiting approval."
 
-#: templates/genre.html:15
+#: templates/genre.html:18
 #, python-format
 msgid "%(genre)s shows in Switzerland"
 msgstr "%(genre)s shows in Switzerland"
 
-#: templates/genre.html:16
+#: templates/genre.html:19
 #, python-format
 msgid ""
 "Upcoming %(genre)s concerts across Switzerland. Hand-curated, non-"
@@ -1355,7 +1358,7 @@ msgstr ""
 "Upcoming %(genre)s concerts across Switzerland. Hand-curated, non-"
 "commercial, updated continuously."
 
-#: templates/_partials/footer_public.html:14 templates/genre.html:50
+#: templates/_partials/footer_public.html:14 templates/genre.html:53
 #: templates/page_texts.html:29
 msgid "Cantons"
 msgstr "Cantons"
@@ -1455,16 +1458,7 @@ msgstr "Current logo — uploading a new file replaces it."
 msgid "Create"
 msgstr "Create"
 
-#: templates/label_page.html:5
-#, python-format
-msgid ""
-"Upcoming shows by %(label)s — dates, venues, prices and accessibility "
-"info."
-msgstr ""
-"Upcoming shows by %(label)s — dates, venues, prices and accessibility "
-"info."
-
-#: templates/label_page.html:26
+#: templates/label_page.html:28
 msgid "No upcoming shows yet — check back soon."
 msgstr "No upcoming shows yet — check back soon."
 
@@ -1904,23 +1898,23 @@ msgstr "No accessibility info for this venue yet."
 msgid "Contact us if you have details."
 msgstr "Contact us if you have details."
 
-#: templates/_partials/event_cards.html:29
+#: templates/_partials/event_cards.html:30
 msgid "TODAY"
 msgstr "TODAY"
 
-#: templates/_partials/event_cards.html:85
+#: templates/_partials/event_cards.html:86
 msgid "doors"
 msgstr "doors"
 
-#: templates/_partials/event_cards.html:103
+#: templates/_partials/event_cards.html:104
 msgid "Accessibility info"
 msgstr "Accessibility info"
 
-#: templates/_partials/event_cards.html:125
+#: templates/_partials/event_cards.html:126
 msgid "Link copied!"
 msgstr "Link copied!"
 
-#: templates/_partials/event_cards.html:130
+#: templates/_partials/event_cards.html:131
 msgid "Share"
 msgstr "Share"
 
@@ -2276,4 +2270,7 @@ msgstr "Fuse blown, cable busted, something between stage and mixing desk."
 
 #~ msgid "Search by band, venue or city."
 #~ msgstr ""
+
+#~ msgid "Upcoming shows by %(label)s."
+#~ msgstr "Upcoming shows by %(label)s."
 

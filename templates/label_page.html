@@ -1,8 +1,10 @@
 {% extends 'base_public.html' %}
 
-{# Label names are proper nouns, identical across locales — not wrapped in _(). #}
-{% block title %}{{ label.name }} · diytracker.ch{% endblock %}
-{% block meta_description %}{{ _('Upcoming shows by %(label)s — dates, venues, prices and accessibility info.', label=label.name) }}{% endblock %}
+{# page_title/page_description are built in the view so the <meta> tags and the
+   JSON-LD in label_ld can't drift apart. page_title is label.name verbatim:
+   label names are proper nouns, identical across locales. #}
+{% block title %}{{ page_title }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ page_description }}{% endblock %}
 
 {% block json_ld %}
   <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ label_ld | tojson }}</script>

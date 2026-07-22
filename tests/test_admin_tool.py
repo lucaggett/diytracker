@@ -150,6 +150,33 @@ class TestEvents:
         everything = admin_events.list_events(include_past=True, limit=0)
         assert {e.name for e in everything} == {"Future Show", "Past Show"}
 
+    def test_list_events_uses_the_wall_clock_like_the_public_pages(
+        self, app, make_event, monkeypatch, request
+    ):
+        # Event.date holds local Swiss time, so "upcoming" must be measured
+        # against datetime.now(), not models.utcnow(). The clock is pinned to
+        # Europe/Zurich because on a UTC host the two are identical and this
+        # would assert nothing: the event below sits 90 minutes in the local
+        # past but still an hour or two in the UTC future, so filtering on
+        # utcnow() wrongly keeps it in the admin list.
+        import time as _time
+        from datetime import datetime, timedelta
+
+        from diytracker.models import utcnow
+
+        monkeypatch.setenv("TZ", "Europe/Zurich")
+        _time.tzset()
+        request.addfinalizer(_time.tzset)
+        assert datetime.now() > utcnow(), "expected a UTC+x local clock"
+
+        event = make_event(name="Already Started")
+        event.date = datetime.now() - timedelta(minutes=90)
+        db.session.commit()
+        assert event.date > utcnow(), "event must straddle the two clocks"
+
+        assert "Already Started" not in [e.name for e in admin_events.list_events()]
+        assert event not in Event.query.filter(Event.date >= datetime.now()).all()
+
     def test_set_status(self, app, make_event):
         event = make_event()
         row = admin_events.set_status(event.id, "cancelled")

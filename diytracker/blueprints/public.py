@@ -146,18 +146,6 @@ def _public_cache_headers(response):
     return response.make_conditional(request)
 
 
-def _months_data(months):
-    """[(year, month)] -> the months_data structure calendar.html iterates."""
-    return [
-        {
-            "year": year,
-            "month": month,
-            "last_day_of_month": calendar.monthrange(year, month)[1],
-        }
-        for year, month in months
-    ]
-
-
 def _group_events_by_date(events):
     grouped_events = defaultdict(list)
     for event in events:
@@ -165,18 +153,13 @@ def _group_events_by_date(events):
     return grouped_events
 
 
-def _months_spanning(events):
-    """[(year, month)] covering first..last event (events sorted by date) —
-    the month span follows the events rather than the calendar's fixed
-    3-month window."""
-    months = []
-    if events:
-        cursor = events[0].date.date().replace(day=1)
-        last = events[-1].date.date().replace(day=1)
-        while cursor <= last:
-            months.append((cursor.year, cursor.month))
-            cursor += relativedelta(months=1)
-    return months
+@bp.app_context_processor
+def _inject_today_local():
+    # _partials/event_cards.html needs today's date to drop past days and to
+    # stamp the current one. Event.date is a wall-clock Swiss time, so this is
+    # the local date, matching the `Event.date >= datetime.now()` filters —
+    # injected here so the partial can never be included without it.
+    return {"today_local": datetime.now().date()}
 
 
 @localized_route("/")
@@ -204,8 +187,6 @@ def calendar_view():
     return render_template(
         "calendar.html",
         grouped_events=_group_events_by_date(events),
-        months_data=_months_data(months),
-        datetime=datetime,
     )
 
 
@@ -421,6 +402,17 @@ def canton_page(canton_slug):
         .order_by(Venue.name.asc())
         .all()
     )
+    # Built once and used for both the <title>/<meta> pair and the JSON-LD, so
+    # the two can't drift apart.
+    page_title = _(
+        "DIY & punk concerts %(in_canton)s", in_canton=canton_in(info["name"])
+    )
+    page_description = _(
+        "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — "
+        "dates, venues, prices and accessibility info.",
+        num=len(events),
+        in_canton=canton_in(info["name"]),
+    )
     return render_template(
         "canton.html",
         canton=info["name"],
@@ -428,17 +420,12 @@ def canton_page(canton_slug):
         events=events,
         venues=venues,
         grouped_events=_group_events_by_date(events),
-        months_data=_months_data(_months_spanning(events)),
-        datetime=datetime,
+        page_title=page_title,
+        page_description=page_description,
         intro_text=get_page_text("canton", canton_slug),
         canton_ld=collection_json_ld(
-            _("DIY & punk concerts %(in_canton)s", in_canton=canton_in(info["name"])),
-            _(
-                "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — "
-                "dates, venues, prices and accessibility info.",
-                num=len(events),
-                in_canton=canton_in(info["name"]),
-            ),
+            page_title,
+            page_description,
             canonical_url(),
             events,
         ),
@@ -472,6 +459,13 @@ def genre_page(genre_slug):
         for slug in info["canton_slugs"]
         if slug in live_cantons
     )
+    page_title = _("%(genre)s concerts in Switzerland", genre=info["name"])
+    page_description = _(
+        "%(num)d upcoming %(genre)s shows in Switzerland — dates, "
+        "venues, prices and accessibility info.",
+        num=len(events),
+        genre=info["name"],
+    )
     return render_template(
         "genre.html",
         genre=info["name"],
@@ -480,17 +474,12 @@ def genre_page(genre_slug):
         venues=venues,
         cantons=cantons,
         grouped_events=_group_events_by_date(events),
-        months_data=_months_data(_months_spanning(events)),
-        datetime=datetime,
+        page_title=page_title,
+        page_description=page_description,
         intro_text=get_page_text("genre", genre_slug),
         genre_ld=collection_json_ld(
-            _("%(genre)s concerts in Switzerland", genre=info["name"]),
-            _(
-                "%(num)d upcoming %(genre)s shows in Switzerland — dates, "
-                "venues, prices and accessibility info.",
-                num=len(events),
-                genre=info["name"],
-            ),
+            page_title,
+            page_description,
             canonical_url(),
             events,
         ),
@@ -516,15 +505,20 @@ def label_page(label_slug):
         .order_by(Event.date.asc())
         .all()
     )
+    # Label names are proper nouns, identical across locales — not wrapped in _().
+    page_description = _(
+        "Upcoming shows by %(label)s — dates, venues, prices and accessibility info.",
+        label=label.name,
+    )
     return render_template(
         "label_page.html",
         label=label,
         grouped_events=_group_events_by_date(events),
-        months_data=_months_data(_months_spanning(events)),
-        datetime=datetime,
+        page_title=label.name,
+        page_description=page_description,
         label_ld=collection_json_ld(
             label.name,
-            _("Upcoming shows by %(label)s.", label=label.name),
+            page_description,
             canonical_url(),
             events,
         ),
@@ -643,8 +637,6 @@ def search():
         events=events,
         venues=venues,
         grouped_events=_group_events_by_date(events),
-        months_data=_months_data(_months_spanning(events)),
-        datetime=datetime,
     )
 
 
