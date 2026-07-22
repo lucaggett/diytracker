@@ -3,11 +3,17 @@
 
 Sources are treated as English. Any msgid not listed here keeps its existing
 (possibly empty) translation in the catalog. Running this script is idempotent.
+
+Each catalog is compiled to its .mo afterwards. Nothing else does this — not
+i18n_status.py, which reads the .po files, and not CI — so without it a fully
+translated catalog can still render in English at runtime, because Babel only
+ever reads the .mo.
 """
 
 import os
 import sys
 
+from babel.messages.mofile import write_mo
 from babel.messages.pofile import read_po, write_po
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -541,6 +547,25 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Venue page": "Venue-Seite",
         "back to venues": "zurück zu den Venues",
         "no upcoming events": "keine kommenden Events",
+        # Search + calendar subscription
+        "Search": "Suche",
+        "Find a show": "Finde eine Show",
+        "Search by band, venue or city": "Nach Band, Venue oder Stadt suchen",
+        "Search DIY, punk and underground shows in Switzerland by band, venue or city.": "Durchsuche DIY-, Punk- und Underground-Shows in der Schweiz nach Band, Venue oder Stadt.",
+        "Band, venue or city": "Band, Venue oder Stadt",
+        "Search: %(query)s": "Suche: %(query)s",
+        "Type a band, a venue or a city to search the listings.": "Tipp eine Band, ein Venue oder eine Stadt ein, um die Einträge zu durchsuchen.",
+        "%(num)d events found": "%(num)d Events gefunden",
+        "Nothing matched “%(query)s”.": "Keine Treffer für „%(query)s“.",
+        "Include past events": "Vergangene Events einbeziehen",
+        "Upcoming only": "Nur kommende",
+        "Add to calendar": "Zum Kalender hinzufügen",
+        "Subscribe": "Abonnieren",
+        "Subscribe to the calendar": "Kalender abonnieren",
+        "Subscribe to these shows": "Diese Shows abonnieren",
+        "Download .ics": ".ics herunterladen",
+        "Add this list to your calendar app — it keeps updating on its own as new shows are posted.": "Füg diese Liste deiner Kalender-App hinzu — sie aktualisiert sich von selbst, sobald neue Shows dazukommen.",
+        "DIY, punk and underground concerts in Switzerland.": "DIY-, Punk- und Underground-Konzerte in der Schweiz.",
     },
     "fr": {
         "Invalid email or password.": "E-mail ou mot de passe invalide.",
@@ -1059,6 +1084,25 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Venue page": "Page du lieu",
         "back to venues": "retour aux lieux",
         "no upcoming events": "pas de concerts à venir",
+        # Search + calendar subscription
+        "Search": "Recherche",
+        "Find a show": "Trouve un concert",
+        "Search by band, venue or city": "Chercher par groupe, lieu ou ville",
+        "Search DIY, punk and underground shows in Switzerland by band, venue or city.": "Cherche des concerts DIY, punk et underground en Suisse par groupe, lieu ou ville.",
+        "Band, venue or city": "Groupe, lieu ou ville",
+        "Search: %(query)s": "Recherche : %(query)s",
+        "Type a band, a venue or a city to search the listings.": "Tape un groupe, un lieu ou une ville pour chercher dans les annonces.",
+        "%(num)d events found": "%(num)d événements trouvés",
+        "Nothing matched “%(query)s”.": "Aucun résultat pour « %(query)s ».",
+        "Include past events": "Inclure les concerts passés",
+        "Upcoming only": "À venir uniquement",
+        "Add to calendar": "Ajouter à l'agenda",
+        "Subscribe": "S'abonner",
+        "Subscribe to the calendar": "S'abonner au calendrier",
+        "Subscribe to these shows": "S'abonner à ces concerts",
+        "Download .ics": "Télécharger le .ics",
+        "Add this list to your calendar app — it keeps updating on its own as new shows are posted.": "Ajoute cette liste à ton agenda — elle se met à jour toute seule dès que de nouveaux concerts sont publiés.",
+        "DIY, punk and underground concerts in Switzerland.": "Concerts DIY, punk et underground en Suisse.",
     },
     "it": {
         "Invalid email or password.": "E-mail o password non validi.",
@@ -1577,8 +1621,36 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Venue page": "Pagina del locale",
         "back to venues": "torna ai locali",
         "no upcoming events": "nessun concerto in programma",
+        # Search + calendar subscription
+        "Search": "Cerca",
+        "Find a show": "Trova un concerto",
+        "Search by band, venue or city": "Cerca per band, locale o città",
+        "Search DIY, punk and underground shows in Switzerland by band, venue or city.": "Cerca concerti DIY, punk e underground in Svizzera per band, locale o città.",
+        "Band, venue or city": "Band, locale o città",
+        "Search: %(query)s": "Ricerca: %(query)s",
+        "Type a band, a venue or a city to search the listings.": "Digita una band, un locale o una città per cercare negli annunci.",
+        "%(num)d events found": "%(num)d eventi trovati",
+        "Nothing matched “%(query)s”.": "Nessun risultato per «%(query)s».",
+        "Include past events": "Includi i concerti passati",
+        "Upcoming only": "Solo in programma",
+        "Add to calendar": "Aggiungi al calendario",
+        "Subscribe": "Iscriviti",
+        "Subscribe to the calendar": "Iscriviti al calendario",
+        "Subscribe to these shows": "Iscriviti a questi concerti",
+        "Download .ics": "Scarica .ics",
+        "Add this list to your calendar app — it keeps updating on its own as new shows are posted.": "Aggiungi questa lista al tuo calendario — si aggiorna da sola quando vengono pubblicati nuovi concerti.",
+        "DIY, punk and underground concerts in Switzerland.": "Concerti DIY, punk e underground in Svizzera.",
     },
 }
+
+
+def compile_catalog(lang: str) -> None:
+    """Write <lang>/LC_MESSAGES/messages.mo from the .po next to it."""
+    base = os.path.join(ROOT, "translations", lang, "LC_MESSAGES", "messages")
+    with open(base + ".po", "rb") as f:
+        catalog = read_po(f, locale=lang)
+    with open(base + ".mo", "wb") as f:
+        write_mo(f, catalog)
 
 
 def populate(lang: str, translations: dict[str, str]) -> None:
@@ -1626,6 +1698,13 @@ def main() -> int:
 
     for lang, translations in TRANSLATIONS.items():
         populate(lang, translations)
+
+    # Runtime reads the .mo, never the .po: a catalog that isn't compiled
+    # keeps serving the previous release's strings (or the bare English
+    # msgids) no matter how complete i18n_status.py says it is.
+    for lang in ("en", *TRANSLATIONS):
+        compile_catalog(lang)
+    print(f"compiled {len(TRANSLATIONS) + 1} catalogs to .mo")
     return 0
 
 

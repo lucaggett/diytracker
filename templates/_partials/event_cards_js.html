@@ -1,5 +1,6 @@
 {# Behavior for _partials/event_cards.html: expand/collapse + share buttons.
-   Include once in the page's scripts block. #}
+   Also drives the copy button in _partials/subscribe_calendar.html, which
+   appears on the same pages. Include once in the page's scripts block. #}
 <script nonce="{{ csp_nonce() }}">
     document.addEventListener("DOMContentLoaded", function () {
         window.toggleEventDetails = function (element) {
@@ -23,6 +24,19 @@
                         setTimeout(function () { label.textContent = original; }, 1500);
                     });
                 }
+            });
+        });
+
+        // Subscription copy button: the webcal:// link next to it covers the
+        // common case, this covers clients that only take a pasted URL.
+        document.querySelectorAll('.copy-ics-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (!(navigator.clipboard && navigator.clipboard.writeText)) return;
+                navigator.clipboard.writeText(btn.dataset.link).then(function () {
+                    const original = btn.textContent;
+                    btn.textContent = '✓';
+                    setTimeout(function () { btn.textContent = original; }, 1500);
+                });
             });
         });
     });

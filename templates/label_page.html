@@ -26,6 +26,9 @@
   <p class="text-sm text-smudge">{{ _('No upcoming shows yet — check back soon.') }}</p>
   {% endif %}
 
+  {% set ics_path = url_for('public.calendar_ics', label=label.slug) %}
+  {% include '_partials/subscribe_calendar.html' %}
+
   {% set back_url = url_for('public.calendar_view') %}
   {% set back_label = _('Back to calendar') %}
   {% include '_partials/back_link.html' %}

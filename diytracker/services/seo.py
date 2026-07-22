@@ -35,6 +35,7 @@ RESERVED_SLUGS = frozenset(
         "agb",
         "archive",
         "api",
+        "calendar.ics",
         "datenschutz",
         "events",
         "genre",
@@ -48,6 +49,7 @@ RESERVED_SLUGS = frozenset(
         "promoter",
         "queue",
         "robots.txt",
+        "search",
         "set-language",
         "set-password",
         "sitemap.xml",
@@ -367,4 +369,12 @@ def website_json_ld():
             "DIY, punk and underground concerts in Switzerland — "
             "shows, festivals and venues."
         ),
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": canonical_url("/search") + "?q={search_term_string}",
+            },
+            "query-input": "required name=search_term_string",
+        },
     }

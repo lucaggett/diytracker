@@ -1,0 +1,35 @@
+{# Calendar subscription block, shared by the calendar and the canton / genre /
+   label landing pages.
+
+   Context vars (set by the including page):
+     ics_path   — relative URL of the .ics feed, e.g. from url_for(...)
+     ics_label  — optional heading override; defaults to the generic wording
+
+   The webcal:// scheme is what makes a click hand the URL straight to the
+   OS calendar app instead of downloading a one-off file; the plain https
+   link stays alongside for anyone whose client wants a download, and the
+   copy button covers clients that ignore webcal entirely. #}
+{% set ics_absolute = canonical_url(ics_path) %}
+{% set ics_webcal = 'webcal://' ~ ics_absolute.split('://', 1)[1] %}
+<div class="border-2 border-ink p-4 my-8">
+  <p class="text-xs uppercase tracking-widest text-smudge mb-2">
+    {{ ics_label or _('Subscribe to these shows') }}
+  </p>
+  <p class="text-sm mb-3">
+    {{ _('Add this list to your calendar app — it keeps updating on its own as new shows are posted.') }}
+  </p>
+  <div class="flex flex-wrap gap-2">
+    <a href="{{ ics_webcal }}"
+       class="btn-press font-mono text-xs uppercase tracking-widest border-2 border-ink bg-ink text-paper px-4 py-2 hover:bg-bleed transition-colors">
+      {{ _('Subscribe') }}
+    </a>
+    <a href="{{ ics_path }}"
+       class="btn-press font-mono text-xs uppercase tracking-widest border-2 border-ink bg-paper text-ink px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
+      {{ _('Download .ics') }}
+    </a>
+    <button type="button" class="copy-ics-btn btn-press font-mono text-xs uppercase tracking-widest border-2 border-ink bg-paper text-ink px-4 py-2 hover:bg-ink hover:text-paper transition-colors"
+            data-link="{{ ics_absolute }}">
+      {{ _('Copy link') }}
+    </button>
+  </div>
+</div>

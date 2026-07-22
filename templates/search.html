@@ -1,0 +1,94 @@
+{% extends 'base_public.html' %}
+
+{% block title %}{% if query %}{{ _('Search: %(query)s', query=query) }}{% else %}{{ _('Search') }}{% endif %} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ _('Search DIY, punk and underground shows in Switzerland by band, venue or city.') }}{% endblock %}
+
+{# The query space is unbounded, so results must never be indexed. robots.txt
+   disallows /search as well. #}
+{% block head_extra %}<meta name="robots" content="noindex, follow">{% endblock %}
+
+{% block banner_preload %}{% endblock %}
+{% block header_hero %}
+  {% set hero_eyebrow = _('Search') %}
+  {% set hero_title = _('Find a show') %}
+  {% set hero_description = _('Search DIY, punk and underground shows in Switzerland by band, venue or city.') %}
+  {% include '_partials/hero.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-2xl">
+
+  <form method="get" action="{{ url_for('public.search') }}" class="flex flex-wrap gap-2 mb-8">
+    <label for="search-q" class="sr-only">{{ _('Search by band, venue or city') }}</label>
+    <input type="search" id="search-q" name="q" value="{{ query }}"
+           placeholder="{{ _('Band, venue or city') }}" autofocus
+           class="flex-1 min-w-0 border-2 border-ink bg-paper px-3 py-2 font-mono text-sm focus:outline-none focus:border-bleed">
+    {% if include_past %}<input type="hidden" name="past" value="1">{% endif %}
+    <button type="submit"
+            class="btn-press font-mono text-xs uppercase tracking-widest border-2 border-ink bg-ink text-paper px-4 py-2 hover:bg-bleed transition-colors">
+      {{ _('Search') }}
+    </button>
+  </form>
+
+  {% if not query %}
+    <p class="text-sm text-smudge">{{ _('Type a band, a venue or a city to search the listings.') }}</p>
+  {% else %}
+
+    {% if venues %}
+    <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-3">{{ _('Venues') }}</h2>
+    <ul class="space-y-2 text-sm mb-8">
+      {% for venue in venues %}
+      <li>
+        <a href="{{ url_for('public.venue_page', venue_id=venue.id) }}"
+           class="text-bleed underline">{{ venue.name }}</a>
+        <span class="text-smudge">· {% if venue.address %}{{ venue.address }}, {% endif %}{{ venue.city }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+      <h2 class="text-xs uppercase tracking-widest font-bold">
+        {{ _('%(num)d events found', num=events|length) }}
+      </h2>
+      <a class="font-mono text-xs uppercase tracking-widest text-bleed underline"
+         href="{{ url_for('public.search', q=query, past=None if include_past else '1') }}">
+        {% if include_past %}{{ _('Upcoming only') }}{% else %}{{ _('Include past events') }}{% endif %}
+      </a>
+    </div>
+
+    {% if not events %}
+      <p class="text-sm text-smudge">
+        {{ _('Nothing matched “%(query)s”.', query=query) }}
+        <a href="{{ url_for('public.calendar_view') }}" class="text-bleed underline">{{ _('Back to calendar') }}</a>
+      </p>
+    {% elif include_past %}
+      {# Past events cannot go through the event-cards partial: it renders only
+         dates from today onward. Same dated list the archive pages use. #}
+      {% for day, day_events in grouped_events | dictsort %}
+      <h3 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-3 {% if not loop.first %}mt-8{% endif %}">{{ format_date(day) }}</h3>
+      <ul class="space-y-3 text-sm">
+        {% for event in day_events %}
+        <li>
+          <a href="{{ url_for('public.event_page', event_id=event.id) }}"
+             class="text-bleed underline">{{ event.name or event.acts }}</a>
+          <span class="text-smudge">· {{ event.venue.name }}, {{ event.venue.city }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endfor %}
+    {% else %}
+      {% include '_partials/event_cards.html' %}
+    {% endif %}
+
+  {% endif %}
+
+  {% set back_url = url_for('public.calendar_view') %}
+  {% set back_label = _('Back to calendar') %}
+  {% include '_partials/back_link.html' %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% include '_partials/event_cards_js.html' %}
+{% endblock %}

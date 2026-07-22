@@ -30,6 +30,9 @@
   <p class="text-sm text-smudge">{{ _('No upcoming events right now.') }}</p>
   {% endif %}
 
+  {% set ics_path = url_for('public.calendar_ics', genre=genre_slug) %}
+  {% include '_partials/subscribe_calendar.html' %}
+
   {% if venues %}
   <h2 class="text-xs uppercase tracking-widest font-bold border-b-2 border-ink pb-1 mb-3 mt-10">{{ _('Venues') }}</h2>
   <ul class="space-y-2 text-sm">

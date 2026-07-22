@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-22 10:30+0200\n"
+"POT-Creation-Date: 2026-07-22 15:08+0200\n"
 "PO-Revision-Date: 2026-04-22 12:23+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: it\n"
@@ -18,267 +18,267 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: diytracker/forms.py:37
+#: diytracker/forms.py:36
 msgid "Links must start with http:// or https://."
 msgstr "I link devono iniziare con http:// o https://."
 
-#: diytracker/forms.py:78 templates/event_queue.html:112
+#: diytracker/forms.py:76 templates/event_queue.html:112
 msgid "Event Name"
 msgstr "Nome dell'evento"
 
-#: diytracker/forms.py:80
+#: diytracker/forms.py:78
 msgid "Event Date"
 msgstr "Data dell'evento"
 
-#: diytracker/forms.py:82 templates/_partials/event_form.html:27
+#: diytracker/forms.py:80 templates/_partials/event_form.html:27
 #: templates/_partials/event_form_scripts.html:12
 msgid "End Date"
 msgstr "Data di fine"
 
-#: diytracker/forms.py:83 templates/event_page.html:58
+#: diytracker/forms.py:81 templates/event_page.html:58
 #: templates/venue_page.html:60
 msgid "Festival"
 msgstr "Festival"
 
-#: diytracker/forms.py:85
+#: diytracker/forms.py:83
 msgid "Doors Open Time"
 msgstr "Apertura porte"
 
-#: diytracker/forms.py:88 diytracker/forms.py:341
+#: diytracker/forms.py:86 diytracker/forms.py:339
 #: templates/_partials/event_cards.html:95 templates/admin.html:86
-#: templates/calendar.html:116 templates/event_page.html:94
+#: templates/calendar.html:120 templates/event_page.html:94
 #: templates/event_queue.html:124 templates/genre.html:14
 msgid "Genre"
 msgstr "Genere"
 
-#: diytracker/forms.py:90 templates/_partials/event_cards.html:95
+#: diytracker/forms.py:88 templates/_partials/event_cards.html:95
 #: templates/event_queue.html:128
 msgid "Acts"
 msgstr "Artisti"
 
-#: diytracker/forms.py:91 templates/_partials/event_form.html:89
+#: diytracker/forms.py:89 templates/_partials/event_form.html:89
 #: templates/event_queue.html:63
 msgid "Flyer"
 msgstr "Volantino"
 
-#: diytracker/forms.py:95
+#: diytracker/forms.py:93
 msgid "Status"
 msgstr "Stato"
 
-#: diytracker/forms.py:97
+#: diytracker/forms.py:95
 msgid "Scheduled"
 msgstr "In programma"
 
-#: diytracker/forms.py:98
+#: diytracker/forms.py:96
 msgid "Cancelled"
 msgstr "Annullato"
 
-#: diytracker/forms.py:99
+#: diytracker/forms.py:97
 msgid "Postponed"
 msgstr "Rinviato"
 
-#: diytracker/forms.py:106 diytracker/forms.py:161 templates/label_page.html:13
+#: diytracker/forms.py:104 diytracker/forms.py:159 templates/label_page.html:13
 #: templates/promoter_dashboard.html:67
 msgid "Label"
 msgstr "Etichetta"
 
-#: diytracker/forms.py:109 templates/event_queue.html:148
+#: diytracker/forms.py:107 templates/event_queue.html:148
 msgid "Ticket Price"
 msgstr "Prezzo biglietto"
 
-#: diytracker/forms.py:114
+#: diytracker/forms.py:112
 msgid "Ticket Link"
 msgstr "Link biglietti"
 
-#: diytracker/forms.py:118 templates/admin.html:149
+#: diytracker/forms.py:116 templates/admin.html:149
 #: templates/admin_statistics.html:38 templates/edit_venue.html:9
 #: templates/event_page.html:79 templates/event_queue.html:50
 #: templates/venue_page.html:24
 msgid "Venue"
 msgstr "Locale"
 
-#: diytracker/forms.py:122 diytracker/forms.py:172
+#: diytracker/forms.py:120 diytracker/forms.py:170
 #: templates/event_queue.html:132
 msgid "Venue Name"
 msgstr "Nome locale"
 
-#: diytracker/forms.py:123 diytracker/forms.py:173
+#: diytracker/forms.py:121 diytracker/forms.py:171
 msgid "Venue Address"
 msgstr "Indirizzo locale"
 
-#: diytracker/forms.py:124 diytracker/forms.py:174
+#: diytracker/forms.py:122 diytracker/forms.py:172
 #: templates/event_queue.html:136 templates/venues.html:40
 msgid "City"
 msgstr "Città"
 
-#: diytracker/forms.py:125 diytracker/forms.py:175 templates/calendar.html:115
+#: diytracker/forms.py:123 diytracker/forms.py:173 templates/calendar.html:119
 #: templates/canton.html:12 templates/venues.html:41
 msgid "Canton"
 msgstr "Cantone"
 
-#: diytracker/forms.py:126 diytracker/forms.py:176 templates/venues.html:42
+#: diytracker/forms.py:124 diytracker/forms.py:174 templates/venues.html:42
 msgid "ZIP Code"
 msgstr "CAP"
 
-#: diytracker/forms.py:127 diytracker/forms.py:177
+#: diytracker/forms.py:125 diytracker/forms.py:175
 msgid "Coordinates"
 msgstr "Coordinate"
 
-#: diytracker/forms.py:134 diytracker/forms.py:331
+#: diytracker/forms.py:132 diytracker/forms.py:329
 msgid "Email"
 msgstr "E-mail"
 
-#: diytracker/forms.py:135 diytracker/forms.py:165
+#: diytracker/forms.py:133 diytracker/forms.py:163
 msgid "Password"
 msgstr "Password"
 
-#: diytracker/forms.py:147
+#: diytracker/forms.py:145
 msgid "Label Name"
 msgstr "Nome dell'etichetta"
 
-#: diytracker/forms.py:149 templates/event_page.html:121
+#: diytracker/forms.py:147 templates/event_page.html:128
 #: templates/event_queue.html:160
 msgid "Description"
 msgstr "Descrizione"
 
-#: diytracker/forms.py:151
+#: diytracker/forms.py:149
 msgid "Logo"
 msgstr "Logo"
 
-#: diytracker/forms.py:167
+#: diytracker/forms.py:165
 msgid "Confirm Password"
 msgstr "Conferma password"
 
-#: diytracker/forms.py:188
+#: diytracker/forms.py:186
 msgid "German"
 msgstr "Tedesco"
 
-#: diytracker/forms.py:189
+#: diytracker/forms.py:187
 msgid "French"
 msgstr "Francese"
 
-#: diytracker/forms.py:190
+#: diytracker/forms.py:188
 msgid "Italian"
 msgstr "Italiano"
 
-#: diytracker/forms.py:191
+#: diytracker/forms.py:189
 msgid "English"
 msgstr "Inglese"
 
-#: diytracker/forms.py:232 templates/venue_accessibility.html:71
+#: diytracker/forms.py:230 templates/venue_accessibility.html:71
 msgid "Step-free entrance"
 msgstr "Ingresso senza barriere"
 
-#: diytracker/forms.py:235
+#: diytracker/forms.py:233
 msgid "Entrance notes"
 msgstr "Note sull'ingresso"
 
-#: diytracker/forms.py:238 templates/venue_accessibility.html:72
+#: diytracker/forms.py:236 templates/venue_accessibility.html:72
 msgid "Step-free throughout interior"
 msgstr "Interni completamente privi di barriere"
 
-#: diytracker/forms.py:241 templates/venue_accessibility.html:73
+#: diytracker/forms.py:239 templates/venue_accessibility.html:73
 msgid "Accessible toilet"
 msgstr "Bagno accessibile"
 
-#: diytracker/forms.py:244
+#: diytracker/forms.py:242
 msgid "Toilet notes"
 msgstr "Note sul bagno"
 
-#: diytracker/forms.py:247 templates/venue_accessibility.html:76
+#: diytracker/forms.py:245 templates/venue_accessibility.html:76
 msgid "Dedicated wheelchair spaces"
 msgstr "Posti riservati alle sedie a rotelle"
 
-#: diytracker/forms.py:250
+#: diytracker/forms.py:248
 msgid "Number of wheelchair spaces"
 msgstr "Numero di posti per sedie a rotelle"
 
-#: diytracker/forms.py:253 templates/venue_accessibility.html:83
+#: diytracker/forms.py:251 templates/venue_accessibility.html:83
 msgid "Floor surface"
 msgstr "Tipo di pavimento"
 
-#: diytracker/forms.py:258 templates/venue_accessibility.html:93
+#: diytracker/forms.py:256 templates/venue_accessibility.html:93
 msgid "Strobe / flashing lights"
 msgstr "Stroboscopio / luci lampeggianti"
 
-#: diytracker/forms.py:261
+#: diytracker/forms.py:259
 msgid "Warning given before strobes"
 msgstr "Avviso prima degli stroboscopi"
 
-#: diytracker/forms.py:264 templates/venue_accessibility.html:95
+#: diytracker/forms.py:262 templates/venue_accessibility.html:95
 msgid "Smoke / haze machines"
 msgstr "Macchine per fumo / nebbia"
 
-#: diytracker/forms.py:267 templates/venue_accessibility.html:96
+#: diytracker/forms.py:265 templates/venue_accessibility.html:96
 msgid "Typical sound level"
 msgstr "Livello sonoro tipico"
 
-#: diytracker/forms.py:270
+#: diytracker/forms.py:268
 msgid "Quiet / low-stimulation room available"
 msgstr "Stanza silenziosa / a bassa stimolazione disponibile"
 
-#: diytracker/forms.py:275
+#: diytracker/forms.py:273
 msgid "Free earplugs provided"
 msgstr "Tappi per le orecchie gratuiti disponibili"
 
-#: diytracker/forms.py:278
+#: diytracker/forms.py:276
 msgid "Sensory-friendly events / nights"
 msgstr "Serate / eventi a bassa stimolazione"
 
-#: diytracker/forms.py:283
+#: diytracker/forms.py:281
 msgid "Hearing loop (induction loop)"
 msgstr "Anello magnetico (loop di induzione)"
 
-#: diytracker/forms.py:286
+#: diytracker/forms.py:284
 msgid "Sign language interpretation at events"
 msgstr "Interpretariato in lingua dei segni agli eventi"
 
-#: diytracker/forms.py:293 templates/venue_accessibility.html:112
+#: diytracker/forms.py:291 templates/venue_accessibility.html:112
 msgid "Refrigerator for medication"
 msgstr "Frigorifero per farmaci"
 
-#: diytracker/forms.py:296
+#: diytracker/forms.py:294
 msgid "First aid kit on site"
 msgstr "Kit di primo soccorso in loco"
 
-#: diytracker/forms.py:299
+#: diytracker/forms.py:297
 msgid "AED (defibrillator) on site"
 msgstr "DAE (defibrillatore) in loco"
 
-#: diytracker/forms.py:304 templates/venue_accessibility.html:125
+#: diytracker/forms.py:302 templates/venue_accessibility.html:125
 msgid "Accessible parking"
 msgstr "Parcheggio accessibile"
 
-#: diytracker/forms.py:307
+#: diytracker/forms.py:305
 msgid "Public transport access"
 msgstr "Accesso ai trasporti pubblici"
 
-#: diytracker/forms.py:310 templates/venue_accessibility.html:132
+#: diytracker/forms.py:308 templates/venue_accessibility.html:132
 msgid "Gender-neutral toilets"
 msgstr "Bagni senza distinzione di genere"
 
-#: diytracker/forms.py:313
+#: diytracker/forms.py:311
 msgid "Rest / seating areas inside"
 msgstr "Zone di riposo / sedute all'interno"
 
-#: diytracker/forms.py:316
+#: diytracker/forms.py:314
 msgid "Guide dogs & assistance animals welcome"
 msgstr "Cani guida e animali di assistenza benvenuti"
 
-#: diytracker/forms.py:321
+#: diytracker/forms.py:319
 msgid "Quiet / alternative entrance option"
 msgstr "Ingresso alternativo / tranquillo disponibile"
 
-#: diytracker/forms.py:324
+#: diytracker/forms.py:322
 msgid "Additional accessibility notes"
 msgstr "Note aggiuntive sull'accessibilità"
 
-#: diytracker/forms.py:329 templates/admin.html:118 templates/admin.html:147
+#: diytracker/forms.py:327 templates/admin.html:118 templates/admin.html:147
 #: templates/venues.html:39
 msgid "Name"
 msgstr "Nome"
 
-#: diytracker/forms.py:334
+#: diytracker/forms.py:332
 msgid "Message"
 msgstr "Messaggio"
 
@@ -394,7 +394,7 @@ msgstr ""
 "Il locale di questo evento non esiste più. Seleziona o crea un locale qui"
 " sotto."
 
-#: diytracker/blueprints/admin.py:183 diytracker/blueprints/submissions.py:250
+#: diytracker/blueprints/admin.py:183 diytracker/blueprints/submissions.py:252
 msgid "Selected venue does not exist."
 msgstr "Il locale selezionato non esiste."
 
@@ -478,7 +478,7 @@ msgstr "Etichetta aggiornata!"
 msgid "Label deleted."
 msgstr "Etichetta eliminata."
 
-#: diytracker/blueprints/public.py:241
+#: diytracker/blueprints/public.py:247
 msgid ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
@@ -486,21 +486,21 @@ msgstr ""
 "Il messaggio non è stato inviato — scrivici direttamente a "
 "kontakt@diytracker.ch."
 
-#: diytracker/blueprints/public.py:251
+#: diytracker/blueprints/public.py:257
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Grazie! Ti risponderemo al più presto."
 
-#: diytracker/blueprints/public.py:279
+#: diytracker/blueprints/public.py:285
 msgid "Accessibility info saved — thank you!"
 msgstr "Informazioni sull'accessibilità salvate — grazie!"
 
-#: diytracker/blueprints/public.py:428 templates/canton.html:3
+#: diytracker/blueprints/public.py:435 templates/canton.html:3
 #: templates/canton.html:13
 #, python-format
 msgid "DIY & punk concerts %(in_canton)s"
 msgstr "Concerti DIY & punk %(in_canton)s"
 
-#: diytracker/blueprints/public.py:430 templates/canton.html:4
+#: diytracker/blueprints/public.py:437 templates/canton.html:4
 #, python-format
 msgid ""
 "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, "
@@ -509,12 +509,12 @@ msgstr ""
 "%(num)d concerti DIY, punk e underground in arrivo %(in_canton)s — date, "
 "locali, prezzi e informazioni sull'accessibilità."
 
-#: diytracker/blueprints/public.py:479 templates/genre.html:5
+#: diytracker/blueprints/public.py:487 templates/genre.html:5
 #, python-format
 msgid "%(genre)s concerts in Switzerland"
 msgstr "Concerti %(genre)s in Svizzera"
 
-#: diytracker/blueprints/public.py:481 templates/genre.html:6
+#: diytracker/blueprints/public.py:489 templates/genre.html:6
 #, python-format
 msgid ""
 "%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices "
@@ -523,50 +523,54 @@ msgstr ""
 "%(num)d concerti %(genre)s in arrivo in Svizzera — date, locali, prezzi e"
 " info sull'accessibilità."
 
-#: diytracker/blueprints/public.py:519
+#: diytracker/blueprints/public.py:527
 #, python-format
 msgid "Upcoming shows by %(label)s."
 msgstr "Prossimi concerti di %(label)s."
 
-#: diytracker/blueprints/submissions.py:122
+#: diytracker/blueprints/public.py:603
+msgid "DIY, punk and underground concerts in Switzerland."
+msgstr "Concerti DIY, punk e underground in Svizzera."
+
+#: diytracker/blueprints/submissions.py:124
 msgid "Invalid event selection."
 msgstr "Selezione evento non valida."
 
-#: diytracker/blueprints/submissions.py:196
+#: diytracker/blueprints/submissions.py:198
 msgid "This event already exists."
 msgstr "Questo evento esiste già."
 
-#: diytracker/blueprints/submissions.py:204
+#: diytracker/blueprints/submissions.py:206
 msgid "Event approved and added to calendar!"
 msgstr "Evento approvato e aggiunto al calendario!"
 
-#: diytracker/blueprints/submissions.py:227
+#: diytracker/blueprints/submissions.py:229
 msgid "Event removed from queue."
 msgstr "Evento rimosso dalla coda."
 
-#: diytracker/blueprints/submissions.py:247
+#: diytracker/blueprints/submissions.py:249
 msgid "Please provide all required venue details for a new venue."
 msgstr "Inserisci tutti i dati richiesti per un nuovo locale."
 
-#: diytracker/blueprints/submissions.py:253
+#: diytracker/blueprints/submissions.py:255
 msgid "Venue already exists. Using existing venue."
 msgstr "Il locale esiste già. Verrà usato quello esistente."
 
-#: diytracker/blueprints/submissions.py:273
+#: diytracker/blueprints/submissions.py:275
 msgid "Event submitted successfully!"
 msgstr "Evento inviato con successo!"
 
-#: diytracker/blueprints/submissions.py:291
+#: diytracker/blueprints/submissions.py:293
 #, python-format
 msgid "'%(name)s' is already in the list."
 msgstr "'%(name)s' è già nella lista."
 
-#: diytracker/blueprints/submissions.py:296
+#: diytracker/blueprints/submissions.py:298
 #, python-format
 msgid "Genre '%(name)s' added."
 msgstr "Genere '%(name)s' aggiunto."
 
-#: diytracker/blueprints/submissions.py:324
+#: diytracker/blueprints/submissions.py:326
 #, python-format
 msgid "Genre '%(name)s' removed."
 msgstr "Genere '%(name)s' rimosso."
@@ -808,7 +812,8 @@ msgid "Collecting stats…"
 msgstr "Raccolta statistiche…"
 
 #: templates/_partials/nav_backstage.html:15 templates/admin.html:71
-#: templates/canton.html:32 templates/genre.html:34 templates/venues.html:3
+#: templates/canton.html:35 templates/genre.html:37 templates/search.html:38
+#: templates/venues.html:3
 msgid "Venues"
 msgstr "Locali"
 
@@ -1052,9 +1057,10 @@ msgid "Nothing in the archive yet."
 msgstr "Ancora niente in archivio."
 
 #: templates/_partials/hero.html:11 templates/archive_index.html:35
-#: templates/canton.html:45 templates/errors/404.html:21
-#: templates/errors/500.html:21 templates/event_page.html:129
-#: templates/genre.html:59 templates/label_page.html:30
+#: templates/canton.html:48 templates/errors/404.html:21
+#: templates/errors/500.html:21 templates/event_page.html:136
+#: templates/genre.html:62 templates/label_page.html:33
+#: templates/search.html:63 templates/search.html:87
 #: templates/venue_accessibility.html:146
 msgid "Back to calendar"
 msgstr "Torna al calendario"
@@ -1095,23 +1101,27 @@ msgstr ""
 "Ogni show DIY, punk, hardcore e underground in Svizzera — un solo "
 "calendario, niente pubblicità, niente algoritmi."
 
-#: templates/calendar.html:24
+#: templates/calendar.html:22
+msgid "Subscribe to the calendar"
+msgstr "Iscriviti al calendario"
+
+#: templates/calendar.html:28
 msgid "Open filters"
 msgstr "Apri filtri"
 
-#: templates/calendar.html:38
+#: templates/calendar.html:42
 msgid "FILTER"
 msgstr "FILTRO"
 
-#: templates/calendar.html:44
+#: templates/calendar.html:48
 msgid "Close"
 msgstr "Chiudi"
 
-#: templates/calendar.html:47
+#: templates/calendar.html:51
 msgid "Apply"
 msgstr "Applica"
 
-#: templates/calendar.html:117
+#: templates/calendar.html:121
 msgid "Tags"
 msgstr "Tag"
 
@@ -1232,7 +1242,11 @@ msgstr "Prezzo"
 msgid "Tickets"
 msgstr "Biglietti"
 
-#: templates/_partials/nav_backstage.html:10 templates/event_queue.html:3
+#: templates/event_page.html:123
+msgid "Add to calendar"
+msgstr "Aggiungi al calendario"
+
+#: templates/_partials/nav_backstage.html:13 templates/event_queue.html:3
 msgid "Queue"
 msgstr "Coda"
 
@@ -1265,7 +1279,7 @@ msgid "Reset"
 msgstr "Reimposta"
 
 #: templates/_partials/footer_public.html:23
-#: templates/_partials/nav_backstage.html:11 templates/event_queue.html:51
+#: templates/_partials/nav_backstage.html:10 templates/event_queue.html:51
 #: templates/page_texts.html:30
 msgid "Genres"
 msgstr "Generi"
@@ -1332,7 +1346,7 @@ msgstr ""
 "Concerti %(genre)s in arrivo in tutta la Svizzera. Curato a mano, non "
 "commerciale, aggiornato di continuo."
 
-#: templates/_partials/footer_public.html:14 templates/genre.html:47
+#: templates/_partials/footer_public.html:14 templates/genre.html:50
 #: templates/page_texts.html:29
 msgid "Cantons"
 msgstr "Cantoni"
@@ -1558,7 +1572,7 @@ msgid "YOUR LABELS"
 msgstr "LE TUE ETICHETTE"
 
 #: templates/_partials/header_nav.html:17
-#: templates/_partials/nav_backstage.html:12
+#: templates/_partials/nav_backstage.html:11
 #: templates/promoter_dashboard.html:15
 msgid "Labels"
 msgstr "Etichette"
@@ -1589,6 +1603,7 @@ msgstr "Link"
 msgid "Copied!"
 msgstr "Copiato!"
 
+#: templates/_partials/subscribe_calendar.html:32
 #: templates/promoter_dashboard.html:90
 msgid "Copy link"
 msgstr "Copia link"
@@ -1611,6 +1626,58 @@ msgid ""
 msgstr ""
 "Ancora nessun evento con le tue etichette. Scegli la tua etichetta quando"
 " invii un concerto, oppure rivendica un evento già in calendario."
+
+#: templates/search.html:3
+#, python-format
+msgid "Search: %(query)s"
+msgstr "Ricerca: %(query)s"
+
+#: templates/_partials/header_nav.html:41 templates/search.html:3
+#: templates/search.html:12 templates/search.html:29
+msgid "Search"
+msgstr "Cerca"
+
+#: templates/search.html:4 templates/search.html:14
+msgid ""
+"Search DIY, punk and underground shows in Switzerland by band, venue or "
+"city."
+msgstr ""
+"Cerca concerti DIY, punk e underground in Svizzera per band, locale o "
+"città."
+
+#: templates/search.html:13
+msgid "Find a show"
+msgstr "Trova un concerto"
+
+#: templates/_partials/header_nav.html:35 templates/search.html:22
+msgid "Search by band, venue or city"
+msgstr "Cerca per band, locale o città"
+
+#: templates/_partials/header_nav.html:37 templates/search.html:24
+msgid "Band, venue or city"
+msgstr "Band, locale o città"
+
+#: templates/search.html:34
+msgid "Type a band, a venue or a city to search the listings."
+msgstr "Digita una band, un locale o una città per cercare negli annunci."
+
+#: templates/search.html:52
+#, python-format
+msgid "%(num)d events found"
+msgstr "%(num)d eventi trovati"
+
+#: templates/search.html:56
+msgid "Upcoming only"
+msgstr "Solo in programma"
+
+#: templates/search.html:56
+msgid "Include past events"
+msgstr "Includi i concerti passati"
+
+#: templates/search.html:62
+#, python-format
+msgid "Nothing matched “%(query)s”."
+msgstr "Nessun risultato per «%(query)s»."
 
 #: templates/set_password.html:3
 msgid "Set password"
@@ -2051,6 +2118,26 @@ msgstr "Sospetti"
 msgid "Menu"
 msgstr "Menu"
 
+#: templates/_partials/subscribe_calendar.html:16
+msgid "Subscribe to these shows"
+msgstr "Iscriviti a questi concerti"
+
+#: templates/_partials/subscribe_calendar.html:19
+msgid ""
+"Add this list to your calendar app — it keeps updating on its own as new "
+"shows are posted."
+msgstr ""
+"Aggiungi questa lista al tuo calendario — si aggiorna da sola quando "
+"vengono pubblicati nuovi concerti."
+
+#: templates/_partials/subscribe_calendar.html:24
+msgid "Subscribe"
+msgstr "Iscriviti"
+
+#: templates/_partials/subscribe_calendar.html:28
+msgid "Download .ics"
+msgstr "Scarica .ics"
+
 #: templates/errors/404.html:3
 msgid "404 · Missing"
 msgstr "404 · Non trovato"
@@ -2200,4 +2287,7 @@ msgstr "Fusibile saltato, cavo rotto, qualcosa tra il palco e il mixer."
 
 #~ msgid "More events in %(canton)s"
 #~ msgstr "Altri eventi in %(canton)s"
+
+#~ msgid "Search by band, venue or city."
+#~ msgstr ""
 

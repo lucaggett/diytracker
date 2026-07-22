@@ -38,9 +38,15 @@ from diytracker.services.archive import (
 )
 from diytracker.services.cantons import canton_directory
 from diytracker.services.genres import genre_directory
+from diytracker.services.ics import build_calendar
 from diytracker.services.limits import limiter
 from diytracker.services.page_texts import get_page_text
 from diytracker.services.scrape_detection import HONEYPOT_PATH
+from diytracker.services.search import (
+    normalise_query,
+    search_events,
+    search_venues,
+)
 from diytracker.services.seo import (
     canonical_url,
     collection_json_ld,
@@ -418,6 +424,7 @@ def canton_page(canton_slug):
     return render_template(
         "canton.html",
         canton=info["name"],
+        canton_slug=canton_slug,
         events=events,
         venues=venues,
         grouped_events=_group_events_by_date(events),
@@ -468,6 +475,7 @@ def genre_page(genre_slug):
     return render_template(
         "genre.html",
         genre=info["name"],
+        genre_slug=genre_slug,
         events=events,
         venues=venues,
         cantons=cantons,
@@ -520,6 +528,123 @@ def label_page(label_slug):
             canonical_url(),
             events,
         ),
+    )
+
+
+# --- Calendar export --------------------------------------------------------
+
+# A subscription is long-lived, so it looks further ahead than the calendar
+# page's fixed three months.
+ICS_HORIZON_MONTHS = 6
+
+
+def _ics_response(body, filename=None):
+    # mimetype only — Flask appends the charset itself, and passing it here
+    # too produces a doubled "charset=utf-8; charset=utf-8".
+    response = Response(body, mimetype="text/calendar")
+    if filename:
+        response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return response
+
+
+def _ics_feed_cache_key():
+    # Feeds carry no page chrome, so unlike the HTML pages the key must not
+    # include the locale — only the filters, normalized to their resolved form.
+    args = request.args
+    parts = [args.get(name, "") for name in ("canton", "genre", "label")]
+    return "calendar_ics:" + ":".join(parts)
+
+
+@bp.route("/calendar.ics")
+@cache.cached(make_cache_key=_ics_feed_cache_key)
+def calendar_ics():
+    """Subscribable feed of upcoming shows, optionally filtered.
+
+    ?canton=<slug>, ?genre=<slug> and ?label=<slug> resolve through the same
+    directories the landing pages use; an unknown slug 404s rather than
+    silently returning the unfiltered feed, so a shared subscription URL can
+    never quietly widen into everything.
+    """
+    now = datetime.now()
+    query = Event.query.options(joinedload(Event.venue)).filter(
+        Event.date >= now,
+        Event.date <= now + relativedelta(months=ICS_HORIZON_MONTHS),
+    )
+    name_parts = []
+
+    canton_slug = request.args.get("canton")
+    if canton_slug:
+        info = canton_directory().get(canton_slug)
+        if info is None:
+            abort(404)
+        query = query.filter(Event.venue_id.in_(info["venue_ids"]))
+        name_parts.append(info["name"])
+
+    genre_slug = request.args.get("genre")
+    if genre_slug:
+        info = genre_directory().get(genre_slug)
+        if info is None:
+            abort(404)
+        query = query.filter(Event.parent_genres.like(f"%,{info['name']},%"))
+        name_parts.append(info["name"])
+
+    label_slug = request.args.get("label")
+    if label_slug:
+        label = Label.query.filter_by(slug=label_slug).first_or_404()
+        query = query.filter(Event.label_id == label.id)
+        name_parts.append(label.name)
+
+    events = query.order_by(Event.date.asc()).all()
+    name = "diytracker.ch"
+    if name_parts:
+        name += " · " + " · ".join(name_parts)
+    body = build_calendar(
+        events,
+        name,
+        _("DIY, punk and underground concerts in Switzerland."),
+    )
+    return _ics_response(body)
+
+
+@bp.route("/events/<int:event_id>.ics")
+def event_ics(event_id):
+    event = (
+        Event.query.options(joinedload(Event.venue))
+        .filter_by(id=event_id)
+        .first_or_404()
+    )
+    body = build_calendar(
+        [event], event.name or event.acts or "diytracker.ch", description=None
+    )
+    filename = (slugify(event.name or event.acts or "event") or "event") + ".ics"
+    return _ics_response(body, filename=filename)
+
+
+# --- Search -----------------------------------------------------------------
+
+
+@localized_route("/search")
+# Every query is an uncached LIKE scan across events and venues; the limit is
+# generous for a human typing and cheap insurance against a scripted sweep.
+@limiter.limit("60 per hour")
+def search():
+    # Deliberately not cached: the query space is unbounded and the page cache
+    # is on disk, so caching results would fill it with single-use entries.
+    raw_query = request.args.get("q", "")
+    query = normalise_query(raw_query)
+    include_past = request.args.get("past") == "1"
+    events = search_events(query, include_past=include_past) if query else []
+    venues = search_venues(query) if query else []
+    return render_template(
+        "search.html",
+        query=query,
+        include_past=include_past,
+        events=events,
+        venues=venues,
+        grouped_events=_group_events_by_date(events),
+        months_data=_months_data(_months_spanning(events)),
+        datetime=datetime,
     )
 
 
@@ -674,6 +799,9 @@ def robots():
             f"Disallow: {HONEYPOT_PATH}",
             "Disallow: /admin",
             "Disallow: /login",
+            # Unbounded query space: every ?q= is a distinct URL with no value
+            # to an index, and the results page carries noindex to match.
+            "Disallow: /search",
             "",
             f"Sitemap: {canonical_url(url_for('public.sitemap'))}",
             "",

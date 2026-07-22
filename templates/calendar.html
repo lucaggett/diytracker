@@ -17,6 +17,10 @@
   <h1 class="sr-only">{{ _('DIY & punk concerts in Switzerland') }}</h1>
 
   {% include '_partials/event_cards.html' %}
+
+  {% set ics_path = url_for('public.calendar_ics') %}
+  {% set ics_label = _('Subscribe to the calendar') %}
+  {% include '_partials/subscribe_calendar.html' %}
 </div>
 
 {# Floating filter button — same id, restyled. #}
