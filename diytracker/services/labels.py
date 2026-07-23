@@ -32,18 +32,14 @@ def all_label_choices():
 
 def label_stats(user):
     """Dashboard rows for a promoter: every event carrying one of their
-    labels (admins: all labels), newest event first, with accumulated
-    page-view counts.
+    labels, newest event first, with accumulated page-view counts.
 
     Returns [{"event", "label", "hits", "visitors"}]. Counts mirror
     event_views.event_popularity(): sums over EventDailyViews, where
     event_id is deliberately not a foreign key — hence the dict lookup
     instead of a join.
     """
-    labels_query = Label.query
-    if not user.is_admin:
-        labels_query = labels_query.filter_by(promoter_id=user.id)
-    labels = labels_query.order_by(Label.name.asc()).all()
+    labels = Label.query.filter_by(promoter_id=user.id).order_by(Label.name.asc()).all()
     if not labels:
         return []
 

@@ -112,12 +112,12 @@ class TestLabelCrud:
         login(make_user(email="other@example.com", is_promoter=True))
         assert client.get(f"/promoter/labels/{label.id}/edit").status_code == 403
 
-    def test_admin_may_edit_any_label(
+    def test_admin_may_not_edit_others_label(
         self, client, make_user, make_label, admin, login
     ):
         label = make_label(make_user(is_promoter=True))
         login(admin)
-        assert client.get(f"/promoter/labels/{label.id}/edit").status_code == 200
+        assert client.get(f"/promoter/labels/{label.id}/edit").status_code == 403
 
     def test_delete_detaches_events(
         self, client, make_user, make_label, make_event, login
@@ -204,16 +204,17 @@ class TestClaim:
         assert b"already belongs to a label" in resp.data
         assert db.session.get(Event, event.id).label_id == their_label.id
 
-    def test_admin_may_claim_with_any_label(
+    def test_admin_may_not_claim_with_others_label(
         self, client, make_user, make_label, make_event, admin, login
     ):
         label = make_label(make_user(is_promoter=True))
         event = make_event()
         login(admin)
-        client.post(
+        resp = client.post(
             f"/promoter/events/{event.id}/claim", data={"label_id": str(label.id)}
         )
-        assert db.session.get(Event, event.id).label_id == label.id
+        assert resp.status_code == 400
+        assert db.session.get(Event, event.id).label_id is None
 
 
 class TestDashboard:
@@ -256,6 +257,16 @@ class TestDashboard:
         label = make_label(owner, name="Theirs")
         make_event(name="Their Show", label_id=label.id)
         login(make_user(email="me@example.com", is_promoter=True))
+        resp = client.get("/promoter/")
+        assert b"Their Show" not in resp.data
+        assert b"Theirs" not in resp.data
+
+    def test_admin_dashboard_hides_others_labels(
+        self, client, make_user, make_label, make_event, admin, login
+    ):
+        label = make_label(make_user(is_promoter=True), name="Theirs")
+        make_event(name="Their Show", label_id=label.id)
+        login(admin)
         resp = client.get("/promoter/")
         assert b"Their Show" not in resp.data
         assert b"Theirs" not in resp.data

@@ -32,7 +32,7 @@ def _current_user():
 def _owned_label_or_403(label_id):
     label = Label.query.get_or_404(label_id)
     user = _current_user()
-    if label.promoter_id != user.id and not user.is_admin:
+    if label.promoter_id != user.id:
         abort(403)
     return label
 
@@ -41,10 +41,7 @@ def _owned_label_or_403(label_id):
 @promoter_required
 def dashboard():
     user = _current_user()
-    labels_query = Label.query
-    if not user.is_admin:
-        labels_query = labels_query.filter_by(promoter_id=user.id)
-    labels = labels_query.order_by(Label.name.asc()).all()
+    labels = Label.query.filter_by(promoter_id=user.id).order_by(Label.name.asc()).all()
     stats = label_stats(user)
     share_urls = {
         row["event"].id: canonical_url(
@@ -63,11 +60,10 @@ def dashboard():
 
 
 def _own_labels(user):
-    """The labels *user* may claim events for (admins: all labels)."""
-    query = Label.query
-    if not user.is_admin:
-        query = query.filter_by(promoter_id=user.id)
-    return query.order_by(Label.name.asc()).all()
+    """The labels *user* may claim events for. Admins get no special
+    treatment here — claiming under someone else's label is exactly the
+    accident this prevents."""
+    return Label.query.filter_by(promoter_id=user.id).order_by(Label.name.asc()).all()
 
 
 def _claim_form(user):
