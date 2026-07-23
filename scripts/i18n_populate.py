@@ -187,6 +187,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Description": "Beschreibung",
         "Approve with Changes": "Mit Änderungen freigeben",
         "No events awaiting approval.": "Keine Events zur Freigabe.",
+        "Possible duplicate": "Mögliches Duplikat",
         # Admin page
         "Admin console": "Admin-Konsole",
         "MANAGE EVENTS": "EVENTS VERWALTEN",
@@ -724,6 +725,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Description": "Description",
         "Approve with Changes": "Approuver avec modifications",
         "No events awaiting approval.": "Aucun événement en attente d'approbation.",
+        "Possible duplicate": "Doublon possible",
         "Admin console": "Console admin",
         "MANAGE EVENTS": "GÉRER LES ÉVÉNEMENTS",
         "live": "en ligne",
@@ -1260,6 +1262,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Description": "Descrizione",
         "Approve with Changes": "Approva con modifiche",
         "No events awaiting approval.": "Nessun evento da approvare.",
+        "Possible duplicate": "Possibile duplicato",
         "Admin console": "Console admin",
         "MANAGE EVENTS": "GESTISCI EVENTI",
         "live": "online",

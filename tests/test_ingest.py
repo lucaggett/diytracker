@@ -126,6 +126,115 @@ class TestIngestCore:
         assert parse_time(None) is None
 
 
+def _day_in(days):
+    return (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
+
+
+def _konzi(**overrides):
+    overrides.setdefault("source_id", "konzi-1")
+    return _payload(source="konzibot", **overrides)
+
+
+class TestKonzibotStrictDedup:
+    """Konzibot pushes shows already on the calendar/queue under fresh ids and
+    ignores the canton/genre/venue spellings — services.ingest_dedup flags the
+    collisions and ingest canonicalizes the names, for source=konzibot only."""
+
+    def test_flags_same_day_city_as_calendar_event(self, app, make_event, make_venue):
+        venue = make_venue(name="Kasheme", city="Zürich")
+        make_event(name="Totally Unrelated Band", venue=venue, days_from_now=10)
+        res = ingest_event(
+            _konzi(
+                title="Some Other Title",
+                city="Zürich",
+                venue_name="Kasheme",
+                start_date=_day_in(10),
+            )
+        )
+        assert res.status == "created"
+        assert res.record.needs_review is True
+        assert "Calendar" in res.record.review_reason
+
+    def test_flags_collision_with_queued_event(self, app):
+        assert (
+            ingest_event(
+                _konzi(
+                    source_id="k1",
+                    title="Show One",
+                    city="Bern",
+                    venue_name="ISC",
+                    start_date=_day_in(20),
+                )
+            ).record.needs_review
+            is False
+        )
+        res = ingest_event(
+            _konzi(
+                source_id="k2",
+                title="Show One",
+                city="Bern",
+                venue_name="ISC",
+                start_date=_day_in(20),
+            )
+        )
+        assert res.record.needs_review is True
+        assert "Queue" in res.record.review_reason
+
+    def test_fuzzy_spelling_and_diacritics_still_flag(
+        self, app, make_event, make_venue
+    ):
+        venue = make_venue(name="KIFF", city="Aarau", plz="5000", canton="AG")
+        make_event(name="Band X", venue=venue, days_from_now=12)
+        res = ingest_event(
+            _konzi(
+                source_id="fuzzy",
+                title="Band Y",  # different title
+                city="aarau",  # different case
+                venue_name="kiff",  # different case
+                start_date=_day_in(12),
+            )
+        )
+        assert res.record.needs_review is True
+
+    def test_non_konzibot_same_day_city_not_flagged(self, app, make_event, make_venue):
+        venue = make_venue(name="Kasheme", city="Zürich")
+        make_event(venue=venue, days_from_now=10)
+        # default source is eventbot -> strict dedup does not apply
+        res = ingest_event(_payload(city="Zürich", start_date=_day_in(10)))
+        assert res.record.needs_review is False
+
+    def test_no_collision_leaves_flag_clear(self, app):
+        res = ingest_event(
+            _konzi(source_id="lonely", city="Chur", start_date=_day_in(30))
+        )
+        assert res.record.needs_review is False
+        assert res.record.review_reason is None
+
+    def test_canonicalizes_genre_to_catalog(self, app):
+        res = ingest_event(
+            _konzi(source_id="g", styles="hardcore, PUNK", start_date=_day_in(31))
+        )
+        assert res.record.styles == "Hardcore, Punk"
+
+    def test_canonicalizes_venue_name_to_existing(self, app, make_venue):
+        make_venue(name="Rote Fabrik", city="Zürich")
+        res = ingest_event(
+            _konzi(
+                source_id="v",
+                venue_name="rote fabrik",
+                city="Zürich",
+                start_date=_day_in(40),
+            )
+        )
+        assert res.record.venue_name == "Rote Fabrik"
+
+    def test_full_canton_name_resolved_to_code(self, app):
+        res = ingest_event(
+            _konzi(source_id="c", region="Zürich", city="", start_date=_day_in(41))
+        )
+        assert res.record.region == "ZH"
+
+
 @pytest.fixture
 def ingest_token(app):
     app.config["INGEST_TOKEN"] = "test-ingest-token"
@@ -229,6 +338,19 @@ class TestFlyerApproval:
         page = resp.data.decode()
         assert "Jonathan Schenker" in page
         assert ScrapedEvent.query.one().flyer in page
+
+    def test_queue_shows_possible_duplicate_banner(
+        self, client, app, admin, login, make_event, make_venue
+    ):
+        venue = make_venue(name="Kasheme", city="Zürich")
+        make_event(name="Unrelated", venue=venue, days_from_now=10)
+        ingest_event(
+            _konzi(city="Zürich", venue_name="Kasheme", start_date=_day_in(10))
+        )
+        login(admin)
+        page = client.get("/queue", headers={"Accept-Language": "en"}).data.decode()
+        assert "Possible duplicate" in page
+        assert "Calendar" in page
 
 
 class TestForwarder:

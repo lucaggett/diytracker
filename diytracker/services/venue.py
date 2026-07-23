@@ -24,6 +24,28 @@ def get_or_create_venue(name, address, city, canton, plz, coords=""):
     return venue, True
 
 
+def canonical_venue_name(name, city):
+    """Return an existing venue's exact name when this is the same venue.
+
+    Matches an existing Venue whose normalized name equals *name*'s and whose
+    normalized city matches (or either city is blank), returning that venue's
+    stored spelling so get_or_create_venue reuses it instead of creating a
+    near-duplicate. Falls back to *name* unchanged when there's no match.
+    Used for sources that don't respect existing venue names (konzibot).
+    """
+    if not (name or "").strip():
+        return name
+    target_name = normalize_name(name)
+    target_city = normalize_city(city or "")
+    for venue in Venue.query.all():
+        if normalize_name(venue.name) != target_name:
+            continue
+        venue_city = normalize_city(venue.city or "")
+        if not target_city or not venue_city or venue_city == target_city:
+            return venue.name
+    return name
+
+
 # ── deduplication ─────────────────────────────────────────────────────────────
 
 # Same-city venues with different names only become merge candidates when one

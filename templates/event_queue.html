@@ -27,6 +27,7 @@
       <option value="metalgigs" {% if filter_source == 'metalgigs' %}selected{% endif %}>MetalGigs</option>
       <option value="petzi" {% if filter_source == 'petzi' %}selected{% endif %}>Petzi</option>
       <option value="eventbot" {% if filter_source == 'eventbot' %}selected{% endif %}>Eventbot (Signal)</option>
+      <option value="konzibot" {% if filter_source == 'konzibot' %}selected{% endif %}>Konzibot</option>
     </select>
   </div>
   <button type="submit"
@@ -54,9 +55,17 @@
     </thead>
     <tbody>
       {% for event in events %}
-      <tr class="border-t border-ink/30 align-top">
+      <tr class="border-t border-ink/30 align-top{% if event.needs_review %} bg-bleed/5{% endif %}">
         <td class="px-3 py-2 whitespace-nowrap">{{ event.start_date }}</td>
         <td class="px-3 py-2">
+          {% if event.needs_review %}
+            <div class="border-2 border-bleed bg-bleed/10 px-2 py-1 mb-2">
+              <div class="text-xs uppercase tracking-widest text-bleed font-semibold">⚠ {{ _('Possible duplicate') }}</div>
+              {% if event.review_reason %}
+                <div class="text-xs text-smudge mt-1">{{ event.review_reason }}</div>
+              {% endif %}
+            </div>
+          {% endif %}
           <div class="flex gap-3">
             {% if event.flyer %}
               <a href="/{{ event.flyer }}" target="_blank" rel="noopener" class="shrink-0">

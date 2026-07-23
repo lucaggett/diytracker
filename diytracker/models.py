@@ -289,6 +289,18 @@ class ScrapedEvent(db.Model):
     approved_at = db.Column(db.DateTime, nullable=True)
     approved_event_id = db.Column(db.Integer, db.ForeignKey("event.id"), nullable=True)
 
+    # Stricter dedup for messy sources (konzibot): flagged when the event
+    # collides on date + city/venue/title with something already on the
+    # calendar or in the queue. Stays in the queue but is marked as a possible
+    # duplicate so an admin looks twice before approving. review_reason holds a
+    # human-readable summary of what it collided with, captured at ingest time.
+    # server_default keeps existing rows valid without an Alembic migration
+    # (schema is db.create_all(); see scripts/migrate_add_needs_review.py).
+    needs_review = db.Column(
+        db.Boolean, nullable=False, default=False, server_default=db.text("0")
+    )
+    review_reason = db.Column(db.String(300), nullable=True)
+
     # Metadata. server_default rather than default=utcnow because these rows are
     # also written by bulk inserts that bypass the ORM; SQLite's now() is UTC
     # too, so the stored value means the same thing either way.

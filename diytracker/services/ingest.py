@@ -35,10 +35,22 @@ from werkzeug.datastructures import FileStorage
 
 from diytracker.models import db, Event, ScrapedEvent
 from diytracker.utils import clean_genre_tokens, clean_ticket_url, resolve_canton
+from diytracker.services.genre_catalog import canonicalize_genre_string
+from diytracker.services.ingest_dedup import (
+    describe_duplicates,
+    find_konzibot_duplicates,
+)
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
+from diytracker.services.venue import canonical_venue_name
 
 IngestResult = namedtuple("IngestResult", ["status", "reason", "record"])
 # status: 'created' | 'duplicate' | 'invalid'
+
+# Sources that don't respect the API contract (canton/genre/venue spellings)
+# and re-push shows already known: their payloads get genre/venue canonicalized
+# and run through the aggressive same-day duplicate check in services.ingest_dedup,
+# which flags collisions for a second manual look instead of dropping them.
+STRICT_DEDUP_SOURCES = {"konzibot"}
 
 # Column length caps (SQLite doesn't enforce VARCHAR sizes; trim on the way
 # in so payloads from external pushers can't bloat rows).
@@ -144,27 +156,39 @@ def ingest_event(payload, flyer=None, upload_folder=None, commit=True):
                 "invalid", "flyer rejected (not a png/jpg/gif image)", None
             )
 
+    strict = (source or "").lower() in STRICT_DEDUP_SOURCES
+    city = _clean(payload, "city")
+    venue_name = _clean(payload, "venue_name")
+    region = resolve_canton(_clean(payload, "region") or "", city or "")
+    styles = (
+        ", ".join(clean_genre_tokens(_clean(payload, "styles") or ""))[
+            : _MAX_LEN["styles"]
+        ]
+        or None
+    )
+    if strict:
+        # konzibot ignores the catalog/venue spellings, so snap them onto the
+        # names already in the DB before staging.
+        venue_name = canonical_venue_name(venue_name, city) if venue_name else None
+        canon = canonicalize_genre_string(_clean(payload, "styles") or "")
+        styles = canon[: _MAX_LEN["styles"]] or None
+
     record = ScrapedEvent(
         source=source,
         source_id=source_id,
         url=url,
         title=title,
         performers=_clean(payload, "performers"),
-        styles=", ".join(clean_genre_tokens(_clean(payload, "styles") or ""))[
-            : _MAX_LEN["styles"]
-        ]
-        or None,
+        styles=styles,
         description=_clean(payload, "description"),
         start_date=start_date,
         end_date=parse_date(payload.get("end_date")),
         doors_open=parse_time(payload.get("doors_open")),
         start_time=parse_time(payload.get("start_time")),
-        venue_name=_clean(payload, "venue_name"),
+        venue_name=venue_name,
         street_address=_clean(payload, "street_address"),
-        city=_clean(payload, "city"),
-        region=resolve_canton(
-            _clean(payload, "region") or "", _clean(payload, "city") or ""
-        ),
+        city=city,
+        region=region,
         postal_code=_clean(payload, "postal_code"),
         ticket_price=_clean(payload, "ticket_price"),
         ticket_currency=_clean(payload, "ticket_currency"),
@@ -174,6 +198,13 @@ def ingest_event(payload, flyer=None, upload_folder=None, commit=True):
         submitter=_clean(payload, "submitter"),
         flyer=flyer_path,
     )
+    if strict:
+        # Same-day collision with the calendar or the queue -> keep it, but
+        # flag it for a second manual look instead of silently duplicating.
+        matches = find_konzibot_duplicates(start_date, city, venue_name, title)
+        if matches:
+            record.needs_review = True
+            record.review_reason = describe_duplicates(matches)
     db.session.add(record)
     if commit:
         db.session.commit()

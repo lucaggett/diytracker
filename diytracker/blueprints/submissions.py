@@ -64,6 +64,8 @@ def _scraped_event_to_dict(rec):
         "event_status": rec.event_status,
         "flyer": rec.flyer,
         "submitter": rec.submitter,
+        "needs_review": rec.needs_review,
+        "review_reason": rec.review_reason,
     }
     data["_event_date"] = (
         datetime.combine(rec.start_date, datetime.min.time())
@@ -88,7 +90,10 @@ def parse_scraped_events(date_from=None, date_to=None, source=None):
     )
     if source:
         q = q.filter(ScrapedEvent.source == source)
-    candidates = q.order_by(ScrapedEvent.start_date.asc()).all()
+    # Possible duplicates (needs_review) surface first so they get looked at.
+    candidates = q.order_by(
+        ScrapedEvent.needs_review.desc(), ScrapedEvent.start_date.asc()
+    ).all()
     return [_scraped_event_to_dict(rec) for rec in candidates]
 
 

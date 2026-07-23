@@ -11,6 +11,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
 from diytracker.models import Genre, db
+from diytracker.utils import clean_genre_tokens
 
 SEED_GENRES = [
     "Hardcore",
@@ -92,3 +93,19 @@ def all_genre_names():
 def find_genre(name):
     """Case-insensitive lookup; returns the Genre row or None."""
     return Genre.query.filter(func.lower(Genre.name) == (name or "").lower()).first()
+
+
+def canonicalize_genre_string(raw):
+    """Map a messy genre string onto the catalog's canonical spellings.
+
+    Splits and drops noise via clean_genre_tokens, then replaces each token
+    with the catalog's exact casing when a case-insensitive match exists
+    (so a pusher's "hip-hop"/"HARDCORE" become "Hip Hop"/"Hardcore"). Tokens
+    with no catalog entry are kept verbatim. Returns a comma-joined string.
+    Used for sources that don't respect the catalog spelling (konzibot).
+    """
+    catalog = {g.name.lower(): g.name for g in Genre.query.all()}
+    out = []
+    for token in clean_genre_tokens(raw or ""):
+        out.append(catalog.get(token.lower(), token))
+    return ", ".join(out)
