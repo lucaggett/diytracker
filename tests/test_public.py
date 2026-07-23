@@ -33,6 +33,33 @@ class TestCalendar:
         assert html.count('class="date-card') == 2
         assert html.count('class="event-item') == 3
 
+    def test_festival_appears_on_every_day_it_runs(self, client, make_event):
+        from datetime import datetime, timedelta
+
+        # A three-day festival gets a card on each of its days, not just the
+        # opening one.
+        start = datetime.now() + timedelta(days=5)
+        make_event(
+            name="Multi Day Fest",
+            days_from_now=5,
+            end_date=(start + timedelta(days=2)).date(),
+        )
+        html = client.get("/").data.decode()
+        assert html.count('class="date-card') == 3
+        assert html.count('class="event-item') == 3
+
+    def test_ongoing_festival_stays_listed_after_it_starts(self, client, make_event):
+        from datetime import datetime, timedelta
+
+        # Started yesterday, ends tomorrow: the past day is dropped but the
+        # remaining days must still show — even across a month boundary.
+        end = (datetime.now() + timedelta(days=1)).date()
+        make_event(name="Running Fest", days_from_now=-1, end_date=end)
+        html = client.get("/").data.decode()
+        assert "Running Fest" in html
+        assert html.count('class="date-card') == 2
+        assert html.count('class="event-item') == 2
+
     def test_calendar_omits_days_already_past_this_month(self, client, make_event):
         # The query window opens on the 1st of the current month, so past days
         # reach the template and have to be filtered out there.

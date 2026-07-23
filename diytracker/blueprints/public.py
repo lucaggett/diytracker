@@ -1,6 +1,6 @@
 import calendar
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
 from flask import (
@@ -18,6 +18,7 @@ from flask import (
 )
 
 from diytracker.forms import AccessibilityForm, CollaboratorRequestForm
+from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
 from diytracker.models import Event, Label, Venue, VenueAccessibility, db, utcnow
@@ -147,17 +148,30 @@ def _public_cache_headers(response):
 
 
 def _group_events_by_date(events):
+    # Festivals (events with an end_date after their start) appear under every
+    # day they run, not just the opening one.
     grouped_events = defaultdict(list)
     for event in events:
-        grouped_events[event.date.date()].append(event)
+        start = event.date.date()
+        last = event.end_date if event.end_date and event.end_date > start else start
+        day = start
+        while day <= last:
+            grouped_events[day].append(event)
+            day += timedelta(days=1)
     return grouped_events
+
+
+def _upcoming_filter(now):
+    # An event is "upcoming" until its last day has passed — a festival that
+    # started yesterday but runs through the weekend must stay listed.
+    return or_(Event.date >= now, Event.end_date >= now.date())
 
 
 @bp.app_context_processor
 def _inject_today_local():
     # _partials/event_cards.html needs today's date to drop past days and to
     # stamp the current one. Event.date is a wall-clock Swiss time, so this is
-    # the local date, matching the `Event.date >= datetime.now()` filters —
+    # the local date, matching the `_upcoming_filter(datetime.now())` filters —
     # injected here so the partial can never be included without it.
     return {"today_local": datetime.now().date()}
 
@@ -179,7 +193,10 @@ def calendar_view():
 
     events = (
         Event.query.options(joinedload(Event.venue))
-        .filter(Event.date >= start_date, Event.date <= end_date)
+        .filter(
+            Event.date <= end_date,
+            or_(Event.date >= start_date, Event.end_date >= start_date.date()),
+        )
         .order_by(Event.date.asc())
         .all()
     )
@@ -369,7 +386,7 @@ def venue_map():
 def venue_page(venue_id):
     venue = Venue.query.get_or_404(venue_id)
     events = (
-        Event.query.filter(Event.venue_id == venue.id, Event.date >= datetime.now())
+        Event.query.filter(Event.venue_id == venue.id, _upcoming_filter(datetime.now()))
         .order_by(Event.date.asc())
         .all()
     )
@@ -393,7 +410,7 @@ def canton_page(canton_slug):
         abort(404)
     events = (
         Event.query.options(joinedload(Event.venue))
-        .filter(Event.venue_id.in_(info["venue_ids"]), Event.date >= datetime.now())
+        .filter(Event.venue_id.in_(info["venue_ids"]), _upcoming_filter(datetime.now()))
         .order_by(Event.date.asc())
         .all()
     )
@@ -443,7 +460,7 @@ def genre_page(genre_slug):
         Event.query.options(joinedload(Event.venue))
         .filter(
             Event.parent_genres.like(f"%,{info['name']},%"),
-            Event.date >= datetime.now(),
+            _upcoming_filter(datetime.now()),
         )
         .order_by(Event.date.asc())
         .all()
@@ -501,7 +518,7 @@ def label_page(label_slug):
     label = Label.query.filter_by(slug=label_slug).first_or_404()
     events = (
         Event.query.options(joinedload(Event.venue))
-        .filter(Event.label_id == label.id, Event.date >= datetime.now())
+        .filter(Event.label_id == label.id, _upcoming_filter(datetime.now()))
         .order_by(Event.date.asc())
         .all()
     )
