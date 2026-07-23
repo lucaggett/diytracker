@@ -4,9 +4,9 @@ contract. The TUI itself is exercised only as an import smoke test."""
 import pytest
 
 from diytracker.admin import events as admin_events
-from diytracker.admin import invites, users
+from diytracker.admin import invites, labels, users
 from diytracker.admin.core import AdminError
-from diytracker.models import Event, Submitter, db
+from diytracker.models import Event, Label, Submitter, db
 
 
 class _FakeSMTP:
@@ -208,6 +208,65 @@ class TestEvents:
         genres = {e.genre for e in Event.query.all()}
         assert len(genres) == 1
         assert admin_events.scan_genre_dups().mapping == {}
+
+
+class TestLabels:
+    @pytest.fixture
+    def promoter(self, make_user):
+        return make_user(email="promo@example.com", is_promoter=True)
+
+    def test_create_and_list(self, app, promoter, make_event):
+        row = labels.create_label("Kalter Schweiss", "promo@example.com")
+        assert row.slug == "kalter-schweiss"
+        event = make_event()
+        event.label_id = row.id
+        db.session.commit()
+        listed = labels.list_labels()
+        assert [(r.name, r.promoter, r.n_events) for r in listed] == [
+            ("Kalter Schweiss", "promo@example.com", 1)
+        ]
+
+    def test_create_requires_promoter_flag(self, app, make_user):
+        make_user(email="plain@example.com")
+        with pytest.raises(AdminError, match="not a promoter"):
+            labels.create_label("Nope", "plain@example.com")
+
+    def test_create_rejects_duplicate_name_case_insensitive(self, app, promoter):
+        labels.create_label("Doom Corp", "promo@example.com")
+        with pytest.raises(AdminError, match="already exists"):
+            labels.create_label("doom corp", "promo@example.com")
+
+    def test_rename_regenerates_slug(self, app, promoter):
+        row = labels.create_label("Old Name", "promo@example.com")
+        updated = labels.rename_label(row.id, "Neuer Name")
+        assert (updated.name, updated.slug) == ("Neuer Name", "neuer-name")
+
+    def test_set_description_blank_clears(self, app, promoter):
+        row = labels.create_label("L", "promo@example.com")
+        assert labels.set_description(row.id, "  hello  ").description == "hello"
+        assert labels.set_description(row.id, "   ").description == ""
+        assert db.session.get(Label, row.id).description is None
+
+    def test_reassign(self, app, promoter, make_user):
+        make_user(email="other@example.com", is_promoter=True)
+        row = labels.create_label("L", "promo@example.com")
+        assert labels.reassign_label(row.id, "other@example.com").promoter == (
+            "other@example.com"
+        )
+
+    def test_delete_detaches_events(self, app, promoter, make_event):
+        row = labels.create_label("Gone", "promo@example.com")
+        event = make_event()
+        event.label_id = row.id
+        db.session.commit()
+        name, n_events = labels.delete_label(row.id)
+        assert (name, n_events) == ("Gone", 1)
+        assert db.session.get(Label, row.id) is None
+        assert db.session.get(Event, event.id).label_id is None
+
+    def test_delete_missing_raises(self, app):
+        with pytest.raises(AdminError):
+            labels.delete_label(424242)
 
 
 class TestCliContract:

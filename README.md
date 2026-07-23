@@ -96,8 +96,8 @@ On the production server the app runs under systemd; see
 and install steps. Use `systemctl {status,restart} diytracker` there.
 
 `manage.py` is the admin tool. Run it with no arguments for the
-interactive TUI (users, events, venue/event/genre dedup, stats, database
-maintenance, logs), or with a subcommand for scripted usage:
+interactive TUI (users, events, labels, venue/event/genre dedup, stats,
+database maintenance, logs), or with a subcommand for scripted usage:
 
 ```bash
 uv run python manage.py                # interactive TUI

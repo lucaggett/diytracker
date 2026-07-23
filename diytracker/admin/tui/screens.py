@@ -18,7 +18,16 @@ from textual.widgets import (
     Static,
 )
 
-from diytracker.admin import db_tools, events, invites, stats, traffic, users, venues
+from diytracker.admin import (
+    db_tools,
+    events,
+    invites,
+    labels,
+    stats,
+    traffic,
+    users,
+    venues,
+)
 from diytracker.admin.core import ACCESS_LOG, ERROR_LOG, AdminError, fmt_size, load_app
 from diytracker.admin.tui.modals import (
     ChoiceModal,
@@ -205,6 +214,172 @@ class UsersScreen(AdminScreen):
         try:
             await self.run_db(users.delete_user, email)
             self.notify(f"Removed {email}.")
+        except AdminError as exc:
+            self.show_error(exc)
+        self.action_refresh()
+
+
+# ── labels ────────────────────────────────────────────────────────────────────
+
+
+class LabelsScreen(AdminScreen):
+    BINDINGS = AdminScreen.BINDINGS + [
+        Binding("a", "add", "Add"),
+        Binding("n", "rename", "Rename"),
+        Binding("e", "edit_description", "Description"),
+        Binding("o", "reassign", "Owner"),
+        Binding("d", "delete", "Delete"),
+        Binding("r", "refresh", "Refresh"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield DataTable(cursor_type="row")
+        yield Footer()
+
+    def on_mount(self):
+        self.sub_title = "Labels"
+        table = self.query_one(DataTable)
+        table.add_columns("ID", "NAME", "SLUG", "EVENTS", "LOGO", "PROMOTER")
+        self.action_refresh()
+
+    def _selected_id(self):
+        table = self.query_one(DataTable)
+        if table.row_count == 0:
+            return None
+        key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
+        return int(key.value)
+
+    def _selected_row(self):
+        label_id = self._selected_id()
+        return self._rows.get(label_id) if label_id is not None else None
+
+    @work(exclusive=True)
+    async def action_refresh(self):
+        rows = await self.run_db(labels.list_labels)
+        self._rows = {row.id: row for row in rows}
+        table = self.query_one(DataTable)
+        table.clear()
+        for row in rows:
+            table.add_row(
+                str(row.id),
+                row.name,
+                row.slug,
+                str(row.n_events),
+                "logo" if row.has_logo else "",
+                row.promoter,
+                key=str(row.id),
+            )
+
+    async def _pick_promoter(self, title):
+        """Choice of promoter accounts; returns an email or None."""
+        promoters = [
+            row.email for row in await self.run_db(users.list_users) if row.is_promoter
+        ]
+        if not promoters:
+            self.notify("No promoter accounts — grant the flag in Users first.")
+            return None
+        picked = await self.app.push_screen_wait(
+            ChoiceModal(title, [(email, email) for email in promoters])
+        )
+        return picked[0] if picked else None
+
+    @work
+    async def action_add(self):
+        name = await self.app.push_screen_wait(
+            PromptModal("New label", placeholder="Label name")
+        )
+        if not name:
+            return
+        email = await self._pick_promoter(f"Owner for {name!r}")
+        if not email:
+            return
+        try:
+            row = await self.run_db(labels.create_label, name, email)
+            self.notify(f"Created label #{row.id} {row.name!r} (/{row.slug}/).")
+        except AdminError as exc:
+            self.show_error(exc)
+        self.action_refresh()
+
+    @work
+    async def action_rename(self):
+        row = self._selected_row()
+        if row is None:
+            return
+        name = await self.app.push_screen_wait(
+            PromptModal(f"Rename label #{row.id}", value=row.name)
+        )
+        if not name or name == row.name:
+            return
+        try:
+            updated = await self.run_db(labels.rename_label, row.id, name)
+            self.notify(
+                f"Renamed to {updated.name!r}; new public URL /{updated.slug}/ "
+                "(the old one is gone)."
+            )
+        except AdminError as exc:
+            self.show_error(exc)
+        self.action_refresh()
+
+    @work
+    async def action_edit_description(self):
+        row = self._selected_row()
+        if row is None:
+            return
+        description = await self.app.push_screen_wait(
+            PromptModal(
+                f"Description for {row.name!r} (blank to clear)",
+                value=row.description,
+            )
+        )
+        if description is None:
+            return
+        try:
+            await self.run_db(labels.set_description, row.id, description)
+            self.notify(f"Description updated for {row.name!r}.")
+        except AdminError as exc:
+            self.show_error(exc)
+        self.action_refresh()
+
+    @work
+    async def action_reassign(self):
+        row = self._selected_row()
+        if row is None:
+            return
+        email = await self._pick_promoter(
+            f"New owner for {row.name!r} (currently {row.promoter})"
+        )
+        if not email or email == row.promoter:
+            return
+        try:
+            await self.run_db(labels.reassign_label, row.id, email)
+            self.notify(f"{row.name!r} reassigned to {email}.")
+        except AdminError as exc:
+            self.show_error(exc)
+        self.action_refresh()
+
+    @work
+    async def action_delete(self):
+        row = self._selected_row()
+        if row is None:
+            return
+        detach = (
+            f"Its {row.n_events} event(s) stay on the calendar without a label.\n"
+            if row.n_events
+            else ""
+        )
+        confirmed = await self.app.push_screen_wait(
+            ConfirmModal(
+                f"Delete label #{row.id} {row.name!r} ({row.promoter})?\n"
+                f"{detach}This cannot be undone.",
+                yes_label="Delete",
+            )
+        )
+        if not confirmed:
+            return
+        try:
+            name, n_events = await self.run_db(labels.delete_label, row.id)
+            self.notify(f"Deleted {name!r}; {n_events} event(s) detached.")
         except AdminError as exc:
             self.show_error(exc)
         self.action_refresh()
