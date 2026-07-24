@@ -23,6 +23,7 @@ from diytracker.admin import (
     events,
     invites,
     labels,
+    queue_review,
     stats,
     traffic,
     users,
@@ -767,6 +768,89 @@ class GenreDedupScreen(DedupScreen):
             self.action_scan()
         elif event.button.id == "apply":
             self.action_apply()
+
+
+class QueueDupScreen(DedupScreen):
+    """Triage staged events the dedup flagged as possible duplicates.
+
+    These are hidden from the web approval queue. Per row: Discard (a real
+    duplicate — drop it) or Unflag (false positive — send it back to the web
+    queue for the normal approve/edit flow).
+    """
+
+    rows = None
+
+    def controls(self):
+        yield Button("Scan", id="scan", variant="primary")
+        yield Button("Review", id="review", disabled=True)
+
+    def on_mount(self):
+        self.sub_title = "Queue duplicates"
+
+    @work(exclusive=True)
+    async def action_scan(self):
+        self.busy(True)
+        self.rows = await self.run_db(queue_review.list_flagged)
+        if not self.rows:
+            self.log_line("No flagged possible-duplicates in the queue.")
+        else:
+            self.log_line(f"{len(self.rows)} flagged possible-duplicate(s):")
+            for row in self.rows:
+                self.log_line(
+                    f"    #{row.id} [{row.source}] {row.date} "
+                    f"{row.title} @ {row.venue}/{row.city}"
+                )
+                if row.review_reason:
+                    self.log_line(f"        collides with -> {row.review_reason}")
+        self.log_line()
+        self.busy(False)
+        self.query_one("#review", Button).disabled = not self.rows
+
+    @work
+    async def action_review(self):
+        if not self.rows:
+            return
+        discarded = unflagged = skipped = 0
+        for row in self.rows:
+            picked = await self.app.push_screen_wait(
+                ChoiceModal(
+                    f"#{row.id} [{row.source}] {row.date}\n"
+                    f"{row.title} @ {row.venue}/{row.city}\n"
+                    f"collides with: {row.review_reason or '(none recorded)'}",
+                    [
+                        ("skip", "Skip"),
+                        ("discard", "Discard (real duplicate)"),
+                        ("unflag", "Unflag (back to web queue)"),
+                    ],
+                )
+            )
+            if picked is None or picked[0] == "skip":
+                skipped += 1
+                continue
+            action = picked[0]
+            try:
+                if action == "discard":
+                    await self.run_db(queue_review.discard, row.id)
+                    discarded += 1
+                    self.log_line(f"discarded #{row.id} {row.title!r}")
+                else:
+                    await self.run_db(queue_review.unflag, row.id)
+                    unflagged += 1
+                    self.log_line(f"unflagged #{row.id} {row.title!r}")
+            except AdminError as exc:
+                self.show_error(exc)
+        self.log_line(
+            f"Done: {discarded} discarded, {unflagged} unflagged, {skipped} skipped."
+        )
+        self.log_line()
+        self.rows = None
+        self.query_one("#review", Button).disabled = True
+
+    def on_button_pressed(self, event: Button.Pressed):
+        if event.button.id == "scan":
+            self.action_scan()
+        elif event.button.id == "review":
+            self.action_review()
 
 
 # ── stats ─────────────────────────────────────────────────────────────────────

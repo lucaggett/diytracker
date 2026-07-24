@@ -45,12 +45,19 @@ def _match_signals(city, venue, title, cand_city, cand_venue, cand_title):
     }
 
 
-def find_konzibot_duplicates(start_date, city, venue_name, title):
+def find_konzibot_duplicates(
+    start_date, city, venue_name, title, exclude_scraped_id=None
+):
     """Return match dicts for calendar/queue events colliding with this one.
 
     A candidate collides when it shares the date and at least one of city /
     venue / title (normalized + fuzzy). Each match is
     {"kind", "label", "signals"}; an empty list means no collision.
+
+    At ingest time the row being checked isn't in the session yet, so it can't
+    self-match. When re-scanning rows that are already staged (the queue-dedup
+    script) pass their id as ``exclude_scraped_id`` to keep them from matching
+    themselves.
     """
     if start_date is None:
         return []
@@ -84,10 +91,13 @@ def find_konzibot_duplicates(start_date, city, venue_name, title):
 
     # Queue: other unapproved staged rows on the same date. The row being
     # ingested isn't in the session yet, so there's no self-match.
-    for sc in ScrapedEvent.query.filter(
+    queue_q = ScrapedEvent.query.filter(
         ScrapedEvent.approved.is_(False),
         ScrapedEvent.start_date == start_date,
-    ).all():
+    )
+    if exclude_scraped_id is not None:
+        queue_q = queue_q.filter(ScrapedEvent.id != exclude_scraped_id)
+    for sc in queue_q.all():
         signals = _match_signals(
             city, venue_name, title, sc.city or "", sc.venue_name or "", sc.title or ""
         )

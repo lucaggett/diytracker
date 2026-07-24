@@ -119,6 +119,19 @@ class TestEventQueue:
         assert resp.status_code == 200
         assert b"Pending One" in resp.data
 
+    def test_flagged_duplicate_hidden_from_queue(self, client, admin, login):
+        login(admin)
+        self._make_scraped(title="Clean Row")
+        self._make_scraped(
+            title="Flagged Dup",
+            url="https://metalgigs.ch/konzerte/dup",
+            needs_review=True,
+            review_reason="Calendar: Clean Row @ Aarau",
+        )
+        resp = client.get("/queue")
+        assert b"Clean Row" in resp.data
+        assert b"Flagged Dup" not in resp.data
+
     def test_approving_creates_event_and_marks_scraped(self, client, admin, login):
         login(admin)
         rec = self._make_scraped()

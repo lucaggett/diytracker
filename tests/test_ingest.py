@@ -210,6 +210,32 @@ class TestKonzibotStrictDedup:
         assert res.record.needs_review is False
         assert res.record.review_reason is None
 
+    def test_exclude_scraped_id_prevents_self_match(self, app):
+        from diytracker.services.ingest_dedup import find_konzibot_duplicates
+
+        day = _day_in(25)
+        a = ingest_event(
+            _konzi(source_id="self-a", title="Twin Show", city="Bern", start_date=day)
+        ).record
+        b = ingest_event(
+            _konzi(source_id="self-b", title="Twin Show", city="Bern", start_date=day)
+        ).record
+
+        # Excluding the row's own id drops its self-match but still finds its sibling.
+        matches = find_konzibot_duplicates(
+            a.start_date, a.city, a.venue_name, a.title, exclude_scraped_id=a.id
+        )
+        queue_labels = [m["label"] for m in matches if m["kind"] == "queue"]
+        assert any("Twin Show" in label for label in queue_labels)
+        # Without excluding, the row would also match itself -> one extra queue hit.
+        all_matches = find_konzibot_duplicates(
+            a.start_date, a.city, a.venue_name, a.title
+        )
+        n_queue_excl = sum(1 for m in matches if m["kind"] == "queue")
+        n_queue_all = sum(1 for m in all_matches if m["kind"] == "queue")
+        assert n_queue_all == n_queue_excl + 1
+        assert b.id  # sibling exists
+
     def test_canonicalizes_genre_to_catalog(self, app):
         res = ingest_event(
             _konzi(source_id="g", styles="hardcore, PUNK", start_date=_day_in(31))
@@ -233,6 +259,53 @@ class TestKonzibotStrictDedup:
             _konzi(source_id="c", region="Zürich", city="", start_date=_day_in(41))
         )
         assert res.record.region == "ZH"
+
+
+class TestScanQueueDuplicates:
+    """scripts/scan_queue_duplicates backfills the needs_review flag across the
+    whole staged queue, regardless of source."""
+
+    def _seed_pair(self):
+        # Two eventbot rows for the same show — strict dedup never ran on them,
+        # so both land unflagged.
+        common = dict(city="Basel", venue_name="Sommercasino", title="Backfill Gig")
+        a = ingest_event(
+            _payload(
+                source="eventbot", source_id="p-a", start_date=_day_in(18), **common
+            )
+        ).record
+        b = ingest_event(
+            _payload(
+                source="eventbot", source_id="p-b", start_date=_day_in(18), **common
+            )
+        ).record
+        assert a.needs_review is False and b.needs_review is False
+        return a, b
+
+    def test_dry_run_flags_nothing(self, app):
+        from scripts.scan_queue_duplicates import scan_queue
+
+        a, b = self._seed_pair()
+        result = scan_queue(dry_run=True)
+        assert result.newly_flagged == 2
+        db.session.refresh(a)
+        db.session.refresh(b)
+        assert a.needs_review is False and b.needs_review is False
+
+    def test_flags_both_members_and_is_idempotent(self, app):
+        from scripts.scan_queue_duplicates import scan_queue
+
+        a, b = self._seed_pair()
+        result = scan_queue()
+        assert result.newly_flagged == 2
+        db.session.refresh(a)
+        db.session.refresh(b)
+        assert a.needs_review is True and b.needs_review is True
+        assert a.review_reason and b.review_reason
+        # Re-running leaves them alone.
+        again = scan_queue()
+        assert again.newly_flagged == 0
+        assert again.already_flagged == 2
 
 
 @pytest.fixture
@@ -339,18 +412,25 @@ class TestFlyerApproval:
         assert "Jonathan Schenker" in page
         assert ScrapedEvent.query.one().flyer in page
 
-    def test_queue_shows_possible_duplicate_banner(
+    def test_flagged_duplicate_kept_out_of_web_queue(
         self, client, app, admin, login, make_event, make_venue
     ):
+        # Flagged possible-duplicates are triaged in the admin TUI's "Queue
+        # duplicates" screen, not the web queue — so they must not render here.
         venue = make_venue(name="Kasheme", city="Zürich")
         make_event(name="Unrelated", venue=venue, days_from_now=10)
-        ingest_event(
-            _konzi(city="Zürich", venue_name="Kasheme", start_date=_day_in(10))
-        )
+        rec = ingest_event(
+            _konzi(
+                title="Hidden Dup",
+                city="Zürich",
+                venue_name="Kasheme",
+                start_date=_day_in(10),
+            )
+        ).record
+        assert rec.needs_review is True
         login(admin)
         page = client.get("/queue", headers={"Accept-Language": "en"}).data.decode()
-        assert "Possible duplicate" in page
-        assert "Calendar" in page
+        assert "Hidden Dup" not in page
 
 
 class TestForwarder:

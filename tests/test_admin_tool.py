@@ -4,9 +4,9 @@ contract. The TUI itself is exercised only as an import smoke test."""
 import pytest
 
 from diytracker.admin import events as admin_events
-from diytracker.admin import invites, labels, users
+from diytracker.admin import invites, labels, queue_review, users
 from diytracker.admin.core import AdminError
-from diytracker.models import Event, Label, Submitter, db
+from diytracker.models import Event, Label, ScrapedEvent, Submitter, db
 
 
 class _FakeSMTP:
@@ -208,6 +208,63 @@ class TestEvents:
         genres = {e.genre for e in Event.query.all()}
         assert len(genres) == 1
         assert admin_events.scan_genre_dups().mapping == {}
+
+
+def _make_scraped(**kw):
+    from datetime import date, timedelta
+
+    defaults = dict(
+        source="konzibot",
+        title="Dup Show",
+        start_date=date.today() + timedelta(days=15),
+        venue_name="Hall",
+        city="Bern",
+        approved=False,
+    )
+    defaults.update(kw)
+    rec = ScrapedEvent(**defaults)
+    db.session.add(rec)
+    db.session.commit()
+    return rec
+
+
+class TestQueueReview:
+    def test_list_flagged_only_returns_flagged_unapproved(self, app):
+        _make_scraped(title="Clean", needs_review=False)
+        _make_scraped(title="Flagged", needs_review=True, url="u1")
+        _make_scraped(title="Resolved", needs_review=True, approved=True, url="u2")
+        rows = queue_review.list_flagged()
+        assert [r.title for r in rows] == ["Flagged"]
+
+    def test_discard_drops_from_queue(self, app):
+        rec = _make_scraped(needs_review=True)
+        queue_review.discard(rec.id)
+        db.session.refresh(rec)
+        assert rec.approved is True
+        assert rec.approved_at is not None
+        assert rec.approved_event_id is None
+        assert queue_review.list_flagged() == []
+
+    def test_unflag_returns_to_web_queue(self, app):
+        from diytracker.blueprints.submissions import parse_scraped_events
+
+        rec = _make_scraped(title="False Positive", needs_review=True)
+        assert "False Positive" not in [e["title"] for e in parse_scraped_events()]
+        queue_review.unflag(rec.id)
+        db.session.refresh(rec)
+        assert rec.needs_review is False
+        assert "False Positive" in [e["title"] for e in parse_scraped_events()]
+
+    def test_actions_reject_bad_id(self, app):
+        with pytest.raises(AdminError):
+            queue_review.discard(99999)
+        with pytest.raises(AdminError):
+            queue_review.unflag(99999)
+
+    def test_actions_reject_already_resolved(self, app):
+        rec = _make_scraped(needs_review=True, approved=True)
+        with pytest.raises(AdminError):
+            queue_review.discard(rec.id)
 
 
 class TestLabels:

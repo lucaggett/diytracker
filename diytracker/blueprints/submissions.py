@@ -85,15 +85,15 @@ def parse_scraped_events(date_from=None, date_to=None, source=None):
         date_to = now + relativedelta(months=2)
     q = ScrapedEvent.query.filter(
         ScrapedEvent.approved.is_(False),
+        # Flagged possible-duplicates are kept out of the web queue entirely;
+        # they're triaged in the admin TUI's "Queue duplicates" screen instead.
+        ScrapedEvent.needs_review.is_(False),
         ScrapedEvent.start_date >= date_from,
         ScrapedEvent.start_date <= date_to,
     )
     if source:
         q = q.filter(ScrapedEvent.source == source)
-    # Possible duplicates (needs_review) surface first so they get looked at.
-    candidates = q.order_by(
-        ScrapedEvent.needs_review.desc(), ScrapedEvent.start_date.asc()
-    ).all()
+    candidates = q.order_by(ScrapedEvent.start_date.asc()).all()
     return [_scraped_event_to_dict(rec) for rec in candidates]
 
 
