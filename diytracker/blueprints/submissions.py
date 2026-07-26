@@ -25,7 +25,7 @@ from diytracker.services.events import (
 from diytracker.services.genre_catalog import find_genre
 from diytracker.services.i18n import gettext as _
 from diytracker.services.ingest import parse_time
-from diytracker.services.labels import all_label_choices
+from diytracker.services.labels import owned_label_choices
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 from diytracker.services.venue import get_or_create_venue
 from diytracker.utils import is_safe_link, resolve_canton
@@ -239,8 +239,8 @@ def delete_scraped_event(scraped_id):
 @login_required
 def submit_event_link():
     form = EventForm()
-    form.label_id.choices = all_label_choices()
     submitter = db.session.get(Submitter, session["user_id"])
+    form.label_id.choices = owned_label_choices(submitter)
 
     if form.validate_on_submit():
         flyer = save_flyer_file(

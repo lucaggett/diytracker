@@ -18,7 +18,7 @@ from diytracker.models import db, Event, Label, Submitter
 from diytracker.services.auth import promoter_required
 from diytracker.services.cache import bust_cache
 from diytracker.services.i18n import gettext as _
-from diytracker.services.labels import label_stats, unique_slug
+from diytracker.services.labels import label_stats, owned_labels, unique_slug
 from diytracker.services.seo import canonical_url
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 
@@ -59,16 +59,11 @@ def dashboard():
     )
 
 
-def _own_labels(user):
-    """The labels *user* may claim events for. Admins get no special
-    treatment here — claiming under someone else's label is exactly the
-    accident this prevents."""
-    return Label.query.filter_by(promoter_id=user.id).order_by(Label.name.asc()).all()
-
-
 def _claim_form(user):
     form = ClaimEventForm()
-    form.label_id.choices = [(str(label.id), label.name) for label in _own_labels(user)]
+    form.label_id.choices = [
+        (str(label.id), label.name) for label in owned_labels(user)
+    ]
     return form
 
 

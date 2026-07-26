@@ -234,11 +234,12 @@ class TestEventQueue:
 
 
 class TestSubmitWithLabel:
-    def test_submit_with_label_sets_label_id(
+    def test_submit_with_own_label_sets_label_id(
         self, client, make_user, make_label, make_venue, login
     ):
-        label = make_label(make_user(email="promo@example.com", is_promoter=True))
-        login(make_user())
+        promoter = make_user(email="promo@example.com", is_promoter=True)
+        label = make_label(promoter)
+        login(promoter)
         venue = make_venue()
         client.post(
             "/submit",
@@ -253,6 +254,44 @@ class TestSubmitWithLabel:
         )
         ev = Event.query.filter_by(name="Labelled Show").one()
         assert ev.label_id == label.id
+
+    def test_submit_with_foreign_label_is_rejected(
+        self, client, make_user, make_label, make_venue, login
+    ):
+        label = make_label(make_user(email="promo@example.com", is_promoter=True))
+        login(make_user())
+        venue = make_venue()
+        client.post(
+            "/submit",
+            data={
+                "name": "Hijacked Show",
+                "date": _future(),
+                "doors": "20:00",
+                "ticket_price": "15",
+                "venue_id": str(venue.id),
+                "label_id": str(label.id),
+            },
+        )
+        assert Event.query.filter_by(name="Hijacked Show").count() == 0
+
+    def test_admin_cannot_submit_under_foreign_label(
+        self, client, make_user, make_label, make_venue, admin, login
+    ):
+        label = make_label(make_user(email="promo@example.com", is_promoter=True))
+        login(admin)
+        venue = make_venue()
+        client.post(
+            "/submit",
+            data={
+                "name": "Admin Hijack",
+                "date": _future(),
+                "doors": "20:00",
+                "ticket_price": "15",
+                "venue_id": str(venue.id),
+                "label_id": str(label.id),
+            },
+        )
+        assert Event.query.filter_by(name="Admin Hijack").count() == 0
 
     def test_submit_without_label_leaves_it_null(
         self, client, make_user, make_venue, login

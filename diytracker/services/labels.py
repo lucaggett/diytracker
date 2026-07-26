@@ -25,9 +25,27 @@ def unique_slug(name, exclude_id=None):
 
 
 def all_label_choices():
-    """(value, name) pairs for EventForm.label_id; "" means no label."""
+    """(value, name) pairs for EventForm.label_id; "" means no label.
+
+    Every label, so admin-only surfaces (admin edit_event) — that form is
+    how misattributed labels get fixed. User-facing forms must use
+    owned_label_choices() instead.
+    """
     labels = Label.query.order_by(Label.name.asc()).all()
     return [("", "—")] + [(str(label.id), label.name) for label in labels]
+
+
+def owned_labels(user):
+    """The labels *user* may attach to events. Admins get no special
+    treatment — attaching someone else's label is exactly the accident
+    this prevents."""
+    return Label.query.filter_by(promoter_id=user.id).order_by(Label.name.asc()).all()
+
+
+def owned_label_choices(user):
+    """(value, name) pairs for EventForm.label_id restricted to the user's
+    own labels; "" means no label."""
+    return [("", "—")] + [(str(label.id), label.name) for label in owned_labels(user)]
 
 
 def label_stats(user):
