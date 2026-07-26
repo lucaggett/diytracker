@@ -1,6 +1,6 @@
 [project]
 name = "diytracker"
-version = "0.51.1"
+version = "0.52.0"
 requires-python = ">=3.10"
 dependencies = [
     "flask>=3.0",
