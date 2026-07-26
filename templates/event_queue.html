@@ -30,6 +30,11 @@
       <option value="konzibot" {% if filter_source == 'konzibot' %}selected{% endif %}>Konzibot</option>
     </select>
   </div>
+  <div class="grow min-w-40">
+    <label class="block text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Search') }}</label>
+    <input type="search" name="q" value="{{ filter_q }}" placeholder="{{ _('Title, venue, city, organizer…') }}"
+           class="border-2 border-ink bg-paper px-2 py-1 text-sm w-full focus:outline-hidden focus:border-bleed">
+  </div>
   <button type="submit"
           class="bg-ink text-paper text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed transition-colors">
     {{ _('Filter') }}
@@ -37,15 +42,37 @@
   <a href="{{ url_for('submissions.event_queue') }}"
      class="text-xs uppercase tracking-widest text-smudge hover:text-bleed self-end pb-2">{{ _('Reset') }}</a>
   <span class="text-xs text-smudge self-end pb-2 ml-auto">
-    {{ events|length }} {% if events|length != 1 %}{{ _('events') }}{% else %}{{ _('event') }}{% endif %}
+    {{ pagination.total }} {% if pagination.total != 1 %}{{ _('events') }}{% else %}{{ _('event') }}{% endif %}
   </span>
 </form>
 
+{% if dup_count %}
+<p class="border-2 border-bleed bg-bleed/10 px-4 py-2 mb-6 text-sm">
+  ⚠ <a href="{{ url_for('submissions.queue_duplicates') }}" class="text-bleed hover:underline">
+    {{ _('%(num)d possible duplicates waiting for review', num=dup_count) }} →</a>
+</p>
+{% endif %}
+
 {% if events %}
+{# Bulk-reject form lives outside the table; row checkboxes reference it via
+   the form attribute so they don't nest inside the per-row forms. #}
+<form id="bulk-reject-form" method="post" action="{{ url_for('submissions.bulk_reject_scraped_events', **request.args) }}"
+      class="border-2 border-ink bg-paper p-3 mb-3 flex flex-wrap items-center gap-3">
+  {{ delete_form.hidden_tag() }}
+  <span class="text-xs uppercase tracking-widest text-smudge">{{ _('With selected:') }}</span>
+  <input type="text" name="reject_reason" maxlength="300" placeholder="{{ _('Reason (optional)') }}"
+         class="border-2 border-ink bg-paper px-2 py-1 text-sm grow min-w-40 focus:outline-hidden focus:border-bleed">
+  <button type="submit"
+          class="bg-ink text-paper text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed transition-colors"
+          onclick="return confirm({{ _('Remove all selected events from the queue?')|tojson }})">
+    {{ _('Reject selected') }}
+  </button>
+</form>
 <div class="overflow-x-auto border-2 border-ink">
   <table class="min-w-full text-sm">
     <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
       <tr>
+        <th class="px-3 py-2"></th>
         <th class="px-3 py-2 text-left">{{ _('Date') }}</th>
         <th class="px-3 py-2 text-left">{{ _('Event') }}</th>
         <th class="px-3 py-2 text-left">{{ _('Venue') }}</th>
@@ -56,6 +83,10 @@
     <tbody>
       {% for event in events %}
       <tr class="border-t border-ink/30 align-top{% if event.needs_review %} bg-bleed/5{% endif %}">
+        <td class="px-3 py-2">
+          <input type="checkbox" name="scraped_ids" value="{{ event._scraped_id }}"
+                 form="bulk-reject-form" class="w-4 h-4 cursor-pointer accent-bleed">
+        </td>
         <td class="px-3 py-2 whitespace-nowrap">{{ event.start_date }}</td>
         <td class="px-3 py-2">
           {% if event.needs_review %}
@@ -104,14 +135,15 @@
           <form action="{{ url_for('submissions.delete_scraped_event', scraped_id=event._scraped_id) }}"
                 method="POST" class="inline">
             {{ delete_form.hidden_tag() }}
+            <input type="hidden" name="reject_reason" value="">
             <button type="submit"
                     class="text-bleed hover:underline uppercase text-xs tracking-widest"
-                    onclick="return confirm({{ _('Remove this event from the queue?')|tojson }})">{{ _('Delete') }}</button>
+                    onclick="return promptReason(this.form)">{{ _('Delete') }}</button>
           </form>
         </td>
       </tr>
       <tr id="edit-{{ loop.index0 }}" style="display:none" class="border-t border-ink/30">
-        <td colspan="5" class="px-3 py-4 bg-ink/5">
+        <td colspan="6" class="px-3 py-4 bg-ink/5">
           <form method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="scraped_id" value="{{ event._scraped_id }}">
@@ -187,6 +219,19 @@
     </tbody>
   </table>
 </div>
+{% if pagination.pages > 1 %}
+<nav class="mt-4 flex items-center justify-between font-mono text-xs">
+  {% if pagination.has_prev %}
+  <a href="{{ url_for('submissions.event_queue', **dict(request.args, page=pagination.prev_num)) }}"
+     class="text-bleed hover:underline">&larr; {{ _('Previous') }}</a>
+  {% else %}<span></span>{% endif %}
+  <span class="text-smudge">{{ _('Page %(page)s of %(pages)s', page=pagination.page, pages=pagination.pages) }}</span>
+  {% if pagination.has_next %}
+  <a href="{{ url_for('submissions.event_queue', **dict(request.args, page=pagination.next_num)) }}"
+     class="text-bleed hover:underline">{{ _('Next') }} &rarr;</a>
+  {% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
 {% else %}
 <p class="text-sm text-smudge border-2 border-ink/30 px-4 py-6 text-center">
   {{ _('No events awaiting approval.') }}
@@ -199,6 +244,12 @@
   function toggleEdit(id) {
     const row = document.getElementById(id);
     row.style.display = row.style.display === 'none' ? '' : 'none';
+  }
+  function promptReason(form) {
+    const reason = prompt({{ _('Remove this event from the queue? Reason (optional):')|tojson }}, '');
+    if (reason === null) return false;
+    form.reject_reason.value = reason.slice(0, 300);
+    return true;
   }
 </script>
 {% endblock %}

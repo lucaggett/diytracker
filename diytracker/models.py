@@ -290,7 +290,26 @@ class ScrapedEvent(db.Model):
         ),
     )
 
-    # Approval tracking
+    # Resolution tracking. status is authoritative: 'pending' (in the queue),
+    # 'published' (approved into an Event) or 'rejected' (removed without
+    # publishing, optionally with a reason). The legacy `approved` boolean
+    # conflated the last two (approved with no approved_event_id meant
+    # rejected); it is still written alongside status for one release as a
+    # safety net for stray scripts, then write-only-status. approved_at is
+    # the resolution time for both outcomes (local clock, kept for
+    # consistency with existing rows). See scripts/migrate_add_queue_status.py.
+    STATUS_PENDING = "pending"
+    STATUS_PUBLISHED = "published"
+    STATUS_REJECTED = "rejected"
+
+    status = db.Column(
+        db.String(20),
+        nullable=False,
+        default=STATUS_PENDING,
+        server_default=STATUS_PENDING,
+        index=True,
+    )
+    reject_reason = db.Column(db.String(300), nullable=True)
     approved = db.Column(db.Boolean, nullable=False, default=False)
     approved_at = db.Column(db.DateTime, nullable=True)
     approved_event_id = db.Column(db.Integer, db.ForeignKey("event.id"), nullable=True)

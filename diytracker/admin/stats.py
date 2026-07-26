@@ -97,7 +97,7 @@ def overview():
         n_admins=sum(1 for user in users if user.is_admin),
         n_no_password=sum(1 for user in users if not user.password_hash),
         scrape_queue=ScrapedEvent.query.filter(
-            ScrapedEvent.approved.is_(False)
+            ScrapedEvent.status == ScrapedEvent.STATUS_PENDING
         ).count(),
         skipped_urls=SkippedUrl.query.count(),
     )

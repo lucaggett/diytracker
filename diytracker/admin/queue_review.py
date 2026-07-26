@@ -48,7 +48,7 @@ def _get_flagged(scraped_id):
     rec = db.session.get(ScrapedEvent, scraped_id)
     if rec is None:
         raise AdminError(f"No queued event found with id {scraped_id}.")
-    if rec.approved:
+    if rec.status != ScrapedEvent.STATUS_PENDING:
         raise AdminError(f"Queued event #{scraped_id} is already resolved.")
     return rec
 
@@ -57,7 +57,7 @@ def list_flagged():
     """Flagged, still-unapproved queue rows, soonest first."""
     rows = (
         ScrapedEvent.query.filter(
-            ScrapedEvent.approved.is_(False),
+            ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
             ScrapedEvent.needs_review.is_(True),
         )
         .order_by(ScrapedEvent.start_date.asc())
@@ -70,7 +70,8 @@ def discard(scraped_id, actor="tui"):
     """Confirmed duplicate: drop it from the queue without publishing."""
     rec = _get_flagged(scraped_id)
     row = _row(rec)
-    rec.approved = True
+    rec.status = ScrapedEvent.STATUS_REJECTED
+    rec.approved = True  # legacy safety net, one release
     rec.approved_at = datetime.now()
     record(
         "queue.reject",

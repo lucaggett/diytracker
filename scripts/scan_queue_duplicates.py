@@ -64,7 +64,7 @@ def scan_queue(source=None, date_from=None, date_to=None, dry_run=False):
     Returns a ScanResult. With dry_run=True nothing is written. Must run inside
     a Flask app context.
     """
-    q = ScrapedEvent.query.filter(ScrapedEvent.approved.is_(False))
+    q = ScrapedEvent.query.filter(ScrapedEvent.status == ScrapedEvent.STATUS_PENDING)
     if source:
         q = q.filter(ScrapedEvent.source == source)
     if date_from is not None:

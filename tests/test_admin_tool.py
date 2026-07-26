@@ -232,7 +232,7 @@ class TestQueueReview:
     def test_list_flagged_only_returns_flagged_unapproved(self, app):
         _make_scraped(title="Clean", needs_review=False)
         _make_scraped(title="Flagged", needs_review=True, url="u1")
-        _make_scraped(title="Resolved", needs_review=True, approved=True, url="u2")
+        _make_scraped(title="Resolved", needs_review=True, status="rejected", url="u2")
         rows = queue_review.list_flagged()
         assert [r.title for r in rows] == ["Flagged"]
 
@@ -249,11 +249,11 @@ class TestQueueReview:
         from diytracker.blueprints.submissions import parse_scraped_events
 
         rec = _make_scraped(title="False Positive", needs_review=True)
-        assert "False Positive" not in [e["title"] for e in parse_scraped_events()]
+        assert "False Positive" not in [e["title"] for e in parse_scraped_events()[0]]
         queue_review.unflag(rec.id)
         db.session.refresh(rec)
         assert rec.needs_review is False
-        assert "False Positive" in [e["title"] for e in parse_scraped_events()]
+        assert "False Positive" in [e["title"] for e in parse_scraped_events()[0]]
 
     def test_actions_reject_bad_id(self, app):
         with pytest.raises(AdminError):
@@ -262,7 +262,7 @@ class TestQueueReview:
             queue_review.unflag(99999)
 
     def test_actions_reject_already_resolved(self, app):
-        rec = _make_scraped(needs_review=True, approved=True)
+        rec = _make_scraped(needs_review=True, status="rejected")
         with pytest.raises(AdminError):
             queue_review.discard(rec.id)
 

@@ -1,0 +1,68 @@
+{% extends 'base_backstage.html' %}
+
+{% block title %}{{ _('Queue duplicates') }} · diytracker.ch{% endblock %}
+
+{% block content %}
+<header class="mb-6">
+  <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Possible duplicate') }}</p>
+  <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('QUEUE DUPLICATES') }}</h1>
+</header>
+
+<p class="text-sm text-smudge mb-6 max-w-prose">
+  {{ _('Staged events that collided with something already on the calendar or in the queue. Discard the real duplicates; unflag false positives to send them back to the normal queue.') }}
+</p>
+
+{% if rows %}
+<div class="overflow-x-auto border-2 border-ink">
+  <table class="min-w-full text-sm">
+    <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
+      <tr>
+        <th class="px-3 py-2 text-left">{{ _('Date') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Event') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Venue') }}</th>
+        <th class="px-3 py-2 text-left">{{ _('Collides with') }}</th>
+        <th class="px-3 py-2 text-right">{{ _('Actions') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr class="border-t border-ink/30 align-top">
+        <td class="px-3 py-2 whitespace-nowrap">{{ row.date }}</td>
+        <td class="px-3 py-2">
+          <div class="font-semibold">{{ row.title }}</div>
+          <div class="text-xs text-smudge">{{ row.source }}</div>
+        </td>
+        <td class="px-3 py-2">{{ row.venue }}, {{ row.city }}</td>
+        <td class="px-3 py-2 text-xs text-smudge">{{ row.review_reason }}</td>
+        <td class="px-3 py-2 text-right whitespace-nowrap">
+          <form action="{{ url_for('submissions.resolve_queue_duplicate', scraped_id=row.id, action='discard') }}"
+                method="POST" class="inline">
+            {{ delete_form.hidden_tag() }}
+            <button type="submit"
+                    class="text-bleed hover:underline uppercase text-xs tracking-widest"
+                    onclick="return confirm({{ _('Discard this entry? It will not be published.')|tojson }})">{{ _('Discard') }}</button>
+          </form>
+          <span class="text-smudge mx-1">·</span>
+          <form action="{{ url_for('submissions.resolve_queue_duplicate', scraped_id=row.id, action='unflag') }}"
+                method="POST" class="inline">
+            {{ delete_form.hidden_tag() }}
+            <button type="submit"
+                    class="text-ink hover:text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Unflag') }}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-sm text-smudge border-2 border-ink/30 px-4 py-6 text-center">
+  {{ _('Nothing flagged right now.') }}
+</p>
+{% endif %}
+
+<p class="mt-6">
+  <a href="{{ url_for('submissions.event_queue') }}"
+     class="font-mono text-xs uppercase tracking-widest text-smudge hover:text-bleed">&larr; {{ _('Back to the queue') }}</a>
+</p>
+{% endblock %}

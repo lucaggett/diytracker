@@ -98,7 +98,7 @@ def find_konzibot_duplicates(
     # Queue: other unapproved staged rows on the same date. The row being
     # ingested isn't in the session yet, so there's no self-match.
     queue_q = ScrapedEvent.query.filter(
-        ScrapedEvent.approved.is_(False),
+        ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
         ScrapedEvent.start_date == start_date,
     )
     if exclude_scraped_id is not None:

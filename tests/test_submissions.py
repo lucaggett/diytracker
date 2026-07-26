@@ -183,7 +183,7 @@ class TestEventQueue:
 
     def test_already_approved_id_rejected(self, client, admin, login):
         login(admin)
-        rec = self._make_scraped(approved=True)
+        rec = self._make_scraped(approved=True, status="published")
         resp = client.post(
             "/queue", data={"scraped_id": str(rec.id)}, follow_redirects=True
         )
@@ -381,3 +381,153 @@ class TestManageGenres:
     def test_delete_missing_genre_404s(self, client, make_user, login):
         login(make_user())
         assert client.post("/genres/99999/delete").status_code == 404
+
+
+class TestQueueStatus:
+    def _make_scraped(self, **kw):
+        return TestEventQueue._make_scraped(TestEventQueue(), **kw)
+
+    def test_approve_sets_published(self, client, admin, login):
+        login(admin)
+        rec = self._make_scraped()
+        client.post("/queue", data={"scraped_id": str(rec.id)})
+        db.session.refresh(rec)
+        assert rec.status == "published"
+        assert rec.approved is True  # legacy column still written
+        assert rec.approved_event_id is not None
+
+    def test_reject_sets_rejected_with_reason(self, client, admin, login):
+        login(admin)
+        rec = self._make_scraped()
+        client.post(f"/queue/{rec.id}/delete", data={"reject_reason": "wrong city"})
+        db.session.refresh(rec)
+        assert rec.status == "rejected"
+        assert rec.reject_reason == "wrong city"
+        assert rec.approved_event_id is None
+        from diytracker.models import ActionLog
+
+        row = ActionLog.query.filter_by(action="queue.reject").one()
+        assert "wrong city" in row.detail
+
+    def test_rejected_rows_leave_the_queue(self, client, admin, login):
+        login(admin)
+        rec = self._make_scraped(title="Gone Show")
+        client.post(f"/queue/{rec.id}/delete")
+        assert b"Gone Show" not in client.get("/queue").data
+
+    def test_bulk_reject(self, client, admin, login):
+        login(admin)
+        recs = [
+            self._make_scraped(url=f"https://metalgigs.ch/konzerte/bulk-{i}")
+            for i in range(3)
+        ]
+        keep = self._make_scraped(url="https://metalgigs.ch/konzerte/keep")
+        client.post(
+            "/queue/bulk-reject",
+            data={
+                "scraped_ids": [str(r.id) for r in recs[:2]],
+                "reject_reason": "spam",
+            },
+        )
+        for rec in recs[:2]:
+            db.session.refresh(rec)
+            assert rec.status == "rejected"
+            assert rec.reject_reason == "spam"
+        db.session.refresh(keep)
+        assert keep.status == "pending"
+
+    def test_queue_search(self, client, admin, login):
+        login(admin)
+        self._make_scraped(title="Grind Night", city="Bern", url="https://x.ch/1")
+        self._make_scraped(title="Jazz Eve", city="Basel", url="https://x.ch/2")
+        resp = client.get("/queue?q=grind")
+        assert b"Grind Night" in resp.data
+        assert b"Jazz Eve" not in resp.data
+
+    def test_queue_pagination(self, client, admin, login):
+        from diytracker.blueprints.submissions import QUEUE_PAGE_SIZE
+
+        login(admin)
+        for i in range(QUEUE_PAGE_SIZE + 1):
+            self._make_scraped(title=f"Paged {i:03d}", url=f"https://x.ch/p{i}")
+        page1 = client.get("/queue")
+        assert b"Page 1 of 2" in page1.data
+        assert b"Paged" in client.get("/queue?page=2").data
+
+
+class TestQueueDuplicatesWeb:
+    def _flagged(self, **kw):
+        defaults = dict(needs_review=True, review_reason="Calendar: X @ Bern")
+        defaults.update(kw)
+        return TestEventQueue._make_scraped(TestEventQueue(), **defaults)
+
+    def test_requires_admin(self, client, make_user, login):
+        login(make_user())
+        assert client.get("/queue/duplicates").status_code == 403
+
+    def test_lists_flagged_rows(self, client, admin, login):
+        login(admin)
+        self._flagged(title="Dup Show")
+        resp = client.get("/queue/duplicates")
+        assert b"Dup Show" in resp.data
+        assert b"Calendar: X @ Bern" in resp.data
+
+    def test_discard_rejects_row(self, client, admin, login):
+        login(admin)
+        rec = self._flagged()
+        client.post(f"/queue/duplicates/{rec.id}/discard")
+        db.session.refresh(rec)
+        assert rec.status == "rejected"
+
+    def test_unflag_returns_row_to_queue(self, client, admin, login):
+        login(admin)
+        rec = self._flagged(title="False Alarm")
+        client.post(f"/queue/duplicates/{rec.id}/unflag")
+        db.session.refresh(rec)
+        assert rec.needs_review is False
+        assert rec.status == "pending"
+        assert b"False Alarm" in client.get("/queue").data
+
+    def test_flagged_rows_link_from_queue(self, client, admin, login):
+        login(admin)
+        self._flagged()
+        resp = client.get("/queue")
+        assert b"/queue/duplicates" in resp.data
+
+
+class TestQueueStatusMigration:
+    def test_backfill_semantics(self, tmp_path):
+        import sqlite3
+        import subprocess
+        import sys
+
+        db_path = tmp_path / "events.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "CREATE TABLE scraped_event ("
+            "id INTEGER PRIMARY KEY, approved BOOLEAN NOT NULL DEFAULT 0, "
+            "approved_event_id INTEGER)"
+        )
+        conn.executemany(
+            "INSERT INTO scraped_event (id, approved, approved_event_id) VALUES (?, ?, ?)",
+            [(1, 1, 42), (2, 1, None), (3, 0, None)],
+        )
+        conn.commit()
+        conn.close()
+
+        subprocess.run(
+            [sys.executable, "scripts/migrate_add_queue_status.py", str(db_path)],
+            check=True,
+            capture_output=True,
+        )
+        # Idempotent: second run must not re-backfill or fail.
+        subprocess.run(
+            [sys.executable, "scripts/migrate_add_queue_status.py", str(db_path)],
+            check=True,
+            capture_output=True,
+        )
+
+        conn = sqlite3.connect(db_path)
+        rows = dict(conn.execute("SELECT id, status FROM scraped_event"))
+        conn.close()
+        assert rows == {1: "published", 2: "rejected", 3: "pending"}

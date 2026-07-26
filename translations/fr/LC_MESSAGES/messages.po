@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-26 09:15+0200\n"
+"POT-Creation-Date: 2026-07-26 09:21+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -20,7 +20,7 @@ msgstr ""
 msgid "Links must start with http:// or https://."
 msgstr "Les liens doivent commencer par http:// ou https://."
 
-#: diytracker/forms.py:80 templates/event_queue.html:121
+#: diytracker/forms.py:80 templates/event_queue.html:153
 msgid "Event Name"
 msgstr "Nom de l'événement"
 
@@ -45,17 +45,17 @@ msgstr "Heure d'ouverture des portes"
 #: diytracker/forms.py:90 diytracker/forms.py:360
 #: templates/_partials/event_cards.html:96 templates/admin.html:86
 #: templates/calendar.html:135 templates/event_page.html:94
-#: templates/event_queue.html:133 templates/genre.html:17
+#: templates/event_queue.html:165 templates/genre.html:17
 msgid "Genre"
 msgstr "Genre"
 
 #: diytracker/forms.py:92 templates/_partials/event_cards.html:96
-#: templates/event_queue.html:137
+#: templates/event_queue.html:169
 msgid "Acts"
 msgstr "Artistes"
 
 #: diytracker/forms.py:93 templates/_partials/event_form.html:89
-#: templates/event_queue.html:72
+#: templates/event_queue.html:103
 msgid "Flyer"
 msgstr "Flyer"
 
@@ -80,7 +80,7 @@ msgstr "Reporté"
 msgid "Label"
 msgstr "Label"
 
-#: diytracker/forms.py:111 templates/event_queue.html:157
+#: diytracker/forms.py:111 templates/event_queue.html:189
 msgid "Ticket Price"
 msgstr "Prix du billet"
 
@@ -90,13 +90,13 @@ msgstr "Lien billetterie"
 
 #: diytracker/forms.py:120 templates/admin.html:149
 #: templates/admin_statistics.html:38 templates/edit_venue.html:9
-#: templates/event_page.html:79 templates/event_queue.html:51
-#: templates/venue_page.html:24
+#: templates/event_page.html:79 templates/event_queue.html:78
+#: templates/queue_duplicates.html:22 templates/venue_page.html:24
 msgid "Venue"
 msgstr "Lieu"
 
 #: diytracker/forms.py:124 diytracker/forms.py:191
-#: templates/event_queue.html:141
+#: templates/event_queue.html:173
 msgid "Venue Name"
 msgstr "Nom du lieu"
 
@@ -105,7 +105,7 @@ msgid "Venue Address"
 msgstr "Adresse du lieu"
 
 #: diytracker/forms.py:126 diytracker/forms.py:193
-#: templates/event_queue.html:145 templates/venues.html:40
+#: templates/event_queue.html:177 templates/venues.html:40
 msgid "City"
 msgstr "Ville"
 
@@ -135,7 +135,7 @@ msgid "Label Name"
 msgstr "Nom du label"
 
 #: diytracker/forms.py:151 templates/event_page.html:128
-#: templates/event_queue.html:169
+#: templates/event_queue.html:201
 msgid "Description"
 msgstr "Description"
 
@@ -412,7 +412,7 @@ msgstr ""
 "Le lieu de cet événement n'existe plus. Sélectionne ou crée un lieu ci-"
 "dessous."
 
-#: diytracker/blueprints/admin.py:186 diytracker/blueprints/submissions.py:279
+#: diytracker/blueprints/admin.py:186 diytracker/blueprints/submissions.py:369
 msgid "Selected venue does not exist."
 msgstr "Le lieu sélectionné n'existe pas."
 
@@ -560,45 +560,60 @@ msgstr ""
 msgid "DIY, punk and underground concerts in Switzerland."
 msgstr "Concerts DIY, punk et underground en Suisse."
 
-#: diytracker/blueprints/submissions.py:130
+#: diytracker/blueprints/submissions.py:152
 msgid "Invalid event selection."
 msgstr "Sélection d'événement invalide."
 
-#: diytracker/blueprints/submissions.py:204
+#: diytracker/blueprints/submissions.py:226
 msgid "This event already exists."
 msgstr "Cet événement existe déjà."
 
-#: diytracker/blueprints/submissions.py:226
+#: diytracker/blueprints/submissions.py:249
 msgid "Event approved and added to calendar!"
 msgstr "Événement approuvé et ajouté au calendrier !"
 
-#: diytracker/blueprints/submissions.py:256
+#: diytracker/blueprints/submissions.py:297
 msgid "Event removed from queue."
 msgstr "Événement retiré de la file."
 
-#: diytracker/blueprints/submissions.py:276
+#: diytracker/blueprints/submissions.py:317
+#, python-format
+msgid "%(num)d events removed from queue."
+msgstr "%(num)d événements retirés de la file."
+
+#: diytracker/blueprints/submissions.py:341
+#, python-format
+msgid "Discarded “%(title)s”."
+msgstr "« %(title)s » écarté."
+
+#: diytracker/blueprints/submissions.py:344
+#, python-format
+msgid "Unflagged “%(title)s” — it's back in the queue."
+msgstr "Signalement de « %(title)s » retiré — il est de retour dans la file."
+
+#: diytracker/blueprints/submissions.py:366
 msgid "Please provide all required venue details for a new venue."
 msgstr "Merci de renseigner toutes les informations requises pour un nouveau lieu."
 
-#: diytracker/blueprints/submissions.py:282
+#: diytracker/blueprints/submissions.py:372
 msgid "Venue already exists. Using existing venue."
 msgstr "Le lieu existe déjà. Utilisation du lieu existant."
 
-#: diytracker/blueprints/submissions.py:302
+#: diytracker/blueprints/submissions.py:392
 msgid "Event submitted successfully!"
 msgstr "Événement soumis avec succès !"
 
-#: diytracker/blueprints/submissions.py:320
+#: diytracker/blueprints/submissions.py:410
 #, python-format
 msgid "'%(name)s' is already in the list."
 msgstr "'%(name)s' est déjà dans la liste."
 
-#: diytracker/blueprints/submissions.py:325
+#: diytracker/blueprints/submissions.py:415
 #, python-format
 msgid "Genre '%(name)s' added."
 msgstr "Genre '%(name)s' ajouté."
 
-#: diytracker/blueprints/submissions.py:353
+#: diytracker/blueprints/submissions.py:443
 #, python-format
 msgid "Genre '%(name)s' removed."
 msgstr "Genre '%(name)s' supprimé."
@@ -781,12 +796,12 @@ msgid "MANAGE EVENTS"
 msgstr "GÉRER LES ÉVÉNEMENTS"
 
 #: templates/admin.html:11 templates/archive_index.html:25
-#: templates/event_queue.html:40
+#: templates/event_queue.html:45
 msgid "events"
 msgstr "événements"
 
 #: templates/admin.html:11 templates/archive_index.html:25
-#: templates/event_queue.html:40
+#: templates/event_queue.html:45
 msgid "event"
 msgstr "événement"
 
@@ -887,13 +902,14 @@ msgstr "ID"
 
 #: templates/_partials/event_cards.html:85 templates/admin.html:119
 #: templates/admin.html:148 templates/admin_statistics.html:37
-#: templates/event_page.html:73 templates/event_queue.html:49
-#: templates/promoter_dashboard.html:66
+#: templates/event_page.html:73 templates/event_queue.html:76
+#: templates/promoter_dashboard.html:66 templates/queue_duplicates.html:20
 msgid "Date"
 msgstr "Date"
 
 #: templates/admin.html:120 templates/admin.html:150
-#: templates/event_queue.html:53 templates/venues.html:45
+#: templates/event_queue.html:80 templates/queue_duplicates.html:24
+#: templates/venues.html:45
 msgid "Actions"
 msgstr "Actions"
 
@@ -901,7 +917,7 @@ msgstr "Actions"
 msgid "Fix"
 msgstr "Corriger"
 
-#: templates/admin.html:162 templates/event_queue.html:102
+#: templates/admin.html:162 templates/event_queue.html:133
 #: templates/promoter_dashboard.html:35 templates/venues.html:68
 msgid "Edit"
 msgstr "Modifier"
@@ -910,7 +926,7 @@ msgstr "Modifier"
 msgid "Delete this event?"
 msgstr "Supprimer cet événement ?"
 
-#: templates/admin.html:167 templates/event_queue.html:109
+#: templates/admin.html:167 templates/event_queue.html:141
 #: templates/genre_manage.html:52 templates/promoter_dashboard.html:40
 #: templates/venues.html:79 templates/venues.html:85
 msgid "Delete"
@@ -979,7 +995,8 @@ msgstr "Afficher les événements passés"
 
 #: templates/admin_statistics.html:36 templates/edit_event.html:14
 #: templates/event_page.html:3 templates/event_page.html:58
-#: templates/event_queue.html:50 templates/promoter_dashboard.html:65
+#: templates/event_queue.html:77 templates/promoter_dashboard.html:65
+#: templates/queue_duplicates.html:21
 msgid "Event"
 msgstr "Événement"
 
@@ -1157,8 +1174,9 @@ msgstr "Chercher par groupe, lieu ou ville"
 msgid "Band, venue or city"
 msgstr "Groupe, lieu ou ville"
 
-#: templates/calendar.html:54 templates/promoter_claim.html:72
-#: templates/search.html:3 templates/search.html:12 templates/search.html:29
+#: templates/calendar.html:54 templates/event_queue.html:34
+#: templates/promoter_claim.html:72 templates/search.html:3
+#: templates/search.html:12 templates/search.html:29
 msgid "Search"
 msgstr "Recherche"
 
@@ -1320,70 +1338,108 @@ msgid "Source"
 msgstr "Source"
 
 #: templates/event_queue.html:35
+msgid "Title, venue, city, organizer…"
+msgstr "Titre, lieu, ville, organisateur…"
+
+#: templates/event_queue.html:40
 msgid "Filter"
 msgstr "Filtrer"
 
-#: templates/event_queue.html:38
+#: templates/event_queue.html:43
 msgid "Reset"
 msgstr "Réinitialiser"
 
+#: templates/event_queue.html:52
+#, python-format
+msgid "%(num)d possible duplicates waiting for review"
+msgstr "%(num)d doublons possibles en attente de vérification"
+
+#: templates/event_queue.html:62
+msgid "With selected:"
+msgstr "Avec la sélection :"
+
+#: templates/event_queue.html:63
+msgid "Reason (optional)"
+msgstr "Raison (facultatif)"
+
+#: templates/event_queue.html:67
+msgid "Remove all selected events from the queue?"
+msgstr "Retirer tous les événements sélectionnés de la file ?"
+
+#: templates/event_queue.html:68
+msgid "Reject selected"
+msgstr "Rejeter la sélection"
+
 #: templates/_partials/footer_public.html:23
-#: templates/_partials/nav_backstage.html:10 templates/event_queue.html:52
+#: templates/_partials/nav_backstage.html:10 templates/event_queue.html:79
 #: templates/page_texts.html:30
 msgid "Genres"
 msgstr "Genres"
 
-#: templates/event_queue.html:63
+#: templates/event_queue.html:94 templates/queue_duplicates.html:7
 msgid "Possible duplicate"
 msgstr "Doublon possible"
 
-#: templates/event_queue.html:82
+#: templates/event_queue.html:113
 msgid "via"
 msgstr "via"
 
-#: templates/event_queue.html:98
+#: templates/event_queue.html:129
 msgid "Approve"
 msgstr "Approuver"
 
-#: templates/event_queue.html:109
-msgid "Remove this event from the queue?"
-msgstr "Retirer cet événement de la file ?"
-
-#: templates/event_queue.html:125
+#: templates/event_queue.html:157
 msgid "Date (YYYY-MM-DD)"
 msgstr "Date (AAAA-MM-JJ)"
 
-#: templates/event_queue.html:129
+#: templates/event_queue.html:161
 msgid "Doors Open (HH:MM)"
 msgstr "Ouverture des portes (HH:MM)"
 
-#: templates/event_queue.html:149
+#: templates/event_queue.html:181
 msgid "Postal Code"
 msgstr "Code postal"
 
-#: templates/event_queue.html:153
+#: templates/event_queue.html:185
 msgid "Street Address"
 msgstr "Adresse"
 
-#: templates/event_queue.html:161
+#: templates/event_queue.html:193
 msgid "Ticket URL"
 msgstr "URL billetterie"
 
-#: templates/event_queue.html:165
+#: templates/event_queue.html:197
 msgid "Source URL"
 msgstr "URL source"
 
-#: templates/event_queue.html:176
+#: templates/event_queue.html:208
 msgid "Approve with Changes"
 msgstr "Approuver avec modifications"
 
-#: templates/_partials/forms.html:51 templates/event_queue.html:180
+#: templates/_partials/forms.html:51 templates/event_queue.html:212
 msgid "Cancel"
 msgstr "Annuler"
 
-#: templates/event_queue.html:192
+#: templates/event_queue.html:226 templates/promoter_claim.html:90
+msgid "Previous"
+msgstr "Précédent"
+
+#: templates/event_queue.html:228 templates/promoter_claim.html:92
+#, python-format
+msgid "Page %(page)s of %(pages)s"
+msgstr "Page %(page)s sur %(pages)s"
+
+#: templates/event_queue.html:231 templates/promoter_claim.html:95
+msgid "Next"
+msgstr "Suivant"
+
+#: templates/event_queue.html:237
 msgid "No events awaiting approval."
 msgstr "Aucun événement en attente d'approbation."
+
+#: templates/event_queue.html:249
+msgid "Remove this event from the queue? Reason (optional):"
+msgstr "Retirer cet événement de la file ? Raison (facultatif) :"
 
 #: templates/genre.html:18
 #, python-format
@@ -1625,19 +1681,6 @@ msgstr "Chercher des événements, groupes ou lieux…"
 msgid "Clear"
 msgstr "Effacer"
 
-#: templates/promoter_claim.html:90
-msgid "Previous"
-msgstr "Précédent"
-
-#: templates/promoter_claim.html:92
-#, python-format
-msgid "Page %(page)s of %(pages)s"
-msgstr "Page %(page)s sur %(pages)s"
-
-#: templates/promoter_claim.html:95
-msgid "Next"
-msgstr "Suivant"
-
 #: templates/promoter_claim.html:100
 msgid "No events match your search."
 msgstr "Aucun événement ne correspond à ta recherche."
@@ -1719,6 +1762,48 @@ msgid ""
 msgstr ""
 "Pas encore d'événements avec tes labels. Choisis ton label en soumettant "
 "un concert, ou revendique un événement déjà au calendrier."
+
+#: templates/queue_duplicates.html:3
+msgid "Queue duplicates"
+msgstr "Doublons de la file"
+
+#: templates/queue_duplicates.html:8
+msgid "QUEUE DUPLICATES"
+msgstr "DOUBLONS DE LA FILE"
+
+#: templates/queue_duplicates.html:12
+msgid ""
+"Staged events that collided with something already on the calendar or in "
+"the queue. Discard the real duplicates; unflag false positives to send "
+"them back to the normal queue."
+msgstr ""
+"Événements en attente entrés en collision avec quelque chose déjà au "
+"calendrier ou dans la file. Écarte les vrais doublons ; retire le "
+"signalement des faux positifs pour les renvoyer dans la file normale."
+
+#: templates/queue_duplicates.html:23
+msgid "Collides with"
+msgstr "En collision avec"
+
+#: templates/queue_duplicates.html:43
+msgid "Discard this entry? It will not be published."
+msgstr "Écarter cette entrée ? Elle ne sera pas publiée."
+
+#: templates/queue_duplicates.html:43
+msgid "Discard"
+msgstr "Écarter"
+
+#: templates/queue_duplicates.html:50
+msgid "Unflag"
+msgstr "Retirer le signalement"
+
+#: templates/queue_duplicates.html:60
+msgid "Nothing flagged right now."
+msgstr "Rien de signalé pour le moment."
+
+#: templates/queue_duplicates.html:66
+msgid "Back to the queue"
+msgstr "Retour à la file"
 
 #: templates/search.html:3
 #, python-format
@@ -2375,4 +2460,7 @@ msgstr ""
 
 #~ msgid "Upcoming shows by %(label)s."
 #~ msgstr "Prochains concerts de %(label)s."
+
+#~ msgid "Remove this event from the queue?"
+#~ msgstr "Retirer cet événement de la file ?"
 

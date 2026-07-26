@@ -13,9 +13,12 @@ from flask import (
     url_for,
 )
 
+from diytracker.admin import queue_review
+from diytracker.admin.core import AdminError
 from diytracker.forms import DeleteScrapedEventForm, EventForm, GenreForm
 from diytracker.models import db, Genre, ScrapedEvent, Submitter
 from diytracker.services.auth import admin_required, login_required
+from diytracker.services.search import like_patterns, normalise_query
 from diytracker.services.cache import bust_cache
 from diytracker.services.events import (
     clean_genre_string,
@@ -33,7 +36,8 @@ from diytracker.utils import is_safe_link, resolve_canton
 
 bp = Blueprint("submissions", __name__)
 
-_ALLOWED_QUEUE_PARAMS = {"date_from", "date_to", "source"}
+_ALLOWED_QUEUE_PARAMS = {"date_from", "date_to", "source", "q", "page"}
+QUEUE_PAGE_SIZE = 50
 
 
 def _queue_redirect_args():
@@ -77,25 +81,39 @@ def _scraped_event_to_dict(rec):
     return data
 
 
-def parse_scraped_events(date_from=None, date_to=None, source=None):
-    """Query the ScrapedEvent table and filter events."""
+def parse_scraped_events(date_from=None, date_to=None, source=None, q=None, page=1):
+    """Pending queue rows within the filters, as (dicts, pagination)."""
     now = datetime.now().date()
     if date_from is None:
         date_from = now
     if date_to is None:
         date_to = now + relativedelta(months=2)
-    q = ScrapedEvent.query.filter(
-        ScrapedEvent.approved.is_(False),
-        # Flagged possible-duplicates are kept out of the web queue entirely;
-        # they're triaged in the admin TUI's "Queue duplicates" screen instead.
+    query = ScrapedEvent.query.filter(
+        ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
+        # Flagged possible-duplicates are kept out of the main web queue;
+        # they're triaged on /queue/duplicates or in the admin TUI.
         ScrapedEvent.needs_review.is_(False),
         ScrapedEvent.start_date >= date_from,
         ScrapedEvent.start_date <= date_to,
     )
     if source:
-        q = q.filter(ScrapedEvent.source == source)
-    candidates = q.order_by(ScrapedEvent.start_date.asc()).all()
-    return [_scraped_event_to_dict(rec) for rec in candidates]
+        query = query.filter(ScrapedEvent.source == source)
+    raw_q = normalise_query(q or "")
+    if raw_q:
+        for pattern in like_patterns(raw_q):
+            query = query.filter(
+                db.or_(
+                    ScrapedEvent.title.ilike(pattern, escape="\\"),
+                    ScrapedEvent.performers.ilike(pattern, escape="\\"),
+                    ScrapedEvent.venue_name.ilike(pattern, escape="\\"),
+                    ScrapedEvent.city.ilike(pattern, escape="\\"),
+                    ScrapedEvent.organizer.ilike(pattern, escape="\\"),
+                )
+            )
+    pagination = query.order_by(ScrapedEvent.start_date.asc()).paginate(
+        page=page, per_page=QUEUE_PAGE_SIZE, error_out=False
+    )
+    return [_scraped_event_to_dict(rec) for rec in pagination.items], pagination
 
 
 # Admin-only: approving a queue entry publishes it to the live calendar, and
@@ -115,10 +133,14 @@ def event_queue():
     filter_date_from = _parse_date("date_from")
     filter_date_to = _parse_date("date_to")
     filter_source = request.args.get("source", "").strip() or None
-    events = parse_scraped_events(
+    filter_q = request.args.get("q", "").strip() or None
+    page = request.args.get("page", 1, type=int)
+    events, pagination = parse_scraped_events(
         date_from=filter_date_from,
         date_to=filter_date_to,
         source=filter_source,
+        q=filter_q,
+        page=page,
     )
     if request.method == "POST":
         try:
@@ -126,7 +148,7 @@ def event_queue():
         except (TypeError, ValueError):
             scraped_id = None
         rec = db.session.get(ScrapedEvent, scraped_id) if scraped_id else None
-        if rec is None or rec.approved:
+        if rec is None or rec.status != ScrapedEvent.STATUS_PENDING:
             flash(_("Invalid event selection."))
             return redirect(url_for("submissions.event_queue"))
         data = _scraped_event_to_dict(rec)
@@ -204,7 +226,8 @@ def event_queue():
             flash(_("This event already exists."))
             return redirect(url_for("submissions.event_queue"))
         db.session.flush()
-        rec.approved = True
+        rec.status = ScrapedEvent.STATUS_PUBLISHED
+        rec.approved = True  # legacy safety net, one release
         rec.approved_at = datetime.now()
         rec.approved_event_id = new_event.id
         # The Event carries the approving admin as submitter_id; the scraped
@@ -226,13 +249,38 @@ def event_queue():
         flash(_("Event approved and added to calendar!"))
         return redirect(url_for("submissions.event_queue", **_queue_redirect_args()))
     now = datetime.now().date()
+    dup_count = ScrapedEvent.query.filter(
+        ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
+        ScrapedEvent.needs_review.is_(True),
+    ).count()
     return render_template(
         "event_queue.html",
         events=events,
+        pagination=pagination,
         filter_date_from=(filter_date_from or now).isoformat(),
         filter_date_to=(filter_date_to or (now + relativedelta(months=2))).isoformat(),
         filter_source=filter_source or "",
+        filter_q=filter_q or "",
+        dup_count=dup_count,
         delete_form=DeleteScrapedEventForm(),
+    )
+
+
+def _reject(scraped, actor, reason):
+    """Mark one pending row rejected and stage the audit entry."""
+    scraped.status = ScrapedEvent.STATUS_REJECTED
+    scraped.approved = True  # legacy safety net, one release
+    scraped.approved_at = datetime.now()
+    scraped.reject_reason = reason or None
+    record(
+        "queue.reject",
+        "scraped_event",
+        scraped.id,
+        actor=actor,
+        detail=(
+            f"title={scraped.title!r} source={scraped.source!r} "
+            f"url={scraped.url!r} reason={reason!r}"
+        ),
     )
 
 
@@ -243,18 +291,60 @@ def delete_scraped_event(scraped_id):
     if not form.validate_on_submit():
         abort(400)
     scraped = ScrapedEvent.query.get_or_404(scraped_id)
-    scraped.approved = True
-    scraped.approved_at = datetime.now()
-    record(
-        "queue.reject",
-        "scraped_event",
-        scraped.id,
-        actor=db.session.get(Submitter, session["user_id"]),
-        detail=f"title={scraped.title!r} source={scraped.source!r} url={scraped.url!r}",
-    )
+    reason = request.form.get("reject_reason", "").strip()[:300]
+    _reject(scraped, db.session.get(Submitter, session["user_id"]), reason)
     db.session.commit()
     flash(_("Event removed from queue."))
     return redirect(url_for("submissions.event_queue", **_queue_redirect_args()))
+
+
+@bp.route("/queue/bulk-reject", methods=["POST"])
+@admin_required
+def bulk_reject_scraped_events():
+    form = DeleteScrapedEventForm()
+    if not form.validate_on_submit():
+        abort(400)
+    ids = [int(x) for x in request.form.getlist("scraped_ids") if x.isdigit()]
+    reason = request.form.get("reject_reason", "").strip()[:300]
+    actor = db.session.get(Submitter, session["user_id"])
+    rows = ScrapedEvent.query.filter(
+        ScrapedEvent.id.in_(ids),
+        ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
+    ).all()
+    for scraped in rows:
+        _reject(scraped, actor, reason)
+    db.session.commit()
+    flash(_("%(num)d events removed from queue.", num=len(rows)))
+    return redirect(url_for("submissions.event_queue", **_queue_redirect_args()))
+
+
+@bp.route("/queue/duplicates")
+@admin_required
+def queue_duplicates():
+    return render_template(
+        "queue_duplicates.html",
+        rows=queue_review.list_flagged(),
+        delete_form=DeleteScrapedEventForm(),
+    )
+
+
+@bp.route("/queue/duplicates/<int:scraped_id>/<action>", methods=["POST"])
+@admin_required
+def resolve_queue_duplicate(scraped_id, action):
+    form = DeleteScrapedEventForm()
+    if not form.validate_on_submit() or action not in ("discard", "unflag"):
+        abort(400)
+    actor = db.session.get(Submitter, session["user_id"])
+    try:
+        if action == "discard":
+            row = queue_review.discard(scraped_id, actor=actor)
+            flash(_("Discarded “%(title)s”.", title=row.title))
+        else:
+            row = queue_review.unflag(scraped_id, actor=actor)
+            flash(_("Unflagged “%(title)s” — it's back in the queue.", title=row.title))
+    except AdminError as exc:
+        flash(str(exc))
+    return redirect(url_for("submissions.queue_duplicates"))
 
 
 @bp.route("/submit", methods=["GET", "POST"])
