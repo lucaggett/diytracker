@@ -57,6 +57,15 @@ ModalScreen {
     color: $error;
 }
 
+.modal-field-label {
+    color: $text-muted;
+    margin-top: 1;
+}
+
+#ops-status {
+    margin: 1 2;
+}
+
 .modal-buttons {
     height: 3;
     align-horizontal: right;

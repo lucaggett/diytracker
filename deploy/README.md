@@ -7,14 +7,14 @@ of those changes, update the paths in both files here.
 ## systemd unit (`diytracker.service`)
 
 Runs gunicorn in the foreground under systemd instead of the old
-`manage.py start` daemonization. First-time switch-over:
+the old `manage.py start` daemonization. First-time switch-over:
 
 ```bash
 cd /home/diytrackeruser/diytracker
 uv sync                                   # make sure .venv/bin/gunicorn exists
 
 # stop the old self-daemonized gunicorn if it's still running
-# (manage.py's start/stop commands were removed when systemd took over)
+# (the tool's start/stop commands were removed when systemd took over)
 kill -TERM "$(cat instance/gunicorn.pid)" 2>/dev/null || true
 
 sudo cp deploy/diytracker.service /etc/systemd/system/
@@ -37,7 +37,7 @@ HUP reload respawns the workers, and the scrape scheduler only starts in
 the first worker the master ever forks, so a reload would silently kill
 the scraper. Restart instead.
 
-Server lifecycle is systemctl's job; `manage.py` only keeps `logs` and
+Server lifecycle is systemctl's job; `db_admin_cli.py` only keeps `logs` and
 `user …`.
 
 ## Remote deploy (`deploy.sh`, `sudoers-diytracker`)

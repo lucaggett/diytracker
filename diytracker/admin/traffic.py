@@ -1,4 +1,5 @@
-"""Traffic analysis: behavioural bot inference and event view distribution.
+"""Traffic analysis: behavioural bot inference, offenders, origin networks,
+device mix and event view distribution.
 
 Everything is distilled from the access logs already on disk (nginx in
 production, gunicorn's own log in dev) plus the ScrapeSuspect rows written by
@@ -24,6 +25,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func
 
 from diytracker.admin.core import ACCESS_LOG, AdminError, require_schema
+from diytracker.admin.rdns import resolve_many
 from diytracker.models import Event, EventDailyViews, ScrapeSuspect, db
 from diytracker.services.analytics import (
     _build_valid_dates,
@@ -32,10 +34,14 @@ from diytracker.services.analytics import (
     find_log_files,
 )
 
+# Capped at 90 days on purpose: an "all logs" window grew with every rotated
+# file on disk and mixed year-old traffic into a picture of what the site is
+# doing now. "3mo" is analytics._date_range()'s own key for today-89 days, so
+# the log-line prefilter keeps doing the date work.
 TIMEFRAMES = {
     "7d": "last 7 days",
     "30d": "last 30 days",
-    "all": "all logs",
+    "3mo": "last 90 days",
 }
 
 BOT_THRESHOLD = 4.0  # matches scrape_detection.FLAG_THRESHOLD
@@ -76,6 +82,56 @@ _PROBE_RE = re.compile(
 )
 _EVENT_PAGE_RE = re.compile(r"^/events/(\d+)/?$")
 _HONEYPOT_PREFIX = "/events/archive"  # scrape_detection's trap path
+
+# Buckets worth chasing in the scrapers view. Crawlers are included: they are
+# self-declared rather than stealthy, but they are still the traffic.
+_OFFENDER_BUCKETS = ("crawler", "bot", "suspicious")
+REPEAT_DAYS = 3  # distinct active days before an offender counts as recurring
+
+# Suffixes where the registrable name is three labels, not two, so
+# "foo.example.co.uk" doesn't collapse to "co.uk".
+_MULTI_SUFFIXES = frozenset(
+    {
+        "co.uk",
+        "org.uk",
+        "ac.uk",
+        "gov.uk",
+        "co.jp",
+        "com.au",
+        "net.au",
+        "com.br",
+        "co.nz",
+        "co.za",
+        "com.cn",
+        "com.tr",
+        "com.mx",
+    }
+)
+
+# Device inference from the UA string. Regex, like every other signal in this
+# module — a UA-parsing dependency would be a lot of machinery for three
+# buckets, and the strings that matter here are stable.
+_TABLET_RE = re.compile(r"iPad|Tablet|PlayBook|Silk", re.IGNORECASE)
+_MOBILE_RE = re.compile(r"Mobi|iPhone|iPod|Android|Windows Phone|IEMobile")
+_OS_PATTERNS = (
+    ("Android", re.compile(r"Android")),
+    ("iOS", re.compile(r"iPhone|iPad|iPod|CPU OS \d")),
+    ("Windows", re.compile(r"Windows NT|Windows Phone")),
+    ("ChromeOS", re.compile(r"CrOS")),
+    ("macOS", re.compile(r"Macintosh|Mac OS X")),
+    ("Linux", re.compile(r"Linux|X11|Ubuntu")),
+)
+# Order matters: every Chromium UA also says Safari, Edge says Chrome, and
+# Samsung Internet says both — so the most specific claim wins.
+_BROWSER_PATTERNS = (
+    ("Edge", re.compile(r"Edg[A-Z]?/")),
+    ("Samsung Internet", re.compile(r"SamsungBrowser")),
+    ("Opera", re.compile(r"OPR/|Opera")),
+    ("Vivaldi", re.compile(r"Vivaldi")),
+    ("Firefox", re.compile(r"Firefox/|FxiOS")),
+    ("Chrome", re.compile(r"Chrome/|CriOS|Chromium")),
+    ("Safari", re.compile(r"Safari/")),
+)
 
 _SCHEMA_HINT = "Run the release's one-shot migration script first."
 
@@ -118,6 +174,84 @@ class TrafficReport:
     top_paths: list = field(default_factory=list)  # (path, count)
     bucket_counts: dict = field(default_factory=dict)  # bucket -> n IPs
     ips: list = field(default_factory=list)  # IpProfile, worst first
+
+
+@dataclass
+class ScraperRow:
+    ip: str
+    bucket: str  # crawler | bot | suspicious
+    score: float
+    requests: int
+    share: float  # of all requests in the window, 0..1
+    peak_per_min: int
+    active_days: int
+    first_seen: str
+    last_seen: str
+    honeypot: bool = False
+    probe: bool = False
+    live_flagged: bool = False  # also flagged by scrape_detection
+    signals: list = field(default_factory=list)
+    top_paths: list = field(default_factory=list)  # (path, count)
+    host: str = ""  # rDNS name, "" when unresolved
+    net24: str = ""
+    ua_sample: str = ""
+
+
+@dataclass
+class ScrapersReport:
+    timeframe_label: str
+    total_requests: int
+    offender_requests: int  # from crawler/bot/suspicious IPs
+    human_requests: int
+    repeat_offenders: int  # offenders seen on >= REPEAT_DAYS distinct days
+    undetected_live: int  # live-flagged here but not scored as a bot
+    unresolved_hosts: int  # rows still waiting for a PTR lookup
+    rows: list = field(default_factory=list)  # ScraperRow, worst first
+
+
+@dataclass
+class HostRow:
+    domain: str  # registrable rDNS domain, or the /24 when there is no name
+    named: bool  # False when `domain` is the network fallback
+    n_ips: int
+    requests: int
+    share: float  # of all requests in the window, 0..1
+    buckets: dict = field(default_factory=dict)  # bucket -> n IPs
+    offender_requests: int = 0  # from crawler/bot/suspicious IPs
+    human_requests: int = 0
+    n_net24: int = 0
+    top_net24: str = ""
+    sample_ips: list = field(default_factory=list)  # (ip, bucket, requests)
+
+
+@dataclass
+class HostsReport:
+    timeframe_label: str
+    total_requests: int
+    total_ips: int
+    resolved_ips: int
+    pending_ips: int  # over the lookup budget, resolved on a later refresh
+    offenders: list = field(default_factory=list)  # HostRow, most bot traffic
+    humans: list = field(default_factory=list)  # HostRow, most human traffic
+
+
+@dataclass
+class DeviceRow:
+    label: str
+    n_ips: int
+    requests: int
+    share: float  # of the breakdown's IPs, 0..1
+
+
+@dataclass
+class DevicesReport:
+    timeframe_label: str
+    n_ips: int  # human-bucket IPs the breakdown is built from
+    n_browser_unclear: int  # browser-UA IPs that scored as unclear
+    requests: int
+    form_factors: list = field(default_factory=list)  # DeviceRow
+    systems: list = field(default_factory=list)
+    browsers: list = field(default_factory=list)
 
 
 @dataclass
@@ -291,22 +425,42 @@ def _bucket(s, score):
     return "unclear"
 
 
-def analyze(timeframe="7d", limit=50):
-    """Scan the access logs once and score every client IP.
+class _Scan:
+    """One pass over the access logs: per-IP behaviour plus daily totals.
 
-    Needs an app context (for the ScrapeSuspect cross-reference). `limit`
-    caps the per-IP list; day trend and totals always cover everything.
+    Shared by every view that needs raw log data, so cycling views in the TUI
+    costs one scan each rather than one scan per statistic.
     """
+
+    __slots__ = (
+        "timeframe",
+        "per_ip",
+        "day_requests",
+        "day_ips",
+        "status_counts",
+        "path_counts",
+    )
+
+    def __init__(self, timeframe):
+        self.timeframe = timeframe
+        self.per_ip = {}
+        self.day_requests = Counter()
+        self.day_ips = {}
+        self.status_counts = Counter()
+        self.path_counts = Counter()
+
+    @property
+    def total_requests(self):
+        return sum(self.day_requests.values())
+
+
+def _scan(timeframe):
+    """Parse the logs for *timeframe*; raises AdminError on an empty window."""
     if timeframe not in TIMEFRAMES:
         raise AdminError(f"Unknown timeframe {timeframe!r}.")
     files = _log_files()
     valid_dates = _build_valid_dates(*_date_range(timeframe))
-
-    per_ip = {}
-    day_requests = Counter()
-    day_ips = {}
-    status_counts = Counter()
-    path_counts = Counter()
+    scan = _Scan(timeframe)
 
     for line in _iter_filtered_lines(files, valid_dates):
         parsed = _parse_line(line)
@@ -315,7 +469,7 @@ def analyze(timeframe="7d", limit=50):
         ip, ts, path, status, ref, ua = parsed
         if path == "/admin" or path.startswith("/admin/"):
             continue  # _is_admin_request only understands the quoted format
-        s = per_ip.setdefault(ip, _IpStats())
+        s = scan.per_ip.setdefault(ip, _IpStats())
         s.times.append(ts)
         s.uas.add(ua)
         s.paths[path] += 1
@@ -332,16 +486,40 @@ def analyze(timeframe="7d", limit=50):
         if _PROBE_RE.search(path):
             s.probe = True
         day = ts.date()
-        day_requests[day] += 1
-        day_ips.setdefault(day, set()).add(ip)
-        status_counts[f"{status[0]}xx"] += 1
-        path_counts[path] += 1
+        scan.day_requests[day] += 1
+        scan.day_ips.setdefault(day, set()).add(ip)
+        scan.status_counts[f"{status[0]}xx"] += 1
+        scan.path_counts[path] += 1
 
-    if not per_ip:
+    if not scan.per_ip:
         raise AdminError(
             f"No log entries found for {TIMEFRAMES[timeframe]} "
             f"({len(files)} log file(s) checked)."
         )
+
+    for s in scan.per_ip.values():
+        s.times.sort()
+    return scan
+
+
+def _classify(scan):
+    """{ip: (bucket, score, signals)} for every IP in the scan."""
+    verdicts = {}
+    for ip, s in scan.per_ip.items():
+        score, signals = _score_ip(s)
+        verdicts[ip] = (_bucket(s, score), score, signals)
+    return verdicts
+
+
+def analyze(timeframe="7d", limit=50):
+    """Scan the access logs once and score every client IP.
+
+    Needs an app context (for the ScrapeSuspect cross-reference). `limit`
+    caps the per-IP list; day trend and totals always cover everything.
+    """
+    scan = _scan(timeframe)
+    per_ip = scan.per_ip
+    verdicts = _classify(scan)
 
     require_schema(db, (ScrapeSuspect,), _SCHEMA_HINT)
     suspects = {row.ip: row for row in ScrapeSuspect.query.all()}
@@ -350,9 +528,7 @@ def analyze(timeframe="7d", limit=50):
     human_days = Counter()  # date -> humans active that day
     bucket_counts = Counter()
     for ip, s in per_ip.items():
-        s.times.sort()
-        score, signals = _score_ip(s)
-        bucket = _bucket(s, score)
+        bucket, score, signals = verdicts[ip]
         bucket_counts[bucket] += 1
         if bucket == "human":
             for day in {t.date() for t in s.times}:
@@ -384,21 +560,310 @@ def analyze(timeframe="7d", limit=50):
     days = [
         DayRow(
             date=day.isoformat(),
-            requests=day_requests[day],
-            unique_ips=len(day_ips[day]),
+            requests=scan.day_requests[day],
+            unique_ips=len(scan.day_ips[day]),
             est_humans=human_days.get(day, 0),
         )
-        for day in sorted(day_requests)
+        for day in sorted(scan.day_requests)
     ]
     return TrafficReport(
         timeframe_label=TIMEFRAMES[timeframe],
-        total_requests=sum(day_requests.values()),
+        total_requests=scan.total_requests,
         total_ips=len(per_ip),
         days=days,
-        status_counts=dict(sorted(status_counts.items())),
-        top_paths=path_counts.most_common(10),
+        status_counts=dict(sorted(scan.status_counts.items())),
+        top_paths=scan.path_counts.most_common(10),
         bucket_counts=dict(bucket_counts),
         ips=profiles[:limit],
+    )
+
+
+def _ua_sample(s):
+    return next((ua for ua in sorted(s.uas) if ua and ua != "-"), "-")
+
+
+def _net24(ip):
+    """The IP's /24 (or /48 for v6) as a display string."""
+    if ":" in ip:
+        return ":".join(ip.split(":")[:3]) + "::/48"
+    parts = ip.split(".")
+    if len(parts) != 4:
+        return ip
+    return ".".join(parts[:3]) + ".0/24"
+
+
+def _registrable(hostname):
+    """The registrable domain of a PTR name, e.g. ec2-1-2.eu.amazonaws.com ->
+    amazonaws.com. Suffix-list-free: two labels, three for the handful of
+    two-level ccTLDs in _MULTI_SUFFIXES."""
+    labels = hostname.strip(".").lower().split(".")
+    if len(labels) <= 2:
+        return ".".join(labels)
+    if ".".join(labels[-2:]) in _MULTI_SUFFIXES:
+        return ".".join(labels[-3:])
+    return ".".join(labels[-2:])
+
+
+def _device(ua):
+    """(form factor, OS, browser) inferred from a UA string.
+
+    Only meaningful for browser UAs; scripted clients land in ("other",
+    "other", "other") and callers keep them out of the breakdown.
+    """
+    if not ua or ua == "-" or _SCRIPTED_RE.search(ua) or _CRAWLER_RE.search(ua):
+        return "other", "other", "other"
+    if _TABLET_RE.search(ua):
+        form = "tablet"
+    elif _MOBILE_RE.search(ua):
+        form = "mobile"
+    elif ua.lower().startswith("mozilla"):
+        form = "desktop"
+    else:
+        form = "other"
+    system = next((name for name, rx in _OS_PATTERNS if rx.search(ua)), "other")
+    browser = next((name for name, rx in _BROWSER_PATTERNS if rx.search(ua)), "other")
+    return form, system, browser
+
+
+def _breakdown(counter_ips, counter_requests):
+    """DeviceRows for one dimension, biggest first."""
+    total = sum(counter_ips.values())
+    return [
+        DeviceRow(
+            label=label,
+            n_ips=n,
+            requests=counter_requests[label],
+            share=n / total if total else 0.0,
+        )
+        for label, n in counter_ips.most_common()
+    ]
+
+
+def scrapers(timeframe="7d", limit=50):
+    """The offenders: every IP scored as a crawler, bot or suspicious.
+
+    Same scan and scoring as analyze(), narrowed to the traffic worth acting
+    on and enriched with what makes a decision possible — how much of the
+    window's traffic each one is, how hard it hit at peak, whether it keeps
+    coming back, and where it resolves to. Needs an app context.
+    """
+    scan = _scan(timeframe)
+    verdicts = _classify(scan)
+    require_schema(db, (ScrapeSuspect,), _SCHEMA_HINT)
+    suspects = {row.ip for row in ScrapeSuspect.query.with_entities(ScrapeSuspect.ip)}
+
+    offenders = [
+        (ip, s, *verdicts[ip])
+        for ip, s in scan.per_ip.items()
+        if verdicts[ip][0] in _OFFENDER_BUCKETS
+    ]
+    offenders.sort(key=lambda item: (-item[3], -len(item[1].times), item[0]))
+
+    total = scan.total_requests
+    offender_requests = sum(len(s.times) for _ip, s, *_rest in offenders)
+    human_requests = sum(
+        len(s.times) for ip, s in scan.per_ip.items() if verdicts[ip][0] == "human"
+    )
+    # Disagreement worth looking at: the live detector flagged it, but the
+    # behavioural score over the whole window doesn't even find it
+    # suspicious.
+    undetected_live = sum(
+        1
+        for ip in suspects
+        if ip in verdicts and verdicts[ip][0] not in _OFFENDER_BUCKETS
+    )
+
+    shown = offenders[:limit]
+    hosts_by_ip = resolve_many([ip for ip, *_rest in shown])
+
+    rows = []
+    repeat = 0
+    for ip, s, bucket, score, signals in shown:
+        active_days = len({t.date() for t in s.times})
+        if active_days >= REPEAT_DAYS:
+            repeat += 1
+        rows.append(
+            ScraperRow(
+                ip=ip,
+                bucket=bucket,
+                score=round(score, 1),
+                requests=len(s.times),
+                share=len(s.times) / total if total else 0.0,
+                peak_per_min=_max_per_minute(s.times),
+                active_days=active_days,
+                first_seen=s.times[0].isoformat(sep=" ", timespec="seconds"),
+                last_seen=s.times[-1].isoformat(sep=" ", timespec="seconds"),
+                honeypot=s.honeypot,
+                probe=s.probe,
+                live_flagged=ip in suspects,
+                signals=signals,
+                top_paths=s.paths.most_common(5),
+                host=hosts_by_ip.get(ip) or "",
+                net24=_net24(ip),
+                ua_sample=_ua_sample(s),
+            )
+        )
+    return ScrapersReport(
+        timeframe_label=TIMEFRAMES[timeframe],
+        total_requests=total,
+        offender_requests=offender_requests,
+        human_requests=human_requests,
+        repeat_offenders=repeat,
+        undetected_live=undetected_live,
+        unresolved_hosts=sum(1 for row in rows if not row.host),
+        rows=rows,
+    )
+
+
+class _HostStats:
+    __slots__ = ("ips", "requests", "buckets", "offender_requests", "human_requests")
+
+    def __init__(self):
+        self.ips = []  # (ip, bucket, requests)
+        self.requests = 0
+        self.buckets = Counter()
+        self.offender_requests = 0
+        self.human_requests = 0
+
+
+def hosts(timeframe="7d", limit=50):
+    """Where the traffic comes from, grouped by rDNS domain and /24.
+
+    Two groupings because either alone lies: a PTR name says who owns the
+    address but is missing for plenty of hosts, and a /24 catches one scraper
+    cycling through a subnet but says nothing about whose subnet it is. So a
+    row is keyed by the registrable domain when there is a name and by the /24
+    when there isn't, and `named` says which.
+
+    Lookups run on a budget (see admin/rdns.py); addresses over it are counted
+    in `pending_ips` and get their names on a later refresh. Needs an app
+    context.
+    """
+    scan = _scan(timeframe)
+    verdicts = _classify(scan)
+
+    by_requests = sorted(
+        scan.per_ip.items(), key=lambda item: -len(item[1].times)
+    )  # spend the lookup budget on the busiest addresses
+    resolved = resolve_many([ip for ip, _s in by_requests])
+
+    groups = {}
+    named = {}
+    nets = {}
+    pending = 0
+    for ip, s in by_requests:
+        hostname = resolved.get(ip)
+        if hostname:
+            domain = _registrable(hostname)
+        else:
+            # No name — group by network instead of dumping every unresolved
+            # address into one bucket. On a site with thousands of visitors
+            # the lookup budget takes many refreshes to catch up, and a single
+            # "(pending)" row that big says nothing at all.
+            domain = _net24(ip)
+            if ip not in resolved:
+                pending += 1
+        named[domain] = bool(hostname)
+        bucket = verdicts[ip][0]
+        n = len(s.times)
+        group = groups.setdefault(domain, _HostStats())
+        group.ips.append((ip, bucket, n))
+        group.requests += n
+        group.buckets[bucket] += 1
+        if bucket in _OFFENDER_BUCKETS:
+            group.offender_requests += n
+        elif bucket == "human":
+            group.human_requests += n
+        nets.setdefault(domain, Counter())[_net24(ip)] += n
+
+    total = scan.total_requests
+
+    def row(domain, group):
+        net_counts = nets[domain]
+        return HostRow(
+            domain=domain,
+            named=named[domain],
+            n_ips=len(group.ips),
+            requests=group.requests,
+            share=group.requests / total if total else 0.0,
+            buckets=dict(group.buckets),
+            offender_requests=group.offender_requests,
+            human_requests=group.human_requests,
+            n_net24=len(net_counts),
+            top_net24=net_counts.most_common(1)[0][0],
+            sample_ips=sorted(group.ips, key=lambda item: -item[2])[:10],
+        )
+
+    rows = [row(domain, group) for domain, group in groups.items()]
+    offenders = sorted(
+        (r for r in rows if r.offender_requests),
+        key=lambda r: (-r.offender_requests, -r.n_ips, r.domain),
+    )
+    humans = sorted(
+        (r for r in rows if r.human_requests),
+        key=lambda r: (-r.human_requests, -r.n_ips, r.domain),
+    )
+    return HostsReport(
+        timeframe_label=TIMEFRAMES[timeframe],
+        total_requests=total,
+        total_ips=len(scan.per_ip),
+        resolved_ips=sum(1 for ip in scan.per_ip if resolved.get(ip)),
+        pending_ips=pending,
+        offenders=offenders[:limit],
+        humans=humans[:limit],
+    )
+
+
+def devices(timeframe="7d"):
+    """What the human traffic browses with: form factor, OS, browser.
+
+    The unit is an IP over the window, not a person: an office behind one NAT
+    counts once, a phone changing cell counts twice. Read the shares, not the
+    absolutes. IPs that look like a browser but scored as `unclear` are
+    counted separately rather than folded in, so the number stays honest about
+    what it is built from. Needs an app context (via the shared classifier).
+    """
+    scan = _scan(timeframe)
+    verdicts = _classify(scan)
+
+    form_ips, form_reqs = Counter(), Counter()
+    os_ips, os_reqs = Counter(), Counter()
+    browser_ips, browser_reqs = Counter(), Counter()
+    n_ips = requests = 0
+    browser_unclear = 0
+
+    for ip, s in scan.per_ip.items():
+        bucket = verdicts[ip][0]
+        ua = _ua_sample(s)
+        form, system, browser = _device(ua)
+        if bucket != "human":
+            if bucket == "unclear" and form != "other":
+                browser_unclear += 1
+            continue
+        n = len(s.times)
+        n_ips += 1
+        requests += n
+        form_ips[form] += 1
+        form_reqs[form] += n
+        os_ips[system] += 1
+        os_reqs[system] += n
+        browser_ips[browser] += 1
+        browser_reqs[browser] += n
+
+    if not n_ips:
+        raise AdminError(
+            f"No human-classified traffic in {TIMEFRAMES[timeframe]} — "
+            "nothing to break down by device."
+        )
+
+    return DevicesReport(
+        timeframe_label=TIMEFRAMES[timeframe],
+        n_ips=n_ips,
+        n_browser_unclear=browser_unclear,
+        requests=requests,
+        form_factors=_breakdown(form_ips, form_reqs),
+        systems=_breakdown(os_ips, os_reqs),
+        browsers=_breakdown(browser_ips, browser_reqs),
     )
 
 

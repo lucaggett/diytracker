@@ -16,17 +16,20 @@ from diytracker.admin.tui.screens import (
     GenreDedupScreen,
     LabelsScreen,
     LogsScreen,
+    OpsScreen,
     QueueDupScreen,
     StatsScreen,
     TrafficScreen,
     UsersScreen,
     VenueDedupScreen,
+    VenuesScreen,
 )
 
 MENU = [
     ("users", "Users", UsersScreen),
     ("events", "Events", EventsScreen),
     ("labels", "Labels", LabelsScreen),
+    ("venues", "Venues", VenuesScreen),
     ("venue-dedup", "Venue dedup", VenueDedupScreen),
     ("event-dedup", "Event dedup", EventDedupScreen),
     ("genre-dedup", "Genre dedup", GenreDedupScreen),
@@ -34,6 +37,7 @@ MENU = [
     ("stats", "Stats", StatsScreen),
     ("traffic", "Traffic", TrafficScreen),
     ("audit", "Audit log", AuditScreen),
+    ("ops", "Ops", OpsScreen),
     ("db", "Database", DatabaseScreen),
     ("logs", "Logs", LogsScreen),
 ]

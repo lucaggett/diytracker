@@ -1,28 +1,53 @@
-"""Venue dedup logic: scan for candidates, merge one group at a time.
+"""Venue logic for the admin tool: browse and edit venues, plus the dedup
+scan/merge.
 
 The old CLI interleaved scanning, printing, and input() in one loop;
 here scan() returns a plan and merge_venue_group() applies one merge, so
 the TUI can rescan after each apply (a merge can backfill a missing city
 and reveal a new exact match, so plans go stale after every merge).
+
+Nothing here ever returns `Venue.accessibility_token`. That link lets its
+holder overwrite a venue's accessibility answers with no history, so it stays
+out of admin listings and terminal scrollback exactly as it stays off public
+pages (see CLAUDE.md) — callers get `has_token` and nothing more.
 """
 
 from dataclasses import dataclass, field
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from diytracker.admin.core import AdminError, require_schema
 from diytracker.models import Event, Venue, VenueAccessibility, db
+from diytracker.services.search import like_patterns, normalise_query
 from diytracker.services.venue import (
     find_dedup_candidates,
     merge_group,
     select_survivor,
 )
+from diytracker.utils import resolve_canton
+
+EDITABLE_FIELDS = ("name", "address", "city", "canton", "plz", "coords")
+REQUIRED_FIELDS = ("name", "city", "plz")  # nullable=False on the model
 
 
 @dataclass
 class VenueInfo:
     id: int
     summary: str
+
+
+@dataclass
+class VenueRow:
+    id: int
+    name: str
+    city: str
+    canton: str
+    plz: str
+    address: str
+    coords: str
+    n_events: int
+    has_token: bool  # never the token itself
+    a11y_updated: str  # "" when the venue has no accessibility record
 
 
 @dataclass
@@ -92,6 +117,112 @@ def _check_schema():
         "Run the scripts in migrations/ first "
         "(e.g. migrate_add_seo_columns.py), then rerun dedup.",
     )
+
+
+def _venue_row(venue, n_events, a11y_updated):
+    return VenueRow(
+        id=venue.id,
+        name=venue.name or "",
+        city=(venue.city or "").strip(),
+        canton=venue.canton or "",
+        plz=(venue.plz or "").strip(),
+        address=(venue.address or "").strip(),
+        coords=(venue.coords or "").strip(),
+        n_events=n_events,
+        has_token=bool(venue.accessibility_token),
+        a11y_updated=a11y_updated.strftime("%Y-%m-%d") if a11y_updated else "",
+    )
+
+
+def _a11y_dates():
+    return dict(
+        db.session.query(
+            VenueAccessibility.venue_id, VenueAccessibility.updated_at
+        ).all()
+    )
+
+
+def _get_venue(venue_id):
+    venue = db.session.get(Venue, venue_id)
+    if venue is None:
+        raise AdminError(f"No venue with id {venue_id}.")
+    return venue
+
+
+def list_venues(search=None, limit=200):
+    """Venues matching every term of *search* (name, city, canton, PLZ)."""
+    query = Venue.query
+    for pattern in like_patterns(normalise_query(search)):
+        query = query.filter(
+            or_(
+                Venue.name.ilike(pattern, escape="\\"),
+                Venue.city.ilike(pattern, escape="\\"),
+                Venue.canton.ilike(pattern, escape="\\"),
+                Venue.plz.ilike(pattern, escape="\\"),
+            )
+        )
+    venues = query.order_by(Venue.name.asc()).limit(limit).all()
+    counts = _event_counts()
+    a11y = _a11y_dates()
+    return [
+        _venue_row(venue, counts.get(venue.id, 0), a11y.get(venue.id))
+        for venue in venues
+    ]
+
+
+def get_venue(venue_id):
+    venue = _get_venue(venue_id)
+    counts = _event_counts()
+    return _venue_row(venue, counts.get(venue.id, 0), _a11y_dates().get(venue.id))
+
+
+def update_venue(venue_id, **fields):
+    """Update any of EDITABLE_FIELDS on one venue; returns the fresh row.
+
+    The canton goes through resolve_canton() like every other write path, so
+    typing "Zürich" stores ZH rather than a value the canton pages can't
+    filter on.
+    """
+    unknown = set(fields) - set(EDITABLE_FIELDS)
+    if unknown:
+        raise AdminError(f"Not an editable venue field: {', '.join(sorted(unknown))}.")
+    venue = _get_venue(venue_id)
+
+    values = {key: (value or "").strip() for key, value in fields.items()}
+    for key in REQUIRED_FIELDS:
+        if key in values and not values[key]:
+            raise AdminError(f"{key.capitalize()} cannot be empty.")
+
+    if "canton" in values:
+        city = values.get("city", venue.city or "")
+        values["canton"] = (resolve_canton(values["canton"], city) or "").upper()
+
+    for key, value in values.items():
+        # Optional columns store NULL rather than "" when cleared; the
+        # required ones were rejected above if empty.
+        setattr(venue, key, value if key in REQUIRED_FIELDS else (value or None))
+    db.session.commit()
+    return get_venue(venue_id)
+
+
+def delete_venue(venue_id):
+    """Delete a venue that has no events left, and its accessibility record.
+
+    Refuses while events point at it: deleting then would either orphan them
+    or take real listings off the calendar. Merging is what that case wants.
+    """
+    venue = _get_venue(venue_id)
+    n_events = _event_counts().get(venue.id, 0)
+    if n_events:
+        raise AdminError(
+            f"Venue #{venue.id} still has {n_events} event(s). "
+            "Merge it in Venue dedup, or repoint the events first."
+        )
+    name = venue.name
+    VenueAccessibility.query.filter_by(venue_id=venue.id).delete()
+    db.session.delete(venue)
+    db.session.commit()
+    return name
 
 
 def scan():

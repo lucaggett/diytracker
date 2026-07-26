@@ -3,10 +3,13 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from sqlalchemy import or_
+
 from diytracker.admin.core import AdminError
 from diytracker.services.audit import record
-from diytracker.models import Event, db
+from diytracker.models import Event, Submitter, Venue, db
 from diytracker.services.cache import bust_cache
+from diytracker.services.search import like_patterns, normalise_query
 from diytracker.services.events import detach_scrape_approvals
 from diytracker.services.event_dedup import (
     find_event_dedup_candidates,
@@ -67,8 +70,26 @@ def _get_event(event_id):
     return event
 
 
-def list_events(include_past=False, limit=20):
+def list_events(include_past=False, limit=20, search=None):
+    """Events, soonest first. *search* ANDs its terms across name, acts,
+    genre, venue and submitter — same dialect as the site search."""
     q = Event.query
+    patterns = like_patterns(normalise_query(search))
+    if patterns:
+        q = q.outerjoin(Venue, Event.venue_id == Venue.id).outerjoin(
+            Submitter, Event.submitter_id == Submitter.id
+        )
+        for pattern in patterns:
+            q = q.filter(
+                or_(
+                    Event.name.ilike(pattern, escape="\\"),
+                    Event.acts.ilike(pattern, escape="\\"),
+                    Event.genre.ilike(pattern, escape="\\"),
+                    Venue.name.ilike(pattern, escape="\\"),
+                    Venue.city.ilike(pattern, escape="\\"),
+                    Submitter.email.ilike(pattern, escape="\\"),
+                )
+            )
     if include_past:
         q = q.order_by(Event.date.desc())
     else:

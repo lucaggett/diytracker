@@ -4,8 +4,8 @@
 Run with no arguments for the interactive TUI (users, events, dedup,
 stats, database, logs). A minimal CLI remains for scripted usage:
 
-    uv run python manage.py                      # TUI
-    uv run python manage.py <command> [options]  # CLI
+    uv run python db_admin_cli.py                      # TUI
+    uv run python db_admin_cli.py <command> [options]  # CLI
 
 CLI commands:
     logs     Tail the access or error log
@@ -212,7 +212,7 @@ def cmd_db_vacuum(args):
 
 def build_parser():
     p = argparse.ArgumentParser(
-        prog="manage.py",
+        prog="db_admin_cli.py",
         description="diytracker management CLI (run without arguments for the TUI)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )

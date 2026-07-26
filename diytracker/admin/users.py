@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from diytracker.admin.core import AdminError
 from diytracker.models import Submitter, db
+from diytracker.services.search import like_patterns, normalise_query
 
 
 @dataclass
@@ -30,8 +31,12 @@ def _get_user(email):
     return user
 
 
-def list_users():
-    return [_row(u) for u in Submitter.query.order_by(Submitter.email).all()]
+def list_users(search=None):
+    """All users by email; *search* ANDs its terms across the address."""
+    query = Submitter.query
+    for pattern in like_patterns(normalise_query(search)):
+        query = query.filter(Submitter.email.ilike(pattern, escape="\\"))
+    return [_row(u) for u in query.order_by(Submitter.email).all()]
 
 
 def add_user(email):

@@ -1,6 +1,7 @@
-"""TUI screens: one per section of the old manage.py command tree."""
+"""TUI screens: one per section of the old CLI command tree."""
 
 import asyncio
+from functools import partial
 
 from textual import work
 from textual.app import ComposeResult
@@ -24,6 +25,7 @@ from diytracker.admin import (
     events,
     invites,
     labels,
+    ops,
     queue_review,
     stats,
     traffic,
@@ -34,6 +36,7 @@ from diytracker.admin.core import ACCESS_LOG, ERROR_LOG, AdminError, fmt_size, l
 from diytracker.admin.tui.modals import (
     ChoiceModal,
     ConfirmModal,
+    FormModal,
     MessageModal,
     PasswordModal,
     PromptModal,
@@ -57,11 +60,48 @@ class AdminScreen(Screen):
         self.notify(str(exc), severity="error", timeout=8)
 
 
+class SearchMixin:
+    """`/` filters the screen's table; an empty query clears the filter.
+
+    The mixin owns only the query string and its visibility — each screen
+    passes `self.filter_query` to its own logic call. The subtitle always
+    spells out an active filter: a filtered table looks exactly like a short
+    one, and that is how you conclude a row was deleted when it was merely
+    filtered out.
+    """
+
+    SEARCH_TITLE = "Filter (empty clears)"
+    SEARCH_PLACEHOLDER = "one or more terms, all must match"
+
+    filter_query = ""
+
+    @work
+    async def action_search(self):
+        query = await self.app.push_screen_wait(
+            PromptModal(
+                self.SEARCH_TITLE,
+                placeholder=self.SEARCH_PLACEHOLDER,
+                value=self.filter_query,
+            )
+        )
+        if query is None:
+            return
+        self.filter_query = query
+        self.action_refresh()
+
+    def filter_suffix(self):
+        return f' — filter: "{self.filter_query}"' if self.filter_query else ""
+
+
+SEARCH_BINDING = Binding("slash", "search", "Filter")
+
+
 # ── users ─────────────────────────────────────────────────────────────────────
 
 
-class UsersScreen(AdminScreen):
+class UsersScreen(SearchMixin, AdminScreen):
     BINDINGS = AdminScreen.BINDINGS + [
+        SEARCH_BINDING,
         Binding("a", "add", "Add"),
         Binding("p", "passwd", "Password"),
         Binding("i", "invite", "Re-invite"),
@@ -77,7 +117,6 @@ class UsersScreen(AdminScreen):
         yield Footer()
 
     def on_mount(self):
-        self.sub_title = "Users"
         table = self.query_one(DataTable)
         table.add_columns("ADMIN", "PROMO", "PW", "EMAIL")
         self.action_refresh()
@@ -91,7 +130,8 @@ class UsersScreen(AdminScreen):
 
     @work(exclusive=True)
     async def action_refresh(self):
-        rows = await self.run_db(users.list_users)
+        self.sub_title = "Users" + self.filter_suffix()
+        rows = await self.run_db(users.list_users, self.filter_query)
         table = self.query_one(DataTable)
         table.clear()
         for row in rows:
@@ -224,8 +264,9 @@ class UsersScreen(AdminScreen):
 # ── labels ────────────────────────────────────────────────────────────────────
 
 
-class LabelsScreen(AdminScreen):
+class LabelsScreen(SearchMixin, AdminScreen):
     BINDINGS = AdminScreen.BINDINGS + [
+        SEARCH_BINDING,
         Binding("a", "add", "Add"),
         Binding("n", "rename", "Rename"),
         Binding("e", "edit_description", "Description"),
@@ -240,7 +281,9 @@ class LabelsScreen(AdminScreen):
         yield Footer()
 
     def on_mount(self):
-        self.sub_title = "Labels"
+        # Set before the first (async) refresh lands: an action key pressed
+        # while it is still running would otherwise hit a missing attribute.
+        self._rows = {}
         table = self.query_one(DataTable)
         table.add_columns("ID", "NAME", "SLUG", "EVENTS", "LOGO", "PROMOTER")
         self.action_refresh()
@@ -258,7 +301,8 @@ class LabelsScreen(AdminScreen):
 
     @work(exclusive=True)
     async def action_refresh(self):
-        rows = await self.run_db(labels.list_labels)
+        self.sub_title = "Labels" + self.filter_suffix()
+        rows = await self.run_db(labels.list_labels, self.filter_query)
         self._rows = {row.id: row for row in rows}
         table = self.query_one(DataTable)
         table.clear()
@@ -390,8 +434,9 @@ class LabelsScreen(AdminScreen):
 # ── events ────────────────────────────────────────────────────────────────────
 
 
-class EventsScreen(AdminScreen):
+class EventsScreen(SearchMixin, AdminScreen):
     BINDINGS = AdminScreen.BINDINGS + [
+        SEARCH_BINDING,
         Binding("u", "toggle_past", "Upcoming/all"),
         Binding("s", "set_status", "Status"),
         Binding("d", "delete", "Delete"),
@@ -421,8 +466,10 @@ class EventsScreen(AdminScreen):
     async def action_refresh(self):
         self.sub_title = (
             "Events — all (newest first)" if self.include_past else "Events — upcoming"
+        ) + self.filter_suffix()
+        rows = await self.run_db(
+            events.list_events, self.include_past, 200, self.filter_query
         )
-        rows = await self.run_db(events.list_events, self.include_past, 200)
         table = self.query_one(DataTable)
         table.clear()
         for row in rows:
@@ -486,6 +533,125 @@ class EventsScreen(AdminScreen):
         except AdminError as exc:
             self.show_error(exc)
         self.action_refresh()
+
+
+# ── venues ────────────────────────────────────────────────────────────────────
+
+
+class VenuesScreen(SearchMixin, AdminScreen):
+    """Browse and fix venues. Merging duplicates is still Venue dedup's job —
+    this is for the everyday case of a venue with a wrong city or a missing
+    PLZ, which until now meant opening the database by hand.
+
+    The accessibility token is never shown, only whether one exists: it is a
+    write credential for the venue's answers, and a terminal scrollback is
+    exactly the wrong place for it.
+    """
+
+    BINDINGS = AdminScreen.BINDINGS + [
+        SEARCH_BINDING,
+        Binding("e", "edit", "Edit"),
+        Binding("d", "delete", "Delete"),
+        Binding("r", "refresh", "Refresh"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield DataTable(cursor_type="row")
+        yield Footer()
+
+    def on_mount(self):
+        self._rows = {}
+        table = self.query_one(DataTable)
+        table.add_columns("ID", "NAME", "CITY", "CANTON", "PLZ", "EVENTS", "A11Y")
+        self.action_refresh()
+
+    def _selected_row(self):
+        table = self.query_one(DataTable)
+        if table.row_count == 0:
+            return None
+        key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
+        return self._rows.get(key.value)
+
+    @work(exclusive=True)
+    async def action_refresh(self):
+        self.sub_title = "Venues" + self.filter_suffix()
+        rows = await self.run_db(venues.list_venues, self.filter_query)
+        self._rows = {str(row.id): row for row in rows}
+        table = self.query_one(DataTable)
+        table.clear()
+        for row in rows:
+            table.add_row(
+                str(row.id),
+                row.name[:35],
+                row.city[:20],
+                row.canton,
+                row.plz,
+                str(row.n_events),
+                row.a11y_updated or "",
+                key=str(row.id),
+            )
+
+    @work
+    async def action_edit(self):
+        row = self._selected_row()
+        if row is None:
+            return
+        values = await self.app.push_screen_wait(
+            FormModal(
+                f"Edit venue #{row.id}",
+                [
+                    (field, field.upper(), getattr(row, field))
+                    for field in venues.EDITABLE_FIELDS
+                ],
+            )
+        )
+        if values is None:
+            return
+        try:
+            updated = await self.run_db(partial(venues.update_venue, row.id, **values))
+            self.notify(f"Updated #{updated.id} {updated.name!r}.")
+        except AdminError as exc:
+            self.show_error(exc)
+        self.action_refresh()
+
+    @work
+    async def action_delete(self):
+        row = self._selected_row()
+        if row is None:
+            return
+        confirmed = await self.app.push_screen_wait(
+            ConfirmModal(
+                f"Delete venue #{row.id} {row.name!r} ({row.city})?\n"
+                "Its accessibility answers go with it. This cannot be undone.",
+                yes_label="Delete",
+            )
+        )
+        if not confirmed:
+            return
+        try:
+            name = await self.run_db(venues.delete_venue, row.id)
+            self.notify(f"Deleted venue {name!r}.")
+        except AdminError as exc:
+            self.show_error(exc)
+        self.action_refresh()
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected):
+        row = self._rows.get(event.row_key.value)
+        if row is None:
+            return
+        self.app.push_screen(
+            MessageModal(
+                f"#{row.id} — {row.name}",
+                f"City:      {row.city or '-'} {row.plz or ''}\n"
+                f"Canton:    {row.canton or '-'}\n"
+                f"Address:   {row.address or '-'}\n"
+                f"Coords:    {row.coords or '-'}\n"
+                f"Events:    {row.n_events}\n"
+                f"A11y:      {row.a11y_updated or 'no answers'}\n"
+                f"A11y link: {'issued' if row.has_token else 'not issued'}",
+            )
+        )
 
 
 # ── dedup screens ─────────────────────────────────────────────────────────────
@@ -917,19 +1083,24 @@ class StatsScreen(AdminScreen):
 
 
 class TrafficScreen(AdminScreen):
-    """Access-log traffic analysis: per-IP bot inference + event view trends.
+    """Access-log traffic analysis, six views over one table (`v` cycles):
 
-    Three views share one table: `v` cycles Users (per-IP behavioural
-    classification), Events (view counts over time) and Errors (paths ranked
-    by 5xx responses). Selecting a row opens the IP's full profile in the
-    Users view and the event's view history in the Events view.
+    Users      per-IP behavioural classification, worst first
+    Scrapers   the offenders only, with how much of the window they are
+    Hosts      where the traffic resolves to: rDNS domain and /24
+    Devices    what the human share browses with
+    Events     recorded event views over time
+    Errors     paths ranked by 5xx responses
+
+    Selecting a row opens a detail modal wherever one makes sense. Every
+    window is bounded (7/30/90 days) — see traffic.TIMEFRAMES.
     """
 
-    VIEWS = ("users", "events", "errors")
+    VIEWS = ("users", "scrapers", "hosts", "devices", "events", "errors")
 
     BINDINGS = AdminScreen.BINDINGS + [
         Binding("t", "cycle_timeframe", "Timeframe"),
-        Binding("v", "toggle_view", "Users/Events/Errors"),
+        Binding("v", "toggle_view", "View"),
         Binding("r", "refresh", "Refresh"),
     ]
 
@@ -946,6 +1117,8 @@ class TrafficScreen(AdminScreen):
     def on_mount(self):
         self._profiles = {}
         self._event_rows = {}
+        self._scraper_rows = {}
+        self._host_rows = {}
         self.action_refresh()
 
     def action_cycle_timeframe(self):
@@ -965,9 +1138,17 @@ class TrafficScreen(AdminScreen):
         table.clear(columns=True)
         self._profiles = {}
         self._event_rows = {}
+        self._scraper_rows = {}
+        self._host_rows = {}
         try:
             if self.view == "users":
                 await self._show_users()
+            elif self.view == "scrapers":
+                await self._show_scrapers()
+            elif self.view == "hosts":
+                await self._show_hosts()
+            elif self.view == "devices":
+                await self._show_devices()
             elif self.view == "events":
                 await self._show_events()
             else:
@@ -1009,6 +1190,116 @@ class TrafficScreen(AdminScreen):
                 p.ua_sample[:60],
                 key=p.ip,
             )
+
+    async def _show_scrapers(self):
+        report = await self.run_db(traffic.scrapers, self.timeframe)
+        total = report.total_requests or 1
+        pending = (
+            f" · {report.unresolved_hosts} host(s) still resolving"
+            if report.unresolved_hosts
+            else ""
+        )
+        self.query_one("#traffic-summary", Static).update(
+            f"Offenders ({report.timeframe_label}): "
+            f"{report.offender_requests} of {report.total_requests} requests "
+            f"({report.offender_requests / total:.1%}) vs "
+            f"{report.human_requests / total:.1%} human\n"
+            f"{report.repeat_offenders} of the listed offenders came back on "
+            f"{traffic.REPEAT_DAYS}+ days · "
+            f"{report.undetected_live} live-flagged IP(s) score below bot "
+            f"here{pending}\n"
+            f"Worst first — enter for detail, v for view, t for timeframe:"
+        )
+        table = self.query_one("#traffic-table", DataTable)
+        table.add_columns(
+            "IP", "BUCKET", "SCORE", "REQS", "SHARE", "PEAK/M", "DAYS", "HOST"
+        )
+        for row in report.rows:
+            self._scraper_rows[row.ip] = row
+            table.add_row(
+                row.ip,
+                row.bucket,
+                f"{row.score:g}",
+                str(row.requests),
+                f"{row.share:.1%}",
+                str(row.peak_per_min),
+                str(row.active_days),
+                (row.host or row.net24)[:40],
+                key=row.ip,
+            )
+
+    async def _show_hosts(self):
+        report = await self.run_db(traffic.hosts, self.timeframe)
+        pending = (
+            f" · {report.pending_ips} awaiting a lookup (they get their names "
+            f"on a later refresh)"
+            if report.pending_ips
+            else ""
+        )
+        self.query_one("#traffic-summary", Static).update(
+            f"Origins ({report.timeframe_label}): {report.total_ips} IPs, "
+            f"{report.resolved_ips} with a PTR name{pending}\n"
+            f"Rows without a name are grouped by /24 instead. Bot networks "
+            f"first, then the busiest human ones — enter for the IPs behind a "
+            f"row, v for view, t for timeframe:"
+        )
+        table = self.query_one("#traffic-table", DataTable)
+        table.add_columns(
+            "KIND", "DOMAIN", "IPS", "REQS", "SHARE", "BOT REQS", "HUMAN REQS", "/24"
+        )
+        seen = set()
+        for kind, rows in (("bots", report.offenders), ("humans", report.humans)):
+            for row in rows:
+                # A domain can appear in both blocks; key on the pair so the
+                # DataTable keys stay unique.
+                key = f"{kind}:{row.domain}"
+                if key in seen:
+                    continue
+                seen.add(key)
+                self._host_rows[key] = row
+                nets = (
+                    f"{row.top_net24} +{row.n_net24 - 1}"
+                    if row.n_net24 > 1
+                    else row.top_net24
+                )
+                table.add_row(
+                    kind,
+                    row.domain[:40] if row.named else f"{row.domain} (no name)",
+                    str(row.n_ips),
+                    str(row.requests),
+                    f"{row.share:.1%}",
+                    str(row.offender_requests),
+                    str(row.human_requests),
+                    nets,
+                    key=key,
+                )
+
+    async def _show_devices(self):
+        report = await self.run_db(traffic.devices, self.timeframe)
+        self.query_one("#traffic-summary", Static).update(
+            f"Devices ({report.timeframe_label}): {report.n_ips} human-scored "
+            f"IPs, {report.requests} requests "
+            f"({report.n_browser_unclear} browser-like IPs scored unclear and "
+            f"are left out)\n"
+            f"The unit is an IP over the window, not a person — an office "
+            f"behind one NAT counts once, a phone changing cell counts twice. "
+            f"Read the shares.\nv for view, t for timeframe:"
+        )
+        table = self.query_one("#traffic-table", DataTable)
+        table.add_columns("BREAKDOWN", "VALUE", "IPS", "SHARE", "REQUESTS")
+        for name, rows in (
+            ("form factor", report.form_factors),
+            ("os", report.systems),
+            ("browser", report.browsers),
+        ):
+            for row in rows:
+                table.add_row(
+                    name,
+                    row.label,
+                    str(row.n_ips),
+                    f"{row.share:.1%}",
+                    str(row.requests),
+                )
 
     async def _show_events(self):
         result = await self.run_db(traffic.events, self.timeframe)
@@ -1083,7 +1374,57 @@ class TrafficScreen(AdminScreen):
             )
         )
 
+    def _show_scraper_detail(self, row):
+        paths = "\n".join(f"  {n:>5}  {p}" for p, n in row.top_paths)
+        signals = "\n".join(f"  {s}" for s in row.signals) or "  none"
+        traps = ", ".join(
+            name
+            for name, hit in (("honeypot", row.honeypot), ("probes", row.probe))
+            if hit
+        )
+        self.app.push_screen(
+            MessageModal(
+                f"{row.ip} — {row.bucket} (score {row.score:g})",
+                f"Requests:  {row.requests} ({row.share:.1%} of the window), "
+                f"peak {row.peak_per_min}/min\n"
+                f"Seen:      {row.active_days} day(s), "
+                f"{row.first_seen} → {row.last_seen}\n"
+                f"Host:      {row.host or 'no PTR name'} · {row.net24}\n"
+                f"Traps:     {traps or 'none hit'}\n"
+                f"Live:      "
+                f"{'flagged by the live detector' if row.live_flagged else 'not flagged live'}\n"
+                f"UA:        {row.ua_sample}\n"
+                f"Signals:\n{signals}\n"
+                f"Top paths:\n{paths}",
+            )
+        )
+
+    def _show_host_detail(self, row):
+        ips = "\n".join(
+            f"  {ip:<40} {bucket:<11} {n:>6} req" for ip, bucket, n in row.sample_ips
+        )
+        buckets = " · ".join(f"{n} {name}" for name, n in sorted(row.buckets.items()))
+        self.app.push_screen(
+            MessageModal(
+                f"{row.domain} — {row.n_ips} IP(s)",
+                f"Requests:  {row.requests} ({row.share:.1%} of the window)\n"
+                f"           {row.offender_requests} bot/crawler, "
+                f"{row.human_requests} human\n"
+                f"Buckets:   {buckets}\n"
+                f"Networks:  {row.n_net24} /24(s), busiest {row.top_net24}\n"
+                f"Busiest IPs:\n{ips}",
+            )
+        )
+
     def on_data_table_row_selected(self, event: DataTable.RowSelected):
+        scraper_row = self._scraper_rows.get(event.row_key.value)
+        if scraper_row is not None:
+            self._show_scraper_detail(scraper_row)
+            return
+        host_row = self._host_rows.get(event.row_key.value)
+        if host_row is not None:
+            self._show_host_detail(host_row)
+            return
         event_row = self._event_rows.get(event.row_key.value)
         if event_row is not None:
             self._show_event_detail(event_row)
@@ -1162,15 +1503,116 @@ class DatabaseScreen(AdminScreen):
         self.refresh_info()
 
 
+# ── ops ───────────────────────────────────────────────────────────────────────
+
+
+class OpsScreen(AdminScreen):
+    """The two things that otherwise need a second terminal: purging the page
+    cache and looking after the scraper."""
+
+    BINDINGS = AdminScreen.BINDINGS + [Binding("r", "refresh", "Refresh")]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Vertical():
+            yield Static("", id="ops-status")
+            with Horizontal(classes="controls"):
+                yield Button("Purge page cache", id="purge", variant="primary")
+                yield Button("Scrape now", id="scrape")
+                yield Button("Refresh", id="refresh")
+        yield Footer()
+
+    def on_mount(self):
+        self.sub_title = "Ops"
+        self.action_refresh()
+
+    @work(exclusive=True)
+    async def action_refresh(self):
+        try:
+            status = await self.run_db(ops.scrape_status)
+        except AdminError as exc:
+            self.show_error(exc)
+            return
+        skipped = "\n".join(
+            f"  {source or '?':<10} {reason or '-':<28} {url}"
+            for url, source, reason in status.recent_skipped
+        )
+        self.query_one("#ops-status", Static).update(
+            f"Last scrape:  {status.last_scrape} ({status.last_ago})\n"
+            f"Next run:     {status.next_due} "
+            f"(every {status.interval_hours}h)\n"
+            f"Running now:  "
+            f"{'yes, in this process' if status.running else 'not in this process'}\n"
+            f"Queue:        {status.pending_queue} pending "
+            f"({status.flagged_queue} flagged as possible duplicates) · "
+            f"{status.published} published · {status.rejected} rejected\n"
+            f"Recently skipped URLs:\n{skipped or '  none'}"
+        )
+
+    def busy(self, value):
+        for button in self.query(Button):
+            button.disabled = value
+
+    @work
+    async def on_button_pressed(self, event: Button.Pressed):
+        if event.button.id == "refresh":
+            self.action_refresh()
+            return
+        if event.button.id == "purge":
+            self.busy(True)
+            try:
+                result = await self.run_db(ops.purge_cache)
+                self.notify(
+                    f"Purged {result.files_removed} cache file(s) from "
+                    f"{result.cache_dir}."
+                )
+            except AdminError as exc:
+                self.show_error(exc)
+            self.busy(False)
+            return
+        if event.button.id == "scrape":
+            await self._scrape()
+
+    async def _scrape(self):
+        confirmed = await self.app.push_screen_wait(
+            ConfirmModal(
+                "Run a scrape now?\n\n"
+                "This takes minutes and fetches both sitemaps. The "
+                "running-lock is per process, so it cannot see a scrape "
+                "already running in a gunicorn worker — the two would "
+                "overlap, re-fetching the same pages (ingest still dedups, "
+                "so no duplicate events).",
+                yes_label="Scrape",
+            )
+        )
+        if not confirmed:
+            return
+        self.busy(True)
+        self.notify("Scraping — this takes a while.", timeout=10)
+        try:
+            run = await self.run_db(partial(ops.run_scrape, self.app.flask_app))
+            self.notify(
+                f"Scrape done: {run.created} new, {run.duplicate} duplicate, "
+                f"{run.invalid} invalid, {run.skipped} skipped.",
+                timeout=15,
+            )
+        except AdminError as exc:
+            self.show_error(exc)
+        self.busy(False)
+        self.action_refresh()
+
+
 # ── audit ─────────────────────────────────────────────────────────────────────
 
 
-class AuditScreen(AdminScreen):
+class AuditScreen(SearchMixin, AdminScreen):
     """Read-only view of the ActionLog trail, newest first. Enter shows a
-    row's full detail; `f` filters by action name or prefix ("label.")."""
+    row's full detail; `f` filters by action name or prefix ("label."), `/`
+    searches actor, target and detail. The two combine."""
 
     BINDINGS = AdminScreen.BINDINGS + [
-        Binding("f", "filter", "Filter"),
+        SEARCH_BINDING,
+        Binding("f", "filter", "Action"),
         Binding("r", "refresh", "Refresh"),
     ]
 
@@ -1190,7 +1632,9 @@ class AuditScreen(AdminScreen):
 
     @work(exclusive=True)
     async def action_refresh(self):
-        rows = await self.run_db(audit.list_actions, 200, self.action_filter_value)
+        rows = await self.run_db(
+            audit.list_actions, 200, self.action_filter_value, self.filter_query
+        )
         table = self.query_one(DataTable)
         table.clear()
         self._rows = {str(row.id): row for row in rows}
@@ -1200,7 +1644,7 @@ class AuditScreen(AdminScreen):
                 row.when, row.actor, row.action, row.target, detail, key=str(row.id)
             )
         suffix = f" — {self.action_filter_value}" if self.action_filter_value else ""
-        self.sub_title = f"Audit log{suffix}"
+        self.sub_title = f"Audit log{suffix}{self.filter_suffix()}"
 
     @work
     async def action_filter(self):

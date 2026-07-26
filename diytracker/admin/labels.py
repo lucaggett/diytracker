@@ -7,13 +7,14 @@ a different promoter, which the web UI deliberately has no path for.
 
 from dataclasses import dataclass
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from diytracker.admin.core import AdminError
 from diytracker.services.audit import record
 from diytracker.models import Event, Label, Submitter, db
 from diytracker.services.cache import bust_cache
 from diytracker.services.labels import unique_slug
+from diytracker.services.search import like_patterns, normalise_query
 
 
 @dataclass
@@ -46,16 +47,30 @@ def _get_label(label_id):
     return label
 
 
-def list_labels():
+def list_labels(search=None):
+    """All labels by name; *search* ANDs its terms across name, slug and the
+    owning promoter's address."""
     counts = dict(
         db.session.query(Event.label_id, func.count(Event.id))
         .filter(Event.label_id.isnot(None))
         .group_by(Event.label_id)
         .all()
     )
+    query = Label.query
+    patterns = like_patterns(normalise_query(search))
+    if patterns:
+        query = query.join(Submitter, Label.promoter_id == Submitter.id)
+        for pattern in patterns:
+            query = query.filter(
+                or_(
+                    Label.name.ilike(pattern, escape="\\"),
+                    Label.slug.ilike(pattern, escape="\\"),
+                    Submitter.email.ilike(pattern, escape="\\"),
+                )
+            )
     return [
         _row(label, counts.get(label.id, 0))
-        for label in Label.query.order_by(Label.name).all()
+        for label in query.order_by(Label.name).all()
     ]
 
 

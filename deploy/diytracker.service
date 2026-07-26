@@ -7,7 +7,7 @@
 #
 # Notes:
 # - systemd runs gunicorn in the foreground and tracks the master PID itself,
-#   so there is no --daemon and no pidfile (manage.py only provides the
+#   so there is no --daemon and no pidfile (the admin tool only provides the
 #   logs / user subcommands; the server lifecycle belongs to systemctl).
 # - No ExecReload on purpose: a HUP reload respawns workers, but the scrape
 #   scheduler only starts in the very first worker the master ever forks

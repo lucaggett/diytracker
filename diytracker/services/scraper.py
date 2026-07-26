@@ -63,7 +63,11 @@ def _record_skipped(url, source, reason):
 
 
 def _scrape_and_import(app):
+    """Run one scrape+import. Returns the ingest counts, or None if the run
+    failed (the exception is logged, never raised — the scheduler thread must
+    survive a bad run)."""
     global _scrape_running, _scrape_progress
+    counts = None
     try:
         from diytracker.services.scrape_events import (
             configure_logging,
@@ -153,7 +157,37 @@ def _scrape_and_import(app):
         set_last_scrape_time(datetime.now())
     except Exception:
         app.logger.exception("Scrape failed")
+        counts = None
     finally:
+        with _scrape_lock:
+            _scrape_running = False
+    return counts
+
+
+def run_scrape_now(app):
+    """Run one scrape synchronously, on demand (the admin tool's trigger).
+
+    Returns (started, counts): started is False when this process is already
+    scraping, counts is None when the run itself failed.
+
+    The lock is a module global, so it only knows about *this* process. The
+    admin tool runs in its own interpreter and therefore cannot see a scrape
+    already running inside a gunicorn worker; the two can overlap. That costs
+    duplicate fetching, not duplicate data — ingest dedups on URL and the
+    known-URL set is read at the start of each run.
+    """
+    global _scrape_running
+    with _scrape_lock:
+        if _scrape_running:
+            return False, None
+        _scrape_running = True
+    try:
+        return True, _scrape_and_import(app)
+    finally:
+        # _scrape_and_import clears the flag itself on every path it controls;
+        # this covers the one it doesn't — blowing up before its own try —
+        # which would otherwise leave the process permanently "busy" and the
+        # trigger dead until restart.
         with _scrape_lock:
             _scrape_running = False
 

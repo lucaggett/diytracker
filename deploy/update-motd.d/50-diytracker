@@ -51,5 +51,5 @@ disk=$(df -h --output=pcent,avail /home 2>/dev/null | awk 'NR==2 {print $1" used
 
 printf '\n'
 printf "  ${DIM}manage:${RESET}  systemctl {status|restart} ${SERVICE}   journalctl -u ${SERVICE} -e\n"
-printf "  ${DIM}app:${RESET}     cd ${APP_DIR} && uv run python manage.py {(TUI)|logs -f|user list|...}\n"
+printf "  ${DIM}app:${RESET}     cd ${APP_DIR} && uv run python db_admin_cli.py {(TUI)|logs -f|user list|...}\n"
 printf '\n'

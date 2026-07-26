@@ -177,6 +177,49 @@ class ChoiceModal(ModalScreen["tuple | None"]):
         self.dismiss(None)
 
 
+class FormModal(ModalScreen["dict | None"]):
+    """Several labelled inputs at once; returns {key: value}, or None on
+    cancel. Editing a venue one PromptModal per field would mean six dialogs
+    to fix a PLZ and a city, with no way to see the record while typing."""
+
+    BINDINGS = [Binding("escape", "cancel", "Cancel", show=False)]
+
+    def __init__(self, title, fields):
+        """*fields* is [(key, label, value)], rendered in order."""
+        super().__init__()
+        self.title_text = title
+        self.fields = list(fields)
+
+    def compose(self) -> ComposeResult:
+        with Vertical(classes="modal-box"):
+            yield Label(self.title_text, classes="modal-title")
+            for key, label, value in self.fields:
+                yield Label(label, classes="modal-field-label")
+                yield Input(value=value or "", id=f"field-{key}")
+            with Horizontal(classes="modal-buttons"):
+                yield Button("Cancel", id="cancel")
+                yield Button("Save", id="ok", variant="primary")
+
+    def on_mount(self):
+        if self.fields:
+            self.query_one(f"#field-{self.fields[0][0]}", Input).focus()
+
+    def _values(self):
+        return {
+            key: self.query_one(f"#field-{key}", Input).value.strip()
+            for key, _label, _value in self.fields
+        }
+
+    def on_input_submitted(self, event: Input.Submitted):
+        self.dismiss(self._values())
+
+    def on_button_pressed(self, event: Button.Pressed):
+        self.dismiss(self._values() if event.button.id == "ok" else None)
+
+    def action_cancel(self):
+        self.dismiss(None)
+
+
 class MessageModal(ModalScreen[None]):
     """Static text (e.g. an invite link to copy) with an OK button."""
 

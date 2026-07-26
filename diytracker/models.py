@@ -374,6 +374,23 @@ class ScrapeSuspect(db.Model):
         return f"<ScrapeSuspect {self.ip} score={self.score}>"
 
 
+class IpHostname(db.Model):
+    """Cached reverse-DNS answers for the admin traffic views.
+
+    A PTR lookup is a network round trip, so the hosts breakdown would either
+    block the TUI or hammer the resolver on every refresh. Answers are kept
+    here instead, failures included: hostname NULL means "asked, no PTR", and
+    checked_at (UTC, audit-column clock) is what makes an answer expire.
+    """
+
+    ip = db.Column(db.String(45), primary_key=True)  # v6 max length
+    hostname = db.Column(db.String(255), nullable=True)
+    checked_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+
+    def __repr__(self):
+        return f"<IpHostname {self.ip}: {self.hostname or '(none)'}>"
+
+
 class EventDailyViews(db.Model):
     """Per-day hit/visitor counts for /events/<id>/ pages, distilled from
     nginx access logs by services/event_views.py on the analytics schedule.

@@ -1,1 +1,1 @@
-"""Textual TUI for the diytracker admin tool (run `manage.py` with no args)."""
+"""Textual TUI for the diytracker admin tool (run `db_admin_cli.py` with no args)."""

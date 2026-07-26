@@ -2,7 +2,7 @@
 
 Single place where environment variables become Flask config. `create_app()`
 in diytracker/app.py consumes a `Config` instance via `app.config.from_object`;
-entrypoints that need overrides (tests, `manage.py venue dedup --db-path`)
+entrypoints that need overrides (tests, the TUI's alternate DB path)
 build the instance themselves and mutate it before passing it in.
 
 Environment variables read by `Config.from_env()` are documented in

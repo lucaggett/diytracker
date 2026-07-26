@@ -1,4 +1,4 @@
-"""Tests for the admin logic layer (diytracker/admin/) and manage.py CLI
+"""Tests for the admin logic layer (diytracker/admin/) and db_admin_cli.py CLI
 contract. The TUI itself is exercised only as an import smoke test."""
 
 import pytest
@@ -367,3 +367,68 @@ class TestCliContract:
 
 def test_tui_imports():
     from diytracker.admin.tui.app import ManageApp  # noqa: F401
+
+
+class TestSearchFilters:
+    """Every list screen filters through the same term-ANDing dialect as the
+    site search — including the wildcard escaping, so a query of "%" filters
+    rather than matching everything."""
+
+    def test_events_search_spans_name_venue_and_submitter(
+        self, app, make_event, make_venue, make_user
+    ):
+        user = make_user(email="promo@example.com")
+        fabrik = make_venue(name="Rote Fabrik", city="Zürich")
+        make_event(name="Noise Night", venue=fabrik, acts="Kälte, Blume")
+        make_event(name="Quiet Night", submitter=user)
+
+        assert [e.name for e in admin_events.list_events(search="fabrik")] == [
+            "Noise Night"
+        ]
+        assert [e.name for e in admin_events.list_events(search="kälte")] == [
+            "Noise Night"
+        ]
+        assert [e.name for e in admin_events.list_events(search="promo@")] == [
+            "Quiet Night"
+        ]
+
+    def test_events_search_ands_terms(self, app, make_event, make_venue):
+        fabrik = make_venue(name="Rote Fabrik", city="Zürich")
+        bern = make_venue(name="Reitschule", city="Bern")
+        make_event(name="Noise Night", venue=fabrik)
+        make_event(name="Noise Night", venue=bern)
+        rows = admin_events.list_events(search="noise bern")
+        assert [e.venue for e in rows] == ["Reitschule"]
+
+    def test_events_search_escapes_wildcards(self, app, make_event):
+        make_event(name="Noise Night")
+        assert admin_events.list_events(search="%") == []
+
+    def test_users_search(self, app, make_user):
+        make_user(email="alice@example.com")
+        make_user(email="bob@other.test")
+        assert [u.email for u in users.list_users("other")] == ["bob@other.test"]
+
+    def test_labels_search_covers_slug_and_owner(self, app, make_user):
+        promoter = make_user(email="owner@example.com", is_promoter=True)
+        labels.create_label("Kaputt Records", promoter.email)
+        labels.create_label("Sunny Tapes", promoter.email)
+        assert [r.name for r in labels.list_labels("kaputt")] == ["Kaputt Records"]
+        assert [r.name for r in labels.list_labels("sunny-tapes")] == ["Sunny Tapes"]
+        assert len(labels.list_labels("owner@example.com")) == 2
+
+    def test_audit_search_combines_with_the_action_filter(self, app):
+        from diytracker.admin import audit
+        from diytracker.services.audit import record
+
+        record("queue.approve", "event", 1, actor="a@example.com", detail="Punk Fest")
+        record("queue.reject", "scraped", 2, actor="b@example.com", detail="spam")
+        db.session.commit()
+
+        assert [r.action for r in audit.list_actions(search="punk")] == [
+            "queue.approve"
+        ]
+        assert [r.action for r in audit.list_actions(search="b@example.com")] == [
+            "queue.reject"
+        ]
+        assert audit.list_actions(action="queue.reject", search="punk") == []

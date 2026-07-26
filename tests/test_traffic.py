@@ -1,8 +1,9 @@
 """Tests for the admin traffic-analysis logic (diytracker/admin/traffic.py).
 
-Logic layer only, like the rest of the admin modules — the Textual screens
-have no driver tests. Log lines are synthesized in both formats the parser
-must understand: quoted nginx COMBINED and gunicorn's unquoted variant.
+Logic layer only, like the rest of the admin modules; the screens that render
+this get their own smoke tests in test_admin_tui.py. Log lines are synthesized
+in both formats the parser must understand: quoted nginx COMBINED and
+gunicorn's unquoted variant.
 """
 
 import gzip
@@ -38,6 +39,12 @@ def log_dir(tmp_path, monkeypatch):
 
     monkeypatch.setattr(traffic, "find_log_files", lambda: [log_file])
     return write
+
+
+@pytest.fixture
+def no_rdns(monkeypatch):
+    """No test may reach a DNS resolver; hosts stay unresolved."""
+    monkeypatch.setattr(traffic, "resolve_many", lambda ips: {})
 
 
 def browse(ip, minutes_apart=7, n=4, first_path="/"):
@@ -518,3 +525,197 @@ class TestEvents:
         with app.app_context():
             with pytest.raises(AdminError, match="No recorded event views"):
                 traffic.events("30d")
+
+
+class TestTimeframes:
+    """The window is capped at 90 days; "all logs" is deliberately gone."""
+
+    def test_three_months_is_the_widest_window(self):
+        assert set(traffic.TIMEFRAMES) == {"7d", "30d", "3mo"}
+
+    def test_all_is_no_longer_accepted(self, app, log_dir):
+        log_dir([nginx_line("1.1.1.1", datetime.now(), "/")])
+        with app.app_context():
+            with pytest.raises(AdminError, match="timeframe"):
+                traffic.analyze("all")
+
+    def test_3mo_spans_89_days_but_not_91(self, app, log_dir):
+        now = datetime.now()
+        log_dir(
+            [
+                nginx_line("1.1.1.1", now, "/"),
+                nginx_line("2.2.2.2", now - timedelta(days=89), "/"),
+                nginx_line("3.3.3.3", now - timedelta(days=91), "/"),
+            ]
+        )
+        with app.app_context():
+            report = traffic.analyze("3mo")
+        assert {p.ip for p in report.ips} == {"1.1.1.1", "2.2.2.2"}
+
+
+class TestScrapers:
+    def test_lists_only_offender_buckets(self, app, log_dir, no_rdns):
+        now = datetime.now()
+        log_dir(
+            browse("10.0.0.1")  # human
+            + [nginx_line("10.0.0.2", now, "/events/archive/2023")]  # honeypot -> bot
+            + [nginx_line("10.0.0.3", now, "/", ua="Googlebot/2.1")]  # crawler
+        )
+        with app.app_context():
+            report = traffic.scrapers("7d")
+        assert {row.ip for row in report.rows} == {"10.0.0.2", "10.0.0.3"}
+        assert {row.bucket for row in report.rows} == {"bot", "crawler"}
+
+    def test_share_and_traps_are_reported(self, app, log_dir, no_rdns):
+        now = datetime.now()
+        log_dir(
+            [nginx_line("10.0.0.2", now, "/wp-login.php", status=404, ua="curl/8")] * 3
+            + browse("10.0.0.1", n=7)
+        )
+        with app.app_context():
+            report = traffic.scrapers("7d")
+        row = next(r for r in report.rows if r.ip == "10.0.0.2")
+        assert row.probe is True
+        assert row.requests == 3
+        assert row.share == pytest.approx(3 / report.total_requests)
+        assert row.net24 == "10.0.0.0/24"
+        assert report.human_requests == 7
+
+    def test_repeat_offenders_need_several_days(self, app, log_dir, no_rdns):
+        now = datetime.now()
+        log_dir(
+            [
+                nginx_line("10.0.0.2", now - timedelta(days=day), "/events/archive/x")
+                for day in range(traffic.REPEAT_DAYS)
+            ]
+            + [nginx_line("10.0.0.3", now, "/events/archive/x")]
+        )
+        with app.app_context():
+            report = traffic.scrapers("7d")
+        assert report.repeat_offenders == 1
+
+    def test_empty_window_raises(self, app, log_dir):
+        log_dir([nginx_line("1.1.1.1", datetime.now() - timedelta(days=120), "/")])
+        with app.app_context():
+            with pytest.raises(AdminError, match="No log entries"):
+                traffic.scrapers("7d")
+
+
+class TestHosts:
+    def test_groups_by_registrable_domain(self, app, log_dir, monkeypatch):
+        now = datetime.now()
+        names = {
+            "10.0.0.2": "ec2-10-0-0-2.eu-west-1.compute.amazonaws.com",
+            "10.0.0.3": "ec2-10-0-0-3.eu-west-1.compute.amazonaws.com",
+        }
+        # None means "asked, no PTR"; absent would mean "not asked yet".
+        resolved = dict(names, **{"10.0.1.9": None})
+        monkeypatch.setattr(traffic, "resolve_many", lambda ips: resolved)
+        log_dir(
+            [nginx_line(ip, now, "/events/archive/x") for ip in names]
+            + browse("10.0.1.9")
+        )
+        with app.app_context():
+            report = traffic.hosts("7d")
+        aws = next(r for r in report.offenders if r.domain == "amazonaws.com")
+        assert aws.named is True
+        assert aws.n_ips == 2
+        assert aws.offender_requests == 2
+        assert aws.n_net24 == 1
+        # A nameless IP falls back to its /24 rather than one big bucket.
+        assert [(r.domain, r.named) for r in report.humans] == [("10.0.1.0/24", False)]
+
+    def test_unlooked_up_addresses_are_counted_as_pending(
+        self, app, log_dir, monkeypatch
+    ):
+        monkeypatch.setattr(traffic, "resolve_many", lambda ips: {})
+        log_dir(browse("10.0.0.1"))
+        with app.app_context():
+            report = traffic.hosts("7d")
+        assert report.pending_ips == 1
+        assert report.resolved_ips == 0
+        assert [r.domain for r in report.humans] == ["10.0.0.0/24"]
+
+    def test_nameless_ips_of_one_subnet_group_together(self, app, log_dir, monkeypatch):
+        monkeypatch.setattr(
+            traffic, "resolve_many", lambda ips: {ip: None for ip in ips}
+        )
+        now = datetime.now()
+        log_dir(
+            [
+                nginx_line(f"10.0.0.{i}", now, "/events/archive/x", ua="curl/8")
+                for i in range(1, 4)
+            ]
+        )
+        with app.app_context():
+            report = traffic.hosts("7d")
+        assert report.pending_ips == 0
+        assert [(r.domain, r.n_ips) for r in report.offenders] == [("10.0.0.0/24", 3)]
+
+    def test_registrable_handles_two_level_cctlds(self):
+        assert traffic._registrable("host.eu-west.amazonaws.com") == "amazonaws.com"
+        assert traffic._registrable("mail.example.co.uk") == "example.co.uk"
+        assert traffic._registrable("localhost") == "localhost"
+
+
+class TestDevices:
+    @pytest.mark.parametrize(
+        "ua,expected",
+        [
+            (
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
+                "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 "
+                "Mobile/15E148 Safari/604.1",
+                ("mobile", "iOS", "Safari"),
+            ),
+            (
+                "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+                ("mobile", "Android", "Chrome"),
+            ),
+            (
+                "Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 "
+                "Version/17.5 Safari/604.1",
+                ("tablet", "iOS", "Safari"),
+            ),
+            (BROWSER_UA, ("desktop", "Linux", "Firefox")),
+            (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
+                ("desktop", "Windows", "Edge"),
+            ),
+            ("curl/8.7.1", ("other", "other", "other")),
+            ("Googlebot/2.1 (+http://www.google.com/bot.html)", ("other",) * 3),
+        ],
+    )
+    def test_device_inference(self, ua, expected):
+        assert traffic._device(ua) == expected
+
+    def test_breaks_down_human_traffic_only(self, app, log_dir):
+        now = datetime.now()
+        iphone = (
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
+            "AppleWebKit/605.1.15 Version/17.5 Mobile/15E148 Safari/604.1"
+        )
+        log_dir(
+            browse("10.0.0.1")
+            + [
+                nginx_line("10.0.0.2", now - timedelta(minutes=i), "/", ua=iphone)
+                for i in range(4)
+            ]
+            + [nginx_line("10.0.0.9", now, "/events/archive/x", ua="curl/8")]
+        )
+        with app.app_context():
+            report = traffic.devices("7d")
+        assert report.n_ips == 2
+        forms = {row.label: row.n_ips for row in report.form_factors}
+        assert forms == {"desktop": 1, "mobile": 1}
+        browsers = {row.label for row in report.browsers}
+        assert browsers == {"Firefox", "Safari"}
+        assert all(row.share == 0.5 for row in report.form_factors)
+
+    def test_no_humans_raises(self, app, log_dir):
+        log_dir([nginx_line("10.0.0.9", datetime.now(), "/events/archive/x")])
+        with app.app_context():
+            with pytest.raises(AdminError, match="No human-classified"):
+                traffic.devices("7d")
