@@ -270,3 +270,101 @@ class TestDashboard:
         resp = client.get("/promoter/")
         assert b"Their Show" not in resp.data
         assert b"Theirs" not in resp.data
+
+
+class TestClaimSearch:
+    def test_search_narrows_results(
+        self, client, make_user, make_label, make_venue, make_event, login
+    ):
+        promoter = make_user(is_promoter=True)
+        make_label(promoter)
+        bern = make_venue(name="Reitschule", city="Bern", plz="3000", canton="BE")
+        make_event(name="Punk Night", venue=bern)
+        make_event(name="Metal Fest")
+        login(promoter)
+        resp = client.get("/promoter/claim?q=punk+bern")
+        assert b"Punk Night" in resp.data
+        assert b"Metal Fest" not in resp.data
+        resp = client.get("/promoter/claim?q=zzzznothing")
+        assert b"No events match your search." in resp.data
+
+    def test_pagination(self, client, make_user, make_label, make_event, login):
+        from diytracker.blueprints.promoter import CLAIM_PAGE_SIZE
+
+        promoter = make_user(is_promoter=True)
+        make_label(promoter)
+        for i in range(CLAIM_PAGE_SIZE + 1):
+            make_event(name=f"Bulk Show {i:03d}", days_from_now=10 + i % 5)
+        login(promoter)
+        page1 = client.get("/promoter/claim")
+        page2 = client.get("/promoter/claim?page=2")
+        assert page1.data.count(b"Bulk Show") <= CLAIM_PAGE_SIZE * 2  # suggestions off
+        assert b"Bulk Show" in page2.data
+        assert b"Page 1 of 2" in page1.data
+
+    def test_likely_yours_suggestion(
+        self, client, make_user, make_label, make_event, login
+    ):
+        promoter = make_user(is_promoter=True)
+        make_label(promoter, name="Kälte Kollektiv")
+        make_event(name="Kaelte Kollektiv Fest")
+        make_event(name="Unrelated Show")
+        login(promoter)
+        resp = client.get("/promoter/claim")
+        assert b"Likely yours" in resp.data
+        assert b"Kaelte Kollektiv Fest" in resp.data
+
+    def test_no_suggestions_section_without_match(
+        self, client, make_user, make_label, make_event, login
+    ):
+        promoter = make_user(is_promoter=True)
+        make_label(promoter, name="Cool Label")
+        make_event(name="Unrelated Show")
+        login(promoter)
+        assert b"Likely yours" not in client.get("/promoter/claim").data
+
+
+class TestUnclaim:
+    def test_owner_can_unclaim_and_it_logs(
+        self, client, make_user, make_label, make_event, login
+    ):
+        from diytracker.models import ActionLog
+
+        promoter = make_user(is_promoter=True)
+        label = make_label(promoter)
+        event = make_event(name="Claimed Show", label_id=label.id)
+        login(promoter)
+        resp = client.post(f"/promoter/events/{event.id}/unclaim")
+        assert resp.status_code == 302
+        db.session.refresh(event)
+        assert event.label_id is None
+        row = ActionLog.query.filter_by(action="label.unclaim").one()
+        assert row.target_id == event.id
+        assert row.actor == promoter.email
+
+    def test_non_owner_cannot_unclaim(
+        self, client, make_user, make_label, make_event, login
+    ):
+        label = make_label(make_user(email="owner@example.com", is_promoter=True))
+        event = make_event(label_id=label.id)
+        login(make_user(email="other@example.com", is_promoter=True))
+        assert client.post(f"/promoter/events/{event.id}/unclaim").status_code == 403
+        db.session.refresh(event)
+        assert event.label_id == label.id
+
+    def test_admin_cannot_unclaim_others(
+        self, client, make_user, make_label, make_event, admin, login
+    ):
+        label = make_label(make_user(is_promoter=True))
+        event = make_event(label_id=label.id)
+        login(admin)
+        assert client.post(f"/promoter/events/{event.id}/unclaim").status_code == 403
+
+    def test_unlabelled_event_404s_or_403s(
+        self, client, make_user, make_label, make_event, login
+    ):
+        promoter = make_user(is_promoter=True)
+        make_label(promoter)
+        event = make_event()
+        login(promoter)
+        assert client.post(f"/promoter/events/{event.id}/unclaim").status_code == 403

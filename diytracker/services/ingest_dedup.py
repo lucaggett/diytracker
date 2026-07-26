@@ -36,6 +36,12 @@ def _similar(a, b):
     return SequenceMatcher(None, a, b).ratio() >= _FUZZY_THRESHOLD
 
 
+def name_similarity(a, b):
+    """Public fuzzy name compare for other callers (label claim suggestions):
+    same normalization + matching rules as the konzibot dedup."""
+    return _similar(normalize_name(a), normalize_name(b))
+
+
 def _match_signals(city, venue, title, cand_city, cand_venue, cand_title):
     """Which of city/venue/title match between the payload and a candidate."""
     return {

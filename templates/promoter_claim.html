@@ -3,6 +3,34 @@
 
 {% block title %}{{ _('Claim an event') }} · diytracker.ch{% endblock %}
 
+{% macro claim_row(event, preselect_id=None) %}
+<li class="flex flex-wrap items-center gap-3 border border-ink/30 p-3">
+  <div class="min-w-0 flex-1">
+    <p class="font-bold text-sm truncate">
+      <a href="{{ url_for('public.event_page', event_id=event.id) }}"
+         class="text-bleed hover:underline">{{ event.name or event.acts }}</a>
+    </p>
+    <p class="font-mono text-xs text-smudge">
+      {{ event.date.strftime('%Y-%m-%d') }} · {{ event.venue.name }}, {{ event.venue.city }}
+    </p>
+  </div>
+  <form method="post" action="{{ url_for('promoter.claim_event', event_id=event.id) }}"
+        class="flex items-center gap-2">
+    {{ form.hidden_tag() }}
+    <select name="{{ form.label_id.name }}"
+            class="border-2 border-ink bg-paper px-2 py-1 text-xs font-mono">
+      {% for value, name in form.label_id.choices %}
+      <option value="{{ value }}"{% if preselect_id is not none and value == preselect_id|string %} selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit"
+            class="btn-press inline-flex items-center border-2 border-ink bg-ink text-paper px-3 py-1.5 uppercase tracking-widest text-xs hover:bg-bleed transition-colors cursor-pointer">
+      {{ _('Claim') }}
+    </button>
+  </form>
+</li>
+{% endmacro %}
+
 {% block content %}
 <div class="max-w-3xl">
 
@@ -11,48 +39,71 @@
     <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('CLAIM AN EVENT') }}</h1>
   </header>
 
+  {% if not form.label_id.choices %}
   <section class="border-2 border-ink bg-paper p-4">
-    <p class="text-sm text-smudge mb-4">{{ _('Upcoming events without a label. Claiming one tags it with your label — it shows up on your label page and in your dashboard stats.') }}</p>
-
-    {% if not form.label_id.choices %}
     <p class="text-sm text-smudge">
       {{ _('You need a label before you can claim events.') }}
       <a href="{{ url_for('promoter.new_label') }}" class="text-bleed hover:underline">{{ _('Create one first.') }}</a>
     </p>
-    {% elif events %}
+  </section>
+  {% else %}
+
+  {% if suggestions %}
+  <section class="border-2 border-ink bg-paper p-4 mb-6">
+    <h2 class="font-bold uppercase tracking-widest text-xs mb-1">{{ _('Likely yours') }}</h2>
+    <p class="text-sm text-smudge mb-4">{{ _('These upcoming events match one of your label names.') }}</p>
     <ul class="space-y-3">
-      {% for event in events %}
-      <li class="flex flex-wrap items-center gap-3 border border-ink/30 p-3">
-        <div class="min-w-0 flex-1">
-          <p class="font-bold text-sm truncate">
-            <a href="{{ url_for('public.event_page', event_id=event.id) }}"
-               class="text-bleed hover:underline">{{ event.name or event.acts }}</a>
-          </p>
-          <p class="font-mono text-xs text-smudge">
-            {{ event.date.strftime('%Y-%m-%d') }} · {{ event.venue.name }}, {{ event.venue.city }}
-          </p>
-        </div>
-        <form method="post" action="{{ url_for('promoter.claim_event', event_id=event.id) }}"
-              class="flex items-center gap-2">
-          {{ form.hidden_tag() }}
-          <select name="{{ form.label_id.name }}"
-                  class="border-2 border-ink bg-paper px-2 py-1 text-xs font-mono">
-            {% for value, name in form.label_id.choices %}
-            <option value="{{ value }}">{{ name }}</option>
-            {% endfor %}
-          </select>
-          <button type="submit"
-                  class="btn-press inline-flex items-center border-2 border-ink bg-ink text-paper px-3 py-1.5 uppercase tracking-widest text-xs hover:bg-bleed transition-colors cursor-pointer">
-            {{ _('Claim') }}
-          </button>
-        </form>
-      </li>
+      {% for event, label in suggestions %}
+      {{ claim_row(event, preselect_id=label.id) }}
       {% endfor %}
     </ul>
+  </section>
+  {% endif %}
+
+  <section class="border-2 border-ink bg-paper p-4">
+    <p class="text-sm text-smudge mb-4">{{ _('Upcoming events without a label. Claiming one tags it with your label — it shows up on your label page and in your dashboard stats.') }}</p>
+
+    <form method="get" action="{{ url_for('promoter.claim_events') }}" class="mb-4 flex items-center gap-2">
+      <input type="search" name="q" value="{{ q }}"
+             placeholder="{{ _('Search events, bands or venues…') }}"
+             class="w-full border-2 border-ink bg-paper px-2 py-1.5 text-sm font-mono">
+      <button type="submit"
+              class="btn-press inline-flex items-center border-2 border-ink bg-ink text-paper px-3 py-1.5 uppercase tracking-widest text-xs hover:bg-bleed transition-colors cursor-pointer">
+        {{ _('Search') }}
+      </button>
+      {% if q %}
+      <a href="{{ url_for('promoter.claim_events') }}"
+         class="text-xs text-smudge hover:underline whitespace-nowrap">{{ _('Clear') }}</a>
+      {% endif %}
+    </form>
+
+    {% if events %}
+    <ul class="space-y-3">
+      {% for event in events %}
+      {{ claim_row(event) }}
+      {% endfor %}
+    </ul>
+    {% if pagination.pages > 1 %}
+    <nav class="mt-4 flex items-center justify-between font-mono text-xs">
+      {% if pagination.has_prev %}
+      <a href="{{ url_for('promoter.claim_events', page=pagination.prev_num, q=q or None) }}"
+         class="text-bleed hover:underline">&larr; {{ _('Previous') }}</a>
+      {% else %}<span></span>{% endif %}
+      <span class="text-smudge">{{ _('Page %(page)s of %(pages)s', page=pagination.page, pages=pagination.pages) }}</span>
+      {% if pagination.has_next %}
+      <a href="{{ url_for('promoter.claim_events', page=pagination.next_num, q=q or None) }}"
+         class="text-bleed hover:underline">{{ _('Next') }} &rarr;</a>
+      {% else %}<span></span>{% endif %}
+    </nav>
+    {% endif %}
+    {% elif q %}
+    <p class="text-sm text-smudge">{{ _('No events match your search.') }}</p>
     {% else %}
     <p class="text-sm text-smudge">{{ _('No unclaimed upcoming events right now.') }}</p>
     {% endif %}
   </section>
+
+  {% endif %}
 
 </div>
 {% endblock %}

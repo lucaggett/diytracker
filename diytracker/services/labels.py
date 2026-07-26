@@ -5,6 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
 from diytracker.models import Event, EventDailyViews, Label, db
+from diytracker.services.ingest_dedup import name_similarity
 from diytracker.services.seo import slugify
 
 
@@ -46,6 +47,22 @@ def owned_label_choices(user):
     """(value, name) pairs for EventForm.label_id restricted to the user's
     own labels; "" means no label."""
     return [("", "—")] + [(str(label.id), label.name) for label in owned_labels(user)]
+
+
+def likely_label_events(labels, events):
+    """[(event, label)] pairs where a label's name fuzzily matches the event
+    name or one of its acts — candidates for "likely yours" on the claim
+    page. First matching label wins per event; events keep their order."""
+    matches = []
+    for event in events:
+        acts = [act.strip() for act in (event.acts or "").split(",") if act.strip()]
+        for label in labels:
+            if name_similarity(label.name, event.name) or any(
+                name_similarity(label.name, act) for act in acts
+            ):
+                matches.append((event, label))
+                break
+    return matches
 
 
 def label_stats(user):

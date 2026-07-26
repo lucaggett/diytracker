@@ -68,6 +68,7 @@
             <th class="px-3 py-2 text-right">{{ _('Views') }}</th>
             <th class="px-3 py-2 text-right">{{ _('Visitors') }}</th>
             <th class="px-3 py-2 text-right">{{ _('Link') }}</th>
+            <th class="px-3 py-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -89,6 +90,14 @@
                       data-copied-label="{{ _('Copied!') }}">
                 <span class="copy-label">{{ _('Copy link') }}</span>
               </button>
+            </td>
+            <td class="px-3 py-2 text-right">
+              <form method="post" action="{{ url_for('promoter.unclaim_event', event_id=row.event.id) }}"
+                    onsubmit="return confirm({{ _('Release this event from your label? It stays on the calendar without a label.')|tojson }});">
+                {{ unclaim_form.hidden_tag() }}
+                <button type="submit"
+                        class="text-xs uppercase tracking-widest text-smudge hover:text-bleed cursor-pointer">{{ _('Release') }}</button>
+              </form>
             </td>
           </tr>
           {% endfor %}

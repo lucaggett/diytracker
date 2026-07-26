@@ -7,19 +7,31 @@ from flask import (
     flash,
     redirect,
     render_template,
+    request,
     session,
     url_for,
 )
 
 from sqlalchemy.orm import joinedload
 
-from diytracker.forms import ClaimEventForm, DeleteLabelForm, LabelForm
-from diytracker.models import db, Event, Label, Submitter
+from diytracker.forms import (
+    ClaimEventForm,
+    DeleteLabelForm,
+    LabelForm,
+    UnclaimEventForm,
+)
+from diytracker.models import db, Event, Label, Submitter, Venue
 from diytracker.services.audit import record
 from diytracker.services.auth import promoter_required
 from diytracker.services.cache import bust_cache
 from diytracker.services.i18n import gettext as _
-from diytracker.services.labels import label_stats, owned_labels, unique_slug
+from diytracker.services.labels import (
+    label_stats,
+    likely_label_events,
+    owned_labels,
+    unique_slug,
+)
+from diytracker.services.search import like_patterns, normalise_query
 from diytracker.services.seo import canonical_url
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 
@@ -56,6 +68,7 @@ def dashboard():
         stats=stats,
         share_urls=share_urls,
         delete_form=DeleteLabelForm(),
+        unclaim_form=UnclaimEventForm(),
         now=datetime.now(),
     )
 
@@ -68,19 +81,52 @@ def _claim_form(user):
     return form
 
 
+CLAIM_PAGE_SIZE = 50
+
+
 @bp.route("/claim")
 @promoter_required
 def claim_events():
     user = _current_user()
     form = _claim_form(user)
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    events = (
+    query = (
         Event.query.options(joinedload(Event.venue))
         .filter(Event.label_id.is_(None), Event.date >= today)
         .order_by(Event.date.asc())
-        .all()
     )
-    return render_template("promoter_claim.html", events=events, form=form)
+    raw_q = normalise_query(request.args.get("q", ""))
+    if raw_q:
+        query = query.outerjoin(Venue, Event.venue_id == Venue.id)
+        for pattern in like_patterns(raw_q):
+            query = query.filter(
+                db.or_(
+                    Event.name.ilike(pattern, escape="\\"),
+                    Event.acts.ilike(pattern, escape="\\"),
+                    Venue.name.ilike(pattern, escape="\\"),
+                    Venue.city.ilike(pattern, escape="\\"),
+                )
+            )
+    page = request.args.get("page", 1, type=int)
+    pagination = query.paginate(page=page, per_page=CLAIM_PAGE_SIZE, error_out=False)
+
+    # "Likely yours": fuzzy-match the user's label names against unfiltered
+    # upcoming unlabelled events, so a suggestion can't be hidden by q/page.
+    suggestions = likely_label_events(
+        owned_labels(user),
+        Event.query.options(joinedload(Event.venue))
+        .filter(Event.label_id.is_(None), Event.date >= today)
+        .order_by(Event.date.asc())
+        .all(),
+    )
+    return render_template(
+        "promoter_claim.html",
+        events=pagination.items,
+        pagination=pagination,
+        q=raw_q,
+        suggestions=suggestions,
+        form=form,
+    )
 
 
 @bp.route("/events/<int:event_id>/claim", methods=["POST"])
@@ -108,6 +154,33 @@ def claim_event(event_id):
     db.session.commit()
     bust_cache()
     flash(_("Event claimed for %(label)s!", label=label.name))
+    return redirect(url_for("promoter.dashboard"))
+
+
+@bp.route("/events/<int:event_id>/unclaim", methods=["POST"])
+@promoter_required
+def unclaim_event(event_id):
+    form = UnclaimEventForm()
+    if not form.validate_on_submit():
+        abort(400)
+    user = _current_user()
+    event = Event.query.get_or_404(event_id)
+    # Strictly per-account, like claiming: admins get no special treatment.
+    if event.label is None or event.label.promoter_id != user.id:
+        abort(403)
+    record(
+        "label.unclaim",
+        "event",
+        event.id,
+        actor=user,
+        detail=(
+            f"label_id={event.label_id} label={event.label.name!r} event={event.name!r}"
+        ),
+    )
+    event.label_id = None
+    db.session.commit()
+    bust_cache()
+    flash(_("Event released from the label."))
     return redirect(url_for("promoter.dashboard"))
 
 
