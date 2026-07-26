@@ -27,12 +27,28 @@
              hint=_('Optional. Shown on your public label page.'),
              rows=4) }}
 
+    {{ field(form.website,
+             hint=_('Optional. Shown on your public label page.'),
+             placeholder='https://…') }}
+
+    {{ field(form.link_social_1, placeholder='https://…') }}
+
+    {{ field(form.link_social_2, placeholder='https://…') }}
+
+    {{ field(form.contact_email,
+             hint=_('Optional. Shown publicly as a contact address for bookings.'),
+             placeholder='booking@example.org') }}
+
     {% call field(form.logo, hint=_('Optional. JPG or PNG formats only.')) %}
       {% if label and label.logo %}
         <div class="mt-2 flex items-center gap-3">
           <img src="/{{ label.logo.lstrip('/') }}" alt="{{ label.name }}"
                class="w-16 h-16 object-contain border border-ink bg-paper">
           <small class="text-xs text-smudge">{{ _('Current logo — uploading a new file replaces it.') }}</small>
+        </div>
+        <div class="mt-2 flex items-center gap-3">
+          {{ form.remove_logo(id="remove_logo", class="w-4 h-4 cursor-pointer accent-bleed") }}
+          {{ form.remove_logo.label(class="text-xs uppercase tracking-widest cursor-pointer") }}
         </div>
       {% endif %}
     {% endcall %}

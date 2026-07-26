@@ -368,3 +368,96 @@ class TestUnclaim:
         event = make_event()
         login(promoter)
         assert client.post(f"/promoter/events/{event.id}/unclaim").status_code == 403
+
+
+class TestLabelProfile:
+    def _base_data(self, name="Profile Label", **extra):
+        data = {"name": name}
+        data.update(extra)
+        return data
+
+    def test_profile_fields_round_trip(self, client, make_user, login):
+        login(make_user(is_promoter=True))
+        client.post(
+            "/promoter/labels/new",
+            data=self._base_data(
+                website="https://example.org",
+                link_social_1="https://instagram.com/x",
+                link_social_2="https://x.bandcamp.com",
+                contact_email="booking@example.org",
+            ),
+        )
+        label = Label.query.filter_by(name="Profile Label").one()
+        assert label.website == "https://example.org"
+        assert label.link_social_1 == "https://instagram.com/x"
+        assert label.link_social_2 == "https://x.bandcamp.com"
+        assert label.contact_email == "booking@example.org"
+
+    def test_unsafe_website_rejected(self, client, make_user, login):
+        login(make_user(is_promoter=True))
+        resp = client.post(
+            "/promoter/labels/new",
+            data=self._base_data(website="javascript:alert(1)"),
+        )
+        assert resp.status_code == 200  # re-rendered with errors
+        assert Label.query.count() == 0
+
+    def test_bad_contact_email_rejected(self, client, make_user, login):
+        login(make_user(is_promoter=True))
+        client.post(
+            "/promoter/labels/new", data=self._base_data(contact_email="not-an-email")
+        )
+        assert Label.query.count() == 0
+
+    def test_remove_logo_clears_column(self, client, make_user, make_label, login):
+        promoter = make_user(is_promoter=True)
+        label = make_label(promoter, logo="uploads/logo.png")
+        login(promoter)
+        client.post(
+            f"/promoter/labels/{label.id}/edit",
+            data=self._base_data(name=label.name, remove_logo="y"),
+            content_type="multipart/form-data",
+        )
+        db.session.refresh(label)
+        assert label.logo is None
+
+    def test_upload_beats_remove_checkbox(self, client, make_user, make_label, login):
+        promoter = make_user(is_promoter=True)
+        label = make_label(promoter, logo="uploads/old.png")
+        login(promoter)
+        client.post(
+            f"/promoter/labels/{label.id}/edit",
+            data=self._base_data(
+                name=label.name, remove_logo="y", logo=_png_upload("new.png")
+            ),
+            content_type="multipart/form-data",
+        )
+        db.session.refresh(label)
+        assert label.logo is not None
+        assert "old.png" not in label.logo
+
+    def test_public_label_page_shows_profile(self, client, make_user, make_label):
+        label = make_label(
+            make_user(is_promoter=True),
+            name="Linked Label",
+            website="https://example.org/",
+            contact_email="booking@example.org",
+            description="Kollektiv. Mehr auf https://blog.example.org und so.",
+        )
+        html = client.get(f"/label/{label.slug}/").data.decode()
+        assert 'href="https://example.org/"' in html
+        assert "example.org" in html
+        assert 'href="mailto:booking@example.org"' in html
+        assert 'href="https://blog.example.org"' in html
+
+    def test_unsafe_stored_links_not_rendered(self, client, make_user, make_label):
+        # Defense in depth: even a value that bypassed form validation must
+        # not render as a link.
+        label = make_label(
+            make_user(is_promoter=True),
+            name="Evil Label",
+            website="javascript:alert(1)",
+            description="javascript:alert(2)",
+        )
+        html = client.get(f"/label/{label.slug}/").data.decode()
+        assert 'href="javascript:' not in html

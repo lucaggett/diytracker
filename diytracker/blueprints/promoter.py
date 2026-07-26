@@ -184,6 +184,13 @@ def unclaim_event(event_id):
     return redirect(url_for("promoter.dashboard"))
 
 
+def _apply_profile_fields(label, form):
+    label.website = (form.website.data or "").strip() or None
+    label.link_social_1 = (form.link_social_1.data or "").strip() or None
+    label.link_social_2 = (form.link_social_2.data or "").strip() or None
+    label.contact_email = (form.contact_email.data or "").strip() or None
+
+
 def _duplicate_name(name, exclude_id=None):
     query = Label.query.filter(db.func.lower(Label.name) == name.lower())
     if exclude_id is not None:
@@ -210,6 +217,7 @@ def new_label():
             description=(form.description.data or "").strip() or None,
             promoter_id=session["user_id"],
         )
+        _apply_profile_fields(label, form)
         db.session.add(label)
         db.session.flush()
         record(
@@ -244,7 +252,12 @@ def edit_label(label_id):
         )
         if logo:
             label.logo = logo
+        elif form.remove_logo.data:
+            # Clears the reference only; the file stays on disk, matching the
+            # replace path, which never deletes old files either.
+            label.logo = None
         label.description = (form.description.data or "").strip() or None
+        _apply_profile_fields(label, form)
         record(
             "label.edit",
             "label",

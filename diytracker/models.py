@@ -197,6 +197,12 @@ class Label(db.Model):
     logo = db.Column(db.String(200), nullable=True)  # same convention as Event.flyer
     # Plain text, shown on the public label page's hero header.
     description = db.Column(db.Text, nullable=True)
+    # Public profile links, all optional; URLs are SafeLink-validated at the
+    # form and re-checked with is_safe_link() before rendering.
+    website = db.Column(db.String(300), nullable=True)
+    link_social_1 = db.Column(db.String(300), nullable=True)
+    link_social_2 = db.Column(db.String(300), nullable=True)
+    contact_email = db.Column(db.String(200), nullable=True)
     promoter_id = db.Column(db.Integer, db.ForeignKey("submitter.id"), nullable=False)
     promoter = db.relationship("Submitter", backref=db.backref("labels", lazy=True))
     created_at = db.Column(db.DateTime, nullable=True, default=utcnow)

@@ -42,7 +42,7 @@ from diytracker.services.seo import (
     website_json_ld,
 )
 from diytracker.services.security import init_security_headers
-from diytracker.utils import is_safe_link, normalise_canton, parent_genres
+from diytracker.utils import is_safe_link, linkify, normalise_canton, parent_genres
 
 
 def create_app(config: Config | None = None) -> Flask:
@@ -91,6 +91,7 @@ def create_app(config: Config | None = None) -> Flask:
     app.jinja_env.globals["normalise_canton"] = normalise_canton
     app.jinja_env.globals["canton_in"] = canton_in
     app.jinja_env.globals["is_safe_link"] = is_safe_link
+    app.jinja_env.filters["linkify"] = linkify
     app.jinja_env.globals["canonical_url"] = canonical_url
     app.jinja_env.globals["hreflang_entries"] = hreflang_entries
     app.jinja_env.globals["localized_paths"] = localized_paths

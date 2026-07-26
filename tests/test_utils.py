@@ -106,3 +106,49 @@ class TestCleanTicketUrl:
     def test_unknown_source_passes_through(self):
         url = "https://example.com/tickets"
         assert clean_ticket_url(url, "unknown-source") == url
+
+
+class TestLinkify:
+    def test_plain_text_is_escaped(self):
+        from diytracker.utils import linkify
+
+        out = str(linkify('<b>hi</b> & "there"'))
+        assert "<b>" not in out
+        assert "&lt;b&gt;" in out
+        assert "&amp;" in out
+
+    def test_http_urls_become_links(self):
+        from diytracker.utils import linkify
+
+        out = str(linkify("see https://example.org/x for info"))
+        assert (
+            '<a href="https://example.org/x" rel="nofollow noopener" '
+            'target="_blank">https://example.org/x</a>' in out
+        )
+
+    def test_trailing_punctuation_stays_outside(self):
+        from diytracker.utils import linkify
+
+        out = str(linkify("see https://example.org/x."))
+        assert 'href="https://example.org/x"' in out
+        assert out.endswith(".")
+
+    def test_unsafe_scheme_stays_text(self):
+        from diytracker.utils import linkify
+
+        out = str(linkify("javascript:alert(1) and data:text/html,x"))
+        assert "<a " not in out
+
+    def test_none_and_empty(self):
+        from diytracker.utils import linkify
+
+        assert str(linkify(None)) == ""
+        assert str(linkify("")) == ""
+
+    def test_html_inside_url_neighbourhood_is_escaped(self):
+        from diytracker.utils import linkify
+
+        out = str(linkify("<script> https://ok.ch <img src=x onerror=y>"))
+        assert "<script>" not in out
+        assert "<img" not in out
+        assert 'href="https://ok.ch"' in out

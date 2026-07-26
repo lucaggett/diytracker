@@ -2,6 +2,8 @@
 
 import re
 
+from markupsafe import Markup, escape
+
 # ---------------------------------------------------------------------------
 # Canton normalisation
 # ---------------------------------------------------------------------------
@@ -695,6 +697,39 @@ def is_safe_link(url):
     if not url:
         return False
     return url.strip().lower().startswith(("http://", "https://"))
+
+
+_URL_RE = re.compile(r"https?://[^\s<>\"']+", re.IGNORECASE)
+
+
+def linkify(text):
+    """Escape *text* and wrap plain http(s) URLs in anchors.
+
+    The whole text is escaped first, then only substrings that pass
+    is_safe_link() become links — the href is never built from anything
+    that fails that check, so a `javascript:` string stays inert text.
+    Returns Markup for direct template use.
+    """
+    if not text:
+        return Markup("")
+    result = []
+    pos = 0
+    for match in _URL_RE.finditer(text):
+        result.append(escape(text[pos : match.start()]))
+        url = match.group(0).rstrip(".,;:)")
+        rest = match.group(0)[len(url) :]
+        if is_safe_link(url):
+            result.append(
+                Markup(
+                    '<a href="{0}" rel="nofollow noopener" target="_blank">{0}</a>'
+                ).format(url)
+            )
+        else:
+            result.append(escape(url))
+        result.append(escape(rest))
+        pos = match.end()
+    result.append(escape(text[pos:]))
+    return Markup("").join(result)
 
 
 def clean_ticket_url(url, source):

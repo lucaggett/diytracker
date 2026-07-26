@@ -1,10 +1,14 @@
 from flask_wtf import FlaskForm
+
+# Werkzeug-aware FileField: data is only ever a real uploaded FileStorage,
+# never the obj attribute (a stored path string) leaking through on POSTs
+# that carry no file part.
+from flask_wtf.file import FileField
 from wtforms import (
     StringField,
     TextAreaField,
     DateField,
     TimeField,
-    FileField,
     SelectField,
     SelectMultipleField,
     PasswordField,
@@ -146,7 +150,20 @@ class LabelForm(FlaskForm):
     description = TextAreaField(
         _l("Description"), validators=[Optional(), Length(max=1000)]
     )
+    website = StringField(
+        _l("Website"), validators=[Optional(), SafeLink(), Length(max=300)]
+    )
+    link_social_1 = StringField(
+        _l("Social link"), validators=[Optional(), SafeLink(), Length(max=300)]
+    )
+    link_social_2 = StringField(
+        _l("Second social link"), validators=[Optional(), SafeLink(), Length(max=300)]
+    )
+    contact_email = StringField(
+        _l("Contact email"), validators=[Optional(), Email(), Length(max=200)]
+    )
     logo = FileField(_l("Logo"), validators=[Optional()])
+    remove_logo = BooleanField(_l("Remove the current logo"))
 
 
 class DeleteLabelForm(FlaskForm):

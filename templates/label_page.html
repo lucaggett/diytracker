@@ -15,7 +15,9 @@
   {% set hero_eyebrow = _('Label') %}
   {% set hero_title = label.name %}
   {% set hero_logo = label.logo %}
-  {% set hero_description = label.description %}
+  {% set hero_description_html = label.description | linkify %}
+  {% set hero_links = [label.website, label.link_social_1, label.link_social_2] | select | list %}
+  {% set hero_contact = label.contact_email %}
   {% include '_partials/hero.html' %}
 {% endblock %}
 

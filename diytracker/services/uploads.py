@@ -2,6 +2,7 @@ import os
 import secrets
 
 from PIL import Image
+from werkzeug.datastructures import FileStorage
 
 from diytracker.paths import ROOT
 
@@ -42,8 +43,15 @@ def _resize_flyer(path):
 
 
 def save_flyer_file(file_storage, upload_folder):
-    """Validate, save, and resize a flyer upload. Returns the saved path or None."""
-    if not file_storage or not file_storage.filename:
+    """Validate, save, and resize a flyer upload. Returns the saved path or None.
+
+    Guards on FileStorage because a form built with obj=... can leak the
+    stored path *string* into the field's data when the POST carries no
+    file part at all (clients that omit the input entirely).
+    """
+    if not isinstance(file_storage, FileStorage):
+        return None
+    if not file_storage.filename:
         return None
     if allowed_file(file_storage.filename) and validate_image_content(file_storage):
         # Random server-side name: avoids collisions between uploads and any

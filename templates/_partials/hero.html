@@ -4,13 +4,18 @@
      hero_eyebrow      — small kicker (Canton/Genre/Label), already translated
      hero_title        — page name; this is the page's only <h1>
      hero_logo         — optional root-relative image path (label logos)
-     hero_description  — optional blurb; switches to the compact-title layout #}
+     hero_description  — optional blurb; switches to the compact-title layout
+     hero_description_html — optional pre-rendered Markup (linkified label
+                         descriptions); wins over hero_description
+     hero_links        — optional list of external URLs (label profiles);
+                         each is re-checked with is_safe_link before rendering
+     hero_contact      — optional public contact email #}
 <div class="bg-ink text-paper">
   <div class="max-w-2xl mx-auto px-4 pt-6 pb-8">
     <a href="{{ url_for('public.calendar_view') }}"
        class="inline-block font-mono text-xs uppercase tracking-widest text-paper/70 hover:text-paper hover:underline underline-offset-4 mb-6">&larr; {{ _('Back to calendar') }}</a>
     <p class="font-mono text-xs uppercase tracking-widest text-paper/60 mb-2">{{ hero_eyebrow }}</p>
-    {% if hero_description %}
+    {% if hero_description or hero_description_html %}
       <div class="flex items-center gap-4">
         {% if hero_logo %}
           <img src="/{{ hero_logo.lstrip('/') }}" alt="{{ hero_title }}"
@@ -18,7 +23,7 @@
         {% endif %}
         <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ hero_title }}</h1>
       </div>
-      <p class="font-mono text-sm text-paper/80 max-w-prose mt-3">{{ hero_description }}</p>
+      <p class="font-mono text-sm text-paper/80 max-w-prose mt-3">{% if hero_description_html %}{{ hero_description_html }}{% else %}{{ hero_description }}{% endif %}</p>
     {% else %}
       <div class="flex items-center gap-5">
         {% if hero_logo %}
@@ -26,6 +31,20 @@
                class="w-24 h-24 object-contain border border-paper/40 bg-paper p-1 shrink-0">
         {% endif %}
         <h1 class="font-richEatin text-5xl sm:text-6xl mis-reg leading-none">{{ hero_title }}</h1>
+      </div>
+    {% endif %}
+    {% if hero_links or hero_contact %}
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-4 font-mono text-xs">
+        {% for link in hero_links or [] %}
+          {% if is_safe_link(link) %}
+            <a href="{{ link }}" rel="nofollow noopener" target="_blank"
+               class="text-paper/70 hover:text-paper hover:underline underline-offset-4">{{ link | replace('https://', '') | replace('http://', '') | trim('/') }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if hero_contact %}
+          <a href="mailto:{{ hero_contact }}"
+             class="text-paper/70 hover:text-paper hover:underline underline-offset-4">{{ hero_contact }}</a>
+        {% endif %}
       </div>
     {% endif %}
   </div>
