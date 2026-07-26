@@ -9,6 +9,7 @@ from textual.widgets import Footer, Header, OptionList
 from textual.widgets.option_list import Option
 
 from diytracker.admin.tui.screens import (
+    AuditScreen,
     DatabaseScreen,
     EventDedupScreen,
     EventsScreen,
@@ -32,6 +33,7 @@ MENU = [
     ("queue-dedup", "Queue duplicates", QueueDupScreen),
     ("stats", "Stats", StatsScreen),
     ("traffic", "Traffic", TrafficScreen),
+    ("audit", "Audit log", AuditScreen),
     ("db", "Database", DatabaseScreen),
     ("logs", "Logs", LogsScreen),
 ]

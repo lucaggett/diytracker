@@ -19,6 +19,7 @@ from textual.widgets import (
 )
 
 from diytracker.admin import (
+    audit,
     db_tools,
     events,
     invites,
@@ -1159,6 +1160,73 @@ class DatabaseScreen(AdminScreen):
             self.show_error(exc)
         self.busy(False)
         self.refresh_info()
+
+
+# ── audit ─────────────────────────────────────────────────────────────────────
+
+
+class AuditScreen(AdminScreen):
+    """Read-only view of the ActionLog trail, newest first. Enter shows a
+    row's full detail; `f` filters by action name or prefix ("label.")."""
+
+    BINDINGS = AdminScreen.BINDINGS + [
+        Binding("f", "filter", "Filter"),
+        Binding("r", "refresh", "Refresh"),
+    ]
+
+    action_filter_value = None
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield DataTable(cursor_type="row")
+        yield Footer()
+
+    def on_mount(self):
+        self.sub_title = "Audit log"
+        table = self.query_one(DataTable)
+        table.add_columns("WHEN (UTC)", "ACTOR", "ACTION", "TARGET", "DETAIL")
+        self._rows = {}
+        self.action_refresh()
+
+    @work(exclusive=True)
+    async def action_refresh(self):
+        rows = await self.run_db(audit.list_actions, 200, self.action_filter_value)
+        table = self.query_one(DataTable)
+        table.clear()
+        self._rows = {str(row.id): row for row in rows}
+        for row in rows:
+            detail = row.detail if len(row.detail) <= 80 else row.detail[:77] + "..."
+            table.add_row(
+                row.when, row.actor, row.action, row.target, detail, key=str(row.id)
+            )
+        suffix = f" — {self.action_filter_value}" if self.action_filter_value else ""
+        self.sub_title = f"Audit log{suffix}"
+
+    @work
+    async def action_filter(self):
+        value = await self.app.push_screen_wait(
+            PromptModal(
+                "Filter by action (e.g. queue.approve, or a prefix like label.). "
+                "Empty clears the filter.",
+                value=self.action_filter_value or "",
+            )
+        )
+        if value is None:
+            return
+        self.action_filter_value = value.strip() or None
+        self.action_refresh()
+
+    @work
+    async def on_data_table_row_selected(self, event: DataTable.RowSelected):
+        row = self._rows.get(event.row_key.value)
+        if row is None:
+            return
+        await self.app.push_screen_wait(
+            MessageModal(
+                f"#{row.id} {row.action}",
+                f"{row.when} UTC · {row.actor}\n{row.target}\n\n{row.detail or '(no detail)'}",
+            )
+        )
 
 
 # ── logs ──────────────────────────────────────────────────────────────────────

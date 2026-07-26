@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from sqlalchemy import func
 
 from diytracker.admin.core import AdminError
+from diytracker.services.audit import record
 from diytracker.models import Event, Label, Submitter, db
 from diytracker.services.cache import bust_cache
 from diytracker.services.labels import unique_slug
@@ -84,6 +85,8 @@ def create_label(name, promoter_email):
     user = _get_promoter(promoter_email)
     label = Label(name=name, slug=unique_slug(name), promoter_id=user.id)
     db.session.add(label)
+    db.session.flush()
+    record("label.create", "label", label.id, actor="tui", detail=f"name={name!r}")
     db.session.commit()
     bust_cache()
     return _row(label, 0)
@@ -95,6 +98,7 @@ def rename_label(label_id, new_name):
     name = _check_name(new_name, exclude_id=label.id)
     label.name = name
     label.slug = unique_slug(name, exclude_id=label.id)
+    record("label.edit", "label", label.id, actor="tui", detail=f"renamed to {name!r}")
     db.session.commit()
     bust_cache()
     return _row(label, _count_events(label.id))
@@ -103,6 +107,7 @@ def rename_label(label_id, new_name):
 def set_description(label_id, description):
     label = _get_label(label_id)
     label.description = (description or "").strip() or None
+    record("label.edit", "label", label.id, actor="tui", detail="description changed")
     db.session.commit()
     bust_cache()
     return _row(label, _count_events(label.id))
@@ -112,6 +117,13 @@ def reassign_label(label_id, promoter_email):
     label = _get_label(label_id)
     user = _get_promoter(promoter_email)
     label.promoter_id = user.id
+    record(
+        "label.edit",
+        "label",
+        label.id,
+        actor="tui",
+        detail=f"reassigned to {promoter_email!r}",
+    )
     db.session.commit()
     return _row(label, _count_events(label.id))
 
@@ -123,6 +135,13 @@ def delete_label(label_id):
     name = label.name
     # Detach events first — FK enforcement would otherwise reject the delete.
     n_events = Event.query.filter_by(label_id=label.id).update({"label_id": None})
+    record(
+        "label.delete",
+        "label",
+        label.id,
+        actor="tui",
+        detail=f"name={name!r} detached_events={n_events}",
+    )
     db.session.delete(label)
     db.session.commit()
     bust_cache()

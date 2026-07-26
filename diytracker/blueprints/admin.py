@@ -11,6 +11,7 @@ from flask import (
     render_template,
     request,
     send_file,
+    session,
     url_for,
 )
 from sqlalchemy import func
@@ -24,7 +25,8 @@ from diytracker.forms import (
     VenueForm,
     get_canton_choices,
 )
-from diytracker.models import db, Event, PageText, ScrapeSuspect, Venue
+from diytracker.models import db, Event, PageText, ScrapeSuspect, Submitter, Venue
+from diytracker.services.audit import record
 from diytracker.services.analytics import (
     REPORT_PATH,
     STATS_INTERVAL_MINUTES,
@@ -166,6 +168,7 @@ def edit_event(event_id):
         form.is_festival.data = event.is_festival
     if request.method == "POST":
         if form.validate_on_submit():
+            old_label_id = event.label_id
             event.name = form.name.data
             event.date = form.date.data
             event.end_date = form.end_date.data
@@ -190,6 +193,18 @@ def edit_event(event_id):
             if saved:
                 event.flyer = saved
 
+            label_note = (
+                f" label {old_label_id}->{event.label_id}"
+                if event.label_id != old_label_id
+                else ""
+            )
+            record(
+                "event.edit",
+                "event",
+                event.id,
+                actor=db.session.get(Submitter, session["user_id"]),
+                detail=f"name={event.name!r} date={event.date}{label_note}",
+            )
             db.session.commit()
             bust_cache()
             flash(_("Event updated successfully!"))
@@ -206,6 +221,16 @@ def delete_event(event_id):
         abort(400)
     event = Event.query.get_or_404(event_id)
     detach_scrape_approvals(event.id)
+    record(
+        "event.delete",
+        "event",
+        event.id,
+        actor=db.session.get(Submitter, session["user_id"]),
+        detail=(
+            f"name={event.name!r} date={event.date} "
+            f"venue={event.venue.name if event.venue else None!r}"
+        ),
+    )
     db.session.delete(event)
     db.session.commit()
     bust_cache()

@@ -25,6 +25,7 @@ from diytracker.services.events import (
 from diytracker.services.genre_catalog import find_genre
 from diytracker.services.i18n import gettext as _
 from diytracker.services.ingest import parse_time
+from diytracker.services.audit import record
 from diytracker.services.labels import owned_label_choices
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 from diytracker.services.venue import get_or_create_venue
@@ -206,6 +207,20 @@ def event_queue():
         rec.approved = True
         rec.approved_at = datetime.now()
         rec.approved_event_id = new_event.id
+        # The Event carries the approving admin as submitter_id; the scraped
+        # attribution survives only here.
+        record(
+            "queue.approve",
+            "scraped_event",
+            rec.id,
+            actor=submitter,
+            detail=(
+                f"event_id={new_event.id} name={name!r} "
+                f"source={data.get('source')!r} url={data.get('url')!r} "
+                f"organizer={data.get('organizer')!r} "
+                f"submitter={data.get('submitter')!r}"
+            ),
+        )
         db.session.commit()
         bust_cache()
         flash(_("Event approved and added to calendar!"))
@@ -230,6 +245,13 @@ def delete_scraped_event(scraped_id):
     scraped = ScrapedEvent.query.get_or_404(scraped_id)
     scraped.approved = True
     scraped.approved_at = datetime.now()
+    record(
+        "queue.reject",
+        "scraped_event",
+        scraped.id,
+        actor=db.session.get(Submitter, session["user_id"]),
+        detail=f"title={scraped.title!r} source={scraped.source!r} url={scraped.url!r}",
+    )
     db.session.commit()
     flash(_("Event removed from queue."))
     return redirect(url_for("submissions.event_queue", **_queue_redirect_args()))

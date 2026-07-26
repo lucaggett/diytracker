@@ -364,6 +364,26 @@ class EventDailyViews(db.Model):
         return f"<EventDailyViews event={self.event_id} {self.date}: {self.hits}>"
 
 
+class ActionLog(db.Model):
+    """Append-only record of moderation and promoter actions, written via
+    services/audit.py. target_id is deliberately not a foreign key: log
+    rows must outlive the events, queue entries and labels they describe.
+    actor is a snapshot (email, or "tui" for the admin tool) so the row
+    stays readable after the account is deleted."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)  # UTC
+    actor_id = db.Column(db.Integer, db.ForeignKey("submitter.id"), nullable=True)
+    actor = db.Column(db.String(200), nullable=False)
+    action = db.Column(db.String(50), nullable=False, index=True)
+    target_type = db.Column(db.String(20), nullable=False)
+    target_id = db.Column(db.Integer, nullable=False, index=True)
+    detail = db.Column(db.Text, nullable=True)
+
+    def __repr__(self):
+        return f"<ActionLog {self.action} {self.target_type}={self.target_id} by {self.actor}>"
+
+
 def _format_parent_genres(genre):
     parents = _compute_parent_genres(genre)
     return "," + ",".join(parents) + "," if parents else None

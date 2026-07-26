@@ -15,6 +15,7 @@ from sqlalchemy.orm import joinedload
 
 from diytracker.forms import ClaimEventForm, DeleteLabelForm, LabelForm
 from diytracker.models import db, Event, Label, Submitter
+from diytracker.services.audit import record
 from diytracker.services.auth import promoter_required
 from diytracker.services.cache import bust_cache
 from diytracker.services.i18n import gettext as _
@@ -97,6 +98,13 @@ def claim_event(event_id):
         flash(_("This event already belongs to a label."))
         return redirect(url_for("promoter.claim_events"))
     event.label_id = label.id
+    record(
+        "label.claim",
+        "event",
+        event.id,
+        actor=user,
+        detail=f"label_id={label.id} label={label.name!r} event={event.name!r}",
+    )
     db.session.commit()
     bust_cache()
     flash(_("Event claimed for %(label)s!", label=label.name))
@@ -130,6 +138,14 @@ def new_label():
             promoter_id=session["user_id"],
         )
         db.session.add(label)
+        db.session.flush()
+        record(
+            "label.create",
+            "label",
+            label.id,
+            actor=_current_user(),
+            detail=f"name={label.name!r}",
+        )
         db.session.commit()
         bust_cache()
         flash(_("Label created!"))
@@ -156,6 +172,13 @@ def edit_label(label_id):
         if logo:
             label.logo = logo
         label.description = (form.description.data or "").strip() or None
+        record(
+            "label.edit",
+            "label",
+            label.id,
+            actor=_current_user(),
+            detail=f"name={label.name!r}",
+        )
         db.session.commit()
         bust_cache()
         flash(_("Label updated!"))
@@ -171,7 +194,14 @@ def delete_label(label_id):
         abort(400)
     label = _owned_label_or_403(label_id)
     # Detach events first — FK enforcement would otherwise reject the delete.
-    Event.query.filter_by(label_id=label.id).update({"label_id": None})
+    detached = Event.query.filter_by(label_id=label.id).update({"label_id": None})
+    record(
+        "label.delete",
+        "label",
+        label.id,
+        actor=_current_user(),
+        detail=f"name={label.name!r} detached_events={detached}",
+    )
     db.session.delete(label)
     db.session.commit()
     bust_cache()

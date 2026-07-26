@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from diytracker.admin.core import AdminError
+from diytracker.services.audit import record
 from diytracker.models import Event, db
 from diytracker.services.cache import bust_cache
 from diytracker.services.events import detach_scrape_approvals
@@ -86,6 +87,13 @@ def set_status(event_id, status):
         raise AdminError(f"Unknown status {status!r} (expected {EVENT_STATUSES}).")
     event = _get_event(event_id)
     event.status = status
+    record(
+        "event.status",
+        "event",
+        event.id,
+        actor="tui",
+        detail=f"name={event.name!r} status={status}",
+    )
     db.session.commit()
     bust_cache()
     return _row(event)
@@ -95,6 +103,13 @@ def delete_event(event_id):
     event = _get_event(event_id)
     row = _row(event)
     detach_scrape_approvals(event.id)
+    record(
+        "event.delete",
+        "event",
+        event.id,
+        actor="tui",
+        detail=f"name={event.name!r} date={event.date}",
+    )
     db.session.delete(event)
     db.session.commit()
     bust_cache()

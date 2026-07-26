@@ -18,6 +18,7 @@ from datetime import datetime
 
 from diytracker.admin.core import AdminError
 from diytracker.models import ScrapedEvent, db
+from diytracker.services.audit import record
 
 
 @dataclass
@@ -65,19 +66,33 @@ def list_flagged():
     return [_row(rec) for rec in rows]
 
 
-def discard(scraped_id):
+def discard(scraped_id, actor="tui"):
     """Confirmed duplicate: drop it from the queue without publishing."""
     rec = _get_flagged(scraped_id)
     row = _row(rec)
     rec.approved = True
     rec.approved_at = datetime.now()
+    record(
+        "queue.reject",
+        "scraped_event",
+        rec.id,
+        actor=actor,
+        detail=f"duplicate discard: title={rec.title!r} reason={rec.review_reason!r}",
+    )
     db.session.commit()
     return row
 
 
-def unflag(scraped_id):
+def unflag(scraped_id, actor="tui"):
     """False positive: clear the flag so it returns to the web queue."""
     rec = _get_flagged(scraped_id)
     rec.needs_review = False
+    record(
+        "queue.unflag",
+        "scraped_event",
+        rec.id,
+        actor=actor,
+        detail=f"title={rec.title!r}",
+    )
     db.session.commit()
     return _row(rec)
