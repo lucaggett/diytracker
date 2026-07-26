@@ -174,6 +174,10 @@ class UnclaimEventForm(FlaskForm):
     pass
 
 
+class NotifyToggleForm(FlaskForm):
+    pass
+
+
 class ClaimEventForm(FlaskForm):
     # Choices must be set to the claiming promoter's labels by every view
     # that instantiates the form (before validate_on_submit).

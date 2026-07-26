@@ -18,6 +18,7 @@ from diytracker.forms import (
     ClaimEventForm,
     DeleteLabelForm,
     LabelForm,
+    NotifyToggleForm,
     UnclaimEventForm,
 )
 from diytracker.models import db, Event, Label, Submitter, Venue
@@ -28,6 +29,7 @@ from diytracker.services.i18n import gettext as _
 from diytracker.services.labels import (
     label_stats,
     likely_label_events,
+    likely_queue_matches,
     owned_labels,
     unique_slug,
 )
@@ -67,10 +69,30 @@ def dashboard():
         labels=labels,
         stats=stats,
         share_urls=share_urls,
+        queue_matches=likely_queue_matches(labels),
+        notify_enabled=user.notify_label_events,
         delete_form=DeleteLabelForm(),
         unclaim_form=UnclaimEventForm(),
+        notify_form=NotifyToggleForm(),
         now=datetime.now(),
     )
+
+
+@bp.route("/notifications", methods=["POST"])
+@promoter_required
+def toggle_notifications():
+    form = NotifyToggleForm()
+    if not form.validate_on_submit():
+        abort(400)
+    user = _current_user()
+    user.notify_label_events = not user.notify_label_events
+    db.session.commit()
+    flash(
+        _("Email notifications enabled.")
+        if user.notify_label_events
+        else _("Email notifications disabled.")
+    )
+    return redirect(url_for("promoter.dashboard"))
 
 
 def _claim_form(user):

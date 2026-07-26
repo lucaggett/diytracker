@@ -159,6 +159,12 @@ class Submitter(db.Model):
     is_promoter = db.Column(db.Boolean, nullable=False, default=False)
     invite_token = db.Column(db.String(64), nullable=True, unique=True)
     invite_token_expiry = db.Column(db.DateTime, nullable=True)
+    # Opt-out email when an admin edits an event carrying one of the user's
+    # labels. Default on: the userbase is tiny and invited. server_default
+    # keeps existing rows valid (see scripts/migrate_add_notify_flag.py).
+    notify_label_events = db.Column(
+        db.Boolean, nullable=False, default=True, server_default=db.text("1")
+    )
 
     def __init__(self, email, submission_code=None):
         self.email = email

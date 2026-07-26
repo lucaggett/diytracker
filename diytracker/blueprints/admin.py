@@ -27,6 +27,7 @@ from diytracker.forms import (
 )
 from diytracker.models import db, Event, PageText, ScrapeSuspect, Submitter, Venue
 from diytracker.services.audit import record
+from diytracker.services.notifications import notify_label_event_edited
 from diytracker.services.analytics import (
     REPORT_PATH,
     STATS_INTERVAL_MINUTES,
@@ -198,15 +199,20 @@ def edit_event(event_id):
                 if event.label_id != old_label_id
                 else ""
             )
+            actor = db.session.get(Submitter, session["user_id"])
             record(
                 "event.edit",
                 "event",
                 event.id,
-                actor=db.session.get(Submitter, session["user_id"]),
+                actor=actor,
                 detail=f"name={event.name!r} date={event.date}{label_note}",
             )
             db.session.commit()
             bust_cache()
+            # After the commit, and never fatal: an SMTP failure must not
+            # break the edit that already happened.
+            if event.label is not None and event.label.promoter_id != actor.id:
+                notify_label_event_edited(event.label.promoter, event, event.label)
             flash(_("Event updated successfully!"))
             return redirect(url_for("admin.admin"))
 
