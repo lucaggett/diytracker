@@ -22,12 +22,11 @@ INVITE_MESSAGES = {
         "body": (
             "Sali!\n\n"
             "Du chasch jetzt im diytracker dis konto aalege."
-            "DIY-Konzärt und -Events i de Schwiiz.\n\n"
             "Unter em folgende link chasch dis passwort setze (de Link isch 7 Täg gültig):\n"
             "https://diytracker.ch/set-password/{token}\n\n"
             "Wenn öppis nöd klappt oder du Frage hesch, "
             "antworte eifach uf das mail.\n\n"
-            "Grüessli, de diytracker applikations-server!"
+            "Grüessli vom diytracker applikations-server"
         ),
     },
     "en": {
@@ -36,7 +35,7 @@ INVITE_MESSAGES = {
             "You've been invited to diytracker.ch\n\n"
             "Set your password using this link (valid for 7 days):\n"
             "https://diytracker.ch/set-password/{token}\n\n"
-            "If you have any questions, contact Luc at luc@aggett.com\n\n"
+            "If you have any questions, contact Luc at luc@aggett.com or reply to this email\n\n"
             "See you at a show!"
         ),
     },
