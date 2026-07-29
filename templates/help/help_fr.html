@@ -1,0 +1,152 @@
+{# FR aide — traduit depuis help_de.html, la version faisant foi.
+   Les ancres doivent rester identiques au fichier allemand :
+   _partials/help_link.html pointe dessus. #}
+<nav class="mb-10 border-2 border-ink p-4" aria-label="Sommaire">
+  <p class="font-mono text-xs uppercase tracking-widest text-smudge mb-2">Sommaire</p>
+  <ul class="space-y-1 font-mono text-sm">
+    <li><a class="text-bleed underline" href="#start">Compte et rôles</a></li>
+    <li><a class="text-bleed underline" href="#submit">Ajouter un concert</a></li>
+    <li><a class="text-bleed underline" href="#labels">Créer et gérer un label</a></li>
+    <li><a class="text-bleed underline" href="#label-page">La page publique du label</a></li>
+    <li><a class="text-bleed underline" href="#claim">Revendiquer des concerts</a></li>
+    <li><a class="text-bleed underline" href="#stats">Chiffres et notifications</a></li>
+    <li><a class="text-bleed underline" href="#genres">Genres</a></li>
+  </ul>
+</nav>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="start" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Compte et rôles</h2>
+  <p>
+    Pas besoin de compte pour consulter le site : le calendrier, la carte, les pages des
+    lieux et des labels sont publics. Un compte ne sert que si tu veux ajouter des
+    concerts toi-même ou t'occuper d'un label. Les comptes sont attribués à la main —
+    écris-nous à
+    <a class="text-bleed underline" href="mailto:info@diytracker.ch">info@diytracker.ch</a>
+    en disant qui tu es et ce que tu fais.
+  </p>
+  <p>
+    Une fois connecté·e, la barre noire des coulisses apparaît en haut. Qui a le droit
+    d'ajouter des concerts y voit <strong>Soumettre</strong> et <strong>Genres</strong>.
+    Si tu t'occupes d'un label, tu vois en plus <strong>Labels</strong> — ton tableau de
+    bord avec tes labels, leurs concerts et leurs chiffres.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="submit" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Ajouter un concert</h2>
+  <p>
+    <strong>Soumettre</strong> ouvre le formulaire. La date, le lieu et les groupes sont
+    obligatoires ; tout le reste — ouverture des portes, prix, lien billetterie, flyer,
+    description, genres — améliore l'entrée mais reste facultatif.
+  </p>
+  <p>
+    Choisis le lieu dans la liste. S'il n'y figure pas encore, prends « nouveau lieu » et
+    remplis nom, adresse et localité — le formulaire refuse les nouveaux lieux
+    incomplets. Pour un événement sur plusieurs jours, coche la case festival et indique
+    une date de fin ; le concert apparaît alors chaque jour où il se déroule.
+  </p>
+  <p>
+    Si tu t'occupes d'un label, tu peux rattacher le concert directement dans le champ
+    <strong>Label</strong>. Les concerts saisis à la main arrivent tout de suite dans le
+    calendrier — ils ne passent pas par une validation. Si tu repères une erreur plus
+    tard, préviens-nous ; seuls les admins peuvent corriger.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="labels" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Créer et gérer un label</h2>
+  <p>
+    Ici, « label » ne veut pas seulement dire maison de disques : c'est le nom sous lequel
+    vous organisez des concerts — collectif, crew de booking, association, équipe d'un
+    lieu ou véritable label. Un compte peut avoir plusieurs labels, par exemple si tu
+    bookes pour deux crews.
+  </p>
+  <p>
+    Crée-en un sous <strong>Labels → Nouveau label</strong>. Le nom est obligatoire ;
+    s'y ajoutent une description, un logo, un site web, deux liens sociaux et une adresse
+    de contact. Tout cela se retrouve sur la page publique du label — l'adresse de
+    contact est donc visible publiquement. Les noms sont uniques : si l'un est déjà pris,
+    contacte-nous plutôt que de créer une variante mal orthographiée.
+  </p>
+  <p>
+    Tu ne peux modifier et supprimer que tes propres labels. Supprimer un label laisse ses
+    concerts dans le calendrier ; ils s'y trouvent simplement sans label.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="label-page" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">La page publique du label</h2>
+  <p>
+    Chaque label a sa propre page sous <code class="font-mono text-sm">/label/nom/</code>
+    avec le logo, la description, vos liens et tous les concerts à venir. La page reste en
+    ligne même quand rien n'est prévu — tu peux donc diffuser le lien avant que la
+    première date soit fixée.
+  </p>
+  <p>
+    <strong>Attention en cas de changement de nom :</strong> l'adresse dérive du nom.
+    Renommer le label change l'adresse — l'ancien lien ne fonctionne plus, y compris sur
+    des flyers déjà imprimés.
+  </p>
+  <p>
+    En bas de la page du label se trouve un abonnement calendrier (.ics). Qui s'y abonne
+    a vos concerts dans son propre agenda, changements ultérieurs compris.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="claim" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Revendiquer des concerts</h2>
+  <p>
+    Une partie du calendrier est collectée automatiquement à partir de sources publiques.
+    Vos concerts y figurent donc souvent avant que vous n'ayez rien saisi — mais sans
+    label. <strong>Revendiquer un événement</strong> rattache une telle entrée à ton
+    label : elle apparaît ensuite sur votre page de label et compte dans vos statistiques.
+  </p>
+  <p>
+    Tu peux revendiquer les concerts à venir qui n'appartiennent encore à aucun label. La
+    liste est consultable par recherche ; tout en haut, nous suggérons les entrées qui
+    correspondent à vos noms de label. Si finalement ce n'était pas votre concert,
+    détache-le depuis le tableau de bord avec <strong>Détacher</strong> — dans les deux
+    cas il reste au calendrier.
+  </p>
+  <p>
+    Le bloc <strong>En vérification — probablement à toi</strong> montre les entrées
+    collectées qui attendent encore la validation d'un admin. Elles ne sont pas encore au
+    calendrier et ne peuvent donc pas être revendiquées — une fois validées, elles
+    apparaissent dans la liste à revendiquer.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="stats" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Chiffres et notifications</h2>
+  <p>
+    Le tableau de bord indique pour chaque concert combien de fois sa page a été ouverte.
+    Les <strong>vues</strong> sont les ouvertures de la page de l'événement, les
+    <strong>visiteurs</strong> sont les adresses IP uniques par jour, et la petite courbe
+    couvre les 30 derniers jours. Les bots et robots d'indexation sont écartés. Ce sont
+    des tendances, pas une mesure exacte — assez pour voir si un lien partagé a servi à
+    quelque chose.
+  </p>
+  <p>
+    <strong>Copier le lien</strong> te donne l'adresse complète d'un concert pour les
+    stories, les newsletters ou les messageries.
+  </p>
+  <p>
+    Tout en bas, tu peux activer ou désactiver les notifications par e-mail. Elles partent
+    quand un admin modifie un concert portant l'un de vos labels, pour qu'une correction
+    de date ou de lieu ne vous échappe pas.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed">
+  <h2 id="genres" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Genres</h2>
+  <p>
+    Le choix des genres dans le formulaire vient d'une liste commune. S'il en manque un,
+    ajoute-le sous <strong>Genres</strong> : il est aussitôt disponible pour tout le
+    monde. Les genres que tu as ajoutés toi-même peuvent être supprimés — cela ne change
+    rien aux concerts existants.
+  </p>
+  <p>
+    Garde les orthographes courantes et mets plutôt deux ou trois genres pertinents qu'une
+    douzaine : les pages de genres du calendrier ne valent que ce que vaut le classement.
+  </p>
+</section>

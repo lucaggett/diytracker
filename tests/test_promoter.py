@@ -217,6 +217,30 @@ class TestClaim:
         assert db.session.get(Event, event.id).label_id is None
 
 
+class TestDashboardTutorial:
+    def test_tutorial_starts_open_without_labels(self, client, make_user, login):
+        login(make_user(is_promoter=True))
+        html = client.get("/promoter/").data.decode()
+        assert "How this page works" in html
+        assert '<details class="border-2 border-ink bg-paper p-4 mb-6" open>' in html
+
+    def test_tutorial_collapses_once_a_label_exists(
+        self, client, make_user, make_label, login
+    ):
+        promoter = make_user(is_promoter=True)
+        make_label(promoter)
+        login(promoter)
+        html = client.get("/promoter/").data.decode()
+        assert "How this page works" in html
+        assert 'mb-6" open>' not in html
+
+    def test_links_to_the_help_page(self, client, make_user, login):
+        login(make_user(is_promoter=True))
+        html = client.get("/promoter/").data.decode()
+        # The help route is locale-prefixed, so match on the tail only.
+        assert html.count('help#labels"') == 2  # header link + full guide
+
+
 class TestDashboard:
     def test_shows_view_counts_for_label_events(
         self, client, make_user, make_label, make_event, login

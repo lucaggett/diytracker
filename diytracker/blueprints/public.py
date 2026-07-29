@@ -133,6 +133,13 @@ def _skip_calendar_cache():
     return "user_id" in session or bool(session.get("_flashes"))
 
 
+def _path_locale_cache_key(*_args, **_kwargs):
+    # flask-caching passes the view args through; the request path already
+    # encodes them, so the key only needs path + locale. Shared by the
+    # archive, help and label pages.
+    return f"page:{request.path}:{getattr(g, 'locale', DEFAULT_LOCALE)}"
+
+
 @bp.after_request
 def _public_cache_headers(response):
     if request.endpoint != "public.calendar_view" or response.status_code != 200:
@@ -255,6 +262,15 @@ def about():
         flash(_("Thanks! We will get back to you as soon as possible."))
         return redirect(url_for("public.about"))
     return render_template("about.html", form=form)
+
+
+@localized_route("/help")
+@cache.cached(make_cache_key=_path_locale_cache_key, unless=_skip_calendar_cache)
+def help_page():
+    # Prose, not UI chrome: the body lives in one template per locale under
+    # templates/help/, the same way the legal documents do, so paragraphs
+    # never go through the .po files.
+    return render_template("help.html")
 
 
 # AGB is still a placeholder until its draft passes review; impressum and
@@ -503,13 +519,6 @@ def genre_page(genre_slug):
     )
 
 
-def _path_locale_cache_key(*_args, **_kwargs):
-    # flask-caching passes the view args through; the request path already
-    # encodes them, so the key only needs path + locale. Shared by the
-    # archive and label pages.
-    return f"page:{request.path}:{getattr(g, 'locale', DEFAULT_LOCALE)}"
-
-
 @localized_route("/label/<label_slug>/")
 @cache.cached(make_cache_key=_path_locale_cache_key, unless=_skip_calendar_cache)
 def label_page(label_slug):
@@ -713,6 +722,7 @@ def sitemap():
     pages = []
     pages += _sitemap_entries("public.calendar_view", "daily")
     pages += _sitemap_entries("public.about", "monthly")
+    pages += _sitemap_entries("public.help_page", "monthly")
     pages += _sitemap_entries("public.venue_map", "weekly")
     for doc in ("impressum", "datenschutz"):
         pages += _sitemap_entries("public.legal", "yearly", doc=doc)

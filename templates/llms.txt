@@ -11,6 +11,7 @@ default, unprefixed locale).
 
 - [Calendar]({{ canonical_url(url_for('public.calendar_view', lang_prefix=None)) }}): upcoming shows, all cantons and genres.
 - [About]({{ canonical_url(url_for('public.about', lang_prefix=None)) }}): what diytracker.ch is and who runs it.
+- [Help]({{ canonical_url(url_for('public.help_page', lang_prefix=None)) }}): how to use the site — labels, submitting and claiming events.
 - [Venue map]({{ canonical_url(url_for('public.venue_map', lang_prefix=None)) }}): every venue, plotted.
 - [Archive]({{ canonical_url(url_for('public.archive_index', lang_prefix=None)) }}): past shows by month.
 

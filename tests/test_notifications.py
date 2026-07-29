@@ -185,4 +185,6 @@ class TestDashboardPanels:
         promoter = make_user(is_promoter=True)
         make_label(promoter, name="Cool Label")
         login(promoter)
-        assert b"In review" not in client.get("/promoter/").data
+        # The tutorial block quotes the panel's heading, so match on the
+        # explanatory line that only the panel itself renders.
+        assert b"waiting for admin approval" not in client.get("/promoter/").data

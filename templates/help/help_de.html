@@ -1,0 +1,148 @@
+{# DE Hilfe — massgebliche Fassung. FR/IT/EN werden hieraus übersetzt.
+   Die Anker-IDs (start, submit, labels, label-page, claim, stats, genres)
+   werden von _partials/help_link.html verlinkt — nicht umbenennen. #}
+<nav class="mb-10 border-2 border-ink p-4" aria-label="Inhalt">
+  <p class="font-mono text-xs uppercase tracking-widest text-smudge mb-2">Inhalt</p>
+  <ul class="space-y-1 font-mono text-sm">
+    <li><a class="text-bleed underline" href="#start">Konto und Rollen</a></li>
+    <li><a class="text-bleed underline" href="#submit">Eine Show eintragen</a></li>
+    <li><a class="text-bleed underline" href="#labels">Labels anlegen und verwalten</a></li>
+    <li><a class="text-bleed underline" href="#label-page">Die öffentliche Labelseite</a></li>
+    <li><a class="text-bleed underline" href="#claim">Shows übernehmen</a></li>
+    <li><a class="text-bleed underline" href="#stats">Zahlen und Benachrichtigungen</a></li>
+    <li><a class="text-bleed underline" href="#genres">Genres</a></li>
+  </ul>
+</nav>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="start" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Konto und Rollen</h2>
+  <p>
+    Zum Stöbern braucht es kein Konto: Kalender, Karte, Venue- und Labelseiten sind
+    öffentlich. Ein Konto brauchst du erst, wenn du selber Shows eintragen oder ein
+    Label betreuen willst. Konten werden von Hand vergeben — schreib uns kurz an
+    <a class="text-bleed underline" href="mailto:info@diytracker.ch">info@diytracker.ch</a>,
+    wer du bist und was du machst.
+  </p>
+  <p>
+    Angemeldet siehst du oben die schwarze Backstage-Leiste. Wer Shows eintragen darf,
+    sieht dort <strong>Einreichen</strong> und <strong>Genres</strong>. Wer ein Label
+    betreut, sieht zusätzlich <strong>Labels</strong> — das ist dein Dashboard mit
+    deinen Labels, den Shows dazu und deren Zahlen.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="submit" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Eine Show eintragen</h2>
+  <p>
+    Über <strong>Einreichen</strong> kommst du zum Formular. Nötig sind Datum, Venue und
+    die Bands; alles andere — Türöffnung, Eintritt, Ticketlink, Flyer, Beschreibung,
+    Genres — macht den Eintrag besser, ist aber freiwillig.
+  </p>
+  <p>
+    Die Venue wählst du aus der Liste. Steht sie noch nicht drin, wähl «neue Venue» und
+    füll Name, Adresse und Ort aus — unvollständige neue Venues nimmt das Formular nicht
+    an. Ist ein Anlass mehrtägig, setz das Festival-Häkchen und trag ein Enddatum ein;
+    die Show erscheint dann an jedem Tag, an dem sie läuft.
+  </p>
+  <p>
+    Betreust du ein Label, kannst du die Show im Feld <strong>Label</strong> gleich
+    deinem Label zuordnen. Manuell eingetragene Shows sind sofort im Kalender — sie
+    laufen nicht durch eine Freigabe. Fällt dir später ein Fehler auf, meld dich bei uns;
+    korrigieren können nur Admins.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="labels" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Labels anlegen und verwalten</h2>
+  <p>
+    «Label» heisst hier nicht bloss Plattenlabel: gemeint ist der Name, unter dem ihr
+    Shows macht — Kollektiv, Booking-Crew, Verein, Venue-Team oder eben Label. Ein Konto
+    kann mehrere Labels haben, etwa wenn du für zwei Crews buchst.
+  </p>
+  <p>
+    Unter <strong>Labels → Neues Label</strong> legst du eines an. Der Name ist Pflicht,
+    dazu kommen Beschreibung, Logo, Website, zwei Social-Links und eine Kontaktadresse.
+    Alles davon landet auf der öffentlichen Labelseite; die Kontaktadresse ist also
+    öffentlich sichtbar. Namen sind eindeutig — ist einer schon vergeben, meld dich bei
+    uns statt eine Variante mit Schreibfehler anzulegen.
+  </p>
+  <p>
+    Bearbeiten und löschen kannst du nur deine eigenen Labels. Löschst du eines, bleiben
+    die Shows im Kalender — sie stehen danach einfach ohne Label da.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="label-page" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Die öffentliche Labelseite</h2>
+  <p>
+    Jedes Label bekommt eine eigene Seite unter <code class="font-mono text-sm">/label/name/</code>
+    mit Logo, Beschreibung, euren Links und allen kommenden Shows. Die Seite bleibt auch
+    dann online, wenn gerade keine Show ansteht — du kannst den Link also verteilen,
+    bevor das erste Datum steht.
+  </p>
+  <p>
+    <strong>Achtung beim Umbenennen:</strong> die Adresse leitet sich vom Namen ab. Wer
+    das Label umbenennt, ändert die Adresse — der alte Link funktioniert danach nicht
+    mehr, auch nicht auf schon gedruckten Flyern.
+  </p>
+  <p>
+    Unten auf der Labelseite steht ein Kalender-Abo (.ics). Wer es abonniert, hat eure
+    Shows automatisch im eigenen Kalender, inklusive späterer Änderungen.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="claim" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Shows übernehmen</h2>
+  <p>
+    Ein Teil des Kalenders wird automatisch von öffentlichen Quellen eingesammelt. Darum
+    stehen eure Shows oft schon drin, bevor ihr selber etwas eintragt — nur eben ohne
+    Label. Über <strong>Event beanspruchen</strong> hängst du so einen Eintrag an dein
+    Label: er taucht danach auf eurer Labelseite auf und zählt in eure Statistik.
+  </p>
+  <p>
+    Übernehmen kannst du kommende Shows, die noch keinem Label gehören. Die Liste lässt
+    sich durchsuchen; ganz oben schlagen wir Einträge vor, die zu euren Labelnamen
+    passen. War es doch nicht eure Show, gibst du sie im Dashboard mit
+    <strong>Lösen</strong> wieder frei — im Kalender bleibt sie so oder so.
+  </p>
+  <p>
+    Der Block <strong>In Prüfung — wahrscheinlich deins</strong> zeigt eingesammelte Einträge,
+    die noch auf die Freigabe durch Admins warten. Sie sind noch nicht im Kalender und
+    lassen sich darum noch nicht übernehmen — sobald sie freigegeben sind, erscheinen
+    sie in der Liste zum Beanspruchen.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="stats" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Zahlen und Benachrichtigungen</h2>
+  <p>
+    Im Dashboard steht zu jeder Show, wie oft ihre Seite geöffnet wurde. <strong>Views</strong>
+    sind Aufrufe der Eventseite, <strong>Besucher:innen</strong> sind pro Tag eindeutige
+    IP-Adressen, die kleine Kurve zeigt die letzten 30 Tage. Bots und Crawler rechnen wir
+    raus. Das sind Tendenzen, keine exakte Messung — genug, um zu sehen, ob ein geteilter
+    Link etwas gebracht hat.
+  </p>
+  <p>
+    Mit <strong>Link kopieren</strong> holst du dir die vollständige Adresse einer Show
+    für Stories, Newsletter oder Chat.
+  </p>
+  <p>
+    Zuunterst kannst du E-Mail-Benachrichtigungen ein- und ausschalten. Sie gehen raus,
+    wenn ein Admin eine Show mit einem eurer Labels bearbeitet — damit eine Korrektur an
+    Datum oder Venue nicht an euch vorbeigeht.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed">
+  <h2 id="genres" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Genres</h2>
+  <p>
+    Die Genre-Auswahl im Eventformular kommt aus einer gemeinsamen Liste. Fehlt eines,
+    trägst du es unter <strong>Genres</strong> nach; es steht sofort allen zur Verfügung.
+    Genres, die du selber angelegt hast, kannst du wieder löschen — an bestehenden Shows
+    ändert das nichts.
+  </p>
+  <p>
+    Bleib bei gängigen Schreibweisen und trag lieber zwei, drei passende Genres ein als
+    ein Dutzend: die Genreseiten im Kalender sind nur so gut wie die Zuordnung.
+  </p>
+</section>

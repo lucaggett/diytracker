@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-26 09:29+0200\n"
+"POT-Creation-Date: 2026-07-29 13:05+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -76,7 +76,7 @@ msgid "Postponed"
 msgstr "Postponed"
 
 #: diytracker/forms.py:108 diytracker/forms.py:184 templates/label_page.html:15
-#: templates/promoter_dashboard.html:100
+#: templates/promoter_dashboard.html:124
 msgid "Label"
 msgstr "Label"
 
@@ -508,7 +508,7 @@ msgstr "Label updated!"
 msgid "Label deleted."
 msgstr "Label deleted."
 
-#: diytracker/blueprints/public.py:245
+#: diytracker/blueprints/public.py:252
 msgid ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
@@ -516,20 +516,20 @@ msgstr ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
 
-#: diytracker/blueprints/public.py:255
+#: diytracker/blueprints/public.py:262
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Thanks! We will get back to you as soon as possible."
 
-#: diytracker/blueprints/public.py:283
+#: diytracker/blueprints/public.py:299
 msgid "Accessibility info saved — thank you!"
 msgstr "Accessibility info saved — thank you!"
 
-#: diytracker/blueprints/public.py:425
+#: diytracker/blueprints/public.py:441
 #, python-format
 msgid "DIY & punk concerts %(in_canton)s"
 msgstr "DIY & punk concerts %(in_canton)s"
 
-#: diytracker/blueprints/public.py:428
+#: diytracker/blueprints/public.py:444
 #, python-format
 msgid ""
 "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, "
@@ -538,12 +538,12 @@ msgstr ""
 "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, "
 "venues, prices and accessibility info."
 
-#: diytracker/blueprints/public.py:479
+#: diytracker/blueprints/public.py:495
 #, python-format
 msgid "%(genre)s concerts in Switzerland"
 msgstr "%(genre)s concerts in Switzerland"
 
-#: diytracker/blueprints/public.py:481
+#: diytracker/blueprints/public.py:497
 #, python-format
 msgid ""
 "%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices "
@@ -552,7 +552,7 @@ msgstr ""
 "%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices "
 "and accessibility info."
 
-#: diytracker/blueprints/public.py:527
+#: diytracker/blueprints/public.py:536
 #, python-format
 msgid ""
 "Upcoming shows by %(label)s — dates, venues, prices and accessibility "
@@ -561,7 +561,7 @@ msgstr ""
 "Upcoming shows by %(label)s — dates, venues, prices and accessibility "
 "info."
 
-#: diytracker/blueprints/public.py:616
+#: diytracker/blueprints/public.py:625
 msgid "DIY, punk and underground concerts in Switzerland."
 msgstr "DIY, punk and underground concerts in Switzerland."
 
@@ -855,7 +855,7 @@ msgstr "min"
 msgid "Collecting stats…"
 msgstr "Collecting stats…"
 
-#: templates/_partials/nav_backstage.html:15 templates/admin.html:71
+#: templates/_partials/nav_backstage.html:16 templates/admin.html:71
 #: templates/canton.html:37 templates/genre.html:40 templates/search.html:38
 #: templates/venues.html:3
 msgid "Venues"
@@ -896,7 +896,7 @@ msgstr "ID"
 #: templates/_partials/event_cards.html:85 templates/admin.html:119
 #: templates/admin.html:148 templates/admin_statistics.html:37
 #: templates/event_page.html:73 templates/event_queue.html:76
-#: templates/promoter_dashboard.html:99 templates/queue_duplicates.html:20
+#: templates/promoter_dashboard.html:123 templates/queue_duplicates.html:20
 msgid "Date"
 msgstr "Date"
 
@@ -911,7 +911,7 @@ msgid "Fix"
 msgstr "Fix"
 
 #: templates/admin.html:162 templates/event_queue.html:133
-#: templates/promoter_dashboard.html:52 templates/venues.html:68
+#: templates/promoter_dashboard.html:76 templates/venues.html:68
 msgid "Edit"
 msgstr "Edit"
 
@@ -920,7 +920,7 @@ msgid "Delete this event?"
 msgstr "Delete this event?"
 
 #: templates/admin.html:167 templates/event_queue.html:141
-#: templates/genre_manage.html:52 templates/promoter_dashboard.html:57
+#: templates/genre_manage.html:56 templates/promoter_dashboard.html:81
 #: templates/venues.html:79 templates/venues.html:85
 msgid "Delete"
 msgstr "Delete"
@@ -970,7 +970,7 @@ msgstr "Scraping…"
 msgid "left"
 msgstr "left"
 
-#: templates/_partials/nav_backstage.html:18 templates/admin_statistics.html:3
+#: templates/_partials/nav_backstage.html:19 templates/admin_statistics.html:3
 msgid "Statistics"
 msgstr "Statistics"
 
@@ -988,7 +988,7 @@ msgstr "Show past events"
 
 #: templates/admin_statistics.html:36 templates/edit_event.html:14
 #: templates/event_page.html:3 templates/event_page.html:58
-#: templates/event_queue.html:77 templates/promoter_dashboard.html:98
+#: templates/event_queue.html:77 templates/promoter_dashboard.html:122
 #: templates/queue_duplicates.html:21
 msgid "Event"
 msgstr "Event"
@@ -997,11 +997,11 @@ msgstr "Event"
 msgid "Hits"
 msgstr "Hits"
 
-#: templates/admin_statistics.html:40 templates/promoter_dashboard.html:102
+#: templates/admin_statistics.html:40 templates/promoter_dashboard.html:126
 msgid "Visitors"
 msgstr "Visitors"
 
-#: templates/admin_statistics.html:51 templates/promoter_dashboard.html:114
+#: templates/admin_statistics.html:51 templates/promoter_dashboard.html:138
 msgid "past"
 msgstr "past"
 
@@ -1105,7 +1105,7 @@ msgstr "Nothing in the archive yet."
 #: templates/_partials/hero.html:16 templates/archive_index.html:35
 #: templates/canton.html:50 templates/errors/404.html:21
 #: templates/errors/500.html:21 templates/event_page.html:136
-#: templates/genre.html:65 templates/label_page.html:37
+#: templates/genre.html:65 templates/help.html:23 templates/label_page.html:37
 #: templates/search.html:63 templates/search.html:87
 #: templates/venue_accessibility.html:146
 msgid "Back to calendar"
@@ -1170,7 +1170,7 @@ msgid "Band, venue or city"
 msgstr "Band, venue or city"
 
 #: templates/calendar.html:54 templates/event_queue.html:34
-#: templates/promoter_claim.html:72 templates/search.html:3
+#: templates/promoter_claim.html:76 templates/search.html:3
 #: templates/search.html:12 templates/search.html:29
 msgid "Search"
 msgstr "Search"
@@ -1236,7 +1236,7 @@ msgstr ""
 "Fallback for locales without their own text. Leave a field empty to "
 "delete that translation."
 
-#: templates/edit_page_text.html:27 templates/label_form.html:56
+#: templates/edit_page_text.html:27 templates/label_form.html:60
 msgid "Save"
 msgstr "Save"
 
@@ -1308,7 +1308,7 @@ msgstr "Tickets"
 msgid "Add to calendar"
 msgstr "Add to calendar"
 
-#: templates/_partials/nav_backstage.html:13 templates/event_queue.html:3
+#: templates/_partials/nav_backstage.html:14 templates/event_queue.html:3
 msgid "Queue"
 msgstr "Queue"
 
@@ -1415,16 +1415,16 @@ msgstr "Approve with Changes"
 msgid "Cancel"
 msgstr "Cancel"
 
-#: templates/event_queue.html:226 templates/promoter_claim.html:90
+#: templates/event_queue.html:226 templates/promoter_claim.html:94
 msgid "Previous"
 msgstr "Previous"
 
-#: templates/event_queue.html:228 templates/promoter_claim.html:92
+#: templates/event_queue.html:228 templates/promoter_claim.html:96
 #, python-format
 msgid "Page %(page)s of %(pages)s"
 msgstr "Page %(page)s of %(pages)s"
 
-#: templates/event_queue.html:231 templates/promoter_claim.html:95
+#: templates/event_queue.html:231 templates/promoter_claim.html:99
 msgid "Next"
 msgstr "Next"
 
@@ -1459,15 +1459,15 @@ msgstr "Cantons"
 msgid "Manage genres"
 msgstr "Manage genres"
 
-#: templates/genre_manage.html:7
+#: templates/genre_manage.html:8
 msgid "Help us grow"
 msgstr "Help us grow"
 
-#: templates/genre_manage.html:8
+#: templates/genre_manage.html:9
 msgid "MANAGE GENRES"
 msgstr "MANAGE GENRES"
 
-#: templates/genre_manage.html:12
+#: templates/genre_manage.html:16
 msgid ""
 "These genres feed the picker on the event form. Missing one? Add it below"
 " — it becomes available immediately. You can remove genres you added "
@@ -1477,80 +1477,96 @@ msgstr ""
 " — it becomes available immediately. You can remove genres you added "
 "yourself; removing one never changes existing events."
 
-#: templates/genre_manage.html:19
+#: templates/genre_manage.html:23
 msgid "e.g. Goregrind"
 msgstr "e.g. Goregrind"
 
-#: templates/genre_manage.html:22
+#: templates/genre_manage.html:26
 msgid "Add"
 msgstr "Add"
 
-#: templates/genre_manage.html:32
+#: templates/genre_manage.html:36
 msgid "Current genres"
 msgstr "Current genres"
 
-#: templates/genre_manage.html:41
+#: templates/genre_manage.html:45
 msgid "added by you"
 msgstr "added by you"
 
-#: templates/genre_manage.html:43
+#: templates/genre_manage.html:47
 msgid "added by a user"
 msgstr "added by a user"
 
-#: templates/genre_manage.html:48
+#: templates/genre_manage.html:52
 msgid "Remove this genre from the list?"
 msgstr "Remove this genre from the list?"
 
-#: templates/genre_manage.html:58
+#: templates/genre_manage.html:62
 msgid "No genres yet."
 msgstr "No genres yet."
+
+#: templates/help.html:7 templates/help.html:14
+msgid "How to use diytracker"
+msgstr "How to use diytracker"
+
+#: templates/help.html:8
+msgid ""
+"How diytracker.ch works: submitting shows, labels and their public pages,"
+" claiming events, and the genre picker."
+msgstr ""
+"How diytracker.ch works: submitting shows, labels and their public pages,"
+" claiming events, and the genre picker."
+
+#: templates/help.html:15
+msgid "HELP"
+msgstr "HELP"
 
 #: templates/label_form.html:5
 msgid "Edit label"
 msgstr "Edit label"
 
-#: templates/label_form.html:5 templates/promoter_dashboard.html:35
+#: templates/label_form.html:5 templates/promoter_dashboard.html:59
 msgid "New label"
 msgstr "New label"
 
-#: templates/label_form.html:11 templates/promoter_claim.html:38
-#: templates/promoter_dashboard.html:26
+#: templates/label_form.html:12 templates/promoter_claim.html:39
+#: templates/promoter_dashboard.html:27
 msgid "Promoter"
 msgstr "Promoter"
 
-#: templates/label_form.html:13
+#: templates/label_form.html:14
 msgid "EDIT LABEL"
 msgstr "EDIT LABEL"
 
-#: templates/label_form.html:13
+#: templates/label_form.html:14
 msgid "NEW LABEL"
 msgstr "NEW LABEL"
 
-#: templates/label_form.html:23
+#: templates/label_form.html:27
 msgid "Renaming changes the label page address; the old link stops working."
 msgstr "Renaming changes the label page address; the old link stops working."
 
-#: templates/label_form.html:24
+#: templates/label_form.html:28
 msgid "Enter the label name"
 msgstr "Enter the label name"
 
-#: templates/label_form.html:27 templates/label_form.html:31
+#: templates/label_form.html:31 templates/label_form.html:35
 msgid "Optional. Shown on your public label page."
 msgstr "Optional. Shown on your public label page."
 
-#: templates/label_form.html:39
+#: templates/label_form.html:43
 msgid "Optional. Shown publicly as a contact address for bookings."
 msgstr "Optional. Shown publicly as a contact address for bookings."
 
-#: templates/_partials/event_form.html:91 templates/label_form.html:42
+#: templates/_partials/event_form.html:91 templates/label_form.html:46
 msgid "Optional. JPG or PNG formats only."
 msgstr "Optional. JPG or PNG formats only."
 
-#: templates/label_form.html:47
+#: templates/label_form.html:51
 msgid "Current logo — uploading a new file replaces it."
 msgstr "Current logo — uploading a new file replaces it."
 
-#: templates/label_form.html:56
+#: templates/label_form.html:60
 msgid "Create"
 msgstr "Create"
 
@@ -1611,7 +1627,7 @@ msgstr "upcoming events"
 msgid "Venue page"
 msgstr "Venue page"
 
-#: templates/_partials/nav_backstage.html:16 templates/page_texts.html:4
+#: templates/_partials/nav_backstage.html:17 templates/page_texts.html:4
 msgid "Page Texts"
 msgstr "Page Texts"
 
@@ -1627,7 +1643,7 @@ msgstr ""
 "Intro paragraphs shown at the top of the canton and genre landing pages. "
 "Missing translations fall back to German."
 
-#: templates/promoter_claim.html:4 templates/promoter_dashboard.html:90
+#: templates/promoter_claim.html:4 templates/promoter_dashboard.html:114
 msgid "Claim an event"
 msgstr "Claim an event"
 
@@ -1635,27 +1651,27 @@ msgstr "Claim an event"
 msgid "Claim"
 msgstr "Claim"
 
-#: templates/promoter_claim.html:39
+#: templates/promoter_claim.html:40
 msgid "CLAIM AN EVENT"
 msgstr "CLAIM AN EVENT"
 
-#: templates/promoter_claim.html:45
+#: templates/promoter_claim.html:49
 msgid "You need a label before you can claim events."
 msgstr "You need a label before you can claim events."
 
-#: templates/promoter_claim.html:46
+#: templates/promoter_claim.html:50
 msgid "Create one first."
 msgstr "Create one first."
 
-#: templates/promoter_claim.html:53
+#: templates/promoter_claim.html:57
 msgid "Likely yours"
 msgstr "Likely yours"
 
-#: templates/promoter_claim.html:54
+#: templates/promoter_claim.html:58
 msgid "These upcoming events match one of your label names."
 msgstr "These upcoming events match one of your label names."
 
-#: templates/promoter_claim.html:64
+#: templates/promoter_claim.html:68
 msgid ""
 "Upcoming events without a label. Claiming one tags it with your label — "
 "it shows up on your label page and in your dashboard stats."
@@ -1663,19 +1679,19 @@ msgstr ""
 "Upcoming events without a label. Claiming one tags it with your label — "
 "it shows up on your label page and in your dashboard stats."
 
-#: templates/promoter_claim.html:68
+#: templates/promoter_claim.html:72
 msgid "Search events, bands or venues…"
 msgstr "Search events, bands or venues…"
 
-#: templates/promoter_claim.html:76
+#: templates/promoter_claim.html:80
 msgid "Clear"
 msgstr "Clear"
 
-#: templates/promoter_claim.html:100
+#: templates/promoter_claim.html:104
 msgid "No events match your search."
 msgstr "No events match your search."
 
-#: templates/promoter_claim.html:102
+#: templates/promoter_claim.html:106
 msgid "No unclaimed upcoming events right now."
 msgstr "No unclaimed upcoming events right now."
 
@@ -1687,29 +1703,87 @@ msgstr "Promoter dashboard"
 msgid "Views over the last 30 days"
 msgstr "Views over the last 30 days"
 
-#: templates/promoter_dashboard.html:27
+#: templates/promoter_dashboard.html:28
 msgid "YOUR LABELS"
 msgstr "YOUR LABELS"
 
+#: templates/promoter_dashboard.html:38
+msgid "How this page works"
+msgstr "How this page works"
+
+#: templates/promoter_dashboard.html:41
+msgid ""
+"A label is the name you put shows on — a collective, a booking crew, a "
+"venue team or an actual record label. Creating one gives you a public "
+"page at /label/<name>/ with your logo, your links and every upcoming "
+"show, plus a calendar feed people can subscribe to."
+msgstr ""
+"A label is the name you put shows on — a collective, a booking crew, a "
+"venue team or an actual record label. Creating one gives you a public "
+"page at /label/<name>/ with your logo, your links and every upcoming "
+"show, plus a calendar feed people can subscribe to."
+
+#: templates/promoter_dashboard.html:42
+msgid ""
+"Renaming a label changes that address, and the old link stops working — "
+"including on flyers already printed."
+msgstr ""
+"Renaming a label changes that address, and the old link stops working — "
+"including on flyers already printed."
+
+#: templates/promoter_dashboard.html:43
+msgid ""
+"Shows you never entered turn up here because part of the calendar is "
+"collected automatically from public sources. Claim one and it moves onto "
+"your label page; release it and it stays on the calendar without a label."
+msgstr ""
+"Shows you never entered turn up here because part of the calendar is "
+"collected automatically from public sources. Claim one and it moves onto "
+"your label page; release it and it stays on the calendar without a label."
+
+#: templates/promoter_dashboard.html:44
+msgid ""
+"\"In review — likely yours\" are collected entries still waiting for an "
+"admin. They are not on the calendar yet, so they cannot be claimed until "
+"they are approved."
+msgstr ""
+"\"In review — likely yours\" are collected entries still waiting for an "
+"admin. They are not on the calendar yet, so they cannot be claimed until "
+"they are approved."
+
+#: templates/promoter_dashboard.html:45
+msgid ""
+"The view and visitor numbers come from server logs with crawlers filtered"
+" out. They are a trend, not an exact count — enough to see whether a link"
+" you shared did anything."
+msgstr ""
+"The view and visitor numbers come from server logs with crawlers filtered"
+" out. They are a trend, not an exact count — enough to see whether a link"
+" you shared did anything."
+
+#: templates/promoter_dashboard.html:48
+msgid "Full guide"
+msgstr "Full guide"
+
 #: templates/_partials/header_nav.html:17
 #: templates/_partials/nav_backstage.html:11
-#: templates/promoter_dashboard.html:32
+#: templates/promoter_dashboard.html:56
 msgid "Labels"
 msgstr "Labels"
 
-#: templates/promoter_dashboard.html:54
+#: templates/promoter_dashboard.html:78
 msgid "Delete this label? Its events stay on the calendar without a label."
 msgstr "Delete this label? Its events stay on the calendar without a label."
 
-#: templates/promoter_dashboard.html:63
+#: templates/promoter_dashboard.html:87
 msgid "No labels yet — create your first one to get a public label page."
 msgstr "No labels yet — create your first one to get a public label page."
 
-#: templates/promoter_dashboard.html:69
+#: templates/promoter_dashboard.html:93
 msgid "In review — likely yours"
 msgstr "In review — likely yours"
 
-#: templates/promoter_dashboard.html:70
+#: templates/promoter_dashboard.html:94
 msgid ""
 "These scraped events are waiting for admin approval and look like they "
 "match one of your labels. Once approved, you can claim them."
@@ -1717,32 +1791,32 @@ msgstr ""
 "These scraped events are waiting for admin approval and look like they "
 "match one of your labels. Once approved, you can claim them."
 
-#: templates/promoter_dashboard.html:87
+#: templates/promoter_dashboard.html:111
 msgid "Your events"
 msgstr "Your events"
 
-#: templates/promoter_dashboard.html:101
+#: templates/promoter_dashboard.html:125
 msgid "Views"
 msgstr "Views"
 
-#: templates/promoter_dashboard.html:103
+#: templates/promoter_dashboard.html:127
 msgid "30 days"
 msgstr "30 days"
 
-#: templates/promoter_dashboard.html:104 templates/venues.html:71
+#: templates/promoter_dashboard.html:128 templates/venues.html:71
 msgid "Link"
 msgstr "Link"
 
-#: templates/promoter_dashboard.html:125
+#: templates/promoter_dashboard.html:149
 msgid "Copied!"
 msgstr "Copied!"
 
 #: templates/_partials/subscribe_calendar.html:32
-#: templates/promoter_dashboard.html:126
+#: templates/promoter_dashboard.html:150
 msgid "Copy link"
 msgstr "Copy link"
 
-#: templates/promoter_dashboard.html:131
+#: templates/promoter_dashboard.html:155
 msgid ""
 "Release this event from your label? It stays on the calendar without a "
 "label."
@@ -1750,11 +1824,11 @@ msgstr ""
 "Release this event from your label? It stays on the calendar without a "
 "label."
 
-#: templates/promoter_dashboard.html:134
+#: templates/promoter_dashboard.html:158
 msgid "Release"
 msgstr "Release"
 
-#: templates/promoter_dashboard.html:142
+#: templates/promoter_dashboard.html:166
 msgid ""
 "Views count opens of the event page — for example when someone follows a "
 "link you shared. Crawlers are filtered out; visitors are daily unique "
@@ -1764,7 +1838,7 @@ msgstr ""
 "link you shared. Crawlers are filtered out; visitors are daily unique "
 "IPs. A trend, not a census."
 
-#: templates/promoter_dashboard.html:144
+#: templates/promoter_dashboard.html:168
 msgid ""
 "No events with your labels yet. Tag a show with your label when "
 "submitting it, or claim one already on the calendar."
@@ -1772,15 +1846,15 @@ msgstr ""
 "No events with your labels yet. Tag a show with your label when "
 "submitting it, or claim one already on the calendar."
 
-#: templates/promoter_dashboard.html:149
+#: templates/promoter_dashboard.html:173
 msgid "Email notifications: on — turn off"
 msgstr "Email notifications: on — turn off"
 
-#: templates/promoter_dashboard.html:149
+#: templates/promoter_dashboard.html:173
 msgid "Email notifications: off — turn on"
 msgstr "Email notifications: off — turn on"
 
-#: templates/promoter_dashboard.html:151
+#: templates/promoter_dashboard.html:175
 msgid "(sent when an admin edits an event with your label)"
 msgstr "(sent when an admin edits an event with your label)"
 
@@ -1881,15 +1955,15 @@ msgstr "One time only — log in normally afterwards."
 msgid "Save password"
 msgstr "Save password"
 
-#: templates/submit_event.html:3 templates/submit_event.html:16
+#: templates/submit_event.html:3 templates/submit_event.html:20
 msgid "Submit Event"
 msgstr "Submit Event"
 
-#: templates/submit_event.html:12
+#: templates/submit_event.html:13
 msgid "Manual submission"
 msgstr "Manual submission"
 
-#: templates/submit_event.html:13
+#: templates/submit_event.html:14
 msgid "SUBMIT EVENT"
 msgstr "SUBMIT EVENT"
 
@@ -2068,7 +2142,7 @@ msgstr "MANAGE VENUES"
 msgid "venues"
 msgstr "venues"
 
-#: templates/_partials/nav_backstage.html:14 templates/venues.html:43
+#: templates/_partials/nav_backstage.html:15 templates/venues.html:43
 msgid "Events"
 msgstr "Events"
 
@@ -2273,8 +2347,8 @@ msgid "Validation"
 msgstr "Validation"
 
 #: templates/_partials/header_nav.html:9
-#: templates/_partials/nav_backstage.html:36
-#: templates/_partials/nav_backstage.html:48
+#: templates/_partials/nav_backstage.html:37
+#: templates/_partials/nav_backstage.html:49
 msgid "Calendar"
 msgstr "Calendar"
 
@@ -2288,19 +2362,27 @@ msgid "Submit"
 msgstr "Submit"
 
 #: templates/_partials/header_nav.html:24
-#: templates/_partials/nav_backstage.html:28
+#: templates/_partials/nav_backstage.html:29
 msgid "Logout"
 msgstr "Logout"
 
-#: templates/_partials/nav_backstage.html:17
+#: templates/_partials/help_link.html:6
+msgid "How to use this page"
+msgstr "How to use this page"
+
+#: templates/_partials/nav_backstage.html:12
+msgid "Help"
+msgstr "Help"
+
+#: templates/_partials/nav_backstage.html:18
 msgid "Analytics"
 msgstr "Analytics"
 
-#: templates/_partials/nav_backstage.html:19
+#: templates/_partials/nav_backstage.html:20
 msgid "Suspects"
 msgstr "Suspects"
 
-#: templates/_partials/nav_backstage.html:50
+#: templates/_partials/nav_backstage.html:51
 msgid "Menu"
 msgstr "Menu"
 

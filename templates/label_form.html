@@ -7,11 +7,15 @@
 {% block content %}
 <div class="max-w-xl">
 
-  <header class="mb-6">
-    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Promoter') }}</p>
-    <h1 class="font-richEatin text-4xl mis-reg leading-none">
-      {% if label %}{{ _('EDIT LABEL') }}{% else %}{{ _('NEW LABEL') }}{% endif %}
-    </h1>
+  <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Promoter') }}</p>
+      <h1 class="font-richEatin text-4xl mis-reg leading-none">
+        {% if label %}{{ _('EDIT LABEL') }}{% else %}{{ _('NEW LABEL') }}{% endif %}
+      </h1>
+    </div>
+    {% set help_anchor = 'labels' %}
+    {% include '_partials/help_link.html' %}
   </header>
 
   {{ form_errors(form) }}

@@ -22,10 +22,34 @@
 {% block content %}
 <div class="max-w-3xl">
 
-  <header class="mb-6">
-    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Promoter') }}</p>
-    <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('YOUR LABELS') }}</h1>
+  <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Promoter') }}</p>
+      <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('YOUR LABELS') }}</h1>
+    </div>
+    {% set help_anchor = 'labels' %}
+    {% include '_partials/help_link.html' %}
   </header>
+
+  {# Open for a promoter with no labels yet — that's the one moment the whole
+     tour is worth reading; afterwards it collapses out of the way. #}
+  <details class="border-2 border-ink bg-paper p-4 mb-6"{% if not labels %} open{% endif %}>
+    <summary class="cursor-pointer text-xs uppercase tracking-widest text-smudge hover:text-bleed select-none">
+      {{ _('How this page works') }}
+    </summary>
+    <div class="mt-4 space-y-3 text-sm leading-relaxed">
+      <p>{{ _('A label is the name you put shows on — a collective, a booking crew, a venue team or an actual record label. Creating one gives you a public page at /label/<name>/ with your logo, your links and every upcoming show, plus a calendar feed people can subscribe to.') }}</p>
+      <p>{{ _('Renaming a label changes that address, and the old link stops working — including on flyers already printed.') }}</p>
+      <p>{{ _('Shows you never entered turn up here because part of the calendar is collected automatically from public sources. Claim one and it moves onto your label page; release it and it stays on the calendar without a label.') }}</p>
+      <p>{{ _('"In review — likely yours" are collected entries still waiting for an admin. They are not on the calendar yet, so they cannot be claimed until they are approved.') }}</p>
+      <p>{{ _('The view and visitor numbers come from server logs with crawlers filtered out. They are a trend, not an exact count — enough to see whether a link you shared did anything.') }}</p>
+      <p>
+        {% set help_anchor = 'labels' %}
+        {% set help_text = _('Full guide') %}
+        {% include '_partials/help_link.html' %}
+      </p>
+    </div>
+  </details>
 
   <section class="border-2 border-ink bg-paper p-4 mb-6">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-3">

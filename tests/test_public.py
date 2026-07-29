@@ -467,6 +467,47 @@ class TestArchive:
         assert "archive" in RESERVED_SLUGS
 
 
+class TestHelpPage:
+    def test_help_page_renders_german_for_the_default_locale(self, client):
+        client.get("/set-language/de")
+        resp = client.get("/help")
+        assert resp.status_code == 200
+        assert "Labels anlegen und verwalten" in resp.data.decode()
+
+    def test_help_page_renders_each_locale(self, client):
+        expected = {
+            "/en/help": "Creating and managing labels",
+            "/fr/help": "Créer et gérer un label",
+            "/it/help": "Creare e gestire un'etichetta",
+        }
+        for path, heading in expected.items():
+            html = client.get(path).data.decode()
+            assert heading in html, path
+
+    def test_every_linked_anchor_exists(self, client):
+        # The backstage pages deep-link into the help page; a renamed section
+        # id would leave them pointing at nothing.
+        import re
+
+        from diytracker.paths import TEMPLATES_DIR
+
+        anchors = set()
+        for template in TEMPLATES_DIR.rglob("*.html"):
+            source = template.read_text(encoding="utf-8")
+            if "_partials/help_link.html" not in source:
+                continue
+            anchors.update(re.findall(r"help_anchor\s*=\s*'([^']+)'", source))
+
+        assert anchors
+        for locale_path in ("/help", "/en/help", "/fr/help", "/it/help"):
+            html = client.get(locale_path).data.decode()
+            for anchor in anchors:
+                assert f'id="{anchor}"' in html, (locale_path, anchor)
+
+    def test_sitemap_includes_help_page(self, client):
+        assert b"/help" in client.get("/sitemap.xml").data
+
+
 class TestLabelPage:
     def test_label_page_lists_upcoming_event(
         self, client, make_user, make_label, make_event

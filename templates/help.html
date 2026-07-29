@@ -1,0 +1,27 @@
+{# Thin wrapper around the per-locale help documents in templates/help/,
+   the same split the legal pages use: the prose is too long for the .po
+   files, so each locale gets its own body template. German is the source;
+   FR/IT/EN are translated from it. #}
+{% extends 'base_public.html' %}
+
+{% block title %}{{ _('How to use diytracker') }} · diytracker.ch{% endblock %}
+{% block meta_description %}{{ _('How diytracker.ch works: submitting shows, labels and their public pages, claiming events, and the genre picker.') }}{% endblock %}
+
+{% block content %}
+<article class="max-w-2xl mx-auto px-4 py-10">
+
+  <header class="mb-10">
+    <p class="font-mono text-xs uppercase tracking-widest text-bleed mb-2">{{ _('How to use diytracker') }}</p>
+    <h1 class="font-richEatin text-5xl md:text-7xl mis-reg leading-none">{{ _('HELP') }}</h1>
+  </header>
+
+  {% set lang = (g.get('locale', 'de') if g else 'de') %}
+  {% set lang = lang if lang in ('de', 'fr', 'it', 'en') else 'de' %}
+  {% include 'help/help_' ~ lang ~ '.html' %}
+
+  {% set back_url = url_for('public.calendar_view') %}
+  {% set back_label = _('Back to calendar') %}
+  {% include '_partials/back_link.html' %}
+
+</article>
+{% endblock %}

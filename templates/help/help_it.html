@@ -1,0 +1,149 @@
+{# IT aiuto — tradotto da help_de.html, che è la versione di riferimento.
+   Gli id delle ancore devono restare identici al file tedesco:
+   _partials/help_link.html ci punta. #}
+<nav class="mb-10 border-2 border-ink p-4" aria-label="Indice">
+  <p class="font-mono text-xs uppercase tracking-widest text-smudge mb-2">Indice</p>
+  <ul class="space-y-1 font-mono text-sm">
+    <li><a class="text-bleed underline" href="#start">Account e ruoli</a></li>
+    <li><a class="text-bleed underline" href="#submit">Inserire un concerto</a></li>
+    <li><a class="text-bleed underline" href="#labels">Creare e gestire un'etichetta</a></li>
+    <li><a class="text-bleed underline" href="#label-page">La pagina pubblica dell'etichetta</a></li>
+    <li><a class="text-bleed underline" href="#claim">Rivendicare concerti</a></li>
+    <li><a class="text-bleed underline" href="#stats">Numeri e notifiche</a></li>
+    <li><a class="text-bleed underline" href="#genres">Generi</a></li>
+  </ul>
+</nav>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="start" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Account e ruoli</h2>
+  <p>
+    Per curiosare non serve un account: calendario, mappa, pagine dei locali e delle
+    etichette sono pubblici. Un account serve solo se vuoi inserire concerti tu stesso o
+    seguire un'etichetta. Gli account vengono assegnati a mano — scrivici a
+    <a class="text-bleed underline" href="mailto:info@diytracker.ch">info@diytracker.ch</a>
+    dicendo chi sei e cosa fai.
+  </p>
+  <p>
+    Una volta connesso vedi in alto la barra nera del backstage. Chi può inserire concerti
+    vi trova <strong>Invia</strong> e <strong>Generi</strong>. Chi segue un'etichetta vede
+    in più <strong>Etichette</strong> — la tua dashboard con le tue etichette, i loro
+    concerti e i relativi numeri.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="submit" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Inserire un concerto</h2>
+  <p>
+    Con <strong>Invia</strong> arrivi al modulo. Data, locale e gruppi sono obbligatori;
+    tutto il resto — apertura porte, prezzo, link ai biglietti, volantino, descrizione,
+    generi — migliora la voce ma è facoltativo.
+  </p>
+  <p>
+    Il locale si sceglie dall'elenco. Se non c'è ancora, seleziona «nuovo locale» e
+    compila nome, indirizzo e città — il modulo rifiuta i nuovi locali incompleti. Se
+    l'evento dura più giorni, spunta la casella festival e indica una data di fine; il
+    concerto compare allora in ogni giorno in cui si svolge.
+  </p>
+  <p>
+    Se segui un'etichetta puoi assegnarle subito il concerto nel campo
+    <strong>Etichetta</strong>. I concerti inseriti a mano finiscono immediatamente nel
+    calendario — non passano da un'approvazione. Se più tardi noti un errore, avvisaci:
+    correggere possono solo gli admin.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="labels" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Creare e gestire un'etichetta</h2>
+  <p>
+    Qui «etichetta» non significa solo casa discografica: è il nome sotto il quale
+    organizzate concerti — collettivo, crew di booking, associazione, squadra di un locale
+    o etichetta vera e propria. Un account può avere più etichette, per esempio se fai
+    booking per due crew.
+  </p>
+  <p>
+    Ne crei una sotto <strong>Etichette → Nuova etichetta</strong>. Il nome è
+    obbligatorio; poi ci sono descrizione, logo, sito web, due link social e un indirizzo
+    di contatto. Tutto questo finisce sulla pagina pubblica dell'etichetta, quindi anche
+    l'indirizzo di contatto è visibile a tutti. I nomi sono unici — se uno è già preso,
+    contattaci invece di creare una variante con un errore di ortografia.
+  </p>
+  <p>
+    Puoi modificare ed eliminare solo le tue etichette. Se ne elimini una, i suoi concerti
+    restano nel calendario: semplicemente non hanno più un'etichetta.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="label-page" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">La pagina pubblica dell'etichetta</h2>
+  <p>
+    Ogni etichetta ha una pagina propria sotto
+    <code class="font-mono text-sm">/label/nome/</code> con logo, descrizione, i vostri
+    link e tutti i concerti in arrivo. La pagina resta online anche quando non c'è nulla
+    in programma — puoi quindi diffondere il link prima che la prima data sia fissata.
+  </p>
+  <p>
+    <strong>Attenzione se cambi nome:</strong> l'indirizzo deriva dal nome. Rinominare
+    l'etichetta cambia l'indirizzo — il vecchio link smette di funzionare, anche su
+    volantini già stampati.
+  </p>
+  <p>
+    In fondo alla pagina dell'etichetta c'è un abbonamento al calendario (.ics). Chi lo
+    sottoscrive ha i vostri concerti nel proprio calendario, comprese le modifiche
+    successive.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="claim" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Rivendicare concerti</h2>
+  <p>
+    Una parte del calendario viene raccolta automaticamente da fonti pubbliche. Per questo
+    i vostri concerti spesso ci sono già prima che inseriate qualcosa — solo senza
+    etichetta. Con <strong>Rivendica un evento</strong> agganci una voce simile alla tua
+    etichetta: compare poi sulla vostra pagina e conta nelle vostre statistiche.
+  </p>
+  <p>
+    Puoi rivendicare i concerti futuri che non appartengono ancora a nessuna etichetta.
+    L'elenco è ricercabile; in cima suggeriamo le voci che corrispondono ai vostri nomi di
+    etichetta. Se poi non era un vostro concerto, lo stacchi dalla dashboard con
+    <strong>Stacca</strong> — nel calendario resta in ogni caso.
+  </p>
+  <p>
+    Il blocco <strong>In verifica — probabilmente tuo</strong> mostra le voci raccolte che
+    aspettano ancora l'approvazione di un admin. Non sono ancora nel calendario e quindi
+    non si possono rivendicare — una volta approvate compaiono nell'elenco da rivendicare.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed mb-10">
+  <h2 id="stats" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Numeri e notifiche</h2>
+  <p>
+    Nella dashboard vedi quante volte è stata aperta la pagina di ogni concerto. Le
+    <strong>visualizzazioni</strong> sono le aperture della pagina dell'evento, i
+    <strong>visitatori</strong> sono indirizzi IP unici per giorno e la piccola curva
+    copre gli ultimi 30 giorni. Bot e crawler vengono esclusi. Sono tendenze, non una
+    misura esatta — abbastanza per capire se un link condiviso è servito.
+  </p>
+  <p>
+    Con <strong>Copia link</strong> ottieni l'indirizzo completo di un concerto per
+    storie, newsletter o chat.
+  </p>
+  <p>
+    In fondo puoi attivare e disattivare le notifiche via e-mail. Partono quando un admin
+    modifica un concerto con una delle vostre etichette, così una correzione di data o di
+    locale non vi sfugge.
+  </p>
+</section>
+
+<section class="space-y-4 leading-relaxed">
+  <h2 id="genres" class="font-bold uppercase tracking-wider text-sm border-b border-ink pb-1">Generi</h2>
+  <p>
+    La scelta dei generi nel modulo dell'evento viene da un elenco comune. Se ne manca
+    uno, aggiungilo sotto <strong>Generi</strong>: è subito disponibile per tutti. I
+    generi che hai aggiunto tu puoi eliminarli di nuovo — ai concerti esistenti non cambia
+    nulla.
+  </p>
+  <p>
+    Usa le grafie correnti e metti due o tre generi azzeccati invece di una dozzina: le
+    pagine dei generi valgono quanto vale la classificazione.
+  </p>
+</section>

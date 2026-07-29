@@ -3,9 +3,13 @@
 {% block title %}{{ _('Manage genres') }} · diytracker.ch{% endblock %}
 
 {% block content %}
-<header class="mb-6">
-  <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Help us grow') }}</p>
-  <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('MANAGE GENRES') }}</h1>
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Help us grow') }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('MANAGE GENRES') }}</h1>
+  </div>
+  {% set help_anchor = 'genres' %}
+  {% include '_partials/help_link.html' %}
 </header>
 
 <p class="leading-relaxed mb-6 max-w-xl">
