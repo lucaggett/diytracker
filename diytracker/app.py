@@ -31,6 +31,7 @@ from diytracker.services.i18n import (
     canton_in,
     select_locale,
 )
+from diytracker.services.abuse import init_abuse_guard
 from diytracker.services.cache import cache
 from diytracker.services.limits import limiter
 from diytracker.services.scrape_detection import detector
@@ -72,6 +73,9 @@ def create_app(config: Config | None = None) -> Flask:
     db.init_app(app)
     cache.init_app(app)
     limiter.init_app(app)
+    # Before the detector: a rejected request short-circuits the remaining
+    # before_request hooks, so blocked clients never enter its scoring state.
+    init_abuse_guard(app)
     detector.init_app(app)
     Babel(app, locale_selector=select_locale)
     init_security_headers(app)

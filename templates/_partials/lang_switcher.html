@@ -1,7 +1,12 @@
 {# Language switcher. Reads g.locale (set by Flask-Babel locale selector);
    defaults to 'de' before Babel is wired up. Each link points at /set-language/<lang>
    which stores the choice in the session and redirects to the same page in
-   the target locale (localized pages carry the locale in the URL). #}
+   the target locale (localized pages carry the locale in the URL).
+
+   rel="nofollow" matters: these links sit on *every* page, one per locale, and
+   each one redirects to a page carrying the same set again. A crawler that
+   follows them walks a multiplying URL space of session-writing redirects with
+   nothing to index. robots.txt disallows /set-language/ for the same reason. #}
 {% set current_locale = (g.get('locale', 'de') if g else 'de') %}
 {% set locales = SUPPORTED_LOCALES if SUPPORTED_LOCALES is defined else ['de', 'fr', 'it', 'en'] %}
 {% set alt_paths = localized_paths() if localized_paths is defined else {} %}
@@ -11,6 +16,7 @@
       <span class="text-bleed font-bold underline underline-offset-4">{{ code }}</span>
     {% else %}
       <a href="{{ url_for('public.set_language', lang=code, next=alt_paths.get(code, request.path)) }}"
+         rel="nofollow"
          class="text-smudge hover:text-ink hover:underline underline-offset-4">{{ code }}</a>
     {% endif %}
   {% endfor %}

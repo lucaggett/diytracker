@@ -811,6 +811,11 @@ def robots():
             # Unbounded query space: every ?q= is a distinct URL with no value
             # to an index, and the results page carries noindex to match.
             "Disallow: /search",
+            # One link per locale on every page, each redirecting to a page
+            # that carries the set again — a multiplying space of
+            # session-writing redirects with nothing to index. The switcher
+            # links are rel="nofollow" to match.
+            "Disallow: /set-language/",
             "",
             f"Sitemap: {canonical_url(url_for('public.sitemap'))}",
             "",
@@ -841,14 +846,18 @@ def events_archive():
 
 
 @bp.route("/set-language/<lang>")
+# A real visitor switches language a handful of times; anything hammering this
+# route is a crawler walking the switcher links (see robots() above).
+@limiter.limit("30 per hour")
 def set_language(lang):
     if lang not in SUPPORTED_LOCALES:
         abort(404)
     session["lang"] = lang
     next_url = safe_redirect_target(request.args.get("next", ""))
-    if next_url:
-        return redirect(next_url)
-    return redirect(url_for("public.calendar_view"))
+    resp = redirect(next_url or url_for("public.calendar_view"))
+    # For crawlers that reach the URL without having read robots.txt.
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return resp
 
 
 @bp.route("/kyuubi")

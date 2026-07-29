@@ -17,6 +17,11 @@ from diytracker.services.uploads import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from diytracker.paths import TRANSLATIONS_DIR
 
 
+def _csv_env(name):
+    """Comma-separated env var -> tuple of stripped, non-empty values."""
+    return tuple(v.strip() for v in os.environ.get(name, "").split(",") if v.strip())
+
+
 class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
@@ -42,6 +47,12 @@ class Config:
     # (e.g. "https://diytracker.ch"). Empty = fall back to the request host
     # (dev/tests); production must set it so canonicals don't depend on headers.
     CANONICAL_HOST = ""
+    # Extra User-Agent substrings / client IPs rejected with a 429 by
+    # services/abuse.py, on top of its built-in list. Both exist so a new
+    # abusive client can be shut out with an .env edit plus a restart, without
+    # a code change and deploy.
+    BLOCKED_USER_AGENTS: tuple[str, ...] = ()
+    BLOCKED_IPS: tuple[str, ...] = ()
 
     @classmethod
     def from_env(cls):
@@ -57,6 +68,8 @@ class Config:
         )
         cfg.INGEST_TOKEN = os.environ.get("INGEST_TOKEN")
         cfg.CANONICAL_HOST = os.environ.get("CANONICAL_HOST", "")
+        cfg.BLOCKED_USER_AGENTS = _csv_env("BLOCKED_USER_AGENTS")
+        cfg.BLOCKED_IPS = _csv_env("BLOCKED_IPS")
         return cfg
 
 
