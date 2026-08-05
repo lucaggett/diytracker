@@ -76,6 +76,7 @@ def _scrape_and_import(app):
             parse_metalgigs_event,
             parse_petzi_event,
         )
+        from diytracker.services.venue_sources import get_sources
 
         # Handlers attach lazily so merely importing the parsers (as the web
         # workers do) never opens logs/scrape_events.log; an actual scrape
@@ -112,6 +113,22 @@ def _scrape_and_import(app):
             if url not in known_urls
         ]
 
+        # Venue sources that need one request per event join the same list, so
+        # the URL dedup above applies to them too.
+        for source in get_sources():
+            if source.is_listing:
+                continue
+            try:
+                discovered = source.discover() or []
+            except Exception:
+                app.logger.exception(f"Scrape: discovery failed for {source.key}")
+                continue
+            all_urls += [
+                (source.key, url, source.parser)
+                for url in discovered
+                if url not in known_urls
+            ]
+
         app.logger.info(
             f"Scrape: {len(mg_urls) + len(petzi_urls)} total URLs, {len(all_urls)} new after dedup"
         )
@@ -124,6 +141,34 @@ def _scrape_and_import(app):
             if parsed:
                 events.append(parsed)
             _scrape_progress["processed"] += 1
+
+        # Listing sources: one request each returns the whole programme, so
+        # they run outside the URL loop. A venue that throws or returns
+        # nothing is logged by name and does not stop the others — with
+        # nineteen sources, a single broken site must not cost the whole run.
+        _scrape_progress["phase"] = "Scraping venue listings"
+        for source in get_sources():
+            if not source.is_listing:
+                continue
+            try:
+                rows = source.fetcher() or []
+            except Exception:
+                app.logger.exception(f"Scrape: {source.key} failed")
+                continue
+            if not rows:
+                app.logger.warning(f"Scrape: {source.key} returned no events")
+            else:
+                app.logger.info(f"Scrape: {source.key} returned {len(rows)} events")
+            events += rows
+
+        # Venue identity comes from the registry, not from whatever the site
+        # prints, so ingest matches the venue row that already exists instead
+        # of creating a near-duplicate next to it.
+        venue_fields = {s.key: s.venue.as_fields() for s in get_sources()}
+        for row in events:
+            fields = venue_fields.get(row.get("source"))
+            if fields:
+                row.update(fields)
 
         _scrape_progress["phase"] = "Importing to database"
         with app.app_context():

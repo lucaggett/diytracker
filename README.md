@@ -209,6 +209,37 @@ shown to the public until an admin approves one in the event queue,
 which copies its fields into a real `Event` row and sets
 `approved_event_id` on the source.
 
+### Venue sources
+
+Aggregators are only half the picture: the DIY spaces the site exists for —
+squats, autonomous centres, small bars — never appear on petzi. Those are
+scraped per venue, and because there are nineteen sources rather than two,
+they are declared rather than hardcoded:
+
+| File | Role |
+| --- | --- |
+| `diytracker/services/venue_sources.py` | The registry. One `VenueSource` per venue: its key, the `VenueIdentity` copied from the `venue` table, the fetcher, the contact address and the language of the venue's site. Also `UNSCRAPED`, the venues deliberately left out and why. |
+| `diytracker/services/venue_parsers.py` | The fetchers. Feed readers where a venue publishes iCal/RSS/CSV/JSON, listing-page parsers otherwise. |
+
+Most venues are **listing sources**: `fetcher()` makes one request and returns
+every row. Two venues (Gare de Lion, Safari Bar) hide the date from their
+listing, so they set `discover()` + `parser(url)` instead and go through the
+same per-URL dedup as metalgigs and petzi.
+
+Two rules that are easy to get wrong:
+
+- **Don't set `url` unless the event has its own page.** `ScrapedEvent.url` is
+  UNIQUE, so reusing the listing URL across a venue's rows makes all but the
+  first vanish as duplicates. Set `source_id` instead — the
+  `UniqueConstraint("source", "source_id")` is what dedups those.
+- **Venue name/PLZ come from the registry, not the page.** They are the values
+  already in the database, warts included, so ingest matches the existing venue
+  instead of creating a near-duplicate beside it.
+
+Adding a venue means one entry in the registry and one fetcher; `scraper.py`
+picks it up with no change. `docs/venue_permission_emails.md` holds the drafts
+for asking a venue whether scraping is okay.
+
 ### Adding a new scraper
 
 1. **Write a parser in `diytracker/services/scrape_events.py`.** It should take an

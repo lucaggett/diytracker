@@ -72,6 +72,13 @@ class TestScrapeImport:
     def _run_import(self, app, monkeypatch, scraped_rows):
         import diytracker.services.scrape_events as scrape_events
         import diytracker.services.scraper as scraper
+        import diytracker.services.venue_sources as venue_sources
+
+        # _scrape_and_import() also walks the venue registry, and every one of
+        # those fetchers goes to the live site. Emptying the registry keeps
+        # this class offline; the venue fetchers have their own tests in
+        # tests/test_venue_scrapers.py.
+        monkeypatch.setattr(venue_sources, "get_sources", lambda: ())
 
         # The real scraper calls this once per source with a URL fragment;
         # return only the rows whose URL matches that fragment.

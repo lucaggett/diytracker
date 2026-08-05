@@ -22,11 +22,13 @@ import csv
 import json
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Iterable, List, Optional, Tuple
+from zoneinfo import ZoneInfo
 
 import requests
-from bs4 import BeautifulSoup
+import warnings
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 import time
 import random
 from urllib.parse import urlparse
@@ -710,6 +712,177 @@ def parse_petzi_event(url: str) -> Optional[Dict[str, str]]:
     logger.debug(f"PETZI canton resolved to: {event.get('region')!r}")
 
     return event
+
+
+# ---------------------------------------------------------------------------
+# Generic feed helpers
+#
+# The venue scrapers in venue_parsers.py read iCal, RSS, CSV and JSON rather
+# than scraping markup wherever the venue publishes one. These helpers do the
+# format-level work so each venue fetcher only has to map fields onto the row
+# dict. Deliberately hand-rolled on the stdlib + bs4: the sitemap parsing above
+# already sets that precedent, and neither `icalendar` nor `feedparser` earns a
+# new dependency for the handful of properties actually read here.
+# ---------------------------------------------------------------------------
+
+SWISS_TZ = ZoneInfo("Europe/Zurich")
+
+
+def to_swiss_local(dt: datetime) -> datetime:
+    """Convert an aware datetime to naive Swiss wall-clock time.
+
+    Event.date/doors/end_date hold the hour a show starts *as entered*, in
+    local Swiss time (see CLAUDE.md, "Two clocks"). Feeds that publish UTC —
+    the Events Manager iCal exports do — must be converted here or every
+    show lands one or two hours early depending on the season.
+    """
+    if dt.tzinfo is None:
+        return dt
+    return dt.astimezone(SWISS_TZ).replace(tzinfo=None)
+
+
+def _unfold_ical(text: str) -> List[str]:
+    """Join RFC 5545 folded continuation lines (leading space/tab) back up."""
+    lines: List[str] = []
+    for raw in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+        if raw[:1] in (" ", "\t") and lines:
+            lines[-1] += raw[1:]
+        else:
+            lines.append(raw)
+    return lines
+
+
+def _unescape_ical(value: str) -> str:
+    """Undo the TEXT escaping of RFC 5545 (\\n, \\, \\, ; and ,)."""
+    out = value.replace("\\N", "\n").replace("\\n", "\n")
+    out = out.replace("\\,", ",").replace("\\;", ";")
+    return out.replace("\\\\", "\\").strip()
+
+
+def _parse_ical_datetime(value: str, params: str) -> Optional[datetime]:
+    """Parse a DTSTART/DTEND value into naive Swiss wall-clock time.
+
+    Handles the three forms these feeds actually emit: a trailing ``Z`` for
+    UTC, an explicit ``TZID=`` parameter (already local), and a bare
+    ``VALUE=DATE`` day with no time at all.
+    """
+    value = value.strip()
+    if not value:
+        return None
+    try:
+        if value.endswith("Z"):
+            parsed = datetime.strptime(value, "%Y%m%dT%H%M%SZ")
+            return to_swiss_local(parsed.replace(tzinfo=timezone.utc))
+        if "T" in value:
+            parsed = datetime.strptime(value, "%Y%m%dT%H%M%S")
+            # A TZID we don't recognise is still far likelier to be local
+            # Swiss time than UTC for these venues, so take it as-is.
+            return parsed
+        if "VALUE=DATE" in params or len(value) == 8:
+            return datetime.strptime(value, "%Y%m%d")
+    except ValueError:
+        logger.debug(f"Unparseable iCal datetime {value!r} (params {params!r})")
+    return None
+
+
+def parse_ical_feed(text: str) -> List[Dict[str, object]]:
+    """Split an iCalendar document into its VEVENTs.
+
+    Returns one dict per event with ``uid``, ``summary``, ``description``,
+    ``url``, ``location``, ``start`` and ``end`` (the last two naive Swiss
+    wall-clock datetimes, or None). Malformed events are skipped rather than
+    raising — a feed with one bad entry should still yield the rest.
+    """
+    events: List[Dict[str, object]] = []
+    current: Optional[Dict[str, object]] = None
+    for line in _unfold_ical(text):
+        if line.startswith("BEGIN:VEVENT"):
+            current = {}
+            continue
+        if line.startswith("END:VEVENT"):
+            if current:
+                events.append(current)
+            current = None
+            continue
+        if current is None or ":" not in line:
+            continue
+        name_part, _, value = line.partition(":")
+        name, _, params = name_part.partition(";")
+        name = name.upper()
+        if name == "UID":
+            current["uid"] = value.strip()
+        elif name == "SUMMARY":
+            current["summary"] = _unescape_ical(value)
+        elif name == "DESCRIPTION":
+            current["description"] = _unescape_ical(value)
+        elif name == "URL":
+            current["url"] = value.strip()
+        elif name == "LOCATION":
+            current["location"] = _unescape_ical(value)
+        elif name == "DTSTART":
+            current["start"] = _parse_ical_datetime(value, params)
+        elif name == "DTEND":
+            current["end"] = _parse_ical_datetime(value, params)
+    logger.debug(f"Parsed {len(events)} VEVENTs from iCal feed")
+    return events
+
+
+def parse_rss_items(text: str) -> List[Dict[str, str]]:
+    """Extract ``<item>`` entries from an RSS/Atom document.
+
+    Returns dicts with ``title``, ``link``, ``description`` and ``pub_date``.
+    Parsed with bs4's XML-ish HTML parser so no lxml dependency is needed;
+    CDATA sections come through as text.
+    """
+    with warnings.catch_warnings():
+        # bs4 warns that this is XML; html.parser handles these feeds fine and
+        # parsing as XML would mean adding lxml for no gain.
+        warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
+        soup = BeautifulSoup(text, "html.parser")
+    items: List[Dict[str, str]] = []
+    for item in soup.find_all("item"):
+        entry = {}
+        for field, tag in (
+            ("title", "title"),
+            ("link", "link"),
+            ("description", "description"),
+            ("pub_date", "pubdate"),
+        ):
+            found = item.find(tag)
+            entry[field] = found.get_text(strip=True) if found else ""
+        # RSS <link> text is sometimes empty when the parser treats it as a
+        # void element; fall back to the guid, which these feeds set to the
+        # permalink.
+        if not entry["link"]:
+            guid = item.find("guid")
+            entry["link"] = guid.get_text(strip=True) if guid else ""
+        items.append(entry)
+    logger.debug(f"Parsed {len(items)} items from RSS feed")
+    return items
+
+
+def fetch_json(url: str) -> Optional[object]:
+    """Fetch a URL and decode it as JSON, or None on failure.
+
+    Goes through fetch_url() so robots.txt, the honest User-Agent, the
+    inter-request delay and the 429/403 handling all still apply.
+    """
+    text = fetch_url(url)
+    if not text:
+        return None
+    try:
+        return json.loads(text)
+    except (ValueError, TypeError) as exc:
+        logger.error(f"Could not decode JSON from {url}: {exc}")
+        return None
+
+
+def html_to_text(value: str) -> str:
+    """Flatten an HTML description into plain text with tidy whitespace."""
+    if not value:
+        return ""
+    text = BeautifulSoup(value, "html.parser").get_text(" ", strip=True)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def write_csv(events: Iterable[Dict[str, str]], filename: str) -> None:

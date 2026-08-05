@@ -1,0 +1,167 @@
+[
+ {
+  "id": 7359,
+  "link": "https://treppenhaus.ch/events/seelavie/",
+  "title": {
+   "rendered": "SeeLaVie"
+  },
+  "excerpt": {
+   "rendered": "",
+   "protected": false
+  },
+  "details": {
+   "headline": [
+    ""
+   ],
+   "category": [
+    "der queere Stammtisch"
+   ],
+   "time": [
+    "18:00"
+   ],
+   "price": [
+    "EINTRITT FREI"
+   ],
+   "ticket": [
+    ""
+   ],
+   "_edit_lock": [
+    "1785417857:6"
+   ],
+   "_edit_last": [
+    "6"
+   ],
+   "_thumbnail_id": [
+    "7360"
+   ],
+   "date_day": [
+    "18"
+   ],
+   "date_month": [
+    "August"
+   ],
+   "date_year": [
+    "2026"
+   ],
+   "date_full": [
+    "20260818"
+   ],
+   "day_name": [
+    "DI"
+   ],
+   "repeatable_fields": [
+    "a:1:{i:0;a:1:{s:9:\"video_url\";s:0:\"\";}}"
+   ]
+  }
+ },
+ {
+  "id": 7351,
+  "link": "https://treppenhaus.ch/events/kilmister-motoerhead-tribute/",
+  "title": {
+   "rendered": "Kilmister<sup>CH</sup> - Motörhead Tribute"
+  },
+  "excerpt": {
+   "rendered": "<p>Nicht nur ein Tribute: KILMISTER bringen Lemmys Rock’n’Roll-Spirit auf die Bühne. Mit neuem Line-up, brachialer Energie und ehrlichem Sound zwischen Motörhead-Hommage und eigener Attitüde.</p>\n",
+   "protected": false
+  },
+  "details": {
+   "headline": [
+    "KILMISTER – Motörhead Tribute im Geist von Lemmy"
+   ],
+   "category": [
+    "Rock’n’Roll"
+   ],
+   "time": [
+    "20:30"
+   ],
+   "price": [
+    "Vorverkauf 20 CHF | Abendkasse 25 CHF"
+   ],
+   "ticket": [
+    "https://eventfrog.ch/kilmister"
+   ],
+   "_edit_lock": [
+    "1784815025:6"
+   ],
+   "_edit_last": [
+    "6"
+   ],
+   "date_day": [
+    "23"
+   ],
+   "date_month": [
+    "Januar"
+   ],
+   "date_year": [
+    "2027"
+   ],
+   "day_name": [
+    "SA"
+   ],
+   "_thumbnail_id": [
+    "7352"
+   ],
+   "date_full": [
+    "20270123"
+   ],
+   "repeatable_fields": [
+    "a:1:{i:0;a:1:{s:9:\"video_url\";s:0:\"\";}}"
+   ]
+  }
+ },
+ {
+  "id": 7349,
+  "link": "https://treppenhaus.ch/events/treppi-thrash-vi/",
+  "title": {
+   "rendered": "Treppi Thrash VI mit Traitor<sup>DE</sup> + Corpus Delicti<sup>CH</sup> + Shotgun<sup>LI</sup>"
+  },
+  "excerpt": {
+   "rendered": "<p>Der Treppi Thrash geht in die sechste Runde! Mit TRAITOR, CORPUS DELICTI und SHOTGUN gibt’s kompromisslosen Thrash Metal, schnelle Riffs und volle Abrissstimmung im Treppenhaus.</p>\n",
+   "protected": false
+  },
+  "details": {
+   "headline": [
+    "Treppi Thrash VI – Old-School Thrash Metal im Treppenhaus"
+   ],
+   "category": [
+    "Thrash Metal"
+   ],
+   "time": [
+    "19:30"
+   ],
+   "price": [
+    "Vorverkauf 23 CHF | Abendkasse 28 CHF"
+   ],
+   "ticket": [
+    "https://eventfrog.ch/treppi-thrash-vi"
+   ],
+   "_edit_lock": [
+    "1784813311:6"
+   ],
+   "_edit_last": [
+    "6"
+   ],
+   "date_day": [
+    "14"
+   ],
+   "date_month": [
+    "November"
+   ],
+   "date_year": [
+    "2026"
+   ],
+   "day_name": [
+    "SA"
+   ],
+   "_thumbnail_id": [
+    "7350"
+   ],
+   "date_full": [
+    "20261114"
+   ],
+   "repeatable_fields": [
+    "a:2:{i:0;a:1:{s:9:\"video_url\";s:61:\"https://www.youtube.com/embed/03GCSoTLEBI?si=Zakjd1IwgJnWhl40\";}i:1;a:1:{s:9:\"video_url\";s:0:\"\";}}"
+   ]
+  }
+ }
+]
