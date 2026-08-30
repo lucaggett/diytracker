@@ -324,11 +324,6 @@ scripts/                 Operational tools: eventbot forwarder/importer, i18n
                          extraction, email config checks, dummy data, etc.
                          Run with `uv run python scripts/<name>.py`.
 
-migrations/              Hand-written one-shot migration scripts. There's no
-                         Alembic env wired up; the table itself is created
-                         by `db.create_all()` and each migration file adds
-                         specific columns/indexes for an upgrade step.
-
 templates/               Jinja templates. `base_public.html` and
                          `base_admin.html` are the two layouts; `_partials/`
                          holds shared fragments.

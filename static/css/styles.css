@@ -1,6 +1,19 @@
-@import 'tailwindcss';
+@import 'tailwindcss' source(none);
 
 @config '../../tailwind.config.js';
+
+/* Templates are the only place our own class names live. Without this,
+   v4's automatic source detection walks the whole repo and compiles
+   utilities out of tests/fixtures/*.html — those are pages saved verbatim
+   from venue websites for the scraper tests, so their Bootstrap/Tailwind
+   classes were landing in the bundle we ship to visitors, and the file grew
+   with every venue added. Neither the config's `content` key nor a bare
+   `@source` restricts this — `source(none)` is what turns the automatic walk
+   off, leaving only what is listed below. */
+@source '../../templates';
+/* event_form.js injects utility classes at runtime (the flyer preview, the
+   festival end-date hint), so the scripts are a source too. */
+@source '../../static/js';
 
 /* v4 replacement for the config `safelist` (ignored by @config): palette
    utilities that are composed dynamically and never appear verbatim in

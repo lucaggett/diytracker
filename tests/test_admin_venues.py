@@ -123,3 +123,47 @@ class TestDeleteVenue:
         with app.app_context():
             with pytest.raises(AdminError, match="No venue"):
                 venues.delete_venue(4242)
+
+
+class TestVenueWritesBustTheCache:
+    """Venue name/city/canton are rendered on cached public pages and decide
+    which canton directory a venue lands in, so every venue write has to
+    invalidate the page cache the way event and label writes do.
+    """
+
+    def _cached_canton_names(self):
+        from diytracker.services.cantons import canton_directory
+
+        return {info["name"] for info in canton_directory().values()}
+
+    def test_update_venue_busts_the_canton_directory(self, app, make_venue, make_event):
+        with app.app_context():
+            venue = make_venue(name="Rote Fabrik", city="Zürich", canton="ZH")
+            make_event(venue=venue)
+            assert "Zürich" in self._cached_canton_names()  # populates the cache
+
+            venues.update_venue(venue.id, canton="BS", city="Basel")
+
+            assert "Basel-Stadt" in self._cached_canton_names()
+
+    def test_delete_venue_busts_the_cache(self, app, make_venue, monkeypatch):
+        # A deletable venue has no events, so it is never in the canton
+        # directory and no directory assertion could see the difference —
+        # spy on the call instead, the way test_admin_ops.py does.
+        cleared = []
+        monkeypatch.setattr(venues, "bust_cache", lambda: cleared.append(True))
+        with app.app_context():
+            doomed = make_venue(name="Gone", city="Bern", canton="BE", plz="3000")
+            venues.delete_venue(doomed.id)
+        assert cleared == [True]
+
+    def test_merge_busts_the_cache(self, app, make_venue, make_event):
+        with app.app_context():
+            survivor = make_venue(name="Rote Fabrik", city="Zürich", canton="ZH")
+            loser = make_venue(name="Rote Fabrik", city="", canton="", plz="8005")
+            make_event(venue=loser)
+            assert self._cached_canton_names() == set()  # loser has no canton
+
+            venues.merge_venue_group(survivor.id, [loser.id])
+
+            assert "Zürich" in self._cached_canton_names()

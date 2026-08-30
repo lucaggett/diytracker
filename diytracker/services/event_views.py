@@ -25,6 +25,7 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import joinedload
 
 from diytracker.models import Event, EventDailyViews, db
+from diytracker.services.events import upcoming_filter
 from diytracker.services.analytics import (
     STATS_WINDOW_DAYS,
     _build_valid_dates,
@@ -145,7 +146,7 @@ def event_popularity(limit=25, include_past=True):
     )
     if not include_past:
         q = q.join(Event, Event.id == EventDailyViews.event_id).filter(
-            Event.date >= datetime.now()
+            upcoming_filter()
         )
     rows = (
         q.group_by(EventDailyViews.event_id)

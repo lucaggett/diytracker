@@ -1,6 +1,6 @@
 import calendar
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 
 from dateutil.relativedelta import relativedelta
 from flask import (
@@ -25,6 +25,7 @@ from diytracker.models import Event, Label, Venue, VenueAccessibility, db, utcno
 from diytracker.services.auth import safe_redirect_target
 from diytracker.services.cache import cache
 from diytracker.services.contact import build_contact_logger, send_contact_email
+from diytracker.services.events import upcoming_filter
 from diytracker.services.i18n import (
     DEFAULT_LOCALE,
     SUPPORTED_LOCALES,
@@ -168,17 +169,11 @@ def _group_events_by_date(events):
     return grouped_events
 
 
-def _upcoming_filter(now):
-    # An event is "upcoming" until its last day has passed — a festival that
-    # started yesterday but runs through the weekend must stay listed.
-    return or_(Event.date >= now, Event.end_date >= now.date())
-
-
 @bp.app_context_processor
 def _inject_today_local():
     # _partials/event_cards.html needs today's date to drop past days and to
     # stamp the current one. Event.date is a wall-clock Swiss time, so this is
-    # the local date, matching the `_upcoming_filter(datetime.now())` filters —
+    # the local date, matching the `upcoming_filter()` filters —
     # injected here so the partial can never be included without it.
     return {"today_local": datetime.now().date()}
 
@@ -323,13 +318,17 @@ def event_page(event_id):
     # Past events stay live (they hold rankings for band/venue queries) but
     # get a visible notice plus pointers to what's coming up instead.
     now = datetime.now()
+    # A festival is over at the end of its last day, not at the opening
+    # night's door time — combining end_date with `doors` would flip the
+    # banner to "past" at 19:00 on the closing day while upcoming_filter()
+    # still has it listed everywhere else.
     is_past = (
-        datetime.combine(event.end_date, event.doors) if event.end_date else event.date
+        datetime.combine(event.end_date, time.max) if event.end_date else event.date
     ) < now
     more_at_venue = []
     if is_past:
         more_at_venue = (
-            Event.query.filter(Event.venue_id == event.venue_id, Event.date >= now)
+            Event.query.filter(Event.venue_id == event.venue_id, upcoming_filter(now))
             .order_by(Event.date.asc())
             .limit(5)
             .all()
@@ -402,7 +401,7 @@ def venue_map():
 def venue_page(venue_id):
     venue = Venue.query.get_or_404(venue_id)
     events = (
-        Event.query.filter(Event.venue_id == venue.id, _upcoming_filter(datetime.now()))
+        Event.query.filter(Event.venue_id == venue.id, upcoming_filter())
         .order_by(Event.date.asc())
         .all()
     )
@@ -426,7 +425,7 @@ def canton_page(canton_slug):
         abort(404)
     events = (
         Event.query.options(joinedload(Event.venue))
-        .filter(Event.venue_id.in_(info["venue_ids"]), _upcoming_filter(datetime.now()))
+        .filter(Event.venue_id.in_(info["venue_ids"]), upcoming_filter())
         .order_by(Event.date.asc())
         .all()
     )
@@ -476,7 +475,7 @@ def genre_page(genre_slug):
         Event.query.options(joinedload(Event.venue))
         .filter(
             Event.parent_genres.like(f"%,{info['name']},%"),
-            _upcoming_filter(datetime.now()),
+            upcoming_filter(),
         )
         .order_by(Event.date.asc())
         .all()
@@ -527,7 +526,7 @@ def label_page(label_slug):
     label = Label.query.filter_by(slug=label_slug).first_or_404()
     events = (
         Event.query.options(joinedload(Event.venue))
-        .filter(Event.label_id == label.id, _upcoming_filter(datetime.now()))
+        .filter(Event.label_id == label.id, upcoming_filter())
         .order_by(Event.date.asc())
         .all()
     )

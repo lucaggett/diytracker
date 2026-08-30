@@ -180,3 +180,62 @@ def login(client):
         return user
 
     return _login
+
+
+# --- Outgoing mail ----------------------------------------------------------
+
+
+class FakeSMTP:
+    """Stand-in for smtplib.SMTP_SSL as a context manager.
+
+    Lives here rather than in each mail test because all outgoing mail now
+    goes through services/mail.py, so there is one thing to patch.
+    """
+
+    instances = []
+
+    def __init__(self, host, port, context=None):
+        self.host = host
+        self.port = port
+        self.login_args = None
+        self.sent_message = None
+        FakeSMTP.instances.append(self)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def login(self, username, password):
+        self.login_args = (username, password)
+
+    def send_message(self, msg):
+        self.sent_message = msg
+
+
+class BrokenSMTP(FakeSMTP):
+    def login(self, username, password):
+        raise ConnectionError("smtp down")
+
+
+@pytest.fixture
+def fake_smtp(monkeypatch):
+    """Credentials in the environment and SMTP_SSL replaced; yields the class
+    so a test can read `.instances`. Pass a subclass via `use()` to simulate
+    a failing server."""
+    from diytracker.services import mail
+
+    monkeypatch.setenv("EMAIL_SERVER", "smtp.example.com")
+    monkeypatch.setenv("EMAIL_USERNAME", "bot@example.com")
+    monkeypatch.setenv("EMAIL_PASSWORD", "hunter2")
+    FakeSMTP.instances.clear()
+
+    def use(cls):
+        monkeypatch.setattr(mail.smtplib, "SMTP_SSL", cls)
+        return cls
+
+    use(FakeSMTP)
+    FakeSMTP.use = staticmethod(use)
+    yield FakeSMTP
+    FakeSMTP.instances.clear()

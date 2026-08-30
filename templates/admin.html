@@ -156,7 +156,7 @@
         <td class="px-3 py-2 text-smudge">{{ event.id }}</td>
         <td class="px-3 py-2 font-semibold">{{ event.name }}</td>
         <td class="px-3 py-2">{{ event.date.strftime('%Y-%m-%d') }}</td>
-        <td class="px-3 py-2">{{ event.venue_name }}</td>
+        <td class="px-3 py-2">{{ event.venue.name if event.venue else '' }}</td>
         <td class="px-3 py-2 text-right whitespace-nowrap">
           <a href="{{ url_for('admin.edit_event', event_id=event.id) }}"
              class="text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Edit') }}</a>

@@ -32,6 +32,7 @@ from diytracker.services.i18n import (
     select_locale,
 )
 from diytracker.services.abuse import init_abuse_guard
+from diytracker.services.auth import current_user
 from diytracker.services.cache import cache
 from diytracker.services.limits import limiter
 from diytracker.services.scrape_detection import detector
@@ -80,8 +81,10 @@ def create_app(config: Config | None = None) -> Flask:
     Babel(app, locale_selector=select_locale)
     init_security_headers(app)
 
-    # create_all() is idempotent and only creates missing tables (the project
-    # has no Alembic); column additions live in migrations/.
+    # create_all() is idempotent and only creates missing tables. The project
+    # has no Alembic and no migrations directory: anything create_all() cannot
+    # do (a new column or index on an existing table) is a one-shot script
+    # written for that release, run on the server, then deleted (see CLAUDE.md).
     with app.app_context():
         db.create_all()
         # Lazy import: genre_catalog needs the models, which need an initialized db.
@@ -137,20 +140,9 @@ def create_app(config: Config | None = None) -> Flask:
     @app.context_processor
     def _inject_current_user():
         # Templates only see the session; the header needs the promoter/admin
-        # flags to decide which nav links to render.
-        from flask import session
-
-        from diytracker.models import Submitter
-
-        def _lookup():
-            if "_current_user" not in g:
-                user_id = session.get("user_id")
-                g._current_user = (
-                    db.session.get(Submitter, user_id) if user_id else None
-                )
-            return g._current_user
-
-        return {"current_user": _lookup}
+        # flags to decide which nav links to render. Passed as the callable so
+        # it stays lazy — most pages never touch it.
+        return {"current_user": current_user}
 
     @app.errorhandler(404)
     def _handle_404(_err):

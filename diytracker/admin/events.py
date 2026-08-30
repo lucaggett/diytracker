@@ -1,7 +1,6 @@
 """Event management logic: list/status/delete plus event & genre dedup."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
 
 from sqlalchemy import or_
 
@@ -10,7 +9,7 @@ from diytracker.services.audit import record
 from diytracker.models import Event, Submitter, Venue, db
 from diytracker.services.cache import bust_cache
 from diytracker.services.search import like_patterns, normalise_query
-from diytracker.services.events import detach_scrape_approvals
+from diytracker.services.events import detach_scrape_approvals, upcoming_filter
 from diytracker.services.event_dedup import (
     find_event_dedup_candidates,
     merge_events,
@@ -93,7 +92,7 @@ def list_events(include_past=False, limit=20, search=None):
     if include_past:
         q = q.order_by(Event.date.desc())
     else:
-        q = q.filter(Event.date >= datetime.now()).order_by(Event.date.asc())
+        q = q.filter(upcoming_filter()).order_by(Event.date.asc())
     if limit:
         q = q.limit(limit)
     return [_row(e) for e in q.all()]
@@ -142,7 +141,7 @@ def scan_event_dups(include_past=False):
     on the same date."""
     q = Event.query
     if not include_past:
-        q = q.filter(Event.date >= datetime.now())
+        q = q.filter(upcoming_filter())
     events = q.all()
     pairs = find_event_dedup_candidates(events)
     return len(events), [

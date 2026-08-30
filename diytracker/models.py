@@ -72,7 +72,8 @@ class Event(db.Model):
     # visible badge on the event page.
     status = db.Column(db.String(20), nullable=False, default="scheduled")
     # Nullable: SQLite can't ALTER TABLE ADD COLUMN with a non-constant NOT
-    # NULL default; migrations/migrate_add_created_at.py backfills old rows.
+    # NULL default, so rows predating the column were backfilled from
+    # updated_at by a one-shot script at the time.
     created_at = db.Column(db.DateTime, nullable=True, default=utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
 
@@ -161,7 +162,7 @@ class Submitter(db.Model):
     invite_token_expiry = db.Column(db.DateTime, nullable=True)
     # Opt-out email when an admin edits an event carrying one of the user's
     # labels. Default on: the userbase is tiny and invited. server_default
-    # keeps existing rows valid (see scripts/migrate_add_notify_flag.py).
+    # keeps existing rows valid without an Alembic migration.
     notify_label_events = db.Column(
         db.Boolean, nullable=False, default=True, server_default=db.text("1")
     )
@@ -300,10 +301,10 @@ class ScrapedEvent(db.Model):
     # 'published' (approved into an Event) or 'rejected' (removed without
     # publishing, optionally with a reason). The legacy `approved` boolean
     # conflated the last two (approved with no approved_event_id meant
-    # rejected); it is still written alongside status for one release as a
-    # safety net for stray scripts, then write-only-status. approved_at is
+    # rejected). Nothing writes it any more — it is kept only so historic rows
+    # stay readable, and no code should start reading it again. approved_at is
     # the resolution time for both outcomes (local clock, kept for
-    # consistency with existing rows). See scripts/migrate_add_queue_status.py.
+    # consistency with existing rows).
     STATUS_PENDING = "pending"
     STATUS_PUBLISHED = "published"
     STATUS_REJECTED = "rejected"
@@ -326,7 +327,7 @@ class ScrapedEvent(db.Model):
     # duplicate so an admin looks twice before approving. review_reason holds a
     # human-readable summary of what it collided with, captured at ingest time.
     # server_default keeps existing rows valid without an Alembic migration
-    # (schema is db.create_all(); see scripts/migrate_add_needs_review.py).
+    # (schema comes from db.create_all()).
     needs_review = db.Column(
         db.Boolean, nullable=False, default=False, server_default=db.text("0")
     )

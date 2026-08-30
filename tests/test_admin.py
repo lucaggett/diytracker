@@ -94,6 +94,25 @@ class TestEventManagement:
         assert b"Events with missing venue" in resp.data
         assert ev.name.encode() in resp.data
 
+    def test_admin_dashboard_lists_the_venue_name(
+        self, client, admin, login, make_venue, make_event
+    ):
+        # The table used to read `event.venue_name`, which Event does not
+        # have — Jinja rendered the column blank instead of raising.
+        login(admin)
+        make_event(venue=make_venue(name="Rote Fabrik"))
+        resp = client.get("/admin")
+        assert resp.status_code == 200
+        assert "Rote Fabrik".encode() in resp.data
+
+    def test_admin_dashboard_survives_a_dangling_venue(
+        self, client, admin, login, make_event
+    ):
+        login(admin)
+        ev = make_event()
+        _force_dangling_venue(ev.id)
+        assert client.get("/admin").status_code == 200
+
     def test_admin_dashboard_hides_missing_venue_section_when_clean(
         self, client, admin, login, make_event
     ):
@@ -135,6 +154,27 @@ class TestVenueManagement:
         db.session.refresh(v)
         assert v.name == "New Name"
         assert v.city == "Basel"
+
+    def test_edit_venue_busts_the_page_cache(
+        self, client, admin, login, make_venue, make_event
+    ):
+        from diytracker.services.cantons import canton_directory
+
+        login(admin)
+        v = make_venue(name="Rote Fabrik", city="Zürich", canton="ZH")
+        make_event(venue=v)
+        assert "Zürich" in {i["name"] for i in canton_directory().values()}
+
+        client.post(
+            f"/admin/venues/{v.id}/edit",
+            data={
+                "name": "Rote Fabrik",
+                "city": "Basel",
+                "plz": "4000",
+                "canton": "BS",
+            },
+        )
+        assert "Basel-Stadt" in {i["name"] for i in canton_directory().values()}
 
     def test_delete_empty_venue(self, client, admin, login, make_venue):
         login(admin)

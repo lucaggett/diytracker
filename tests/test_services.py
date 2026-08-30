@@ -1,6 +1,6 @@
 """Service-layer tests: event hashing, venue get-or-create/dedup, scrape import."""
 
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 
 from diytracker.models import (
     db,
@@ -615,3 +615,43 @@ class TestDbStats:
         assert stats["max"] == 15.0
         assert dict(stats["buckets"])["0–10"] == 1
         assert dict(stats["buckets"])["10–20"] == 1
+
+
+class TestUpcomingFilter:
+    """A multi-day event stays upcoming until its last day is over — the
+    calendar always got this right, the other read paths did not."""
+
+    def _running_festival(self, make_event):
+        # Started yesterday, runs through tomorrow.
+        ev = make_event(name="Long Weekender", days_from_now=-1)
+        ev.end_date = (datetime.now() + timedelta(days=1)).date()
+        ev.is_festival = True
+        db.session.add(ev)
+        db.session.commit()
+        return ev
+
+    def test_search_finds_a_running_festival(self, app, make_event):
+        from diytracker.services.search import search_events
+
+        self._running_festival(make_event)
+        names = [e.name for e in search_events("weekender")]
+        assert "Long Weekender" in names
+
+    def test_canton_directory_keeps_a_running_festival(self, app, make_event):
+        from diytracker.services.cantons import canton_directory
+
+        ev = self._running_festival(make_event)
+        directory = canton_directory()
+        assert any(ev.venue_id in info["venue_ids"] for info in directory.values())
+
+    def test_genre_directory_keeps_a_running_festival(self, app, make_event):
+        from diytracker.services.genres import genre_directory
+
+        self._running_festival(make_event)
+        assert "punk" in genre_directory()
+
+    def test_a_finished_event_is_not_upcoming(self, app, make_event):
+        from diytracker.services.search import search_events
+
+        make_event(name="Old Gig", days_from_now=-5)
+        assert search_events("old gig") == []

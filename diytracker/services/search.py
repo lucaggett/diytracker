@@ -10,12 +10,11 @@ Multi-word queries AND their terms — each term must match somewhere — so
 "punk bern" narrows to punk shows in Bern instead of returning both sets.
 """
 
-from datetime import datetime
-
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
 from diytracker.models import Event, Venue
+from diytracker.services.events import upcoming_filter
 
 # Long enough for a band plus a city, short enough that nobody can hand the
 # database a kilobyte of LIKE patterns.
@@ -59,7 +58,7 @@ def search_events(raw_query, include_past=False, limit=DEFAULT_LIMIT):
         Venue, Event.venue_id == Venue.id
     )
     if not include_past:
-        q = q.filter(Event.date >= datetime.now())
+        q = q.filter(upcoming_filter())
 
     for term in _terms(query):
         pattern = _pattern(term)

@@ -52,7 +52,8 @@ class TestIngestCore:
         assert rec.doors_open.strftime("%H:%M") == "19:00"
         assert rec.start_time.strftime("%H:%M") == "20:30"
         assert rec.submitter == "Jonathan Schenker"
-        assert rec.approved is False  # lands in the queue, not on the site
+        # Lands in the queue, not on the site.
+        assert rec.status == ScrapedEvent.STATUS_PENDING
 
     @pytest.mark.parametrize("missing", ["source", "title", "start_date"])
     def test_required_fields(self, app, missing):
@@ -398,7 +399,8 @@ class TestFlyerApproval:
         assert resp.status_code == 302
         ev = Event.query.one()
         assert ev.flyer == rec.flyer
-        assert rec.approved and rec.approved_event_id == ev.id
+        assert rec.status == ScrapedEvent.STATUS_PUBLISHED
+        assert rec.approved_event_id == ev.id
 
     def test_queue_shows_flyer_and_submitter(self, client, app, admin, login):
         ingest_event(

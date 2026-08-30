@@ -7,10 +7,9 @@ searches for, and would make a thin, incoherent page. Only genres with at
 least one upcoming event get a landing page.
 """
 
-from datetime import datetime
-
 from diytracker.models import Event, Venue, db
 from diytracker.services.cache import cache
+from diytracker.services.events import upcoming_filter
 from diytracker.services.seo import slugify
 from diytracker.utils import CANTONS, PARENT_GENRES_ORDER, resolve_canton
 
@@ -28,7 +27,7 @@ def genre_directory():
     rows = (
         db.session.query(Event.parent_genres, Venue.id, Venue.canton, Venue.city)
         .join(Venue, Event.venue_id == Venue.id)
-        .filter(Event.date >= datetime.now())
+        .filter(upcoming_filter())
         .all()
     )
 

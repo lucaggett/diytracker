@@ -11,7 +11,6 @@ from flask import (
     render_template,
     request,
     send_file,
-    session,
     url_for,
 )
 from sqlalchemy import func
@@ -25,7 +24,7 @@ from diytracker.forms import (
     VenueForm,
     get_canton_choices,
 )
-from diytracker.models import db, Event, PageText, ScrapeSuspect, Submitter, Venue
+from diytracker.models import db, Event, PageText, ScrapeSuspect, Venue
 from diytracker.services.audit import record
 from diytracker.services.notifications import notify_label_event_edited
 from diytracker.services.analytics import (
@@ -37,7 +36,7 @@ from diytracker.services.analytics import (
     read_stats,
     stats_age_seconds,
 )
-from diytracker.services.auth import admin_required
+from diytracker.services.auth import admin_required, current_user
 from diytracker.services import db_stats
 from diytracker.services.event_views import event_popularity
 from diytracker.services.cache import bust_cache
@@ -86,7 +85,10 @@ def admin():
     now = datetime.now()
     today_start = datetime.combine(now.date(), datetime.min.time())
     events = (
-        Event.query.filter(Event.date >= today_start).order_by(Event.date.asc()).all()
+        Event.query.options(joinedload(Event.venue))
+        .filter(Event.date >= today_start)
+        .order_by(Event.date.asc())
+        .all()
     )
     orphaned_venue_events = (
         Event.query.outerjoin(Venue, Event.venue_id == Venue.id)
@@ -199,7 +201,7 @@ def edit_event(event_id):
                 if event.label_id != old_label_id
                 else ""
             )
-            actor = db.session.get(Submitter, session["user_id"])
+            actor = current_user()
             record(
                 "event.edit",
                 "event",
@@ -231,7 +233,7 @@ def delete_event(event_id):
         "event.delete",
         "event",
         event.id,
-        actor=db.session.get(Submitter, session["user_id"]),
+        actor=current_user(),
         detail=(
             f"name={event.name!r} date={event.date} "
             f"venue={event.venue.name if event.venue else None!r}"
@@ -271,6 +273,9 @@ def edit_venue(venue_id):
         venue.plz = form.plz.data.strip()
         venue.coords = (form.coords.data or "").strip() or None
         db.session.commit()
+        # Venue name/city/canton appear on cached public pages and decide the
+        # venue's canton bucket, so this write invalidates them like any other.
+        bust_cache()
         flash(_("Venue updated successfully!"))
         return redirect(url_for("admin.venues"))
     return render_template("edit_venue.html", form=form, venue=venue)
@@ -310,6 +315,7 @@ def delete_venue(venue_id):
         db.session.delete(venue.accessibility)
     db.session.delete(venue)
     db.session.commit()
+    bust_cache()
     flash(_("Venue deleted."))
     return redirect(url_for("admin.venues"))
 
@@ -320,6 +326,10 @@ def generate_accessibility_link(venue_id):
     venue = Venue.query.get_or_404(venue_id)
     venue.generate_accessibility_token()
     db.session.commit()
+    # Only the sitemap's lastmod actually moves here (the token never reaches
+    # a public page), but every venue write busting the cache is a rule worth
+    # keeping exception-free — and this one runs a few times a year.
+    bust_cache()
     link = url_for(
         "public.accessibility_form", token=venue.accessibility_token, _external=True
     )

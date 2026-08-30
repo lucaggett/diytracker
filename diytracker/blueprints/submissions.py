@@ -9,15 +9,14 @@ from flask import (
     redirect,
     render_template,
     request,
-    session,
     url_for,
 )
 
 from diytracker.admin import queue_review
 from diytracker.admin.core import AdminError
 from diytracker.forms import DeleteScrapedEventForm, EventForm, GenreForm
-from diytracker.models import db, Genre, ScrapedEvent, Submitter
-from diytracker.services.auth import admin_required, login_required
+from diytracker.models import db, Genre, ScrapedEvent
+from diytracker.services.auth import admin_required, current_user, login_required
 from diytracker.services.search import like_patterns, normalise_query
 from diytracker.services.cache import bust_cache
 from diytracker.services.events import (
@@ -121,7 +120,7 @@ def parse_scraped_events(date_from=None, date_to=None, source=None, q=None, page
 @bp.route("/queue", methods=["GET", "POST"])
 @admin_required
 def event_queue():
-    submitter = db.session.get(Submitter, session["user_id"])
+    submitter = current_user()
 
     def _parse_date(key):
         raw = request.args.get(key, "").strip()
@@ -227,7 +226,6 @@ def event_queue():
             return redirect(url_for("submissions.event_queue"))
         db.session.flush()
         rec.status = ScrapedEvent.STATUS_PUBLISHED
-        rec.approved = True  # legacy safety net, one release
         rec.approved_at = datetime.now()
         rec.approved_event_id = new_event.id
         # The Event carries the approving admin as submitter_id; the scraped
@@ -269,7 +267,6 @@ def event_queue():
 def _reject(scraped, actor, reason):
     """Mark one pending row rejected and stage the audit entry."""
     scraped.status = ScrapedEvent.STATUS_REJECTED
-    scraped.approved = True  # legacy safety net, one release
     scraped.approved_at = datetime.now()
     scraped.reject_reason = reason or None
     record(
@@ -292,7 +289,7 @@ def delete_scraped_event(scraped_id):
         abort(400)
     scraped = ScrapedEvent.query.get_or_404(scraped_id)
     reason = request.form.get("reject_reason", "").strip()[:300]
-    _reject(scraped, db.session.get(Submitter, session["user_id"]), reason)
+    _reject(scraped, current_user(), reason)
     db.session.commit()
     flash(_("Event removed from queue."))
     return redirect(url_for("submissions.event_queue", **_queue_redirect_args()))
@@ -306,7 +303,7 @@ def bulk_reject_scraped_events():
         abort(400)
     ids = [int(x) for x in request.form.getlist("scraped_ids") if x.isdigit()]
     reason = request.form.get("reject_reason", "").strip()[:300]
-    actor = db.session.get(Submitter, session["user_id"])
+    actor = current_user()
     rows = ScrapedEvent.query.filter(
         ScrapedEvent.id.in_(ids),
         ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
@@ -334,7 +331,7 @@ def resolve_queue_duplicate(scraped_id, action):
     form = DeleteScrapedEventForm()
     if not form.validate_on_submit() or action not in ("discard", "unflag"):
         abort(400)
-    actor = db.session.get(Submitter, session["user_id"])
+    actor = current_user()
     try:
         if action == "discard":
             row = queue_review.discard(scraped_id, actor=actor)
@@ -351,7 +348,7 @@ def resolve_queue_duplicate(scraped_id, action):
 @login_required
 def submit_event_link():
     form = EventForm()
-    submitter = db.session.get(Submitter, session["user_id"])
+    submitter = current_user()
     form.label_id.choices = owned_label_choices(submitter)
 
     if form.validate_on_submit():
@@ -401,7 +398,7 @@ def manage_genres():
     """The genre catalog page: any logged-in user can add a genre (it shows
     up in the event form's picker immediately) and delete genres they added
     themselves. Seed genres (added_by NULL) are deletable by admins only."""
-    submitter = db.session.get(Submitter, session["user_id"])
+    submitter = current_user()
     form = GenreForm()
     if form.validate_on_submit():
         name = " ".join(form.name.data.split())
@@ -430,7 +427,7 @@ def genre_submissions():
 @bp.route("/genres/<int:genre_id>/delete", methods=["POST"])
 @login_required
 def delete_genre(genre_id):
-    submitter = db.session.get(Submitter, session["user_id"])
+    submitter = current_user()
     genre = db.session.get(Genre, genre_id)
     if genre is None:
         abort(404)

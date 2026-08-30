@@ -71,7 +71,6 @@ def discard(scraped_id, actor="tui"):
     rec = _get_flagged(scraped_id)
     row = _row(rec)
     rec.status = ScrapedEvent.STATUS_REJECTED
-    rec.approved = True  # legacy safety net, one release
     rec.approved_at = datetime.now()
     record(
         "queue.reject",

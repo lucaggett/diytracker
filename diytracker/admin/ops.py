@@ -86,8 +86,8 @@ def scrape_status():
     require_schema(
         db,
         (ScrapedEvent, SkippedUrl),
-        "Run the release's one-shot migration script first "
-        "(e.g. scripts/migrate_add_queue_status.py).",
+        "Add the missing column(s) with a one-shot ALTER TABLE against "
+        "instance/events.db, then retry.",
     )
     last = get_last_scrape_time()
     now = datetime.now()

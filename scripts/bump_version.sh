@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 # Bump the project version (pyproject.toml + package.json), tag, commit, and push.
 #
-# Usage: scripts/bump_version.sh <major|minor|patch>
+# Usage: scripts/bump_version.sh <major|minor|patch|X.Y.Z>
+#
+# The explicit X.Y.Z form exists because the changelog and the version can
+# drift apart: releases 0.57.0 through 0.59.0 were written up but never
+# bumped, and running `minor` four times to catch up would have minted four
+# tags all pointing at the same tree. It only moves forward.
 
 set -euo pipefail
 
-if [[ $# -ne 1 || ! "$1" =~ ^(major|minor|patch)$ ]]; then
-    echo "Usage: $0 <major|minor|patch>" >&2
+if [[ $# -ne 1 || ! "$1" =~ ^(major|minor|patch|[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+    echo "Usage: $0 <major|minor|patch|X.Y.Z>" >&2
     exit 1
 fi
 
@@ -37,10 +42,20 @@ case "$part" in
     patch)
         patch=$((patch + 1))
         ;;
+    *)
+        IFS='.' read -r major minor patch <<< "$part"
+        ;;
 esac
 
 new_version="${major}.${minor}.${patch}"
 tag="v${new_version}"
+
+# Guard the explicit form against typos that would move the version backwards.
+if [[ "$(printf '%s\n%s\n' "$current_version" "$new_version" | sort -V | tail -1)" != "$new_version" \
+      || "$new_version" == "$current_version" ]]; then
+    echo "Refusing to go from $current_version to $new_version — versions only move forward." >&2
+    exit 1
+fi
 
 if git rev-parse "$tag" >/dev/null 2>&1; then
     echo "Tag $tag already exists." >&2

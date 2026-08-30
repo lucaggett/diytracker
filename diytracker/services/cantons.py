@@ -7,10 +7,9 @@ resolve to nothing stay on the main calendar but get no canton page. Only
 cantons with at least one upcoming event get a landing page.
 """
 
-from datetime import datetime
-
 from diytracker.models import Event, Venue, db
 from diytracker.services.cache import cache
+from diytracker.services.events import upcoming_filter
 from diytracker.services.seo import slugify
 from diytracker.utils import CANTONS, resolve_canton
 
@@ -24,7 +23,7 @@ def canton_directory():
     rows = (
         db.session.query(Venue.id, Venue.canton, Venue.city, db.func.count(Event.id))
         .join(Event, Event.venue_id == Venue.id)
-        .filter(Event.date >= datetime.now())
+        .filter(upcoming_filter())
         .group_by(Venue.id)
         .all()
     )

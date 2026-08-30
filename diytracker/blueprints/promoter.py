@@ -8,7 +8,6 @@ from flask import (
     redirect,
     render_template,
     request,
-    session,
     url_for,
 )
 
@@ -21,16 +20,17 @@ from diytracker.forms import (
     NotifyToggleForm,
     UnclaimEventForm,
 )
-from diytracker.models import db, Event, Label, Submitter, Venue
+from diytracker.models import db, Event, Label, Venue
 from diytracker.services.audit import record
-from diytracker.services.auth import promoter_required
+from diytracker.services.auth import current_user, promoter_required
 from diytracker.services.cache import bust_cache
+from diytracker.services.events import upcoming_filter
 from diytracker.services.i18n import gettext as _
 from diytracker.services.labels import (
     label_stats,
-    likely_label_events,
     likely_queue_matches,
     owned_labels,
+    suggest_label_events,
     unique_slug,
 )
 from diytracker.services.search import like_patterns, normalise_query
@@ -40,13 +40,9 @@ from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 bp = Blueprint("promoter", __name__, url_prefix="/promoter")
 
 
-def _current_user():
-    return db.session.get(Submitter, session["user_id"])
-
-
 def _owned_label_or_403(label_id):
     label = Label.query.get_or_404(label_id)
-    user = _current_user()
+    user = current_user()
     if label.promoter_id != user.id:
         abort(403)
     return label
@@ -55,7 +51,7 @@ def _owned_label_or_403(label_id):
 @bp.route("/")
 @promoter_required
 def dashboard():
-    user = _current_user()
+    user = current_user()
     labels = Label.query.filter_by(promoter_id=user.id).order_by(Label.name.asc()).all()
     stats = label_stats(user)
     share_urls = {
@@ -84,7 +80,7 @@ def toggle_notifications():
     form = NotifyToggleForm()
     if not form.validate_on_submit():
         abort(400)
-    user = _current_user()
+    user = current_user()
     user.notify_label_events = not user.notify_label_events
     db.session.commit()
     flash(
@@ -109,14 +105,17 @@ CLAIM_PAGE_SIZE = 50
 @bp.route("/claim")
 @promoter_required
 def claim_events():
-    user = _current_user()
+    user = current_user()
     form = _claim_form(user)
+    # Midnight, not now: a promoter claiming tonight's show at 21:00 must still
+    # see it. upcoming_filter() then keeps a running festival in the list too.
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    query = (
+    unclaimed = (
         Event.query.options(joinedload(Event.venue))
-        .filter(Event.label_id.is_(None), Event.date >= today)
+        .filter(Event.label_id.is_(None), upcoming_filter(today))
         .order_by(Event.date.asc())
     )
+    query = unclaimed
     raw_q = normalise_query(request.args.get("q", ""))
     if raw_q:
         query = query.outerjoin(Venue, Event.venue_id == Venue.id)
@@ -134,13 +133,7 @@ def claim_events():
 
     # "Likely yours": fuzzy-match the user's label names against unfiltered
     # upcoming unlabelled events, so a suggestion can't be hidden by q/page.
-    suggestions = likely_label_events(
-        owned_labels(user),
-        Event.query.options(joinedload(Event.venue))
-        .filter(Event.label_id.is_(None), Event.date >= today)
-        .order_by(Event.date.asc())
-        .all(),
-    )
+    suggestions = suggest_label_events(owned_labels(user), unclaimed)
     return render_template(
         "promoter_claim.html",
         events=pagination.items,
@@ -154,7 +147,7 @@ def claim_events():
 @bp.route("/events/<int:event_id>/claim", methods=["POST"])
 @promoter_required
 def claim_event(event_id):
-    user = _current_user()
+    user = current_user()
     event = Event.query.get_or_404(event_id)
     form = _claim_form(user)
     if not form.validate_on_submit():
@@ -185,7 +178,7 @@ def unclaim_event(event_id):
     form = UnclaimEventForm()
     if not form.validate_on_submit():
         abort(400)
-    user = _current_user()
+    user = current_user()
     event = Event.query.get_or_404(event_id)
     # Strictly per-account, like claiming: admins get no special treatment.
     if event.label is None or event.label.promoter_id != user.id:
@@ -224,6 +217,7 @@ def _duplicate_name(name, exclude_id=None):
 @promoter_required
 def new_label():
     form = LabelForm()
+    user = current_user()
     if form.validate_on_submit():
         name = form.name.data.strip()
         if _duplicate_name(name):
@@ -237,7 +231,7 @@ def new_label():
             slug=unique_slug(name),
             logo=logo,
             description=(form.description.data or "").strip() or None,
-            promoter_id=session["user_id"],
+            promoter_id=user.id,
         )
         _apply_profile_fields(label, form)
         db.session.add(label)
@@ -246,7 +240,7 @@ def new_label():
             "label.create",
             "label",
             label.id,
-            actor=_current_user(),
+            actor=user,
             detail=f"name={label.name!r}",
         )
         db.session.commit()
@@ -284,7 +278,7 @@ def edit_label(label_id):
             "label.edit",
             "label",
             label.id,
-            actor=_current_user(),
+            actor=current_user(),
             detail=f"name={label.name!r}",
         )
         db.session.commit()
@@ -307,7 +301,7 @@ def delete_label(label_id):
         "label.delete",
         "label",
         label.id,
-        actor=_current_user(),
+        actor=current_user(),
         detail=f"name={label.name!r} detached_events={detached}",
     )
     db.session.delete(label)

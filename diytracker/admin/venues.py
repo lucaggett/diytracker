@@ -18,6 +18,7 @@ from sqlalchemy import func, or_
 
 from diytracker.admin.core import AdminError, require_schema
 from diytracker.models import Event, Venue, VenueAccessibility, db
+from diytracker.services.cache import bust_cache
 from diytracker.services.search import like_patterns, normalise_query
 from diytracker.services.venue import (
     find_dedup_candidates,
@@ -114,8 +115,9 @@ def _check_schema():
     require_schema(
         db,
         (Venue, Event, VenueAccessibility),
-        "Run the scripts in migrations/ first "
-        "(e.g. migrate_add_seo_columns.py), then rerun dedup.",
+        "Add the missing column(s) with a one-shot ALTER TABLE against "
+        "instance/events.db, then rerun dedup — this project has no Alembic "
+        "and keeps no migrations directory between releases (see CLAUDE.md).",
     )
 
 
@@ -202,6 +204,9 @@ def update_venue(venue_id, **fields):
         # required ones were rejected above if empty.
         setattr(venue, key, value if key in REQUIRED_FIELDS else (value or None))
     db.session.commit()
+    # Venue name/city/canton are rendered on cached public pages and decide
+    # which canton directory the venue lands in.
+    bust_cache()
     return get_venue(venue_id)
 
 
@@ -222,6 +227,7 @@ def delete_venue(venue_id):
     VenueAccessibility.query.filter_by(venue_id=venue.id).delete()
     db.session.delete(venue)
     db.session.commit()
+    bust_cache()
     return name
 
 
@@ -272,6 +278,7 @@ def merge_venue_group(survivor_id, loser_ids):
         raise AdminError("Venue already merged away — rescan and retry.")
     stats = merge_group(survivor, losers)
     db.session.commit()
+    bust_cache()
     return MergeResult(
         backfilled=stats["backfilled"],
         accessibility=stats["accessibility"],

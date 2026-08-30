@@ -6,12 +6,8 @@ through it, and there is no 'gsw' catalog. The language is picked per
 send (CLI --lang / TUI radio buttons), not stored on the Submitter.
 """
 
-import os
-import smtplib
-import ssl
-from email.message import EmailMessage
-
 from diytracker.admin.core import AdminError
+from diytracker.services.mail import send_mail
 
 INVITE_LANGS = ("gsw", "en", "fr")
 DEFAULT_INVITE_LANG = "gsw"
@@ -56,19 +52,6 @@ INVITE_MESSAGES = {
 LANG_LABELS = {"gsw": "Schwiizerdütsch", "en": "English", "fr": "Français"}
 
 
-def send_email(to_address, subject, body):
-    message = EmailMessage()
-    message.set_content(body)
-    message["Subject"] = subject
-    message["From"] = "info@diytracker.ch"
-    message["To"] = to_address
-
-    context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(os.environ["EMAIL_SERVER"], 465, context=context) as server:
-        server.login(os.environ["EMAIL_USERNAME"], os.environ["EMAIL_PASSWORD"])
-        server.send_message(message)
-
-
 def invite_link(token):
     return f"https://diytracker.ch/set-password/{token}"
 
@@ -79,4 +62,4 @@ def send_invite_email(email, token, lang=DEFAULT_INVITE_LANG):
             f"Unknown invite language {lang!r} (expected one of {INVITE_LANGS})."
         )
     text = INVITE_MESSAGES[lang]
-    send_email(email, text["subject"], text["body"].format(token=token))
+    send_mail(email, text["subject"], text["body"].format(token=token))

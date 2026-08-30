@@ -9,47 +9,6 @@ from diytracker.admin.core import AdminError
 from diytracker.models import Event, Label, ScrapedEvent, Submitter, db
 
 
-class _FakeSMTP:
-    """Stand-in for smtplib.SMTP_SSL as a context manager."""
-
-    instances = []
-
-    def __init__(self, host, port, context=None):
-        self.host = host
-        self.port = port
-        self.login_args = None
-        self.sent_message = None
-        _FakeSMTP.instances.append(self)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        return False
-
-    def login(self, username, password):
-        self.login_args = (username, password)
-
-    def send_message(self, msg):
-        self.sent_message = msg
-
-
-@pytest.fixture(autouse=True)
-def _clear_instances():
-    _FakeSMTP.instances.clear()
-    yield
-    _FakeSMTP.instances.clear()
-
-
-@pytest.fixture
-def fake_smtp(monkeypatch):
-    monkeypatch.setenv("EMAIL_SERVER", "smtp.example.com")
-    monkeypatch.setenv("EMAIL_USERNAME", "bot@example.com")
-    monkeypatch.setenv("EMAIL_PASSWORD", "hunter2")
-    monkeypatch.setattr(invites.smtplib, "SMTP_SSL", _FakeSMTP)
-    return _FakeSMTP
-
-
 class TestInvites:
     @pytest.mark.parametrize("lang", invites.INVITE_LANGS)
     def test_sends_localized_invite(self, fake_smtp, lang):
@@ -78,8 +37,10 @@ class TestInvites:
         assert not fake_smtp.instances
 
     def test_missing_env_raises(self, monkeypatch):
+        from diytracker.services.mail import MailNotConfigured
+
         monkeypatch.delenv("EMAIL_SERVER", raising=False)
-        with pytest.raises(KeyError):
+        with pytest.raises(MailNotConfigured):
             invites.send_invite_email("new@example.com", "tok123", "en")
 
     def test_every_language_has_token_placeholder(self):
@@ -240,7 +201,7 @@ class TestQueueReview:
         rec = _make_scraped(needs_review=True)
         queue_review.discard(rec.id)
         db.session.refresh(rec)
-        assert rec.approved is True
+        assert rec.status == ScrapedEvent.STATUS_REJECTED
         assert rec.approved_at is not None
         assert rec.approved_event_id is None
         assert queue_review.list_flagged() == []

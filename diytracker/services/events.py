@@ -1,10 +1,30 @@
-"""Event assembly shared by the submit, queue-approve and admin-edit routes."""
+"""Event assembly shared by the submit, queue-approve and admin-edit routes,
+plus the one definition of what "upcoming" means."""
 
 import hashlib
+from datetime import datetime
+
+from sqlalchemy import or_
 
 from diytracker.models import db, Event, ScrapedEvent, Venue
 from diytracker.services.venue import get_or_create_venue
 from diytracker.utils import clean_genre_tokens
+
+
+def upcoming_filter(now=None):
+    """SQLAlchemy filter for "this event has not finished yet".
+
+    A festival that started yesterday but runs through the weekend is still
+    upcoming, so the end date decides when there is one — checking only
+    `Event.date` drops a multi-day event from a listing on its second
+    morning while the calendar still shows it. Both columns hold local Swiss
+    wall-clock time (see models.utcnow), hence datetime.now().
+
+    The archive uses a different, deliberately coarser boundary (strictly
+    before the start of today); see services/archive.py.
+    """
+    now = now or datetime.now()
+    return or_(Event.date >= now, Event.end_date >= now.date())
 
 
 def detach_scrape_approvals(event_id):

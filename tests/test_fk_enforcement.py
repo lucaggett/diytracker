@@ -38,14 +38,16 @@ class TestForeignKeyEnforcement:
     ):
         login(admin)
         ev = make_event()
-        rec = ScrapedEvent(approved=True, approved_event_id=ev.id)
+        rec = ScrapedEvent(
+            status=ScrapedEvent.STATUS_PUBLISHED, approved_event_id=ev.id
+        )
         db.session.add(rec)
         db.session.commit()
         resp = client.post(f"/admin/delete_event/{ev.id}")
         assert resp.status_code == 302
         db.session.refresh(rec)
         assert rec.approved_event_id is None
-        assert rec.approved is True
+        assert rec.status == ScrapedEvent.STATUS_PUBLISHED
 
     def test_delete_user_owning_labels_is_refused(self, app, make_user, make_label):
         promoter = make_user(email="promo@example.com", is_promoter=True)

@@ -22,6 +22,21 @@ def _csv_env(name):
     return tuple(v.strip() for v in os.environ.get(name, "").split(",") if v.strip())
 
 
+def email_settings():
+    """(host, username, password) for outgoing mail, any of them "" if unset.
+
+    Not a Flask config key like the rest of this module: mail is also sent
+    from db_admin_cli.py's invite commands, which run outside a request, so
+    services/mail.py must not depend on an app context to reach them. Kept
+    here anyway so every os.environ read in the app still lives in one file.
+    """
+    return (
+        os.environ.get("EMAIL_SERVER", ""),
+        os.environ.get("EMAIL_USERNAME", ""),
+        os.environ.get("EMAIL_PASSWORD", ""),
+    )
+
+
 class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024

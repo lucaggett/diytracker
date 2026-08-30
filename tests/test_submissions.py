@@ -143,7 +143,7 @@ class TestEventQueue:
         assert ev.venue.name == "Hall"
 
         db.session.refresh(rec)
-        assert rec.approved is True
+        assert rec.status == ScrapedEvent.STATUS_PUBLISHED
         assert rec.approved_event_id == ev.id
 
     def test_duplicate_event_is_rejected_by_hash(self, client, admin, login):
@@ -217,13 +217,13 @@ class TestEventQueue:
         assert b"Petzi" in resp.data
         assert b">MG<" not in resp.data  # crude, but MG title shouldn't render
 
-    def test_delete_from_queue_marks_approved(self, client, admin, login):
+    def test_delete_from_queue_marks_rejected(self, client, admin, login):
         login(admin)
         rec = self._make_scraped()
         resp = client.post(f"/queue/{rec.id}/delete")
         assert resp.status_code == 302
         db.session.refresh(rec)
-        assert rec.approved is True
+        assert rec.status == ScrapedEvent.STATUS_REJECTED
         # No Event created by a delete.
         assert Event.query.count() == 0
 
@@ -393,7 +393,6 @@ class TestQueueStatus:
         client.post("/queue", data={"scraped_id": str(rec.id)})
         db.session.refresh(rec)
         assert rec.status == "published"
-        assert rec.approved is True  # legacy column still written
         assert rec.approved_event_id is not None
 
     def test_reject_sets_rejected_with_reason(self, client, admin, login):
@@ -493,41 +492,3 @@ class TestQueueDuplicatesWeb:
         self._flagged()
         resp = client.get("/queue")
         assert b"/queue/duplicates" in resp.data
-
-
-class TestQueueStatusMigration:
-    def test_backfill_semantics(self, tmp_path):
-        import sqlite3
-        import subprocess
-        import sys
-
-        db_path = tmp_path / "events.db"
-        conn = sqlite3.connect(db_path)
-        conn.execute(
-            "CREATE TABLE scraped_event ("
-            "id INTEGER PRIMARY KEY, approved BOOLEAN NOT NULL DEFAULT 0, "
-            "approved_event_id INTEGER)"
-        )
-        conn.executemany(
-            "INSERT INTO scraped_event (id, approved, approved_event_id) VALUES (?, ?, ?)",
-            [(1, 1, 42), (2, 1, None), (3, 0, None)],
-        )
-        conn.commit()
-        conn.close()
-
-        subprocess.run(
-            [sys.executable, "scripts/migrate_add_queue_status.py", str(db_path)],
-            check=True,
-            capture_output=True,
-        )
-        # Idempotent: second run must not re-backfill or fail.
-        subprocess.run(
-            [sys.executable, "scripts/migrate_add_queue_status.py", str(db_path)],
-            check=True,
-            capture_output=True,
-        )
-
-        conn = sqlite3.connect(db_path)
-        rows = dict(conn.execute("SELECT id, status FROM scraped_event"))
-        conn.close()
-        assert rows == {1: "published", 2: "rejected", 3: "pending"}

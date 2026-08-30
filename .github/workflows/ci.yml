@@ -132,5 +132,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # --minify to match the documented local command (README / CLAUDE.md);
+      # a build with different flags produces a different file and could never
+      # be compared against the committed one.
       - name: Build Tailwind CSS
-        run: npx tailwindcss -i ./static/css/styles.css -o ./static/css/output.css
+        run: npx @tailwindcss/cli -i ./static/css/styles.css -o ./static/css/output.css --minify
+
+      # static/css/output.css is committed and served straight to visitors, so
+      # a template change without a rebuild silently ships stale CSS. Building
+      # alone never caught that — the diff is the actual check.
+      - name: Check the committed CSS is up to date
+        run: |
+          if ! git diff --quiet -- static/css/output.css; then
+            echo "::error::static/css/output.css is stale. Rebuild it with:"
+            echo "  npx @tailwindcss/cli -i ./static/css/styles.css -o ./static/css/output.css --minify"
+            git diff --stat -- static/css/output.css
+            exit 1
+          fi

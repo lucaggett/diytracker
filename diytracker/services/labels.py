@@ -51,20 +51,45 @@ def owned_label_choices(user):
     return [("", "—")] + [(str(label.id), label.name) for label in owned_labels(user)]
 
 
-def likely_label_events(labels, events):
-    """[(event, label)] pairs where a label's name fuzzily matches the event
-    name or one of its acts — candidates for "likely yours" on the claim
-    page. First matching label wins per event; events keep their order."""
-    matches = []
-    for event in events:
-        acts = [act.strip() for act in (event.acts or "").split(",") if act.strip()]
-        for label in labels:
-            if name_similarity(label.name, event.name) or any(
-                name_similarity(label.name, act) for act in acts
-            ):
-                matches.append((event, label))
-                break
-    return matches
+def _first_matching_label(labels, name, acts_raw):
+    """The first label in *labels* whose name fuzzily matches the event name
+    or one of its acts, else None."""
+    acts = [act.strip() for act in (acts_raw or "").split(",") if act.strip()]
+    for label in labels:
+        if name_similarity(label.name, name) or any(
+            name_similarity(label.name, act) for act in acts
+        ):
+            return label
+    return None
+
+
+def suggest_label_events(labels, base_query):
+    """[(event, label)] for the claim page's "likely yours" panel.
+
+    The match itself only needs each event's name and line-up, so the scan
+    runs over those two columns rather than hydrating every upcoming
+    unlabelled event (with its venue) just to discard almost all of them;
+    only the handful that actually match are then loaded in full. *base_query*
+    is the unfiltered upcoming-unlabelled query — unfiltered on purpose, so a
+    suggestion can't be hidden by the page's own search or pagination.
+    """
+    if not labels:
+        return []
+    rows = base_query.with_entities(Event.id, Event.name, Event.acts).all()
+    hits = {}
+    for event_id, name, acts in rows:
+        label = _first_matching_label(labels, name, acts)
+        if label is not None:
+            hits[event_id] = label
+    if not hits:
+        return []
+    events = (
+        Event.query.options(joinedload(Event.venue))
+        .filter(Event.id.in_(hits))
+        .order_by(Event.date.asc())
+        .all()
+    )
+    return [(event, hits[event.id]) for event in events]
 
 
 TREND_DAYS = 30

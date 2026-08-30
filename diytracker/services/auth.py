@@ -1,6 +1,8 @@
+"""Session helpers: who is logged in, and the three access decorators."""
+
 import functools
 
-from flask import session, request, url_for, redirect, abort
+from flask import g, session, request, url_for, redirect, abort
 
 from diytracker.models import db, Submitter
 
@@ -21,41 +23,50 @@ def safe_redirect_target(target):
     return None
 
 
-def login_required(f):
-    @functools.wraps(f)
-    def decorated(*args, **kwargs):
-        if "user_id" not in session:
-            return redirect(url_for("auth.login", next=request.path))
-        if db.session.get(Submitter, session["user_id"]) is None:
-            session.clear()
-            return redirect(url_for("auth.login", next=request.path))
-        return f(*args, **kwargs)
+def current_user():
+    """The logged-in Submitter, or None — cached on `g` for the request.
 
-    return decorated
+    A single admin POST used to run this lookup three or four times: once in
+    the decorator, once or twice in the view to name an audit actor, and once
+    more in the header's context processor. They all want the same row.
 
-
-def admin_required(f):
-    @functools.wraps(f)
-    def decorated(*args, **kwargs):
-        if "user_id" not in session:
-            return redirect(url_for("auth.login", next=request.path))
-        user = db.session.get(Submitter, session["user_id"])
-        if not user or not user.is_admin:
-            abort(403)
-        return f(*args, **kwargs)
-
-    return decorated
+    The cache is filled on first read, so a view that changes `session
+    ["user_id"]` (login, set-password) must not call this before doing so;
+    both redirect immediately instead.
+    """
+    if "_current_user" not in g:
+        user_id = session.get("user_id")
+        g._current_user = db.session.get(Submitter, user_id) if user_id else None
+    return g._current_user
 
 
-def promoter_required(f):
-    # Admins pass too, so they can inspect any promoter flow.
-    @functools.wraps(f)
-    def decorated(*args, **kwargs):
-        if "user_id" not in session:
-            return redirect(url_for("auth.login", next=request.path))
-        user = db.session.get(Submitter, session["user_id"])
-        if not user or not (user.is_promoter or user.is_admin):
-            abort(403)
-        return f(*args, **kwargs)
+def _require(predicate):
+    """Build a decorator that sends anonymous visitors to the login page and
+    403s a logged-in user who fails *predicate*. A session naming a user that
+    no longer exists is cleared rather than 403'd — the account was deleted
+    out from under a live cookie, and asking them to log in again is the
+    honest answer."""
 
-    return decorated
+    def decorator(f):
+        @functools.wraps(f)
+        def decorated(*args, **kwargs):
+            if "user_id" not in session:
+                return redirect(url_for("auth.login", next=request.path))
+            user = current_user()
+            if user is None:
+                session.clear()
+                g.pop("_current_user", None)
+                return redirect(url_for("auth.login", next=request.path))
+            if not predicate(user):
+                abort(403)
+            return f(*args, **kwargs)
+
+        return decorated
+
+    return decorator
+
+
+login_required = _require(lambda user: True)
+admin_required = _require(lambda user: user.is_admin)
+# Admins pass too, so they can inspect any promoter flow.
+promoter_required = _require(lambda user: user.is_promoter or user.is_admin)

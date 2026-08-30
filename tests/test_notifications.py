@@ -1,45 +1,8 @@
 """Promoter notification emails and the dashboard opt-out toggle."""
 
 from diytracker.models import db
-from diytracker.services import notifications
 
-
-class _FakeSMTP:
-    """Stand-in for smtplib.SMTP_SSL as a context manager."""
-
-    instances = []
-
-    def __init__(self, host, port, context=None):
-        self.host = host
-        self.port = port
-        self.login_args = None
-        self.sent_message = None
-        _FakeSMTP.instances.append(self)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        return False
-
-    def login(self, username, password):
-        self.login_args = (username, password)
-
-    def send_message(self, msg):
-        self.sent_message = msg
-
-
-class _BrokenSMTP(_FakeSMTP):
-    def login(self, username, password):
-        raise ConnectionError("smtp down")
-
-
-def _smtp_env(monkeypatch, cls=_FakeSMTP):
-    monkeypatch.setenv("EMAIL_SERVER", "smtp.example.com")
-    monkeypatch.setenv("EMAIL_USERNAME", "bot@example.com")
-    monkeypatch.setenv("EMAIL_PASSWORD", "hunter2")
-    monkeypatch.setattr(notifications.smtplib, "SMTP_SSL", cls)
-    _FakeSMTP.instances.clear()
+from conftest import BrokenSMTP
 
 
 def _edit_payload(event, label_id=""):
@@ -56,9 +19,8 @@ def _edit_payload(event, label_id=""):
 
 class TestAdminEditNotification:
     def test_admin_edit_of_labelled_event_emails_owner(
-        self, client, admin, login, make_user, make_label, make_event, monkeypatch
+        self, client, admin, login, make_user, make_label, make_event, fake_smtp
     ):
-        _smtp_env(monkeypatch)
         owner = make_user(email="promo@example.com", is_promoter=True)
         label = make_label(owner)
         event = make_event(label_id=label.id)
@@ -68,15 +30,14 @@ class TestAdminEditNotification:
             data=_edit_payload(event, label_id=str(label.id)),
         )
         assert resp.status_code == 302
-        assert len(_FakeSMTP.instances) == 1
-        msg = _FakeSMTP.instances[0].sent_message
+        assert len(fake_smtp.instances) == 1
+        msg = fake_smtp.instances[0].sent_message
         assert msg["To"] == "promo@example.com"
         assert event.name in msg["Subject"]
 
     def test_opt_out_suppresses_email(
-        self, client, admin, login, make_user, make_label, make_event, monkeypatch
+        self, client, admin, login, make_user, make_label, make_event, fake_smtp
     ):
-        _smtp_env(monkeypatch)
         owner = make_user(email="promo@example.com", is_promoter=True)
         owner.notify_label_events = False
         db.session.commit()
@@ -87,21 +48,19 @@ class TestAdminEditNotification:
             f"/admin/edit_event/{event.id}",
             data=_edit_payload(event, label_id=str(label.id)),
         )
-        assert _FakeSMTP.instances == []
+        assert fake_smtp.instances == []
 
     def test_no_email_for_unlabelled_event(
-        self, client, admin, login, make_event, monkeypatch
+        self, client, admin, login, make_event, fake_smtp
     ):
-        _smtp_env(monkeypatch)
         event = make_event()
         login(admin)
         client.post(f"/admin/edit_event/{event.id}", data=_edit_payload(event))
-        assert _FakeSMTP.instances == []
+        assert fake_smtp.instances == []
 
     def test_owner_editing_own_labelled_event_not_emailed(
-        self, client, login, make_user, make_label, make_event, monkeypatch
+        self, client, login, make_user, make_label, make_event, fake_smtp
     ):
-        _smtp_env(monkeypatch)
         owner = make_user(email="promo@example.com", is_promoter=True, is_admin=True)
         label = make_label(owner)
         event = make_event(label_id=label.id)
@@ -110,12 +69,12 @@ class TestAdminEditNotification:
             f"/admin/edit_event/{event.id}",
             data=_edit_payload(event, label_id=str(label.id)),
         )
-        assert _FakeSMTP.instances == []
+        assert fake_smtp.instances == []
 
     def test_smtp_failure_does_not_break_edit(
-        self, client, admin, login, make_user, make_label, make_event, monkeypatch
+        self, client, admin, login, make_user, make_label, make_event, fake_smtp
     ):
-        _smtp_env(monkeypatch, cls=_BrokenSMTP)
+        fake_smtp.use(BrokenSMTP)
         owner = make_user(email="promo@example.com", is_promoter=True)
         label = make_label(owner)
         event = make_event(name="Before Edit", label_id=label.id)
