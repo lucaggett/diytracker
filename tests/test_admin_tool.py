@@ -227,6 +227,39 @@ class TestQueueReview:
         with pytest.raises(AdminError):
             queue_review.discard(rec.id)
 
+    def test_list_flagged_carries_live_matches(self, app, make_venue, make_event):
+        """review_reason has no ids; the rows re-match so the page can link."""
+        venue = make_venue(name="Hall", city="Bern", plz="3000", canton="BE")
+        event = make_event(name="Dup Show", venue=venue, days_from_now=15)
+        _make_scraped(needs_review=True, review_reason="Calendar: Dup Show @ Bern")
+        (row,) = queue_review.list_flagged()
+        (match,) = row.matches
+        assert match.kind == "calendar"
+        assert match.id == event.id
+        assert match.strong is True  # same title, not just the same night
+
+    def test_list_flagged_marks_same_night_matches_weak(self, app, make_venue):
+        """Date + city alone is two shows in one town, not a duplicate."""
+        _make_scraped(title="Doom Night", venue_name="Hall", url="u1")
+        _make_scraped(
+            title="Ska Matinee", venue_name="Keller", url="u2", needs_review=True
+        )
+        (row,) = queue_review.list_flagged()
+        (match,) = row.matches
+        assert match.kind == "queue"
+        assert match.strong is False
+
+    def test_bulk_actions_skip_stale_ids(self, app):
+        a = _make_scraped(title="A", needs_review=True, url="u1")
+        b = _make_scraped(title="B", needs_review=True, url="u2")
+        gone = _make_scraped(title="C", needs_review=True, status="rejected", url="u3")
+        assert queue_review.discard_many([a.id, gone.id, 99999]) == 1
+        assert queue_review.unflag_many([b.id]) == 1
+        db.session.refresh(a)
+        db.session.refresh(b)
+        assert a.status == ScrapedEvent.STATUS_REJECTED
+        assert b.needs_review is False
+
 
 class TestLabels:
     @pytest.fixture

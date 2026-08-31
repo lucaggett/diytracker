@@ -11,6 +11,12 @@ whitespace — reusing services.venue) and fuzzy-compare. Same date is the
 anchor; a single further signal (city, venue or title) is enough to flag. The
 row is still ingested — it just carries needs_review/review_reason so an admin
 looks twice before approving.
+
+Each match carries the matched record's id and its date/venue/city/title, so
+the queue-duplicates page can link straight to the colliding show and put the
+two side by side. Those fields are free — the ORM objects are already loaded
+here — and additive: ``describe_duplicates`` reads only ``kind``/``label`` and
+``scan_queue`` only ``signals``.
 """
 
 from datetime import datetime, time as time_type, timedelta
@@ -51,6 +57,37 @@ def _match_signals(city, venue, title, cand_city, cand_venue, cand_title):
     }
 
 
+def is_strong_match(match):
+    """A real duplicate — not just two different shows on the same night.
+
+    The ingest heuristic flags on a *single* signal (same date + city OR venue
+    OR title), which is right for konzibot re-pushes but far too loose applied
+    queue-wide: two unrelated concerts in the same city on the same night share
+    date+city and would each flag the other. A genuine duplicate has the same
+    title (fuzzy — konzibot mangles them, so containment/ratio still lines up)
+    or, when the title was rewritten entirely, the same venue *and* city.
+
+    Used by scripts/scan_queue_duplicates.py to decide what to flag, and by the
+    queue-duplicates page to separate real collisions from same-night context.
+    """
+    signals = set(match["signals"])
+    return "title" in signals or {"venue", "city"} <= signals
+
+
+def _match(kind, record_id, title, venue, city, date, time, signals):
+    return {
+        "kind": kind,
+        "label": f"{title} @ {city or '?'}",
+        "signals": [k for k, v in signals.items() if v],
+        "id": record_id,
+        "title": title,
+        "venue": venue or "",
+        "city": city or "",
+        "date": date,
+        "time": time,
+    }
+
+
 def find_konzibot_duplicates(
     start_date, city, venue_name, title, exclude_scraped_id=None
 ):
@@ -58,12 +95,14 @@ def find_konzibot_duplicates(
 
     A candidate collides when it shares the date and at least one of city /
     venue / title (normalized + fuzzy). Each match is
-    {"kind", "label", "signals"}; an empty list means no collision.
+    {"kind", "label", "signals", "id", "title", "venue", "city", "date",
+    "time"}; an empty list means no collision. ``kind`` says which table ``id``
+    points at: "calendar" -> Event, "queue" -> ScrapedEvent.
 
     At ingest time the row being checked isn't in the session yet, so it can't
     self-match. When re-scanning rows that are already staged (the queue-dedup
-    script) pass their id as ``exclude_scraped_id`` to keep them from matching
-    themselves.
+    script, and the queue-duplicates page) pass their id as
+    ``exclude_scraped_id`` to keep them from matching themselves.
     """
     if start_date is None:
         return []
@@ -86,13 +125,17 @@ def find_konzibot_duplicates(
             event.name,
         )
         if any(signals.values()):
-            where = venue.city if venue and venue.city else "?"
             matches.append(
-                {
-                    "kind": "calendar",
-                    "label": f"{event.name} @ {where}",
-                    "signals": [k for k, v in signals.items() if v],
-                }
+                _match(
+                    "calendar",
+                    event.id,
+                    event.name,
+                    venue.name if venue else "",
+                    venue.city if venue and venue.city else "",
+                    event.date,
+                    event.doors,
+                    signals,
+                )
             )
 
     # Queue: other unapproved staged rows on the same date. The row being
@@ -108,13 +151,17 @@ def find_konzibot_duplicates(
             city, venue_name, title, sc.city or "", sc.venue_name or "", sc.title or ""
         )
         if any(signals.values()):
-            where = sc.city or "?"
             matches.append(
-                {
-                    "kind": "queue",
-                    "label": f"{sc.title or '(untitled)'} @ {where}",
-                    "signals": [k for k, v in signals.items() if v],
-                }
+                _match(
+                    "queue",
+                    sc.id,
+                    sc.title or "(untitled)",
+                    sc.venue_name or "",
+                    sc.city or "",
+                    sc.start_date,
+                    sc.doors_open or sc.start_time,
+                    signals,
+                )
             )
     return matches
 

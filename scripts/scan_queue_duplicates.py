@@ -33,6 +33,7 @@ from diytracker.models import ScrapedEvent, db
 from diytracker.services.ingest_dedup import (
     describe_duplicates,
     find_konzibot_duplicates,
+    is_strong_match,
 )
 
 
@@ -42,20 +43,6 @@ class ScanResult:
     newly_flagged: int = 0
     already_flagged: int = 0
     flagged: list = field(default_factory=list)  # [(id, title, reason)]
-
-
-def _is_strong(match):
-    """A real duplicate — not just two different shows on the same night.
-
-    The ingest heuristic flags on a *single* signal (same date + city OR venue
-    OR title), which is right for konzibot re-pushes but far too loose applied
-    queue-wide: two unrelated concerts in the same city on the same night share
-    date+city and would each flag the other. A genuine duplicate has the same
-    title (fuzzy — konzibot mangles them, so containment/ratio still lines up)
-    or, when the title was rewritten entirely, the same venue *and* city.
-    """
-    signals = set(match["signals"])
-    return "title" in signals or {"venue", "city"} <= signals
 
 
 def scan_queue(source=None, date_from=None, date_to=None, dry_run=False):
@@ -87,7 +74,7 @@ def scan_queue(source=None, date_from=None, date_to=None, dry_run=False):
                 rec.title,
                 exclude_scraped_id=rec.id,
             )
-            if _is_strong(m)
+            if is_strong_match(m)
         ]
         if not matches:
             continue

@@ -325,6 +325,29 @@ def queue_duplicates():
     )
 
 
+@bp.route("/queue/duplicates/bulk/<action>", methods=["POST"])
+@admin_required
+def bulk_resolve_queue_duplicates(action):
+    """Discard or unflag every checked row in one round trip.
+
+    Clearing a konzibot re-push batch row by row is one confirm and one full
+    page reload each; this mirrors bulk_reject_scraped_events for the flagged
+    queue. Ids that went stale while the page was open are skipped, not fatal.
+    """
+    form = DeleteScrapedEventForm()
+    if not form.validate_on_submit() or action not in ("discard", "unflag"):
+        abort(400)
+    ids = [int(x) for x in request.form.getlist("scraped_ids") if x.isdigit()]
+    actor = current_user()
+    if action == "discard":
+        count = queue_review.discard_many(ids, actor=actor)
+        flash(_("%(num)d entries discarded.", num=count))
+    else:
+        count = queue_review.unflag_many(ids, actor=actor)
+        flash(_("%(num)d entries unflagged — they are back in the queue.", num=count))
+    return redirect(url_for("submissions.queue_duplicates"))
+
+
 @bp.route("/queue/duplicates/<int:scraped_id>/<action>", methods=["POST"])
 @admin_required
 def resolve_queue_duplicate(scraped_id, action):

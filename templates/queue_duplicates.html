@@ -1,11 +1,37 @@
 {% extends 'base_backstage.html' %}
+{% set nav_active = 'submissions.event_queue' %}
 
 {% block title %}{{ _('Queue duplicates') }} · diytracker.ch{% endblock %}
 
+{% macro field(label, value) -%}
+  <div class="flex gap-2">
+    <span class="text-xs uppercase tracking-widest text-smudge w-16 shrink-0 pt-0.5">{{ label }}</span>
+    <span class="text-sm">{{ value or '—' }}</span>
+  </div>
+{%- endmacro %}
+
+{# The matcher flags on a single signal, so it also catches two different shows
+   sharing a city on the same night. Naming the signals lets the admin see at a
+   glance which kind of collision this is. #}
+{% macro signal_chips(signals) -%}
+  {% set labels = {'title': _('same title'), 'venue': _('same venue'), 'city': _('same city')} %}
+  <span class="inline-flex flex-wrap gap-1 align-middle">
+    <span class="border border-ink/40 px-1 text-[10px] uppercase tracking-widest text-smudge">{{ _('same date') }}</span>
+    {% for s in signals %}
+      <span class="border border-ink/40 px-1 text-[10px] uppercase tracking-widest text-smudge">{{ labels[s] }}</span>
+    {% endfor %}
+  </span>
+{%- endmacro %}
+
 {% block content %}
-<header class="mb-6">
-  <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Possible duplicate') }}</p>
-  <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('QUEUE DUPLICATES') }}</h1>
+<header class="mb-6 flex items-end justify-between">
+  <div>
+    <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Possible duplicate') }}</p>
+    <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('QUEUE DUPLICATES') }}</h1>
+  </div>
+  <p class="text-xs text-smudge">
+    {{ rows|length }} {% if rows|length != 1 %}{{ _('flagged entries') }}{% else %}{{ _('flagged entry') }}{% endif %}
+  </p>
 </header>
 
 <p class="text-sm text-smudge mb-6 max-w-prose">
@@ -13,48 +39,132 @@
 </p>
 
 {% if rows %}
-<div class="overflow-x-auto border-2 border-ink">
-  <table class="min-w-full text-sm">
-    <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
-      <tr>
-        <th class="px-3 py-2 text-left">{{ _('Date') }}</th>
-        <th class="px-3 py-2 text-left">{{ _('Event') }}</th>
-        <th class="px-3 py-2 text-left">{{ _('Venue') }}</th>
-        <th class="px-3 py-2 text-left">{{ _('Collides with') }}</th>
-        <th class="px-3 py-2 text-right">{{ _('Actions') }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-      <tr class="border-t border-ink/30 align-top">
-        <td class="px-3 py-2 whitespace-nowrap">{{ row.date }}</td>
-        <td class="px-3 py-2">
+{# Bulk bar — the checkboxes live inside each card and reference this form by
+   id, the same trick event_queue.html uses so they never nest in a row form.
+   Two buttons, one form: formaction picks the action. #}
+<form id="dup-bulk-form" method="post"
+      action="{{ url_for('submissions.bulk_resolve_queue_duplicates', action='discard') }}"
+      class="border-2 border-ink bg-paper p-3 mb-4 flex flex-wrap items-center gap-3">
+  {{ delete_form.hidden_tag() }}
+  <span class="text-xs uppercase tracking-widest text-smudge">{{ _('With selected:') }}</span>
+  <button type="submit"
+          formaction="{{ url_for('submissions.bulk_resolve_queue_duplicates', action='discard') }}"
+          class="bg-ink text-paper text-xs uppercase tracking-widest px-4 py-2 hover:bg-bleed transition-colors"
+          onclick="return confirm({{ _('Discard all selected entries? They will not be published.')|tojson }})">
+    {{ _('Discard selected') }}
+  </button>
+  <button type="submit"
+          formaction="{{ url_for('submissions.bulk_resolve_queue_duplicates', action='unflag') }}"
+          class="bg-paper text-ink border-2 border-ink text-xs uppercase tracking-widest px-4 py-2 hover:bg-ink hover:text-paper transition-colors">
+    {{ _('Unflag selected') }}
+  </button>
+</form>
+
+{% for row in rows %}
+<article class="border-2 border-ink bg-paper p-4 mb-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    {# Left: the staged row waiting for a verdict. #}
+    <div class="md:border-r-2 md:border-ink/20 md:pr-4">
+      <p class="text-xs uppercase tracking-widest text-smudge mb-2">
+        {{ _('Staged') }} · {{ row.source }} · #{{ row.id }}
+      </p>
+      <div class="flex gap-3">
+        {% if row.flyer %}
+          <a href="/{{ row.flyer }}" target="_blank" rel="noopener" class="shrink-0">
+            <img src="/{{ row.flyer }}" loading="lazy" alt="{{ _('Flyer') }}"
+                 class="w-16 h-20 object-cover border-2 border-ink">
+          </a>
+        {% endif %}
+        <div class="space-y-1 min-w-0">
           <div class="font-semibold">{{ row.title }}</div>
-          <div class="text-xs text-smudge">{{ row.source }}</div>
-        </td>
-        <td class="px-3 py-2">{{ row.venue }}, {{ row.city }}</td>
-        <td class="px-3 py-2 text-xs text-smudge">{{ row.review_reason }}</td>
-        <td class="px-3 py-2 text-right whitespace-nowrap">
-          <form action="{{ url_for('submissions.resolve_queue_duplicate', scraped_id=row.id, action='discard') }}"
-                method="POST" class="inline">
-            {{ delete_form.hidden_tag() }}
-            <button type="submit"
-                    class="text-bleed hover:underline uppercase text-xs tracking-widest"
-                    onclick="return confirm({{ _('Discard this entry? It will not be published.')|tojson }})">{{ _('Discard') }}</button>
-          </form>
-          <span class="text-smudge mx-1">·</span>
-          <form action="{{ url_for('submissions.resolve_queue_duplicate', scraped_id=row.id, action='unflag') }}"
-                method="POST" class="inline">
-            {{ delete_form.hidden_tag() }}
-            <button type="submit"
-                    class="text-ink hover:text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Unflag') }}</button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+          {{ field(_('Date'), row.date ~ (' · ' ~ row.time if row.time else '')) }}
+          {{ field(_('Venue'), row.venue) }}
+          {{ field(_('City'), row.city) }}
+          {% if row.url %}
+            <a href="{{ row.url }}" target="_blank" rel="noopener"
+               class="text-xs text-bleed hover:underline uppercase tracking-widest">source ↗</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# Right: what it collides with, same fields in the same order so the two
+       columns read as a diff. #}
+    <div>
+      <p class="text-xs uppercase tracking-widest text-smudge mb-2">{{ _('Collides with') }}</p>
+
+      {% if row.matches %}
+        <div class="space-y-3">
+          {% for m in row.matches %}
+          <div class="{% if not m.strong %}opacity-60{% endif %}">
+            <div class="flex flex-wrap items-baseline gap-2">
+              {% if m.kind == 'calendar' %}
+                <a href="{{ url_for('public.event_page', event_id=m.id) }}"
+                   target="_blank" rel="noopener"
+                   class="font-semibold text-bleed hover:underline">{{ m.title }} ↗</a>
+                <a href="{{ url_for('admin.edit_event', event_id=m.id) }}"
+                   class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('Edit') }}</a>
+              {% else %}
+                <span class="font-semibold">{{ m.title }}</span>
+                <a href="{{ url_for('submissions.event_queue', date_from=m.date, date_to=m.date) }}"
+                   class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('In the queue') }} #{{ m.id }}</a>
+              {% endif %}
+            </div>
+            {% if m.kind == 'calendar' or not m.strong %}
+            <p class="text-xs uppercase tracking-widest text-smudge mt-1">
+              {% if m.kind == 'calendar' %}{{ _('On the calendar') }}{% endif %}
+              {% if m.kind == 'calendar' and not m.strong %} · {% endif %}
+              {% if not m.strong %}{{ _('probably a different show') }}{% endif %}
+            </p>
+            {% endif %}
+            <div class="mt-1 space-y-1">
+              {{ field(_('Date'), m.date ~ (' · ' ~ m.time if m.time else '')) }}
+              {{ field(_('Venue'), m.venue) }}
+              {{ field(_('City'), m.city) }}
+            </div>
+            <div class="mt-1">{{ signal_chips(m.signals) }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        {# Nothing collides any more: the calendar entry was edited or deleted
+           after the flag was written. The stored reason is all that is left. #}
+        <p class="text-sm border-2 border-ink/30 px-3 py-2">
+          {{ _('No longer collides — the calendar entry may have been edited or deleted. Unflag it to send it back to the normal queue.') }}
+        </p>
+        {% if row.review_reason %}
+          <p class="text-xs text-smudge mt-2">{{ _('Flagged at the time as:') }} {{ row.review_reason }}</p>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mt-4 pt-3 border-t border-ink/30 flex items-center gap-3">
+    <label class="flex items-center gap-2 text-xs uppercase tracking-widest text-smudge cursor-pointer">
+      <input type="checkbox" name="scraped_ids" value="{{ row.id }}"
+             form="dup-bulk-form" class="w-4 h-4 cursor-pointer accent-bleed">
+      {{ _('Select') }}
+    </label>
+    <span class="ml-auto whitespace-nowrap">
+      <form action="{{ url_for('submissions.resolve_queue_duplicate', scraped_id=row.id, action='discard') }}"
+            method="POST" class="inline">
+        {{ delete_form.hidden_tag() }}
+        <button type="submit"
+                class="text-bleed hover:underline uppercase text-xs tracking-widest"
+                onclick="return confirm({{ _('Discard this entry? It will not be published.')|tojson }})">{{ _('Discard') }}</button>
+      </form>
+      <span class="text-smudge mx-1">·</span>
+      <form action="{{ url_for('submissions.resolve_queue_duplicate', scraped_id=row.id, action='unflag') }}"
+            method="POST" class="inline">
+        {{ delete_form.hidden_tag() }}
+        <button type="submit"
+                class="text-ink hover:text-bleed hover:underline uppercase text-xs tracking-widest">{{ _('Unflag') }}</button>
+      </form>
+    </span>
+  </div>
+</article>
+{% endfor %}
 {% else %}
 <p class="text-sm text-smudge border-2 border-ink/30 px-4 py-6 text-center">
   {{ _('Nothing flagged right now.') }}

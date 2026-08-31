@@ -492,3 +492,76 @@ class TestQueueDuplicatesWeb:
         self._flagged()
         resp = client.get("/queue")
         assert b"/queue/duplicates" in resp.data
+
+    def test_calendar_collision_links_to_the_event_page(
+        self, client, admin, login, make_venue, make_event
+    ):
+        """The whole point of the page: open the show it supposedly duplicates."""
+        login(admin)
+        venue = make_venue(name="Hall", city="Aarau", plz="5000", canton="AG")
+        event = make_event(name="Scraped Show", venue=venue, days_from_now=20)
+        self._flagged(title="Scraped Show")
+        resp = client.get("/queue/duplicates")
+        assert f"/events/{event.id}/".encode() in resp.data
+        assert b"On the calendar" in resp.data
+
+    def test_queue_collision_has_no_public_link(self, client, admin, login):
+        """A colliding queue row isn't published, so it gets no /events/ link."""
+        login(admin)
+        TestEventQueue._make_scraped(
+            TestEventQueue(), title="Scraped Show", url="https://x.ch/other"
+        )
+        self._flagged(title="Scraped Show")
+        resp = client.get("/queue/duplicates")
+        assert b"In the queue" in resp.data
+        assert b"/events/" not in resp.data
+
+    def test_stale_reason_shown_when_nothing_collides(self, client, admin, login):
+        """review_reason is a snapshot; when the collision is gone, say so."""
+        login(admin)
+        self._flagged(title="Orphaned Flag")
+        resp = client.get("/queue/duplicates")
+        assert b"No longer collides" in resp.data
+        assert b"Calendar: X @ Bern" in resp.data
+
+    def test_bulk_discard_only_touches_checked_rows(self, client, admin, login):
+        login(admin)
+        keep = self._flagged(title="Keep", url="https://x.ch/keep")
+        drop = self._flagged(title="Drop", url="https://x.ch/drop")
+        client.post(
+            "/queue/duplicates/bulk/discard", data={"scraped_ids": [str(drop.id)]}
+        )
+        db.session.refresh(keep)
+        db.session.refresh(drop)
+        assert drop.status == "rejected"
+        assert keep.status == "pending"
+
+    def test_bulk_unflag_returns_rows_to_the_queue(self, client, admin, login):
+        login(admin)
+        rec = self._flagged(title="Batch False Alarm")
+        client.post(
+            "/queue/duplicates/bulk/unflag", data={"scraped_ids": [str(rec.id)]}
+        )
+        db.session.refresh(rec)
+        assert rec.needs_review is False
+        assert b"Batch False Alarm" in client.get("/queue").data
+
+    def test_bulk_skips_stale_ids(self, client, admin, login):
+        """The checkboxes come from a page that may have been open a while."""
+        login(admin)
+        rec = self._flagged()
+        resp = client.post(
+            "/queue/duplicates/bulk/discard",
+            data={"scraped_ids": [str(rec.id), "99999"]},
+        )
+        assert resp.status_code == 302
+        db.session.refresh(rec)
+        assert rec.status == "rejected"
+
+    def test_bulk_rejects_unknown_action(self, client, admin, login):
+        login(admin)
+        assert client.post("/queue/duplicates/bulk/publish").status_code == 400
+
+    def test_bulk_requires_admin(self, client, make_user, login):
+        login(make_user())
+        assert client.post("/queue/duplicates/bulk/discard").status_code == 403
