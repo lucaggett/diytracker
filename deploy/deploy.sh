@@ -24,8 +24,8 @@ git pull --ff-only
 echo "==> uv sync"
 uv sync
 
-echo "==> busting cache (rm /instance/cache/*)"
-rm -f /instance/cache/*
+echo "==> busting cache (rm instance/cache/*)"
+rm -f "$repo_root"/instance/cache/*
 
 echo "==> restarting diytracker.service"
 # -n: fail immediately if the sudoers rule is missing instead of hanging on a
