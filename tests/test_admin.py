@@ -1,6 +1,6 @@
 """Admin dashboard, event/venue management, and exports."""
 
-from diytracker.models import db, Event, Venue
+from diytracker.models import Event, Venue, db
 
 
 def _force_dangling_venue(event_id):
@@ -103,7 +103,7 @@ class TestEventManagement:
         make_event(venue=make_venue(name="Rote Fabrik"))
         resp = client.get("/admin")
         assert resp.status_code == 200
-        assert "Rote Fabrik".encode() in resp.data
+        assert b"Rote Fabrik" in resp.data
 
     def test_admin_dashboard_survives_a_dangling_venue(
         self, client, admin, login, make_event
@@ -233,9 +233,7 @@ class TestAnalyticsStats:
         login(admin)
         monkeypatch.setattr(analytics, "STATS_PATH", tmp_path / "stats.json")
         kicked = []
-        monkeypatch.setattr(
-            admin_bp, "kick_stats_generation", lambda app: kicked.append(app)
-        )
+        monkeypatch.setattr(admin_bp, "kick_stats_generation", kicked.append)
         resp = client.get("/admin/analytics/stats")
         assert resp.status_code == 202
         assert resp.get_json() == {"status": "pending"}
@@ -262,9 +260,7 @@ class TestAnalyticsStats:
         )
         monkeypatch.setattr(analytics, "STATS_PATH", stats_path)
         kicked = []
-        monkeypatch.setattr(
-            admin_bp, "kick_stats_generation", lambda app: kicked.append(app)
-        )
+        monkeypatch.setattr(admin_bp, "kick_stats_generation", kicked.append)
         resp = client.get("/admin/analytics/stats")
         assert resp.status_code == 200
         data = resp.get_json()
@@ -296,6 +292,7 @@ class TestStatisticsPage:
 
     def test_shows_popularity_rows(self, client, admin, login, make_event):
         from datetime import date
+
         from diytracker.services.event_views import persist_event_day_counts
 
         login(admin)
@@ -309,6 +306,7 @@ class TestStatisticsPage:
 
     def test_past_events_only_with_toggle(self, client, admin, login, make_event):
         from datetime import date
+
         from diytracker.services.event_views import persist_event_day_counts
 
         login(admin)

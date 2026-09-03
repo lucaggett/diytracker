@@ -18,7 +18,7 @@ import sys
 from babel.messages.pofile import read_po
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from i18n_extract import ROOT, build_source_catalog  # noqa: E402
+from i18n_extract import ROOT, build_source_catalog
 
 MAX_LISTED = 20
 
@@ -66,8 +66,10 @@ def write_github_summary(total: int, results: list, pot_ok: bool) -> None:
     lines = [
         "## i18n status",
         "",
-        f"{total} translatable strings in source. "
-        f"messages.pot is {'in sync' if pot_ok else '**stale** — run scripts/i18n_extract.py'}.",
+        (
+            f"{total} translatable strings in source. "
+            f"messages.pot is {'in sync' if pot_ok else '**stale** — run scripts/i18n_extract.py'}."
+        ),
         "",
         "| Locale | Coverage | Translated | Untranslated | Fuzzy | Missing | Obsolete |",
         "|--------|----------|------------|--------------|-------|---------|----------|",

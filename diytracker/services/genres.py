@@ -23,7 +23,8 @@ def genre_directory():
     parent genre (except Other) with an upcoming event. Venues and cantons are
     resolved the same way as canton_directory(); venues whose canton resolves
     to nothing still count for the genre but add no canton link. Cached;
-    bust_cache() on any event/venue write invalidates it."""
+    bust_cache() on any event/venue write invalidates it.
+    """
     rows = (
         db.session.query(Event.parent_genres, Venue.id, Venue.canton, Venue.city)
         .join(Venue, Event.venue_id == Venue.id)

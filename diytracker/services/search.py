@@ -44,7 +44,8 @@ def _pattern(term):
 
 def like_patterns(query):
     """Escaped LIKE patterns, one per term of an already-normalised query,
-    for callers that AND them onto their own base query (claim-page search)."""
+    for callers that AND them onto their own base query (claim-page search).
+    """
     return [_pattern(term) for term in _terms(query)]
 
 
@@ -79,7 +80,8 @@ def search_events(raw_query, include_past=False, limit=DEFAULT_LIMIT):
 
 def search_venues(raw_query, limit=10):
     """Venues matching every term of *raw_query*, so searching a venue name
-    surfaces the venue page alongside its shows."""
+    surfaces the venue page alongside its shows.
+    """
     query = normalise_query(raw_query)
     if not query:
         return []

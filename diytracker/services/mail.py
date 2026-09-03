@@ -12,7 +12,7 @@ rendered in a request, so there is no locale to bind (see admin/invites.py).
 
 Credentials come from the environment rather than ``Config`` because mail is
 also sent from the admin CLI, which builds its own app; ``send_mail`` raises
-``MailNotConfigured`` when they are missing so a caller can tell "not set up"
+``MailNotConfiguredError`` when they are missing so a caller can tell "not set up"
 apart from "the server rejected it".
 """
 
@@ -27,7 +27,7 @@ from diytracker.paths import LOGS_DIR
 FROM_ADDRESS = "info@diytracker.ch"
 
 
-class MailNotConfigured(RuntimeError):
+class MailNotConfiguredError(RuntimeError):
     """EMAIL_SERVER / EMAIL_USERNAME / EMAIL_PASSWORD are not all set."""
 
 
@@ -52,7 +52,7 @@ def send_mail(to_address, subject, body, reply_to=None):
     """Send one plain-text mail over implicit TLS. Raises on failure."""
     host, username, password = email_settings()
     if not (host and username and password):
-        raise MailNotConfigured(
+        raise MailNotConfiguredError(
             "EMAIL_SERVER, EMAIL_USERNAME and EMAIL_PASSWORD must all be set "
             "to send mail (see .env.example)."
         )

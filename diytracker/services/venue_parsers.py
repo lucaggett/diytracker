@@ -24,13 +24,13 @@ the values already in the database, not whatever the site prints, so ingest
 matches the existing venue instead of creating a near-duplicate.
 """
 
+import contextlib
 import csv
 import hashlib
 import io
 import json
 import re
 from datetime import date, datetime, timedelta
-from typing import Dict, List, Optional
 
 from bs4 import BeautifulSoup
 
@@ -75,14 +75,14 @@ def _today() -> date:
     return date.today()
 
 
-def _is_current(start_date: Optional[date]) -> bool:
+def _is_current(start_date: date | None) -> bool:
     return bool(start_date) and start_date >= _today() - _PAST_GRACE
 
 
 def _source_id(*parts) -> str:
     """Stable per-source record id for rows that have no URL of their own."""
     joined = "|".join(str(p or "") for p in parts)
-    return hashlib.sha1(joined.encode("utf-8")).hexdigest()[:32]
+    return hashlib.sha1(joined.encode("utf-8"), usedforsecurity=False).hexdigest()[:32]
 
 
 def _fmt_date(value) -> str:
@@ -114,7 +114,7 @@ def _clean_time(value: str) -> str:
     return f"{hour:02d}:{minute:02d}"
 
 
-def _german_dates(text: str) -> List[date]:
+def _german_dates(text: str) -> list[date]:
     """Every "9. August 2026" style date in a string, in order."""
     found = []
     for day, name, year in re.findall(
@@ -130,7 +130,7 @@ def _german_dates(text: str) -> List[date]:
     return found
 
 
-def _year_nearest_today(month: int, day: int) -> Optional[date]:
+def _year_nearest_today(month: int, day: int) -> date | None:
     """Pick the year that puts month/day closest to today.
 
     For the sites that print a day and month but no year. Choosing "the next
@@ -155,13 +155,13 @@ def _price(value: str) -> str:
     if not value:
         return ""
     text = str(value)
-    if re.search(r"frei|gratis|libre|free|kollekte", text, re.I):
+    if re.search(r"frei|gratis|libre|free|kollekte", text, re.IGNORECASE):
         return "0"
     match = re.search(r"(\d+(?:[.,]\d{1,2})?)", text)
     return match.group(1).replace(",", ".") if match else ""
 
 
-def _row(source: str, **fields) -> Dict[str, str]:
+def _row(source: str, **fields) -> dict[str, str]:
     """Build a row with every key ingest knows about defaulted to ''."""
     row = {
         "source": source,
@@ -185,7 +185,7 @@ def _row(source: str, **fields) -> Dict[str, str]:
     return row
 
 
-def _soup(url: str) -> Optional[BeautifulSoup]:
+def _soup(url: str) -> BeautifulSoup | None:
     html = fetch_url(url)
     if not html:
         logger.error(f"Could not fetch listing page {url}")
@@ -199,7 +199,7 @@ def _soup(url: str) -> Optional[BeautifulSoup]:
 # ---------------------------------------------------------------------------
 
 
-def fetch_altepost() -> List[Dict[str, str]]:
+def fetch_altepost() -> list[dict[str, str]]:
     """Alte Post, Zürich Seebach — Events Manager listing page.
 
     Both zureich.rip venues expose ``?ical=1``, which looked like the obvious
@@ -246,7 +246,7 @@ def fetch_altepost() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_postsquat() -> List[Dict[str, str]]:
+def fetch_postsquat() -> list[dict[str, str]]:
     """Post Squat, Zürich Wipkingen — themed Events Manager listing.
 
     Same plugin as Alte Post but a different theme, so different markup: each
@@ -287,7 +287,7 @@ def fetch_postsquat() -> List[Dict[str, str]]:
 # ---------------------------------------------------------------------------
 
 
-def fetch_horstklub() -> List[Dict[str, str]]:
+def fetch_horstklub() -> list[dict[str, str]]:
     """Horstklub, Kreuzlingen — the CSV its own front page loads.
 
     The site is static HTML that fetches events.csv client-side and renders it
@@ -332,7 +332,7 @@ def fetch_horstklub() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_treppenhaus() -> List[Dict[str, str]]:
+def fetch_treppenhaus() -> list[dict[str, str]]:
     """Café Bar Treppenhaus, Rorschach — custom WP REST `events` post type.
 
     The theme stores date/time/price in a `details` meta block, already split
@@ -345,7 +345,7 @@ def fetch_treppenhaus() -> List[Dict[str, str]]:
     for entry in data:
         details = entry.get("details") or {}
 
-        def first(key):
+        def first(key, details=details):
             value = details.get(key)
             return (value[0] if isinstance(value, list) and value else "") or ""
 
@@ -376,7 +376,7 @@ def fetch_treppenhaus() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_eldorado() -> List[Dict[str, str]]:
+def fetch_eldorado() -> list[dict[str, str]]:
     """Eldorado, Biel/Bienne — The Events Calendar REST API.
 
     `start_date` is already local time in the venue's own timezone, so it is
@@ -396,10 +396,8 @@ def fetch_eldorado() -> List[Dict[str, str]]:
         if not _is_current(start.date()):
             continue
         end = None
-        try:
+        with contextlib.suppress(ValueError):
             end = datetime.strptime(entry.get("end_date", ""), "%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            pass
         rows.append(
             _row(
                 "eldorado",
@@ -418,7 +416,7 @@ def fetch_eldorado() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_taptab() -> List[Dict[str, str]]:
+def fetch_taptab() -> list[dict[str, str]]:
     """TapTab, Schaffhausen — Joomla RSS.
 
     The plain /feed path 404s; the programme feed is the query-string form.
@@ -459,7 +457,7 @@ def fetch_taptab() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_provitreff() -> List[Dict[str, str]]:
+def fetch_provitreff() -> list[dict[str, str]]:
     """Provitreff, Zürich — the JSON Next.js embeds in the homepage.
 
     There is no feed, but the page ships its own hydration payload with the
@@ -482,7 +480,7 @@ def fetch_provitreff() -> List[Dict[str, str]]:
         logger.error("Provitreff: __NEXT_DATA__ is not valid JSON")
         return []
 
-    blocks: List[dict] = []
+    blocks: list[dict] = []
 
     def walk(node):
         if isinstance(node, dict):
@@ -537,7 +535,7 @@ def fetch_provitreff() -> List[Dict[str, str]]:
 # ---------------------------------------------------------------------------
 
 
-def fetch_badbonn() -> List[Dict[str, str]]:
+def fetch_badbonn() -> list[dict[str, str]]:
     """Bad Bonn, Düdingen — each listing anchor carries data-* attributes.
 
     The club hangs title, date, time and price straight off the link, so the
@@ -571,7 +569,7 @@ def fetch_badbonn() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_werkk() -> List[Dict[str, str]]:
+def fetch_werkk() -> list[dict[str, str]]:
     """Werkk Kulturlokal, Baden — REDAXO agenda with <time datetime>.
 
     The layout renders each event twice (a mobile and a desktop block), so
@@ -611,7 +609,7 @@ def fetch_werkk() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_quaidubas() -> List[Dict[str, str]]:
+def fetch_quaidubas() -> list[dict[str, str]]:
     """QuaiDuBas30, Biel/Bienne — Hugo listing of li.event-card.
 
     The German locale is requested because the venue is in bilingual Biel and
@@ -653,7 +651,7 @@ def fetch_quaidubas() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_cafete() -> List[Dict[str, str]]:
+def fetch_cafete() -> list[dict[str, str]]:
     """Die Cafete, Bern — hand-written static HTML, div.event per show.
 
     Dates read "Do. 06. August 2026 — 23:30" with a German month name and an
@@ -665,7 +663,7 @@ def fetch_cafete() -> List[Dict[str, str]]:
     rows = []
     for block in soup.select("div.event"):
 
-        def part(name):
+        def part(name, block=block):
             found = block.select_one(f".{name}")
             return found.get_text(" ", strip=True) if found else ""
 
@@ -689,7 +687,7 @@ def fetch_cafete() -> List[Dict[str, str]]:
                 "cafete",
                 title=title,
                 performers=part("acts").replace("\n", ", "),
-                styles=re.sub(r"^Style:\s*", "", part("style"), flags=re.I),
+                styles=re.sub(r"^Style:\s*", "", part("style"), flags=re.IGNORECASE),
                 description=part("description"),
                 start_date=_fmt_date(start),
                 start_time=_clean_time(clock.group(1)) if clock else "",
@@ -699,7 +697,7 @@ def fetch_cafete() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_kuzeb() -> List[Dict[str, str]]:
+def fetch_kuzeb() -> list[dict[str, str]]:
     """KUZEB, Bremgarten — Bootstrap cards, full detail in a paired modal.
 
     Each card opens a modal carrying the title, the date (or date range) and
@@ -745,7 +743,7 @@ def fetch_kuzeb() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_nouveaumonde() -> List[Dict[str, str]]:
+def fetch_nouveaumonde() -> list[dict[str, str]]:
     """Nouveau Monde, Fribourg — ProcessWire agenda of a.poster links.
 
     `data-toFilter` classifies each entry (crt concert, spt spectacle, fte
@@ -803,7 +801,7 @@ def fetch_nouveaumonde() -> List[Dict[str, str]]:
     return rows
 
 
-def fetch_kaschemme() -> List[Dict[str, str]]:
+def fetch_kaschemme() -> list[dict[str, str]]:
     """Kaschemme, Basel — Squarespace event list, parsed from HTML.
 
     Squarespace also exposes ?format=json and ?format=ical for this page and
@@ -851,7 +849,7 @@ def fetch_kaschemme() -> List[Dict[str, str]]:
     return rows
 
 
-def get_garedelion_event_urls() -> List[str]:
+def get_garedelion_event_urls() -> list[str]:
     """Discover Gare de Lion event pages via the WP REST `event` post type.
 
     The REST rows carry the slug and title but no date, doors or price — those
@@ -864,7 +862,7 @@ def get_garedelion_event_urls() -> List[str]:
     return [entry.get("link") for entry in data if entry.get("link")]
 
 
-def parse_garedelion_event(url: str) -> Optional[Dict[str, str]]:
+def parse_garedelion_event(url: str) -> dict[str, str] | None:
     """Parse one Gare de Lion event page.
 
     Date, doors, start, genre and price sit in a labelled `.detail-info` grid
@@ -912,7 +910,7 @@ def parse_garedelion_event(url: str) -> Optional[Dict[str, str]]:
 # ---------------------------------------------------------------------------
 
 
-def fetch_ruempeltum() -> List[Dict[str, str]]:
+def fetch_ruempeltum() -> list[dict[str, str]]:
     """Rümpeltum, St. Gallen — WPBakery layout with no per-event wrapper.
 
     Fragile by nature: events are page-builder rows, so this keys off the
@@ -964,7 +962,7 @@ def fetch_ruempeltum() -> List[Dict[str, str]]:
     return rows
 
 
-def get_safaribar_event_urls() -> List[str]:
+def get_safaribar_event_urls() -> list[str]:
     """Discover Safari Bar event pages from the homepage slider.
 
     The slider opens each event in a modal, so the real link lives in
@@ -981,7 +979,7 @@ def get_safaribar_event_urls() -> List[str]:
     return urls
 
 
-def parse_safaribar_event(url: str) -> Optional[Dict[str, str]]:
+def parse_safaribar_event(url: str) -> dict[str, str] | None:
     """Parse one Safari Bar event page.
 
     No structured data anywhere on these pages, so this reads the first

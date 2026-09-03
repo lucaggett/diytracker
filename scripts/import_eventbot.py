@@ -102,8 +102,8 @@ def main():
     app = create_app()
     with app.app_context():
         with open(jsonl, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
+            for raw_line in f:
+                line = raw_line.strip()
                 if not line:
                     continue
                 rec = json.loads(line)

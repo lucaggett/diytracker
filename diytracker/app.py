@@ -6,17 +6,17 @@ decisions — see the root-level app.py (gunicorn / dev server) and
 tests/conftest.py (test app).
 """
 
-import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from flask import Flask, g, render_template
 from flask_babel import Babel, format_date
 from flask_compress import Compress
 from flask_wtf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from dotenv import load_dotenv
-
 from diytracker.config import Config
+from diytracker.models import db
 from diytracker.paths import (
     INSTANCE_DIR,
     ROOT,
@@ -24,18 +24,18 @@ from diytracker.paths import (
     TEMPLATES_DIR,
     ensure_runtime_dirs,
 )
-from diytracker.models import db
+from diytracker.services.abuse import init_abuse_guard
+from diytracker.services.auth import current_user
+from diytracker.services.cache import cache
 from diytracker.services.i18n import (
     DEFAULT_LOCALE,
     SUPPORTED_LOCALES,
     canton_in,
     select_locale,
 )
-from diytracker.services.abuse import init_abuse_guard
-from diytracker.services.auth import current_user
-from diytracker.services.cache import cache
 from diytracker.services.limits import limiter
 from diytracker.services.scrape_detection import detector
+from diytracker.services.security import init_security_headers
 from diytracker.services.seo import (
     CantonSlugConverter,
     canonical_url,
@@ -43,7 +43,6 @@ from diytracker.services.seo import (
     localized_paths,
     website_json_ld,
 )
-from diytracker.services.security import init_security_headers
 from diytracker.utils import is_safe_link, linkify, normalise_canton, parent_genres
 
 
@@ -119,9 +118,9 @@ def create_app(config: Config | None = None) -> Flask:
 
     @app.context_processor
     def _static_version():
-        css_path = os.path.join(app.static_folder, "css", "output.css")
+        css_path = Path(app.static_folder) / "css" / "output.css"
         try:
-            v = int(os.path.getmtime(css_path))
+            v = int(css_path.stat().st_mtime)
         except OSError:
             v = 0
         return {"css_version": v}
@@ -155,12 +154,12 @@ def create_app(config: Config | None = None) -> Flask:
     # Must be registered before the blueprints that use it in routes.
     app.url_map.converters["canton_slug"] = CantonSlugConverter
 
-    from diytracker.blueprints.auth import bp as auth_bp
-    from diytracker.blueprints.public import bp as public_bp
-    from diytracker.blueprints.submissions import bp as submissions_bp
     from diytracker.blueprints.admin import bp as admin_bp
     from diytracker.blueprints.api import bp as api_bp
+    from diytracker.blueprints.auth import bp as auth_bp
     from diytracker.blueprints.promoter import bp as promoter_bp
+    from diytracker.blueprints.public import bp as public_bp
+    from diytracker.blueprints.submissions import bp as submissions_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(public_bp)

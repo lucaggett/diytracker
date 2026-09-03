@@ -30,6 +30,7 @@ of an IP's traffic, so volume thresholds are effectively up to 4x — same
 trade-off flask-limiter already makes in services/limits.py.
 """
 
+import itertools
 import json
 import re
 import statistics
@@ -65,15 +66,15 @@ _EVENT_PAGE_RE = re.compile(r"^/events/(\d+)/$")
 
 class _IpState:
     __slots__ = (
-        "times",
         "event_ids",
         "internal_nav",
-        "page_count",
-        "signals",
-        "sample_paths",
         "last_persist",
+        "page_count",
         "persisted_pages",
         "persisted_signals",
+        "sample_paths",
+        "signals",
+        "times",
         "user_agent",
     )
 
@@ -213,7 +214,10 @@ class ScrapeDetector:
 
         if n >= 10:
             intervals = [
-                b - a for a, b in zip(list(state.times)[-11:], list(state.times)[-10:])
+                b - a
+                for a, b in zip(
+                    list(state.times)[-11:], list(state.times)[-10:], strict=False
+                )
             ]
             mean = statistics.fmean(intervals)
             if 0 < mean < 15 and statistics.pstdev(intervals) / mean < 0.25:
@@ -223,7 +227,7 @@ class ScrapeDetector:
         if m:
             state.event_ids.append(int(m.group(1)))
             ids = list(state.event_ids)[-8:]
-            if len(ids) >= 8 and all(a < b for a, b in zip(ids, ids[1:])):
+            if len(ids) >= 8 and all(a < b for a, b in itertools.pairwise(ids)):
                 state.signals["enumeration"] = 2.0
 
         self._check_shared_client(state, ip, now, ua, headers)
@@ -261,7 +265,7 @@ class ScrapeDetector:
             suspect.user_agent = user_agent
             suspect.sample_paths = json.dumps(sample_paths)
             db.session.commit()
-        except Exception:
+        except Exception:  # noqa: BLE001 - see below
             # Detection must never take a public request down with it.
             db.session.rollback()
 

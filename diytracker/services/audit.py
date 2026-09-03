@@ -11,7 +11,8 @@ from diytracker.models import ActionLog, db
 
 def record(action, target_type, target_id, actor, detail=None):
     """Stage an audit row. *actor* is either a Submitter instance (web) or
-    a plain string like "tui"/"cli"."""
+    a plain string like "tui"/"cli".
+    """
     actor_id = None
     actor_name = actor
     if not isinstance(actor, str):

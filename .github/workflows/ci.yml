@@ -54,12 +54,28 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
+      # --output-format=github turns findings into inline PR annotations
+      # instead of burying them in the job log.
       - name: ruff check
-        run: uv run ruff check .
+        run: uv run ruff check --output-format=github .
+
+      # Formatting is a *gate* on pull requests. It used to be enforced only
+      # by the auto-commit job below, which is skipped for forks -- so a fork
+      # PR with unformatted code passed CI clean. Pushes to main are still
+      # auto-formatted rather than rejected.
+      - name: ruff format --check
+        if: github.event_name == 'pull_request'
+        run: uv run ruff format --check --diff .
 
   format:
-    name: Format (ruff format)
+    name: Format (auto-commit on main)
     runs-on: ubuntu-latest
+    # Only pushes to main auto-format. PRs are gated by the lint job instead:
+    # pushing to a contributor's branch needs write access we don't have on
+    # forks, and the push would not re-trigger CI anyway.
+    if: github.event_name == 'push'
+    # Never lay a formatting commit on top of a red commit.
+    needs: [test, lint]
     permissions:
       contents: write
     steps:
@@ -67,7 +83,7 @@ jobs:
         with:
           # default GITHUB_TOKEN, but explicit so the later push works
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ github.ref_name }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -82,12 +98,10 @@ jobs:
         run: uv run ruff format .
 
       - name: Commit and push formatting fixes
-        # Skip for PRs from forks: their GITHUB_TOKEN is read-only, so a
-        # push would fail. `ruff check` still catches real issues there;
-        # only auto-formatting is skipped.
-        if: |
-          github.event_name == 'push' ||
-          github.event.pull_request.head.repo.full_name == github.repository
+        # Note: this push does not re-trigger CI (pushes made with
+        # GITHUB_TOKEN never do). That is acceptable only because the commit
+        # it lands on already passed `test` and `lint` via `needs:` above,
+        # and `ruff format` changes layout, never behaviour.
         run: |
           if [ -z "$(git status --porcelain)" ]; then
             echo "Already formatted, nothing to commit."
@@ -97,7 +111,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "style: auto-format with ${RUFF_VERSION}"
-          git push origin HEAD:"${{ github.head_ref || github.ref_name }}"
+          git push origin HEAD:"${{ github.ref_name }}"
 
   i18n:
     name: i18n (translation status)

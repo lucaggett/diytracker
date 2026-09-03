@@ -16,30 +16,31 @@ from flask import (
     session,
     url_for,
 )
-
-from diytracker.forms import AccessibilityForm, CollaboratorRequestForm
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
+from diytracker.forms import AccessibilityForm, CollaboratorRequestForm
 from diytracker.models import Event, Label, Venue, VenueAccessibility, db, utcnow
-from diytracker.services.auth import safe_redirect_target
-from diytracker.services.cache import cache
-from diytracker.services.contact import build_contact_logger, send_contact_email
-from diytracker.services.events import upcoming_filter
-from diytracker.services.i18n import (
-    DEFAULT_LOCALE,
-    SUPPORTED_LOCALES,
-    canton_in,
-    gettext as _,
-    validate_lang,
-)
 from diytracker.services.archive import (
     adjacent_months,
     archive_directory,
     archive_month_events,
 )
+from diytracker.services.auth import safe_redirect_target
+from diytracker.services.cache import cache
 from diytracker.services.cantons import canton_directory
+from diytracker.services.contact import build_contact_logger, send_contact_email
+from diytracker.services.events import upcoming_filter
 from diytracker.services.genres import genre_directory
+from diytracker.services.i18n import (
+    DEFAULT_LOCALE,
+    SUPPORTED_LOCALES,
+    canton_in,
+    validate_lang,
+)
+from diytracker.services.i18n import (
+    gettext as _,
+)
 from diytracker.services.ics import build_calendar
 from diytracker.services.limits import limiter
 from diytracker.services.page_texts import get_page_text
@@ -72,7 +73,8 @@ _LANG_PREFIX = "/<any(fr, it, en):lang_prefix>"
 
 def localized_route(rule, **options):
     """@bp.route plus a locale-prefixed twin under the same endpoint, so
-    url_for picks the right rule from the presence of `lang_prefix`."""
+    url_for picks the right rule from the presence of `lang_prefix`.
+    """
 
     def decorator(f):
         endpoint = options.pop("endpoint", f.__name__)
@@ -233,13 +235,12 @@ def about():
         else:
             try:
                 send_contact_email(name, sender_email, message)
-            except Exception as exc:
+            except Exception:
                 logger.exception(
-                    "send_failed name=%r email=%r message=%r error=%s",
+                    "send_failed name=%r email=%r message=%r",
                     name,
                     sender_email,
                     single_line_message,
-                    exc,
                 )
                 current_app.logger.exception("Failed to send collaborator email")
                 flash(
@@ -698,7 +699,8 @@ def archive_month(year, month):
 def _sitemap_entries(endpoint, changefreq, lastmod=None, **view_args):
     """One sitemap entry per locale variant of a localized page, all sharing
     the same alternate set. Locales are passed explicitly so the (cached)
-    sitemap never inherits the requester's locale."""
+    sitemap never inherits the requester's locale.
+    """
     paths = localized_paths(endpoint, view_args)
     alternates = hreflang_entries(endpoint, view_args)
     return [

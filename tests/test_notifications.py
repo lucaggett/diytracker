@@ -1,8 +1,8 @@
 """Promoter notification emails and the dashboard opt-out toggle."""
 
-from diytracker.models import db
-
 from conftest import BrokenSMTP
+
+from diytracker.models import db
 
 
 def _edit_payload(event, label_id=""):
@@ -105,6 +105,7 @@ class TestDashboardPanels:
         self, client, make_user, make_label, make_event, login
     ):
         from datetime import date
+
         from diytracker.models import EventDailyViews
 
         promoter = make_user(is_promoter=True)
@@ -121,6 +122,7 @@ class TestDashboardPanels:
 
     def test_queue_match_panel(self, client, make_user, make_label, login):
         from datetime import date, timedelta
+
         from diytracker.models import ScrapedEvent
 
         promoter = make_user(is_promoter=True)

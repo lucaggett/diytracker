@@ -36,10 +36,11 @@ def notify_label_event_edited(owner, event, label):
     )
     try:
         send_mail(owner.email, subject, body)
-        logger.info("label-edit mail to %s for event %s", owner.email, event.id)
-        return True
     except Exception:
         logger.exception(
             "label-edit mail to %s for event %s failed", owner.email, event.id
         )
         return False
+    else:
+        logger.info("label-edit mail to %s for event %s", owner.email, event.id)
+        return True

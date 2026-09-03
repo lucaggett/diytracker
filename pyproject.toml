@@ -47,7 +47,111 @@ source = ["diytracker"]
 [tool.ruff]
 target-version = "py310"
 
+# Ruff's *implicit* default rule set changed under us in 0.16 (dependabot
+# bumped 0.15.22 -> 0.16.4 in #20): it dropped E402/E711 and switched on ~370
+# extra rules, so a config we never touched went from 0 findings to 303
+# overnight. The selection is therefore pinned explicitly from here on --
+# upgrading ruff may fix bugs, but must never silently redefine the gate.
+[tool.ruff.lint]
+select = ["ALL"]
+
+ignore = [
+    # --- Conflicts with `ruff format` (Astral's own documented list) ---
+    # These fight the formatter; with both enabled CI can never converge.
+    "COM812", "COM819", "ISC001", "ISC002",
+    "E111", "E114", "E117", "D206", "D300", "Q000", "Q001", "Q002", "Q003", "W191",
+    # Line length belongs to the formatter, which deliberately leaves long
+    # URLs and strings intact rather than mangling them.
+    "E501",
+
+    # --- Conflicts with documented design decisions (see CLAUDE.md) ---
+    # "Two clocks, by column": Event.date/doors/end_date hold naive *local
+    # Swiss wall-clock* and must be compared against datetime.now(). Making
+    # DTZ happy would introduce the exact off-by-an-hour bug the design avoids.
+    "DTZ",
+    # Imports inside functions are deliberate: blueprints and services are
+    # imported late to break circular imports.
+    "PLC0415",
+    # Module-level flags (_scrape_running, _stats_generating, _contact_logger)
+    # are an intentional process-wide singleton, guarded by the single-worker
+    # scraper setup in gunicorn_conf.py.
+    "PLW0603",
+
+    # --- Not this project's conventions ---
+    "CPY001",  # no copyright headers
+    "ANN",     # deliberately untyped; annotating is a migration, not a lint fix
+    # Docstrings are written where they earn their place, not on every symbol.
+    # Docstring *style* (D2xx/D4xx) stays enabled.
+    "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107",
+    "D401",    # "imperative mood" is subjective and misfires on this prose
+    # D212/D213 are mutually exclusive; this repo puts the summary on the
+    # first line after the opening quotes, so D212 wins and D213 goes.
+    "D213",
+    # D203/D211 are mutually exclusive; no blank line before a class docstring.
+    "D203",
+    # House style is a wrapped summary *paragraph* (two lines) before the
+    # blank line, used consistently in ~60 docstrings. Complying would mean
+    # rewriting good prose to satisfy a line-break rule.
+    "D205",
+
+    # --- False positives in this codebase ---
+    # "Ambiguous unicode" fires on legitimate de/fr/it copy.
+    "RUF001", "RUF002", "RUF003",
+    # f-strings in logging calls are the consistent house style and read better
+    # than %-formatting at every call site.
+    "G004",
+    # Would force an exception-message indirection layer for no real gain.
+    "EM101", "EM102", "TRY003",
+    # Boolean parameters are already part of public signatures.
+    "FBT001", "FBT002", "FBT003",
+    # Complexity limits: these flag scraper/admin functions that are long
+    # because the domain is. Refactoring is a design task, not a lint gate.
+    "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR0917", "C901",
+    # Magic values: overwhelmingly HTTP status codes, byte widths and
+    # line-folding limits that read better inline than behind a name.
+    "PLR2004",
+    # ERA001 reads prose comments as code: "# Styles (Stil)" and
+    # "# Tags (styles)" look like calls, "# status: 'created' | 'duplicate'"
+    # like an expression. Every hit in this repo was a false positive.
+    "ERA001",
+]
+
 [tool.ruff.lint.per-file-ignores]
 # Blueprints are imported after `app`/extensions are created (avoids
-# circular imports) — intentional.
+# circular imports) -- intentional.
 "diytracker/app.py" = ["E402"]
+
+# Decorative randomness (image layout jitter) and local drawing constants
+# (W, H, BG, RED) -- neither is security-sensitive or a naming mistake.
+"diytracker/services/calendar_image.py" = ["S311", "N806"]
+
+# These two double as standalone CLIs (`main()` at the bottom, run by hand to
+# debug a venue parser); `print` is that interface, not stray debug output.
+"diytracker/services/scrape_events.py" = ["T201"]
+"diytracker/services/venue_parsers.py" = ["T201"]
+
+# pytest's idiom is bare `assert`; fixtures pass literal credentials and reach
+# into internals on purpose; test functions take fixtures they don't all use.
+"tests/**" = [
+    "S101",                        # assert is the entire point
+    "S105", "S106", "S107",        # literal test credentials
+    "SLF001",                      # tests may reach into private members
+    "ARG001", "ARG002", "ARG005",  # fixtures requested for their side effects
+    "PT018",                       # composite asserts are readable here
+    "INP001",                      # pytest rootdir needs no __init__.py
+    "D",                           # docstring style is not enforced on tests
+    "PTH",                         # os.path is fine in throwaway test setup
+    "S314",                        # parsing our own generated XML
+    "E402",                        # imports run after sys.path/env setup
+]
+
+# One-shot operational CLIs: `print` is their user interface, they are run as
+# `uv run python scripts/x.py`, and they fetch from URLs we control.
+"scripts/**" = [
+    "T201",            # print is the output mechanism
+    "INP001",          # not a package
+    "PTH",             # os.path is fine in one-shot scripts
+    "S310",            # urlopen against known, hard-coded endpoints
+    "D",               # docstring style not enforced
+    "S105",            # config-check script names an env var "PASS"
+]

@@ -77,9 +77,9 @@ def check_dkim():
     for selector in DKIM_SELECTORS:
         name = f"{selector}._domainkey.{DOMAIN}"
         records = resolve_txt(name)
-        for r in records:
-            if "v=DKIM1" in r or "p=" in r:
-                found.append((selector, name, r))
+        found.extend(
+            (selector, name, r) for r in records if "v=DKIM1" in r or "p=" in r
+        )
 
     if not found:
         print(

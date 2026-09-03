@@ -19,7 +19,8 @@ here — and additive: ``describe_duplicates`` reads only ``kind``/``label`` and
 ``scan_queue`` only ``signals``.
 """
 
-from datetime import datetime, time as time_type, timedelta
+from datetime import datetime, timedelta
+from datetime import time as time_type
 from difflib import SequenceMatcher
 
 from diytracker.models import Event, ScrapedEvent
@@ -32,7 +33,8 @@ _REASON_CAP = 300
 
 def _similar(a, b):
     """True when two normalized strings are the same, one contains the other
-    (both non-trivial), or they're fuzzily close."""
+    (both non-trivial), or they're fuzzily close.
+    """
     if not a or not b:
         return False
     if a == b:
@@ -44,7 +46,8 @@ def _similar(a, b):
 
 def name_similarity(a, b):
     """Public fuzzy name compare for other callers (label claim suggestions):
-    same normalization + matching rules as the konzibot dedup."""
+    same normalization + matching rules as the konzibot dedup.
+    """
     return _similar(normalize_name(a), normalize_name(b))
 
 

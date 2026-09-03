@@ -140,7 +140,7 @@ class TestGenerateReport:
 
     def test_fails_when_no_log_files(self, monkeypatch):
         monkeypatch.setattr(analytics.shutil, "which", lambda name: "/usr/bin/goaccess")
-        monkeypatch.setattr(analytics, "find_log_files", lambda: [])
+        monkeypatch.setattr(analytics, "find_log_files", list)
         success, message = analytics.generate_report("7d")
         assert success is False
         assert "No nginx access log files found" in message
@@ -165,7 +165,7 @@ class TestGenerateReport:
 
         captured = {}
 
-        def fake_run(cmd, input, capture_output, text, env):
+        def fake_run(cmd, input, capture_output, text, env, check):  # noqa: A002 - mirrors subprocess.run's keyword names
             captured["cmd"] = cmd
             captured["input"] = input
             report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -193,7 +193,7 @@ class TestGenerateReport:
         )
         success, message = analytics.generate_report("all")
         assert success is False
-        assert "goaccess error: boom" == message
+        assert message == "goaccess error: boom"
 
 
 class TestParsePanelDate:
@@ -270,7 +270,7 @@ class TestGenerateStats:
 
     def test_fails_when_no_log_files(self, monkeypatch):
         monkeypatch.setattr(analytics.shutil, "which", lambda name: "/usr/bin/goaccess")
-        monkeypatch.setattr(analytics, "find_log_files", lambda: [])
+        monkeypatch.setattr(analytics, "find_log_files", list)
         success, message = analytics.generate_stats()
         assert success is False
         assert "No nginx access log files found" in message
@@ -299,7 +299,7 @@ class TestGenerateStats:
         )
         monkeypatch.setattr(analytics, "find_log_files", lambda: [log])
 
-        def fake_run(cmd, input, capture_output, text, env):
+        def fake_run(cmd, input, capture_output, text, env, check):  # noqa: A002 - mirrors subprocess.run's keyword names
             out = next(a for a in cmd if a.startswith("--output=")).split("=", 1)[1]
             fixture = {"visitors": {"data": [_panel_entry(today, 7, 3)]}}
             pathlib.Path(out).write_text(json.dumps(fixture))

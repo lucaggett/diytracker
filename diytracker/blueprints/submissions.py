@@ -1,4 +1,6 @@
-from datetime import datetime, time as time_type
+import contextlib
+from datetime import datetime
+from datetime import time as time_type
 
 from dateutil.relativedelta import relativedelta
 from flask import (
@@ -12,13 +14,13 @@ from flask import (
     url_for,
 )
 
-from diytracker.services import queue_review
-from diytracker.services.errors import AdminError
 from diytracker.forms import DeleteScrapedEventForm, EventForm, GenreForm
-from diytracker.models import db, Genre, ScrapedEvent
+from diytracker.models import Genre, ScrapedEvent, db
+from diytracker.services import queue_review
+from diytracker.services.audit import record
 from diytracker.services.auth import admin_required, current_user, login_required
-from diytracker.services.search import like_patterns, normalise_query
 from diytracker.services.cache import bust_cache
+from diytracker.services.errors import AdminError
 from diytracker.services.events import (
     clean_genre_string,
     create_event,
@@ -27,8 +29,8 @@ from diytracker.services.events import (
 from diytracker.services.genre_catalog import find_genre
 from diytracker.services.i18n import gettext as _
 from diytracker.services.ingest import parse_time
-from diytracker.services.audit import record
 from diytracker.services.labels import owned_label_choices
+from diytracker.services.search import like_patterns, normalise_query
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 from diytracker.services.venue import get_or_create_venue
 from diytracker.utils import is_safe_link, resolve_canton
@@ -49,7 +51,7 @@ def _scraped_event_to_dict(rec):
         "source": rec.source,
         "url": rec.url,
         "title": rec.title,
-        "performers": rec.performers if rec.performers else rec.title,
+        "performers": rec.performers or rec.title,
         "styles": rec.styles,
         "description": rec.description,
         "start_date": rec.start_date.isoformat() if rec.start_date else None,
@@ -154,7 +156,7 @@ def event_queue():
 
         def _ov(key, fallback):
             val = request.form.get(key, "").strip()
-            return val if val else fallback
+            return val or fallback
 
         name = _ov(
             "override_name", data.get("title") or data.get("performers") or "Concert"
@@ -184,13 +186,11 @@ def event_queue():
         override_date = request.form.get("override_date", "").strip()
         event_date = data.get("_event_date")
         if override_date:
-            try:
-                # Kept a datetime (not ingest.parse_date's date): Event.date
-                # is a DateTime column and the dedup hash stringifies it, so
-                # a bare date would hash differently than scraped rows do.
+            # Kept a datetime (not ingest.parse_date's date): Event.date
+            # is a DateTime column and the dedup hash stringifies it, so
+            # a bare date would hash differently than scraped rows do.
+            with contextlib.suppress(ValueError):
                 event_date = datetime.strptime(override_date, "%Y-%m-%d")
-            except ValueError:
-                pass
 
         override_doors = request.form.get("override_doors", "").strip()
         if override_doors:
@@ -420,7 +420,8 @@ def submit_event_link():
 def manage_genres():
     """The genre catalog page: any logged-in user can add a genre (it shows
     up in the event form's picker immediately) and delete genres they added
-    themselves. Seed genres (added_by NULL) are deletable by admins only."""
+    themselves. Seed genres (added_by NULL) are deletable by admins only.
+    """
     submitter = current_user()
     form = GenreForm()
     if form.validate_on_submit():

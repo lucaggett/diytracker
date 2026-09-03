@@ -1,12 +1,13 @@
 """Event assembly shared by the submit, queue-approve and admin-edit routes,
-plus the one definition of what "upcoming" means."""
+plus the one definition of what "upcoming" means.
+"""
 
 import hashlib
 from datetime import datetime
 
 from sqlalchemy import or_
 
-from diytracker.models import db, Event, ScrapedEvent, Venue
+from diytracker.models import Event, ScrapedEvent, Venue, db
 from diytracker.services.venue import get_or_create_venue
 from diytracker.utils import clean_genre_tokens
 
@@ -30,7 +31,8 @@ def upcoming_filter(now=None):
 def detach_scrape_approvals(event_id):
     """Null out scrape-queue approval links before deleting an event — the
     FK on scraped_event.approved_event_id would reject the delete otherwise.
-    Does not commit."""
+    Does not commit.
+    """
     return ScrapedEvent.query.filter_by(approved_event_id=event_id).update(
         {"approved_event_id": None}
     )
@@ -41,7 +43,8 @@ def compute_event_hash(
 ):
     """Stable hash used to deduplicate events. All args should be strings or
     types with a consistent __str__ (datetime, time). genre_str must be a
-    cleaned comma-joined string, not a raw list."""
+    cleaned comma-joined string, not a raw list.
+    """
     payload = (
         f"{name}{date}{doors}{genre_str}{acts}{ticket_link}{ticket_price}{venue_id}"
     )

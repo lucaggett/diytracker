@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
-from diytracker.models import db, ScrapedEvent, Venue, VenueAccessibility
+from diytracker.models import ScrapedEvent, Venue, VenueAccessibility, db
 
 
 class TestForeignKeyEnforcement:

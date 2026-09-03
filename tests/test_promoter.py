@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 from PIL import Image
 
-from diytracker.models import db, Event, EventDailyViews, Label
+from diytracker.models import Event, EventDailyViews, Label, db
 
 
 def _png_upload(filename="logo.png"):

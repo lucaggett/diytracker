@@ -20,10 +20,10 @@ def get_genres():
     for event in (
         Event.query.with_entities(Event.genre).filter(Event.genre != None).all()  # noqa: E711 (SQLAlchemy needs `!= None` for IS NOT NULL, not `is not None`)
     ):
-        for g in (event.genre or "").split(","):
-            g = g.strip()
-            if g:
-                db_genres.append(g)
+        for raw_genre in (event.genre or "").split(","):
+            genre = raw_genre.strip()
+            if genre:
+                db_genres.append(genre)
     combined = sorted(set(catalog + db_genres), key=str.lower)
     return jsonify({"genres": combined})
 
@@ -32,19 +32,18 @@ def get_genres():
 @cache.cached()
 def get_venues():
     venues = Venue.query.order_by(Venue.name.asc()).all()
-    venue_list = []
-    for venue in venues:
-        venue_list.append(
-            {
-                "id": venue.id,
-                "name": venue.name,
-                "address": venue.address,
-                "city": venue.city,
-                "plz": venue.plz,
-                "canton": venue.canton,
-                "coords": venue.coords if venue.coords else "N/A",
-            }
-        )
+    venue_list = [
+        {
+            "id": venue.id,
+            "name": venue.name,
+            "address": venue.address,
+            "city": venue.city,
+            "plz": venue.plz,
+            "canton": venue.canton,
+            "coords": venue.coords or "N/A",
+        }
+        for venue in venues
+    ]
     return jsonify({"venues": venue_list})
 
 

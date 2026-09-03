@@ -28,13 +28,14 @@ services.uploads and the resulting path lands on ScrapedEvent.flyer.
 """
 
 import io
-from collections import namedtuple
-from datetime import date as date_type, datetime, time as time_type
+from datetime import date as date_type
+from datetime import datetime
+from datetime import time as time_type
+from typing import NamedTuple
 
 from werkzeug.datastructures import FileStorage
 
-from diytracker.models import db, Event, ScrapedEvent
-from diytracker.utils import clean_genre_tokens, clean_ticket_url, resolve_canton
+from diytracker.models import Event, ScrapedEvent, db
 from diytracker.services.genre_catalog import canonicalize_genre_string
 from diytracker.services.ingest_dedup import (
     describe_duplicates,
@@ -42,9 +43,14 @@ from diytracker.services.ingest_dedup import (
 )
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 from diytracker.services.venue import canonical_venue_name
+from diytracker.utils import clean_genre_tokens, clean_ticket_url, resolve_canton
 
-IngestResult = namedtuple("IngestResult", ["status", "reason", "record"])
-# status: 'created' | 'duplicate' | 'invalid'
+
+class IngestResult(NamedTuple):
+    status: str  # 'created' | 'duplicate' | 'invalid'
+    reason: str
+    record: object
+
 
 # Sources that don't respect the API contract (canton/genre/venue spellings)
 # and re-push shows already known: their payloads get genre/venue canonicalized
@@ -134,18 +140,19 @@ def ingest_event(payload, flyer=None, upload_folder=None, commit=True):
         )
 
     url = _clean(payload, "url")
-    if url:
-        if (
-            ScrapedEvent.query.filter_by(url=url).first()
-            or Event.query.filter_by(source_url=url).first()
-        ):
-            return IngestResult("duplicate", f"url already known: {url}", None)
+    if url and (
+        ScrapedEvent.query.filter_by(url=url).first()
+        or Event.query.filter_by(source_url=url).first()
+    ):
+        return IngestResult("duplicate", f"url already known: {url}", None)
     source_id = _clean(payload, "source_id")
-    if source_id:
-        if ScrapedEvent.query.filter_by(source=source, source_id=source_id).first():
-            return IngestResult(
-                "duplicate", f"source_id already known: {source}/{source_id}", None
-            )
+    if (
+        source_id
+        and ScrapedEvent.query.filter_by(source=source, source_id=source_id).first()
+    ):
+        return IngestResult(
+            "duplicate", f"source_id already known: {source}/{source_id}", None
+        )
 
     flyer_path = None
     fs = _as_filestorage(flyer)

@@ -15,7 +15,8 @@ from diytracker.utils import CANTONS
 
 def get_page_text(kind, key, locale=None):
     """Text for (kind, key) in `locale` (default: current request locale),
-    falling back to the default locale; None when neither exists."""
+    falling back to the default locale; None when neither exists.
+    """
     locale = locale or g.get("locale", DEFAULT_LOCALE)
     rows = PageText.query.filter_by(kind=kind, key=key).filter(
         PageText.locale.in_({locale, DEFAULT_LOCALE})
@@ -30,7 +31,8 @@ def valid_page_text_keys():
     """{kind: {slug, ...}} of every page that may carry an intro text: all 26
     cantons and the parent genres (Other has no landing page). Independent of
     whether the page currently has upcoming events, so texts can be authored
-    ahead of time."""
+    ahead of time.
+    """
     from diytracker.services.genres import GENRE_SLUGS
 
     return {

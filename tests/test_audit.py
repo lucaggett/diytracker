@@ -7,26 +7,26 @@ reader behind the Audit log screen belong to the diytracker-admin repo.
 
 from datetime import date, time, timedelta
 
+from diytracker.models import ActionLog, Event, ScrapedEvent, db
 from diytracker.services import queue_review
-from diytracker.models import db, ActionLog, Event, ScrapedEvent
 
 
 def _make_scraped(**kw):
-    defaults = dict(
-        source="metalgigs",
-        url="https://metalgigs.ch/konzerte/audit-1",
-        title="Audit Show",
-        performers="Headliner",
-        styles="Metal",
-        start_date=date.today() + timedelta(days=20),
-        doors_open=time(19, 0),
-        venue_name="Hall",
-        city="Aarau",
-        postal_code="5000",
-        region="AG",
-        organizer="Kollektiv X",
-        approved=False,
-    )
+    defaults = {
+        "source": "metalgigs",
+        "url": "https://metalgigs.ch/konzerte/audit-1",
+        "title": "Audit Show",
+        "performers": "Headliner",
+        "styles": "Metal",
+        "start_date": date.today() + timedelta(days=20),
+        "doors_open": time(19, 0),
+        "venue_name": "Hall",
+        "city": "Aarau",
+        "postal_code": "5000",
+        "region": "AG",
+        "organizer": "Kollektiv X",
+        "approved": False,
+    }
     defaults.update(kw)
     rec = ScrapedEvent(**defaults)
     db.session.add(rec)

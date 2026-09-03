@@ -109,7 +109,7 @@ class TestPersist:
 
 class TestGenerateEventViewStats:
     def test_fails_without_logs(self, app, monkeypatch):
-        monkeypatch.setattr(event_views, "find_log_files", lambda: [])
+        monkeypatch.setattr(event_views, "find_log_files", list)
         success, message = event_views.generate_event_view_stats()
         assert success is False
         assert "No nginx access log files found" in message
@@ -120,7 +120,7 @@ class TestGenerateEventViewStats:
         log = tmp_path / "access.log"
         log.write_text(_line(day=today) + "\n" + _line(day=old) + "\n")
         monkeypatch.setattr(event_views, "find_log_files", lambda: [log])
-        success, message = event_views.generate_event_view_stats()
+        success, _message = event_views.generate_event_view_stats()
         assert success is True
         row = EventDailyViews.query.one()
         assert (row.event_id, row.date, row.hits) == (12, today, 1)
@@ -129,7 +129,7 @@ class TestGenerateEventViewStats:
         log = tmp_path / "access.log"
         log.write_text(_line(path="/", day=datetime.now().date()) + "\n")
         monkeypatch.setattr(event_views, "find_log_files", lambda: [log])
-        success, message = event_views.generate_event_view_stats()
+        success, _message = event_views.generate_event_view_stats()
         assert success is True
         assert EventDailyViews.query.count() == 0
 

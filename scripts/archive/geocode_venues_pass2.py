@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from geocode_venues import nominatim  # noqa: E402
+from geocode_venues import nominatim
 
 COUNTRIES = "ch,li,fr,at,de"
 
@@ -58,12 +58,11 @@ def main():
         city = (venue["city"] or "").strip()
         hit, used = None, None
         queries = []
-        for n in name_variants(name):
-            for c in city_variants(city):
-                queries.append(f"{n}, {c}")
+        queries.extend(
+            f"{n}, {c}" for n in name_variants(name) for c in city_variants(city)
+        )
         if venue["address"] and city:
-            for c in city_variants(city):
-                queries.append(f"{venue['address']}, {c}")
+            queries.extend(f"{venue['address']}, {c}" for c in city_variants(city))
         for query in queries:
             hit = nominatim(query, countrycodes=COUNTRIES)
             if hit:

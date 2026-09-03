@@ -11,10 +11,11 @@ Environment variables read by `Config.from_env()` are documented in
 
 import os
 from datetime import timedelta
+from typing import ClassVar
 
+from diytracker.paths import TRANSLATIONS_DIR
 from diytracker.services.i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES
 from diytracker.services.uploads import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
-from diytracker.paths import TRANSLATIONS_DIR
 
 
 def _csv_env(name):
@@ -48,9 +49,9 @@ class Config:
     UPLOAD_FOLDER = UPLOAD_FOLDER
     ALLOWED_EXTENSIONS = ALLOWED_EXTENSIONS
     SEND_FILE_MAX_AGE_DEFAULT = 31536000
-    COMPRESS_ALGORITHM = ["br", "gzip"]
+    COMPRESS_ALGORITHM: ClassVar[list[str]] = ["br", "gzip"]
     BABEL_DEFAULT_LOCALE = DEFAULT_LOCALE
-    BABEL_SUPPORTED_LOCALES = list(SUPPORTED_LOCALES)
+    BABEL_SUPPORTED_LOCALES: ClassVar[list[str]] = list(SUPPORTED_LOCALES)
     BABEL_TRANSLATION_DIRECTORIES = str(TRANSLATIONS_DIR)
 
     # Filled in by from_env() (or by a subclass / caller override).
@@ -97,7 +98,7 @@ class TestConfig(Config):
     # Rapid-fire test requests look exactly like scraping; keep the detector
     # off except where a test enables it explicitly.
     SCRAPE_DETECTION_ENABLED = False
-    SECRET_KEY = "test-secret-key"
+    SECRET_KEY = "test-secret-key"  # noqa: S105 - test config, never production
 
     def __init__(self, database_uri):
         self.SQLALCHEMY_DATABASE_URI = database_uri

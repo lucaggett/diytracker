@@ -37,7 +37,7 @@ class TestSendMail:
         # Distinguishable from an SMTP failure: callers that swallow send
         # errors still want "mail was never set up" to read differently.
         monkeypatch.delenv(missing, raising=False)
-        with pytest.raises(mail.MailNotConfigured):
+        with pytest.raises(mail.MailNotConfiguredError):
             mail.send_mail("a@example.com", "S", "B")
         assert fake_smtp.instances == []
 

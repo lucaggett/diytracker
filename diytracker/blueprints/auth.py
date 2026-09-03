@@ -10,7 +10,7 @@ from flask import (
 )
 
 from diytracker.forms import LoginForm, SetPasswordForm
-from diytracker.models import db, Submitter, utcnow
+from diytracker.models import Submitter, db, utcnow
 from diytracker.services.auth import safe_redirect_target
 from diytracker.services.i18n import gettext as _
 from diytracker.services.limits import limiter

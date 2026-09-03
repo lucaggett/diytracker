@@ -20,7 +20,7 @@ def keep_dir(path: str) -> bool:
     base = os.path.basename(path)
     if base.startswith("."):
         return False
-    if base in (
+    return base not in (
         "__pycache__",
         "node_modules",
         "venv",
@@ -29,9 +29,7 @@ def keep_dir(path: str) -> bool:
         "migrations",
         "logs",
         "uploads",
-    ):
-        return False
-    return True
+    )
 
 
 def build_source_catalog() -> Catalog:

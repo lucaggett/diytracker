@@ -1,13 +1,12 @@
-import os
 import threading
 import time as time_module
 from datetime import datetime
 
+from diytracker.models import Event, ScrapedEvent, SkippedUrl, db
 from diytracker.paths import INSTANCE_DIR
-from diytracker.models import db, Event, ScrapedEvent, SkippedUrl
 from diytracker.services.ingest import ingest_event
 
-LAST_SCRAPE_FILE = str(INSTANCE_DIR / "last_scrape.txt")
+LAST_SCRAPE_FILE = INSTANCE_DIR / "last_scrape.txt"
 # Event listings change a few times a day at most; scraping more often
 # than this just re-downloads unchanged sitemaps and pages.
 SCRAPE_INTERVAL_HOURS = 6
@@ -19,15 +18,15 @@ _scrape_progress = {"total": 0, "processed": 0, "started_at": None, "phase": ""}
 
 def get_last_scrape_time():
     try:
-        with open(LAST_SCRAPE_FILE) as f:
+        with LAST_SCRAPE_FILE.open() as f:
             return datetime.fromisoformat(f.read().strip())
     except (FileNotFoundError, ValueError):
         return None
 
 
 def set_last_scrape_time(dt):
-    os.makedirs(os.path.dirname(LAST_SCRAPE_FILE), exist_ok=True)
-    with open(LAST_SCRAPE_FILE, "w") as f:
+    LAST_SCRAPE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with LAST_SCRAPE_FILE.open("w") as f:
         f.write(dt.isoformat())
 
 
@@ -65,7 +64,8 @@ def _record_skipped(url, source, reason):
 def _scrape_and_import(app):
     """Run one scrape+import. Returns the ingest counts, or None if the run
     failed (the exception is logged, never raised — the scheduler thread must
-    survive a bad run)."""
+    survive a bad run).
+    """
     global _scrape_running, _scrape_progress
     counts = None
     try:

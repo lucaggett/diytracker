@@ -24,9 +24,8 @@ from diytracker.forms import (
     VenueForm,
     get_canton_choices,
 )
-from diytracker.models import db, Event, PageText, ScrapeSuspect, Venue
-from diytracker.services.audit import record
-from diytracker.services.notifications import notify_label_event_edited
+from diytracker.models import Event, PageText, ScrapeSuspect, Venue, db
+from diytracker.services import db_stats
 from diytracker.services.analytics import (
     REPORT_PATH,
     STATS_INTERVAL_MINUTES,
@@ -36,11 +35,11 @@ from diytracker.services.analytics import (
     read_stats,
     stats_age_seconds,
 )
+from diytracker.services.audit import record
 from diytracker.services.auth import admin_required, current_user
-from diytracker.services import db_stats
-from diytracker.services.event_views import event_popularity
 from diytracker.services.cache import bust_cache
 from diytracker.services.calendar_image import generate_weekly_calendar_image
+from diytracker.services.event_views import event_popularity
 from diytracker.services.events import (
     clean_genre_string,
     detach_scrape_approvals,
@@ -48,6 +47,7 @@ from diytracker.services.events import (
 )
 from diytracker.services.i18n import gettext as _
 from diytracker.services.labels import all_label_choices
+from diytracker.services.notifications import notify_label_event_edited
 from diytracker.services.scraper import (
     SCRAPE_INTERVAL_HOURS,
     get_last_scrape_time,
@@ -62,7 +62,8 @@ bp = Blueprint("admin", __name__)
 
 def _excel_safe(value):
     """Neutralise spreadsheet formula injection: user/scraper strings starting
-    with a formula trigger character would otherwise execute when opened."""
+    with a formula trigger character would otherwise execute when opened.
+    """
     if isinstance(value, str) and value[:1] in ("=", "+", "-", "@"):
         return "'" + value
     return value
@@ -169,54 +170,53 @@ def edit_event(event_id):
         ]
         form.end_date.data = event.end_date
         form.is_festival.data = event.is_festival
-    if request.method == "POST":
-        if form.validate_on_submit():
-            old_label_id = event.label_id
-            event.name = form.name.data
-            event.date = form.date.data
-            event.end_date = form.end_date.data
-            event.is_festival = form.is_festival.data
-            event.doors = form.doors.data
-            event.acts = form.acts.data
-            event.ticket_price = form.ticket_price.data
-            event.ticket_link = form.ticket_link.data
-            event.status = form.status.data
-            event.genre = clean_genre_string(form.genre.data or [])
-            event.label_id = int(form.label_id.data) if form.label_id.data else None
+    if request.method == "POST" and form.validate_on_submit():
+        old_label_id = event.label_id
+        event.name = form.name.data
+        event.date = form.date.data
+        event.end_date = form.end_date.data
+        event.is_festival = form.is_festival.data
+        event.doors = form.doors.data
+        event.acts = form.acts.data
+        event.ticket_price = form.ticket_price.data
+        event.ticket_link = form.ticket_link.data
+        event.status = form.status.data
+        event.genre = clean_genre_string(form.genre.data or [])
+        event.label_id = int(form.label_id.data) if form.label_id.data else None
 
-            venue, _created, error = resolve_venue_from_form(form)
-            if error:
-                flash(_("Selected venue does not exist."))
-                return redirect(url_for("admin.edit_event", event_id=event_id))
-            event.venue_id = venue.id
+        venue, _created, error = resolve_venue_from_form(form)
+        if error:
+            flash(_("Selected venue does not exist."))
+            return redirect(url_for("admin.edit_event", event_id=event_id))
+        event.venue_id = venue.id
 
-            saved = save_flyer_file(
-                form.flyer.data, current_app.config.get("UPLOAD_FOLDER", UPLOAD_FOLDER)
-            )
-            if saved:
-                event.flyer = saved
+        saved = save_flyer_file(
+            form.flyer.data, current_app.config.get("UPLOAD_FOLDER", UPLOAD_FOLDER)
+        )
+        if saved:
+            event.flyer = saved
 
-            label_note = (
-                f" label {old_label_id}->{event.label_id}"
-                if event.label_id != old_label_id
-                else ""
-            )
-            actor = current_user()
-            record(
-                "event.edit",
-                "event",
-                event.id,
-                actor=actor,
-                detail=f"name={event.name!r} date={event.date}{label_note}",
-            )
-            db.session.commit()
-            bust_cache()
-            # After the commit, and never fatal: an SMTP failure must not
-            # break the edit that already happened.
-            if event.label is not None and event.label.promoter_id != actor.id:
-                notify_label_event_edited(event.label.promoter, event, event.label)
-            flash(_("Event updated successfully!"))
-            return redirect(url_for("admin.admin"))
+        label_note = (
+            f" label {old_label_id}->{event.label_id}"
+            if event.label_id != old_label_id
+            else ""
+        )
+        actor = current_user()
+        record(
+            "event.edit",
+            "event",
+            event.id,
+            actor=actor,
+            detail=f"name={event.name!r} date={event.date}{label_note}",
+        )
+        db.session.commit()
+        bust_cache()
+        # After the commit, and never fatal: an SMTP failure must not
+        # break the edit that already happened.
+        if event.label is not None and event.label.promoter_id != actor.id:
+            notify_label_event_edited(event.label.promoter, event, event.label)
+        flash(_("Event updated successfully!"))
+        return redirect(url_for("admin.admin"))
 
     return render_template("edit_event.html", form=form, event=event)
 
@@ -264,7 +264,7 @@ def venues():
 def edit_venue(venue_id):
     venue = Venue.query.get_or_404(venue_id)
     form = VenueForm(obj=venue)
-    form.canton.choices = [("", _("— none —"))] + get_canton_choices()
+    form.canton.choices = [("", _("— none —")), *get_canton_choices()]
     if request.method == "POST" and form.validate_on_submit():
         venue.name = form.name.data.strip()
         venue.address = (form.address.data or "").strip() or None
@@ -494,7 +494,8 @@ def analytics_stats():
     # looks dead (dev mode, or the first gunicorn worker died). Never generate
     # inline: goaccess over 60 days of logs must not block a request.
     if stats is None or age is None or age > 3 * STATS_INTERVAL_MINUTES * 60:
-        kick_stats_generation(current_app._get_current_object())
+        # _get_current_object() is the documented LocalProxy escape hatch.
+        kick_stats_generation(current_app._get_current_object())  # noqa: SLF001
     if stats is None:
         return jsonify({"status": "pending"}), 202
     return jsonify({"status": "ok", "age_seconds": age, **stats})

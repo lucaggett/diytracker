@@ -18,8 +18,8 @@ matches venues by name and PLZ, so "improving" these strings here would create
 a second venue next to the real one.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Tuple
 
 from diytracker.services import venue_parsers as vp
 
@@ -34,7 +34,7 @@ class VenueIdentity:
     plz: str
     canton: str
 
-    def as_fields(self) -> Dict[str, str]:
+    def as_fields(self) -> dict[str, str]:
         return {
             "venue_name": self.name,
             "street_address": self.address,
@@ -60,10 +60,10 @@ class VenueSource:
     key: str
     venue: VenueIdentity
     lang: str
-    contact_email: Optional[str] = None
-    fetcher: Optional[Callable[[], List[dict]]] = None
-    discover: Optional[Callable[[], List[str]]] = None
-    parser: Optional[Callable[[str], Optional[dict]]] = None
+    contact_email: str | None = None
+    fetcher: Callable[[], list[dict]] | None = None
+    discover: Callable[[], list[str]] | None = None
+    parser: Callable[[str], dict | None] | None = None
     notes: str = ""
 
     @property
@@ -104,7 +104,7 @@ _RUEMPELTUM = VenueIdentity("Rümpeltum", "Bachstrasse 36", "St. Gallen", "9008"
 _SAFARIBAR = VenueIdentity("Safari Bar", "Zähringerstrasse 29", "Zürich", "8001", "ZH")
 
 
-VENUE_SOURCES: Tuple[VenueSource, ...] = (
+VENUE_SOURCES: tuple[VenueSource, ...] = (
     # --- feed-backed ------------------------------------------------------
     VenueSource(
         key="horstklub",
@@ -292,7 +292,7 @@ VENUE_SOURCES: Tuple[VenueSource, ...] = (
 # Venues that were considered and deliberately have no scraper. Kept in code
 # rather than only in a commit message so the next person does not spend an
 # afternoon rediscovering why.
-UNSCRAPED: Dict[str, str] = {
+UNSCRAPED: dict[str, str] = {
     "Photobastei": (
         "robots.txt is 'User-agent: * / Disallow: /' for the whole site. "
         "fetch_url() refuses it, so any parser would be dead code. Written "
@@ -311,9 +311,9 @@ UNSCRAPED: Dict[str, str] = {
 }
 
 
-def get_sources() -> Tuple[VenueSource, ...]:
+def get_sources() -> tuple[VenueSource, ...]:
     return VENUE_SOURCES
 
 
-def sources_by_key() -> Dict[str, VenueSource]:
+def sources_by_key() -> dict[str, VenueSource]:
     return {source.key: source for source in VENUE_SOURCES}

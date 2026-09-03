@@ -38,7 +38,7 @@ _VALID_CODES = {
 }
 
 
-def N_(s):
+def N_(s):  # noqa: N802 - Babel extraction marker, must keep this exact name
     """Babel extraction marker (in Babel's DEFAULT_KEYWORDS); identity at runtime."""
     return s
 

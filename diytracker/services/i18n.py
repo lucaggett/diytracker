@@ -4,7 +4,7 @@ SUPPORTED_LOCALES = ("de", "fr", "it", "en")
 DEFAULT_LOCALE = "de"
 
 try:
-    from flask_babel import gettext as _babel_gettext  # type: ignore
+    from flask_babel import gettext as _babel_gettext  # type: ignore[import-not-found]
 
     HAS_BABEL = True
 except ImportError:
@@ -37,7 +37,8 @@ def canton_in(name):
 
 def current_locale():
     """The active locale, usable outside a request context (falls back to the
-    default rather than raising, so CLI/test callers work)."""
+    default rather than raising, so CLI/test callers work).
+    """
     try:
         locale = g.get("locale") or g.get("url_locale")
     except RuntimeError:  # no application/request context

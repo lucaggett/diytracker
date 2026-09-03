@@ -10,7 +10,6 @@ from flask import (
     request,
     url_for,
 )
-
 from sqlalchemy.orm import joinedload
 
 from diytracker.forms import (
@@ -20,7 +19,7 @@ from diytracker.forms import (
     NotifyToggleForm,
     UnclaimEventForm,
 )
-from diytracker.models import db, Event, Label, Venue
+from diytracker.models import Event, Label, Venue, db
 from diytracker.services.audit import record
 from diytracker.services.auth import current_user, promoter_required
 from diytracker.services.cache import bust_cache

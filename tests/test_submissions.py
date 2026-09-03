@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, time, timedelta
 
-from diytracker.models import db, Event, Genre, ScrapedEvent, Venue
+from diytracker.models import Event, Genre, ScrapedEvent, Venue, db
 
 
 def _future(days=14):
@@ -92,20 +92,20 @@ class TestSubmitEvent:
 
 class TestEventQueue:
     def _make_scraped(self, **kw):
-        defaults = dict(
-            source="metalgigs",
-            url="https://metalgigs.ch/konzerte/show-1",
-            title="Scraped Show",
-            performers="Headliner",
-            styles="Metal",
-            start_date=date.today() + timedelta(days=20),
-            doors_open=time(19, 0),
-            venue_name="Hall",
-            city="Aarau",
-            postal_code="5000",
-            region="AG",
-            approved=False,
-        )
+        defaults = {
+            "source": "metalgigs",
+            "url": "https://metalgigs.ch/konzerte/show-1",
+            "title": "Scraped Show",
+            "performers": "Headliner",
+            "styles": "Metal",
+            "start_date": date.today() + timedelta(days=20),
+            "doors_open": time(19, 0),
+            "venue_name": "Hall",
+            "city": "Aarau",
+            "postal_code": "5000",
+            "region": "AG",
+            "approved": False,
+        }
         defaults.update(kw)
         rec = ScrapedEvent(**defaults)
         db.session.add(rec)
@@ -150,17 +150,17 @@ class TestEventQueue:
         login(admin)
         # Two distinct scraped rows that resolve to identical event content
         # (same venue + name + date + …) -> identical event_hash.
-        common = dict(
-            title="Same Gig",
-            styles="Punk",
-            venue_name="Hall",
-            city="Aarau",
-            postal_code="5000",
-            region="AG",
-            start_date=date.today() + timedelta(days=20),
-            doors_open=time(19, 0),
-            performers="Headliner",
-        )
+        common = {
+            "title": "Same Gig",
+            "styles": "Punk",
+            "venue_name": "Hall",
+            "city": "Aarau",
+            "postal_code": "5000",
+            "region": "AG",
+            "start_date": date.today() + timedelta(days=20),
+            "doors_open": time(19, 0),
+            "performers": "Headliner",
+        }
         rec_a = self._make_scraped(url="https://metalgigs.ch/konzerte/a", **common)
         rec_b = self._make_scraped(url="https://metalgigs.ch/konzerte/b", **common)
 
@@ -456,7 +456,7 @@ class TestQueueStatus:
 
 class TestQueueDuplicatesWeb:
     def _flagged(self, **kw):
-        defaults = dict(needs_review=True, review_reason="Calendar: X @ Bern")
+        defaults = {"needs_review": True, "review_reason": "Calendar: X @ Bern"}
         defaults.update(kw)
         return TestEventQueue._make_scraped(TestEventQueue(), **defaults)
 

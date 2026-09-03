@@ -20,24 +20,24 @@ Missing values are left blank.
 
 import csv
 import json
+import logging
+import random
 import re
 import sys
+import time
+import warnings
+from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Dict, Iterable, List, Optional, Tuple
+from pathlib import Path
+from urllib.parse import urlparse
+from urllib.robotparser import RobotFileParser
 from zoneinfo import ZoneInfo
 
 import requests
-import warnings
 from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
-import time
-import random
-from urllib.parse import urlparse
-from urllib.robotparser import RobotFileParser
 
 from diytracker.paths import INSTANCE_DIR, LOGS_DIR
 from diytracker.utils import resolve_canton, split_leading_plz
-
-import logging
 
 # Messages go nowhere until configure_logging() attaches handlers — the web
 # app imports this module only for the parsers and must not open log files
@@ -69,10 +69,10 @@ def configure_logging():
     logger.addHandler(stream_handler)
 
 
-def _dedup_preserving_order(urls) -> List[str]:
+def _dedup_preserving_order(urls) -> list[str]:
     """Drop duplicate URLs while keeping first-seen order."""
     seen: set = set()
-    unique: List[str] = []
+    unique: list[str] = []
     for url in urls:
         if url not in seen:
             unique.append(url)
@@ -82,7 +82,7 @@ def _dedup_preserving_order(urls) -> List[str]:
 
 # Random delay (in seconds) between requests to reduce the likelihood
 # of triggering rate-limiting.  Values are inclusive in random.uniform.
-REQUEST_DELAY_RANGE: Tuple[float, float] = (0.5, 1.5)
+REQUEST_DELAY_RANGE: tuple[float, float] = (0.5, 1.5)
 
 # Identify ourselves honestly so site operators can see who is crawling
 # and how to reach us, rather than disguising the scraper as a browser.
@@ -91,10 +91,10 @@ USER_AGENT = "diytracker (+https://diytracker.ch; lucaggett@gmail.com)"
 # Per-host robots.txt parsers, refreshed after ROBOTS_CACHE_TTL seconds
 # (the scheduler process runs for weeks, so entries must expire).
 ROBOTS_CACHE_TTL = 24 * 3600
-_robots_cache: Dict[str, Tuple[float, Optional[RobotFileParser]]] = {}
+_robots_cache: dict[str, tuple[float, RobotFileParser | None]] = {}
 
 
-def _get_robots_parser(base_url: str) -> Optional[RobotFileParser]:
+def _get_robots_parser(base_url: str) -> RobotFileParser | None:
     cached = _robots_cache.get(base_url)
     if cached and time.time() - cached[0] < ROBOTS_CACHE_TTL:
         return cached[1]
@@ -125,7 +125,7 @@ def _robots_allowed(url: str) -> bool:
     return parser is None or parser.can_fetch(USER_AGENT, url)
 
 
-def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str]:
+def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> str | None:
     """Fetch a URL and return its text content.
 
     Honors the host's robots.txt and identifies the scraper with an
@@ -135,9 +135,11 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
     Args:
         url: The URL to fetch.
         timeout: The timeout for the request in seconds.
+        max_retries: How many times to retry before giving up.
 
     Returns:
         The response text, or None if the request failed.
+
     """
     if not _robots_allowed(url):
         logger.warning(f"Skipping {url}: disallowed by robots.txt")
@@ -150,7 +152,7 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
         # Introduce a randomized delay before each request to avoid rapid-fire
         # access patterns.  This can help with sites that rate-limit or
         # detect scraping.
-        delay = random.uniform(*REQUEST_DELAY_RANGE)
+        delay = random.uniform(*REQUEST_DELAY_RANGE)  # noqa: S311 - politeness jitter, not crypto
         logger.debug(
             f"Sleeping for {delay:.2f} seconds before fetching {url} (attempt {attempt + 1}/{max_retries})"
         )
@@ -160,7 +162,8 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
         try:
             resp = requests.get(url, headers=headers, timeout=timeout)
         except requests.RequestException as e:
-            logger.error(f"Request to {url} failed with exception: {e}")
+            # A traceback for every unreachable URL is noise, not signal.
+            logger.error(f"Request to {url} failed with exception: {e}")  # noqa: TRY400
             continue
         # Check for success
         if resp.status_code == 200:
@@ -193,8 +196,8 @@ def fetch_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str
 
 
 def get_sitemap_event_urls(
-    sitemap_url: str, pattern: str, sub_sitemap_hints: Optional[List[str]] = None
-) -> List[str]:
+    sitemap_url: str, pattern: str, sub_sitemap_hints: list[str] | None = None
+) -> list[str]:
     """Extract event URLs matching a pattern from a sitemap.xml file.
 
     Handles both regular sitemaps and sitemap index files (which contain
@@ -212,6 +215,7 @@ def get_sitemap_event_urls(
 
     Returns:
         A list of unique event URLs matching the pattern.
+
     """
     sitemap_text = fetch_url(sitemap_url)
     if not sitemap_text:
@@ -253,7 +257,7 @@ def get_sitemap_event_urls(
     )
 
 
-def get_petzi_event_urls() -> List[str]:
+def get_petzi_event_urls() -> list[str]:
     """Return a list of event URLs from the PETZI home page.
 
     The PETZI site no longer includes all events in its sitemap.  This
@@ -265,27 +269,25 @@ def get_petzi_event_urls() -> List[str]:
 
     Returns:
         A list of absolute event URLs.
+
     """
     base_url = "https://www.petzi.ch"
     home_html = fetch_url("https://www.petzi.ch/en/")
     if not home_html:
         return []
     soup = BeautifulSoup(home_html, "html.parser")
-    urls: List[str] = []
+    urls: list[str] = []
     for a in soup.find_all("a", href=True):
         href = a["href"]
         # Accept both absolute and relative event URLs
         if "/en/events/" in href:
             # Build absolute URL
-            if href.startswith("http"):
-                url = href
-            else:
-                url = base_url + href
+            url = href if href.startswith("http") else base_url + href
             urls.append(url)
     return _dedup_preserving_order(urls)
 
 
-def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
+def parse_metalgigs_event(url: str) -> dict[str, str] | None:
     """Parse a metalgigs.ch event page and extract relevant information.
 
     The metalgigs event pages embed a JSON‑LD snippet describing the
@@ -299,6 +301,7 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
     Returns:
         A dictionary of event information, or None if the page could not
         be parsed.
+
     """
     logger.info(f"Parsing MetalGigs event: {url}")
     html = fetch_url(url)
@@ -306,7 +309,7 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
         logger.error(f"Failed to retrieve MetalGigs event page: {url}")
         return None
     soup = BeautifulSoup(html, "html.parser")
-    event: Dict[str, str] = {
+    event: dict[str, str] = {
         "source": "metalgigs",
         "url": url,
     }
@@ -350,7 +353,8 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
         try:
             data = json.loads(script_json)
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to decode JSON-LD for {url}: {e}")
+            # Malformed JSON-LD is an expected scrape outcome, not a fault.
+            logger.error(f"Failed to decode JSON-LD for {url}: {e}")  # noqa: TRY400
             data = None
         if data:
             logger.debug(f"Parsed MusicEvent JSON-LD for {url}")
@@ -395,7 +399,7 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
             event["ticket_url"] = offers.get("url", "")
             # Performers
             performers = data.get("performer", [])
-            performer_names: List[str] = []
+            performer_names: list[str] = []
             if isinstance(performers, list):
                 for p in performers:
                     if isinstance(p, dict):
@@ -406,7 +410,7 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
             event["event_status"] = data.get("eventStatus", "")
             # For Festival type, collect genres from performer entries if styles not set
             if not event.get("styles"):
-                genre_set: List[str] = []
+                genre_set: list[str] = []
                 seen_genres: set = set()
                 for p in performers if isinstance(performers, list) else []:
                     if isinstance(p, dict):
@@ -429,8 +433,7 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
         """
         dt = soup.find("dt", string=lambda s: s and s.strip().lower() == title.lower())
         if dt and dt.find_next_sibling("dd"):
-            text = dt.find_next_sibling("dd").get_text(" ", strip=True)
-            return text
+            return dt.find_next_sibling("dd").get_text(" ", strip=True)
         return ""
 
     # If performers are missing, attempt to extract from the page title
@@ -480,7 +483,7 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
                     event["start_date"] = iso_date
                     event["end_date"] = iso_date
                     logger.debug(f"MetalGigs date: {iso_date}")
-                except Exception:
+                except ValueError:
                     pass
 
     # Doors open and start time if missing
@@ -540,7 +543,7 @@ def parse_metalgigs_event(url: str) -> Optional[Dict[str, str]]:
     return event
 
 
-def parse_petzi_event(url: str) -> Optional[Dict[str, str]]:
+def parse_petzi_event(url: str) -> dict[str, str] | None:
     """Parse a petzi.ch event page and extract relevant information.
 
     Unlike metalgigs, PETZI pages do not embed JSON‑LD for events.  This
@@ -553,6 +556,7 @@ def parse_petzi_event(url: str) -> Optional[Dict[str, str]]:
     Returns:
         A dictionary of event information, or None if the page could not
         be parsed.
+
     """
     logger.info(f"Parsing PETZI event: {url}")
     html = fetch_url(url)
@@ -560,7 +564,7 @@ def parse_petzi_event(url: str) -> Optional[Dict[str, str]]:
         logger.error(f"Failed to retrieve PETZI event page: {url}")
         return None
     soup = BeautifulSoup(html, "html.parser")
-    event: Dict[str, str] = {
+    event: dict[str, str] = {
         "source": "petzi",
         "url": url,
     }
@@ -616,7 +620,7 @@ def parse_petzi_event(url: str) -> Optional[Dict[str, str]]:
                 event["start_date"] = iso_date
                 event["end_date"] = iso_date
                 logger.debug(f"PETZI date: {iso_date}")
-        except Exception:
+        except (ValueError, IndexError):
             pass
 
     # Venue and city.  The venue appears in an <h4> after the date
@@ -684,7 +688,7 @@ def parse_petzi_event(url: str) -> Optional[Dict[str, str]]:
 
     # Tags (styles)
     tag_list = soup.find("section", {"class": "tag-list"})
-    tags: List[str] = []
+    tags: list[str] = []
     if tag_list:
         for a in tag_list.find_all("a", class_="tag"):
             tag_text = a.get_text(strip=True)
@@ -741,9 +745,9 @@ def to_swiss_local(dt: datetime) -> datetime:
     return dt.astimezone(SWISS_TZ).replace(tzinfo=None)
 
 
-def _unfold_ical(text: str) -> List[str]:
+def _unfold_ical(text: str) -> list[str]:
     """Join RFC 5545 folded continuation lines (leading space/tab) back up."""
-    lines: List[str] = []
+    lines: list[str] = []
     for raw in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
         if raw[:1] in (" ", "\t") and lines:
             lines[-1] += raw[1:]
@@ -753,13 +757,13 @@ def _unfold_ical(text: str) -> List[str]:
 
 
 def _unescape_ical(value: str) -> str:
-    """Undo the TEXT escaping of RFC 5545 (\\n, \\, \\, ; and ,)."""
+    r"""Undo the TEXT escaping of RFC 5545 (\\n, \\, \\, ; and ,)."""
     out = value.replace("\\N", "\n").replace("\\n", "\n")
     out = out.replace("\\,", ",").replace("\\;", ";")
     return out.replace("\\\\", "\\").strip()
 
 
-def _parse_ical_datetime(value: str, params: str) -> Optional[datetime]:
+def _parse_ical_datetime(value: str, params: str) -> datetime | None:
     """Parse a DTSTART/DTEND value into naive Swiss wall-clock time.
 
     Handles the three forms these feeds actually emit: a trailing ``Z`` for
@@ -774,10 +778,9 @@ def _parse_ical_datetime(value: str, params: str) -> Optional[datetime]:
             parsed = datetime.strptime(value, "%Y%m%dT%H%M%SZ")
             return to_swiss_local(parsed.replace(tzinfo=timezone.utc))
         if "T" in value:
-            parsed = datetime.strptime(value, "%Y%m%dT%H%M%S")
+            return datetime.strptime(value, "%Y%m%dT%H%M%S")
             # A TZID we don't recognise is still far likelier to be local
             # Swiss time than UTC for these venues, so take it as-is.
-            return parsed
         if "VALUE=DATE" in params or len(value) == 8:
             return datetime.strptime(value, "%Y%m%d")
     except ValueError:
@@ -785,7 +788,7 @@ def _parse_ical_datetime(value: str, params: str) -> Optional[datetime]:
     return None
 
 
-def parse_ical_feed(text: str) -> List[Dict[str, object]]:
+def parse_ical_feed(text: str) -> list[dict[str, object]]:
     """Split an iCalendar document into its VEVENTs.
 
     Returns one dict per event with ``uid``, ``summary``, ``description``,
@@ -793,8 +796,8 @@ def parse_ical_feed(text: str) -> List[Dict[str, object]]:
     wall-clock datetimes, or None). Malformed events are skipped rather than
     raising — a feed with one bad entry should still yield the rest.
     """
-    events: List[Dict[str, object]] = []
-    current: Optional[Dict[str, object]] = None
+    events: list[dict[str, object]] = []
+    current: dict[str, object] | None = None
     for line in _unfold_ical(text):
         if line.startswith("BEGIN:VEVENT"):
             current = {}
@@ -827,7 +830,7 @@ def parse_ical_feed(text: str) -> List[Dict[str, object]]:
     return events
 
 
-def parse_rss_items(text: str) -> List[Dict[str, str]]:
+def parse_rss_items(text: str) -> list[dict[str, str]]:
     """Extract ``<item>`` entries from an RSS/Atom document.
 
     Returns dicts with ``title``, ``link``, ``description`` and ``pub_date``.
@@ -839,7 +842,7 @@ def parse_rss_items(text: str) -> List[Dict[str, str]]:
         # parsing as XML would mean adding lxml for no gain.
         warnings.simplefilter("ignore", XMLParsedAsHTMLWarning)
         soup = BeautifulSoup(text, "html.parser")
-    items: List[Dict[str, str]] = []
+    items: list[dict[str, str]] = []
     for item in soup.find_all("item"):
         entry = {}
         for field, tag in (
@@ -861,7 +864,7 @@ def parse_rss_items(text: str) -> List[Dict[str, str]]:
     return items
 
 
-def fetch_json(url: str) -> Optional[object]:
+def fetch_json(url: str) -> object | None:
     """Fetch a URL and decode it as JSON, or None on failure.
 
     Goes through fetch_url() so robots.txt, the honest User-Agent, the
@@ -873,7 +876,8 @@ def fetch_json(url: str) -> Optional[object]:
     try:
         return json.loads(text)
     except (ValueError, TypeError) as exc:
-        logger.error(f"Could not decode JSON from {url}: {exc}")
+        # A non-JSON response is an expected scrape outcome, not a fault.
+        logger.error(f"Could not decode JSON from {url}: {exc}")  # noqa: TRY400
         return None
 
 
@@ -885,7 +889,7 @@ def html_to_text(value: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def write_csv(events: Iterable[Dict[str, str]], filename: str) -> None:
+def write_csv(events: Iterable[dict[str, str]], filename: str) -> None:
     """Write a list of event dictionaries to a CSV file.
 
     The header is determined by the union of all keys.  Missing keys
@@ -894,10 +898,11 @@ def write_csv(events: Iterable[Dict[str, str]], filename: str) -> None:
     Args:
         events: Iterable of event dictionaries.
         filename: Output CSV filename.
+
     """
     # Determine all field names
     fieldnames = set()
-    events_list: List[Dict[str, str]] = []
+    events_list: list[dict[str, str]] = []
     for event in events:
         events_list.append(event)
         fieldnames.update(event.keys())
@@ -927,7 +932,7 @@ def write_csv(events: Iterable[Dict[str, str]], filename: str) -> None:
     # Append any remaining fields not in the preferred order
     remaining = [f for f in fieldnames if f not in preferred_order]
     header = preferred_order + sorted(remaining)
-    with open(filename, "w", newline="", encoding="utf-8") as f:
+    with Path(filename).open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=header)
         writer.writeheader()
         for event in events_list:
@@ -937,7 +942,7 @@ def write_csv(events: Iterable[Dict[str, str]], filename: str) -> None:
 def main() -> None:
     """Main entry point of the script."""
     configure_logging()
-    events: List[Dict[str, str]] = []
+    events: list[dict[str, str]] = []
     # Fetch and parse metalgigs concerts and festivals
     print("Fetching metalgigs event URLs…", file=sys.stderr)
     mg_urls = get_sitemap_event_urls(

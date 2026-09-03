@@ -5,24 +5,30 @@ from flask_wtf import FlaskForm
 # that carry no file part.
 from flask_wtf.file import FileField
 from wtforms import (
-    StringField,
-    TextAreaField,
     DateField,
-    TimeField,
+    IntegerField,
+    PasswordField,
     SelectField,
     SelectMultipleField,
-    PasswordField,
-    IntegerField,
+    StringField,
+    TextAreaField,
+    TimeField,
 )
 from wtforms.fields.datetime import DateTimeField
-from wtforms.fields.simple import HiddenField, BooleanField
-from wtforms.validators import DataRequired, Optional, Email, EqualTo, Length
-from wtforms.validators import ValidationError
+from wtforms.fields.simple import BooleanField, HiddenField
+from wtforms.validators import (
+    DataRequired,
+    Email,
+    EqualTo,
+    Length,
+    Optional,
+    ValidationError,
+)
 
 from diytracker.utils import is_safe_link
 
 try:
-    from flask_babel import lazy_gettext as _l  # type: ignore
+    from flask_babel import lazy_gettext as _l  # type: ignore[import-not-found]
 except ImportError:  # pragma: no cover - defensive fallback
 
     def _l(s):
@@ -35,15 +41,14 @@ class SafeLink:
     Empty values pass so the validator can sit behind Optional().
     """
 
-    def __call__(self, form, field):
+    def __call__(self, form, field):  # noqa: ARG002 - WTForms validator protocol
         if field.data and not is_safe_link(field.data):
             raise ValidationError(_l("Links must start with http:// or https://."))
 
 
 def get_canton_choices():
-    """
-    Get list of Swiss cantons for SelectField
-    :return: a list of tuples with canton abbreviations and names
+    """Get list of Swiss cantons for SelectField
+    :return: a list of tuples with canton abbreviations and names.
     """
     return [
         ("AG", "Aargau"),
@@ -206,7 +211,8 @@ class DeleteVenueForm(FlaskForm):
 
 class PageTextForm(FlaskForm):
     """Per-locale intro texts for a canton/genre landing page. All fields
-    optional: blanking a locale deletes its row (de then serves as fallback)."""
+    optional: blanking a locale deletes its row (de then serves as fallback).
+    """
 
     text_de = TextAreaField(_l("German"), validators=[Optional()])
     text_fr = TextAreaField(_l("French"), validators=[Optional()])

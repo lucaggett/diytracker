@@ -7,18 +7,20 @@ overrides (CSRF off, rate limiter off, scrape detector off) through config.
 Schema is rebuilt per-test (drop_all/create_all) so tests are isolated.
 """
 
+import contextlib
 import os
 import sys
 import tempfile
+from typing import ClassVar
 
 import pytest
 
 # Make sure the project root is importable regardless of pytest's rootdir.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from diytracker.app import create_app  # noqa: E402
-from diytracker.config import TestConfig  # noqa: E402
-from diytracker.models import db, Submitter, Venue, Event  # noqa: E402
+from diytracker.app import create_app
+from diytracker.config import TestConfig
+from diytracker.models import Event, Submitter, Venue, db
 
 # A shared temp-file DB (rather than sqlite:///:memory:) so every connection
 # from the pool sees the same database.
@@ -31,16 +33,14 @@ _app = create_app(TestConfig(f"sqlite:///{_DB_PATH}"))
 # attribute (not RATELIMIT_ENABLED) so the rate-limit test can flip it back
 # on for one request burst — config-level disable can't be re-enabled at
 # runtime.
-from diytracker.services.limits import limiter as _limiter  # noqa: E402
+from diytracker.services.limits import limiter as _limiter
 
 _limiter.enabled = False
 
 
 def pytest_unconfigure(config):
-    try:
+    with contextlib.suppress(OSError):
         os.unlink(_DB_PATH)
-    except OSError:
-        pass
 
 
 @pytest.fixture
@@ -121,6 +121,7 @@ def make_venue(app):
 @pytest.fixture
 def make_event(app, make_venue):
     from datetime import datetime, time, timedelta
+
     from diytracker.services.events import compute_event_hash
 
     def _make(
@@ -192,7 +193,7 @@ class FakeSMTP:
     goes through services/mail.py, so there is one thing to patch.
     """
 
-    instances = []
+    instances: ClassVar[list] = []
 
     def __init__(self, host, port, context=None):
         self.host = host

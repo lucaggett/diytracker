@@ -24,7 +24,7 @@ class TestSendContactEmail:
         monkeypatch.delenv("EMAIL_SERVER", raising=False)
         monkeypatch.delenv("EMAIL_USERNAME", raising=False)
         monkeypatch.delenv("EMAIL_PASSWORD", raising=False)
-        with pytest.raises(mail.MailNotConfigured):
+        with pytest.raises(mail.MailNotConfiguredError):
             contact.send_contact_email("Jane", "jane@example.com", "Hi")
 
     def test_propagates_smtp_errors(self, fake_smtp):

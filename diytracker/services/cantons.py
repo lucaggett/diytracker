@@ -19,7 +19,8 @@ def canton_directory():
     """{slug: {"code", "name", "venue_ids", "event_count"}} for every canton
     with an upcoming event. Names are the canonical (untranslated) canton
     names from CANTONS; slugs derive from them. Cached; bust_cache() on any
-    event/venue write invalidates it."""
+    event/venue write invalidates it.
+    """
     rows = (
         db.session.query(Venue.id, Venue.canton, Venue.city, db.func.count(Event.id))
         .join(Event, Event.venue_id == Venue.id)
@@ -45,7 +46,8 @@ def canton_directory():
 
 def top_cantons(limit=10):
     """(slug, canonical_name) pairs for the footer, most upcoming events
-    first. Names are localized in the template via _()."""
+    first. Names are localized in the template via _().
+    """
     directory = canton_directory()
     ranked = sorted(
         directory.items(), key=lambda item: (-item[1]["event_count"], item[0])

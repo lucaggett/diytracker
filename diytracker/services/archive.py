@@ -23,7 +23,8 @@ def _today_start():
 @cache.memoize()
 def archive_directory():
     """{year: [(month, event_count), ...]} for every month with at least one
-    past event, newest first (years descending, months descending within)."""
+    past event, newest first (years descending, months descending within).
+    """
     rows = (
         db.session.query(
             db.func.strftime("%Y", Event.date),
@@ -48,7 +49,8 @@ def archive_directory():
 
 def archive_month_events(year, month):
     """Past events in the given month, grouped by day ({date: [events]},
-    days ascending, events ascending within each day)."""
+    days ascending, events ascending within each day).
+    """
     start = datetime(year, month, 1)
     end = min(start + relativedelta(months=1), _today_start())
     events = (
@@ -65,7 +67,8 @@ def archive_month_events(year, month):
 
 def adjacent_months(year, month):
     """((prev_year, prev_month), (next_year, next_month)) among the months
-    that actually have past events; None on either side when at the edge."""
+    that actually have past events; None on either side when at the edge.
+    """
     months = sorted(
         (y, m)
         for y, month_counts in archive_directory().items()

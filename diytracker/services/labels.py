@@ -1,5 +1,6 @@
 """Label helpers: slug generation, form choices and the promoter dashboard
-stats query."""
+stats query.
+"""
 
 from datetime import date, timedelta
 
@@ -13,7 +14,8 @@ from diytracker.services.seo import slugify
 
 def unique_slug(name, exclude_id=None):
     """Slug for *name* that is unique among labels, suffixing -2/-3/... on
-    collision. `exclude_id` skips the label being renamed."""
+    collision. `exclude_id` skips the label being renamed.
+    """
     base = slugify(name) or "label"
     slug = base
     counter = 2
@@ -41,19 +43,22 @@ def all_label_choices():
 def owned_labels(user):
     """The labels *user* may attach to events. Admins get no special
     treatment — attaching someone else's label is exactly the accident
-    this prevents."""
+    this prevents.
+    """
     return Label.query.filter_by(promoter_id=user.id).order_by(Label.name.asc()).all()
 
 
 def owned_label_choices(user):
     """(value, name) pairs for EventForm.label_id restricted to the user's
-    own labels; "" means no label."""
+    own labels; "" means no label.
+    """
     return [("", "—")] + [(str(label.id), label.name) for label in owned_labels(user)]
 
 
 def _first_matching_label(labels, name, acts_raw):
     """The first label in *labels* whose name fuzzily matches the event name
-    or one of its acts, else None."""
+    or one of its acts, else None.
+    """
     acts = [act.strip() for act in (acts_raw or "").split(",") if act.strip()]
     for label in labels:
         if name_similarity(label.name, name) or any(
@@ -98,7 +103,8 @@ TREND_DAYS = 30
 def likely_queue_matches(labels):
     """Pending, upcoming queue rows whose title/line-up/organizer fuzzily
     matches one of *labels* — the read-only "in review, likely yours"
-    dashboard panel. Returns [(ScrapedEvent, Label)]."""
+    dashboard panel. Returns [(ScrapedEvent, Label)].
+    """
     if not labels:
         return []
     rows = (

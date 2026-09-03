@@ -1,7 +1,8 @@
-import os
 import random as _r
 from collections import defaultdict
-from datetime import datetime, time as time_type, timedelta
+from datetime import datetime, timedelta
+from datetime import time as time_type
+from pathlib import Path
 
 from diytracker.models import Event
 from diytracker.utils import clean_genre_tokens, parent_for_token, parent_genres
@@ -41,17 +42,17 @@ def _load_font(size, bold=False):
         ]
     )
     for path in candidates:
-        if os.path.exists(path):
+        if Path(path).exists():
             try:
                 return ImageFont.truetype(path, size)
-            except Exception:
+            except OSError:
                 continue
-    if os.path.exists("/System/Library/Fonts/Helvetica.ttc"):
+    if Path("/System/Library/Fonts/Helvetica.ttc").exists():
         try:
             return ImageFont.truetype(
                 "/System/Library/Fonts/Helvetica.ttc", size, index=0
             )
-        except Exception:
+        except OSError:
             pass
     return ImageFont.load_default()
 
@@ -146,12 +147,12 @@ def generate_weekly_calendar_image(monday_date, parent_genre=None):
             "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
             "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
         ]:
-            if os.path.exists(path):
+            if Path(path).exists():
                 try:
                     from PIL import ImageFont
 
                     return ImageFont.truetype(path, size)
-                except Exception:
+                except OSError:
                     pass
         return _load_font(size, bold=True)
 

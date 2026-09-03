@@ -65,7 +65,8 @@ class CantonSlugConverter(BaseConverter):
     """URL converter for /<canton-slug>/ landing pages: lowercase slugs only,
     with reserved segments excluded at routing time so paths like /logout
     keep their original behavior (405, honeypot, ...) instead of being
-    slash-redirected into the canton route."""
+    slash-redirected into the canton route.
+    """
 
     regex = (
         r"(?!(?:" + "|".join(re.escape(s) for s in sorted(RESERVED_SLUGS)) + r")$)"
@@ -115,7 +116,8 @@ def localized_paths(endpoint=None, view_args=None):
 
     Passes an explicit lang_prefix/lang per locale so the result never
     depends on the requester's own locale (the sitemap is cached and must
-    not inherit it)."""
+    not inherit it).
+    """
     if endpoint is None:
         rule = request.url_rule
         if rule is None:  # 404/500 pages
@@ -142,7 +144,8 @@ def localized_paths(endpoint=None, view_args=None):
 
 def hreflang_entries(endpoint=None, view_args=None):
     """[(hreflang, absolute URL)] for all locales plus x-default (= the
-    default locale's URL); [] when the page is not localizable."""
+    default locale's URL); [] when the page is not localizable.
+    """
     paths = localized_paths(endpoint, view_args)
     if not paths:
         return []
@@ -171,7 +174,8 @@ def parse_price(raw):
 
 def parse_acts(raw):
     """Split the free-text acts column (newline-, pipe- or comma-separated)
-    into a deduplicated list of act names."""
+    into a deduplicated list of act names.
+    """
     seen = {}
     for part in re.split(r"[\n|,]", raw or ""):
         name = part.strip()
@@ -192,7 +196,8 @@ def _flyer_url(flyer):
 def parse_swiss_coords(coords):
     """Parse a 'lat,lon' string; None if malformed or outside the Swiss
     bounding box. The map is a cutout of Switzerland with panning locked to
-    it, so venues outside the box would be unreachable anyway."""
+    it, so venues outside the box would be unreachable anyway.
+    """
     try:
         lat, lon = (float(part) for part in (coords or "").split(","))
     except ValueError:
@@ -335,7 +340,8 @@ def venue_json_ld(venue, coords=None):
 def collection_json_ld(name, description, url, events):
     """CollectionPage + ItemList JSON-LD for genre/canton/label landing pages:
     a list of the upcoming events shown on that page, each pointing back at
-    its own event page (which carries the full MusicEvent JSON-LD)."""
+    its own event page (which carries the full MusicEvent JSON-LD).
+    """
     return {
         "@context": "https://schema.org",
         "@type": "CollectionPage",

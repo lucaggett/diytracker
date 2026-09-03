@@ -25,13 +25,13 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import joinedload
 
 from diytracker.models import Event, EventDailyViews, db
-from diytracker.services.events import upcoming_filter
 from diytracker.services.analytics import (
     STATS_WINDOW_DAYS,
     _build_valid_dates,
     _iter_filtered_lines,
     find_log_files,
 )
+from diytracker.services.events import upcoming_filter
 
 # Combined log format: IP ident user [date] "request" status size "ref" "ua".
 # Only successful GETs of event detail pages count; the path regex mirrors
@@ -91,7 +91,8 @@ def collect_event_day_counts(files, valid_dates):
 def persist_event_day_counts(counts, chunk_size=500):
     """Upsert per-(event, day) rows, keeping the MAX of stored and new values
     so repeated runs over the same (possibly partial) log window never shrink
-    or inflate counts. Requires an app context."""
+    or inflate counts. Requires an app context.
+    """
     rows = [
         {"event_id": event_id, "date": day, "hits": hits, "visitors": visitors}
         for (event_id, day), (hits, visitors) in sorted(counts.items())
@@ -112,7 +113,8 @@ def persist_event_day_counts(counts, chunk_size=500):
 
 def generate_event_view_stats() -> tuple[bool, str]:
     """Recompute and persist event view counts for the analytics window.
-    Mirrors analytics.generate_stats()'s (success, message) contract."""
+    Mirrors analytics.generate_stats()'s (success, message) contract.
+    """
     log_files = find_log_files()
     if not log_files:
         return False, "No nginx access log files found"

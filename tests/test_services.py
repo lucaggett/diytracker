@@ -3,12 +3,12 @@
 from datetime import date, datetime, time, timedelta
 
 from diytracker.models import (
-    db,
     Event,
     ScrapedEvent,
     SkippedUrl,
     Venue,
     VenueAccessibility,
+    db,
     utcnow,
 )
 from diytracker.services.events import compute_event_hash
@@ -41,7 +41,7 @@ class TestComputeEventHash:
 
 class TestGetOrCreateVenue:
     def test_creates_when_absent(self, app):
-        venue, created = get_or_create_venue("New", "Addr", "Bern", "BE", "3000")
+        _venue, created = get_or_create_venue("New", "Addr", "Bern", "BE", "3000")
         db.session.commit()
         assert created is True
         assert Venue.query.count() == 1
@@ -65,9 +65,7 @@ class TestScrapeImport:
     so the real cleanup/dedup/filtering logic runs without any network."""
 
     def _run_import(self, app, monkeypatch, scraped_rows):
-        import diytracker.services.scrape_events as scrape_events
-        import diytracker.services.scraper as scraper
-        import diytracker.services.venue_sources as venue_sources
+        from diytracker.services import scrape_events, scraper, venue_sources
 
         # _scrape_and_import() also walks the venue registry, and every one of
         # those fetchers goes to the live site. Emptying the registry keeps
@@ -84,14 +82,10 @@ class TestScrapeImport:
                 r["url"] for r in scraped_rows if frag in r["url"]
             ],
         )
-        monkeypatch.setattr(scrape_events, "get_petzi_event_urls", lambda: [])
+        monkeypatch.setattr(scrape_events, "get_petzi_event_urls", list)
         url_to_row = {r["url"]: r for r in scraped_rows}
-        monkeypatch.setattr(
-            scrape_events, "parse_metalgigs_event", lambda url: url_to_row.get(url)
-        )
-        monkeypatch.setattr(
-            scrape_events, "parse_petzi_event", lambda url: url_to_row.get(url)
-        )
+        monkeypatch.setattr(scrape_events, "parse_metalgigs_event", url_to_row.get)
+        monkeypatch.setattr(scrape_events, "parse_petzi_event", url_to_row.get)
         monkeypatch.setattr(scraper, "set_last_scrape_time", lambda dt: None)
 
         scraper._scrape_and_import(app)

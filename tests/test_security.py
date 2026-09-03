@@ -10,7 +10,6 @@ import pytest
 from diytracker.models import db
 from diytracker.services.limits import limiter
 
-
 # --------------------------------------------------------------------------
 # Ticket links must never reach an href unless they are http(s)
 # --------------------------------------------------------------------------
@@ -59,6 +58,7 @@ def test_safe_ticket_link_still_rendered(app, client, make_event):
 @pytest.mark.parametrize("bad_link", HOSTILE_LINKS)
 def test_event_form_rejects_non_http_ticket_link(app, bad_link):
     from werkzeug.datastructures import MultiDict
+
     from diytracker.forms import EventForm
 
     # formdata, not data=: Optional() keys off raw_data and would otherwise
@@ -71,6 +71,7 @@ def test_event_form_rejects_non_http_ticket_link(app, bad_link):
 
 def test_event_form_accepts_http_ticket_link(app):
     from werkzeug.datastructures import MultiDict
+
     from diytracker.forms import EventForm
 
     with app.test_request_context():

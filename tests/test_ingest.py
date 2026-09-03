@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 import pytest
 from PIL import Image
 
-from diytracker.models import db, Event, ScrapedEvent
+from diytracker.models import Event, ScrapedEvent, db
 from diytracker.services.ingest import ingest_event, parse_date, parse_time
 
 
@@ -269,7 +269,11 @@ class TestScanQueueDuplicates:
     def _seed_pair(self):
         # Two eventbot rows for the same show — strict dedup never ran on them,
         # so both land unflagged.
-        common = dict(city="Basel", venue_name="Sommercasino", title="Backfill Gig")
+        common = {
+            "city": "Basel",
+            "venue_name": "Sommercasino",
+            "title": "Backfill Gig",
+        }
         a = ingest_event(
             _payload(
                 source="eventbot", source_id="p-a", start_date=_day_in(18), **common

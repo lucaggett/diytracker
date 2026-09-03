@@ -2,7 +2,7 @@
 
 import pytest
 
-from diytracker.models import db, utcnow, VenueAccessibility
+from diytracker.models import VenueAccessibility, db, utcnow
 
 
 class TestCalendar:
@@ -563,7 +563,7 @@ class TestLabelPage:
             re.search(
                 r'<script type="application/ld\+json"[^>]*>(.*?)</script>',
                 html,
-                re.S,
+                re.DOTALL,
             ).group(1)
         )
         assert meta == ld["description"]

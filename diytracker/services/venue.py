@@ -1,13 +1,14 @@
 import unicodedata
 from difflib import SequenceMatcher
 
-from diytracker.models import db, Event, Venue, VenueAccessibility, utcnow
+from diytracker.models import Event, Venue, VenueAccessibility, db, utcnow
 from diytracker.utils import split_leading_plz
 
 
 def get_or_create_venue(name, address, city, canton, plz, coords=""):
     """Find venue by (name, city, plz) or create it. Returns (venue, created).
-    Does not commit — caller is responsible for the transaction."""
+    Does not commit — caller is responsible for the transaction.
+    """
     venue = Venue.query.filter_by(name=name, city=city, plz=plz).first()
     if venue:
         return venue, False
@@ -57,7 +58,34 @@ FUZZY_RATIO_THRESHOLD = 0.80
 _BACKFILL_FIELDS = ("address", "city", "plz", "canton", "coords")
 
 _CANTON_CODES = frozenset(
-    "ag ai ar be bl bs fr ge gl gr ju lu ne nw ow sg sh so sz tg ti ur vd vs zg zh".split()
+    [
+        "ag",
+        "ai",
+        "ar",
+        "be",
+        "bl",
+        "bs",
+        "fr",
+        "ge",
+        "gl",
+        "gr",
+        "ju",
+        "lu",
+        "ne",
+        "nw",
+        "ow",
+        "sg",
+        "sh",
+        "so",
+        "sz",
+        "tg",
+        "ti",
+        "ur",
+        "vd",
+        "vs",
+        "zg",
+        "zh",
+    ]
 )
 
 
@@ -76,7 +104,8 @@ def normalize_name(name):
 
 def normalize_city(city):
     """Like normalize_name, but also strips a leading 4-digit PLZ ("8005 Zürich")
-    and a trailing canton abbreviation ("Bremgarten AG")."""
+    and a trailing canton abbreviation ("Bremgarten AG").
+    """
     normalized = normalize_name(split_leading_plz(city)[1])
     tokens = normalized.split()
     if len(tokens) > 1 and tokens[-1] in _CANTON_CODES:
@@ -86,7 +115,8 @@ def normalize_city(city):
 
 def normalize_address(address):
     """Normalize the street part of an address: anything after the first comma
-    (", 2504 Biel/Bienne") is dropped so differently-padded entries compare equal."""
+    (", 2504 Biel/Bienne") is dropped so differently-padded entries compare equal.
+    """
     return normalize_name((address or "").split(",", 1)[0])
 
 
@@ -142,17 +172,19 @@ def find_dedup_candidates(venues):
                 auto_groups.append(sorted(bucket, key=lambda v: v.id))
         for i, (_city_a, bucket_a) in enumerate(buckets):
             for _city_b, bucket_b in buckets[i + 1 :]:
-                for a in bucket_a:
-                    for b in bucket_b:
-                        pairs.append((a, b, "same name, city differs"))
+                pairs.extend(
+                    (a, b, "same name, city differs")
+                    for a in bucket_a
+                    for b in bucket_b
+                )
 
     by_city = {}
     for venue in venues:
         city = normalize_city(venue.city)
         if city:
             by_city.setdefault(city, []).append(venue)
-    for bucket in by_city.values():
-        bucket = sorted(bucket, key=lambda v: v.id)
+    for raw_bucket in by_city.values():
+        bucket = sorted(raw_bucket, key=lambda v: v.id)
         for i, a in enumerate(bucket):
             name_a = normalize_name(a.name)
             for b in bucket[i + 1 :]:
@@ -200,7 +232,8 @@ def planned_backfills(survivor, losers):
 def merge_group(survivor, losers):
     """Fold `losers` into `survivor`: backfill empty fields, repoint events and
     accessibility data, then delete the losers. Flushes but does not commit.
-    Returns a stats dict describing what happened."""
+    Returns a stats dict describing what happened.
+    """
     stats = {
         "backfilled": planned_backfills(survivor, losers),
         "accessibility": [],

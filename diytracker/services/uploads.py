@@ -1,5 +1,5 @@
-import os
 import secrets
+from pathlib import Path
 
 from PIL import Image
 from werkzeug.datastructures import FileStorage
@@ -58,8 +58,8 @@ def save_flyer_file(file_storage, upload_folder):
         # filename-derived path issues; only the validated extension is kept.
         ext = file_storage.filename.rsplit(".", 1)[1].lower()
         filename = f"{secrets.token_hex(8)}.{ext}"
-        path = os.path.join(upload_folder, filename)
-        fs_path = path if os.path.isabs(path) else os.path.join(str(ROOT), path)
+        path = str(Path(upload_folder) / filename)
+        fs_path = path if Path(path).is_absolute() else str(ROOT / path)
         file_storage.save(fs_path)
         _resize_flyer(fs_path)
         return path

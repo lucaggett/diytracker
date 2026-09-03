@@ -96,9 +96,9 @@ def _iter_filtered_lines(files: list[Path], valid_dates: set[str] | None):
     for path in files:
         try:
             opener = (
-                gzip.open(path, "rt", errors="replace")
+                gzip.open(path, "rt", errors="replace")  # noqa: SIM115 - closed by the `with` on the next line
                 if path.suffix == ".gz"
-                else open(path, errors="replace")
+                else path.open(errors="replace")
             )
             with opener as f:
                 for line in f:
@@ -129,8 +129,8 @@ def generate_report(timeframe: str = "7d") -> tuple[bool, str]:
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     env = {**os.environ, "LANG": "C", "LC_ALL": "C"}
-    result = subprocess.run(
-        [
+    result = subprocess.run(  # noqa: S603 - fixed argv, goaccess resolved from PATH
+        [  # noqa: S607 - goaccess is resolved from PATH on the server
             "goaccess",
             "-",
             "--log-format=COMBINED",
@@ -144,6 +144,7 @@ def generate_report(timeframe: str = "7d") -> tuple[bool, str]:
         capture_output=True,
         text=True,
         env=env,
+        check=False,
     )
 
     if result.returncode != 0:
@@ -158,7 +159,7 @@ def _parse_panel_date(value: str):
     for fmt in ("%Y-%m-%d", "%Y%m%d", "%d/%b/%Y"):
         try:
             return datetime.strptime(str(value), fmt).date()
-        except ValueError:
+        except ValueError:  # noqa: PERF203 - probing three date formats, not a hot loop
             continue
     return None
 
@@ -225,7 +226,8 @@ def _parse_goaccess_json(data: dict, today) -> dict:
 
 def generate_stats() -> tuple[bool, str]:
     """Run goaccess over the last 60 days and cache compact visitor/hit
-    stats as JSON. Returns (success, message)."""
+    stats as JSON. Returns (success, message).
+    """
     if not shutil.which("goaccess"):
         return False, "goaccess not found in PATH"
 
@@ -248,8 +250,8 @@ def generate_stats() -> tuple[bool, str]:
     raw_path = STATS_PATH.with_name("analytics_stats_raw.json")
 
     env = {**os.environ, "LANG": "C", "LC_ALL": "C"}
-    result = subprocess.run(
-        [
+    result = subprocess.run(  # noqa: S603 - fixed argv, goaccess resolved from PATH
+        [  # noqa: S607 - goaccess is resolved from PATH on the server
             "goaccess",
             "-",
             "--log-format=COMBINED",
@@ -263,6 +265,7 @@ def generate_stats() -> tuple[bool, str]:
         capture_output=True,
         text=True,
         env=env,
+        check=False,
     )
 
     if result.returncode != 0:
@@ -278,7 +281,7 @@ def generate_stats() -> tuple[bool, str]:
     stats = _parse_goaccess_json(raw, today)
     tmp_path = STATS_PATH.with_suffix(".json.tmp")
     tmp_path.write_text(json.dumps(stats))
-    os.replace(tmp_path, STATS_PATH)
+    tmp_path.replace(STATS_PATH)
 
     return True, f"Stats generated from {len(log_files)} log file(s)"
 
@@ -349,7 +352,8 @@ def start_stats_scheduler(app):
 
 def kick_stats_generation(app):
     """Fire a one-shot background regeneration (lazy fallback when no
-    scheduler is running, e.g. dev mode or a dead first worker)."""
+    scheduler is running, e.g. dev mode or a dead first worker).
+    """
     threading.Thread(
         target=_generate_stats_guarded,
         args=(app,),

@@ -1,12 +1,12 @@
 import secrets
 import sqlite3
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import event as sa_event
 from sqlalchemy.engine import Engine
-from werkzeug.security import generate_password_hash, check_password_hash
-import uuid
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from diytracker.utils import parent_genres as _compute_parent_genres
 
@@ -194,7 +194,8 @@ class Submitter(db.Model):
 
 class Label(db.Model):
     """A record label / collective owned by a promoter account. Events can
-    optionally carry a label; each label gets a public /label/<slug>/ page."""
+    optionally carry a label; each label gets a public /label/<slug>/ page.
+    """
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
@@ -222,7 +223,8 @@ class Label(db.Model):
 class PageText(db.Model):
     """Admin-editable intro paragraph for a landing page, one row per locale.
     kind is 'canton' or 'genre'; key is the page slug (zuerich, metal, ...).
-    Lookup falls back to the default locale; no row means no paragraph."""
+    Lookup falls back to the default locale; no row means no paragraph.
+    """
 
     id = db.Column(db.Integer, primary_key=True)
     kind = db.Column(db.String(20), nullable=False)
@@ -244,7 +246,8 @@ class Genre(db.Model):
     hardcoded list in forms.py: rows with added_by_id NULL are the curated
     seed set (only admins may delete them); user-added rows may be deleted
     by their creator or an admin. Event.genre stays a free-text string, so
-    deleting a row never touches existing events."""
+    deleting a row never touches existing events.
+    """
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
@@ -345,7 +348,8 @@ class ScrapedEvent(db.Model):
 class SkippedUrl(db.Model):
     """URLs the scraper fetched and rejected (non-concert petzi rows, invalid
     payloads). Without a record of these, every scrape run re-downloads the
-    same rejected pages; the scraper folds them into its known-URL set."""
+    same rejected pages; the scraper folds them into its known-URL set.
+    """
 
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(300), nullable=False, unique=True)
@@ -359,7 +363,8 @@ class SkippedUrl(db.Model):
 
 class ScrapeSuspect(db.Model):
     """IPs flagged by services/scrape_detection.py as likely scrapers.
-    Detection-only: rows are evidence for the admin view, nothing is blocked."""
+    Detection-only: rows are evidence for the admin view, nothing is blocked.
+    """
 
     id = db.Column(db.Integer, primary_key=True)
     ip = db.Column(db.String(45), nullable=False, unique=True)  # v6 max length
@@ -397,7 +402,8 @@ class EventDailyViews(db.Model):
     nginx access logs by services/event_views.py on the analytics schedule.
     event_id is deliberately not a foreign key: log lines may reference
     events that were deleted later, and rows must outlive the log window
-    (days that rotate out of the logs are never recomputed)."""
+    (days that rotate out of the logs are never recomputed).
+    """
 
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, nullable=False, index=True)
@@ -418,7 +424,8 @@ class ActionLog(db.Model):
     services/audit.py. target_id is deliberately not a foreign key: log
     rows must outlive the events, queue entries and labels they describe.
     actor is a snapshot (email, or "tui" for the admin tool) so the row
-    stays readable after the account is deleted."""
+    stays readable after the account is deleted.
+    """
 
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)  # UTC
@@ -440,5 +447,5 @@ def _format_parent_genres(genre):
 
 @sa_event.listens_for(Event, "before_insert")
 @sa_event.listens_for(Event, "before_update")
-def _sync_event_parent_genres(mapper, connection, target):
+def _sync_event_parent_genres(mapper, connection, target):  # noqa: ARG001 - SQLAlchemy listener signature
     target.parent_genres = _format_parent_genres(target.genre)

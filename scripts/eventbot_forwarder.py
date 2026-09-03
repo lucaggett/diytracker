@@ -65,9 +65,11 @@ def eventbot_to_payload(rec):
 def encode_multipart(payload, flyer_bytes, flyer_name):
     boundary = uuid.uuid4().hex
     parts = [
-        f"--{boundary}\r\n"
-        'Content-Disposition: form-data; name="event"\r\n\r\n'
-        f"{json.dumps(payload)}\r\n"
+        (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="event"\r\n\r\n'
+            f"{json.dumps(payload)}\r\n"
+        )
     ]
     body = "".join(parts).encode("utf-8")
     if flyer_bytes is not None:
@@ -76,11 +78,11 @@ def encode_multipart(payload, flyer_bytes, flyer_name):
                 f"--{boundary}\r\n"
                 f'Content-Disposition: form-data; name="flyer"; filename="{flyer_name}"\r\n'
                 "Content-Type: application/octet-stream\r\n\r\n"
-            ).encode("utf-8")
+            ).encode()
             + flyer_bytes
             + b"\r\n"
         )
-    body += f"--{boundary}--\r\n".encode("utf-8")
+    body += f"--{boundary}--\r\n".encode()
     return body, f"multipart/form-data; boundary={boundary}"
 
 
@@ -102,7 +104,7 @@ def deliver(url, token, payload, flyer_bytes, flyer_name, timeout=30):
     except urllib.error.HTTPError as e:
         try:
             detail = json.loads(e.read().decode("utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001 - error body is best-effort detail
             detail = {}
         return e.code, detail
 

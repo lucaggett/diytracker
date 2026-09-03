@@ -71,7 +71,8 @@ SEED_GENRES = [
 def seed_genres():
     """Insert any missing seed genres (case-insensitive). Idempotent; runs at
     every app startup after create_all(), which is also how existing
-    databases get their initial rows — no separate migration needed."""
+    databases get their initial rows — no separate migration needed.
+    """
     existing = {name.lower() for (name,) in db.session.query(Genre.name).all()}
     missing = [name for name in SEED_GENRES if name.lower() not in existing]
     if not missing:
@@ -105,7 +106,5 @@ def canonicalize_genre_string(raw):
     Used for sources that don't respect the catalog spelling (konzibot).
     """
     catalog = {g.name.lower(): g.name for g in Genre.query.all()}
-    out = []
-    for token in clean_genre_tokens(raw or ""):
-        out.append(catalog.get(token.lower(), token))
+    out = [catalog.get(token.lower(), token) for token in clean_genre_tokens(raw or "")]
     return ", ".join(out)

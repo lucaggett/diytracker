@@ -34,7 +34,8 @@ def events_per_month():
 
 def monthly_series(months=24):
     """The last `months` calendar months as [{"month", "count"}], zero-filled,
-    oldest first — chart-ready, same shape as the admin traffic series."""
+    oldest first — chart-ready, same shape as the admin traffic series.
+    """
     counts = dict(events_per_month())
     first = date.today().replace(day=1) - relativedelta(months=months - 1)
     series = []
@@ -56,7 +57,8 @@ def events_per_year():
 @cache.memoize()
 def events_by_parent_genre():
     """[(genre_name, count)] in PARENT_GENRES_ORDER; events with several
-    parent genres count once per genre. Untagged events land in "Other"."""
+    parent genres count once per genre. Untagged events land in "Other".
+    """
     totals = Counter()
     for (parents,) in db.session.query(Event.parent_genres).all():
         names = [name for name in (parents or "").strip(",").split(",") if name]
@@ -74,7 +76,8 @@ def events_by_parent_genre():
 @cache.memoize()
 def events_by_canton():
     """[(canton_name_or_None, count)], most events first; None means the
-    venue's canton could not be resolved."""
+    venue's canton could not be resolved.
+    """
     rows = (
         db.session.query(Venue.canton, Venue.city, db.func.count(Event.id))
         .join(Event, Event.venue_id == Venue.id)
@@ -105,7 +108,8 @@ def ticket_price_stats():
     """Approximate CHF price stats via seo.parse_price (free/Kollekte → 0,
     ranges → lower bound, unparseable → None). Aggregates (mean/median/…)
     and buckets cover paid events only; free and unparseable are counted
-    separately."""
+    separately.
+    """
     prices = [parse_price(raw) for (raw,) in db.session.query(Event.ticket_price).all()]
     total = len(prices)
     unparsed = sum(1 for p in prices if p is None)
