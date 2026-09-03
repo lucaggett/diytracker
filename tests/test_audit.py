@@ -1,9 +1,13 @@
 """The ActionLog audit trail: rows are written alongside the actions they
-describe and readable through diytracker/admin/audit.py."""
+describe.
+
+Only the web half lives here now. Rows written with actor="tui" and the
+reader behind the Audit log screen belong to the diytracker-admin repo.
+"""
 
 from datetime import date, time, timedelta
 
-from diytracker.admin import audit, labels as admin_labels, queue_review
+from diytracker.services import queue_review
 from diytracker.models import db, ActionLog, Event, ScrapedEvent
 
 
@@ -52,7 +56,9 @@ class TestQueueAudit:
         assert row.target_id == rec.id
         assert "Audit Show" in row.detail
 
-    def test_tui_discard_and_unflag_log_as_tui(self, app):
+    def test_queue_review_discard_and_unflag_log(self, app):
+        # queue_review backs /queue/duplicates; its rows are attributed to the
+        # caller that ran it, which for these direct calls is "tui".
         rec = _make_scraped(needs_review=True, review_reason="same-day collision")
         queue_review.unflag(rec.id)
         rec2 = _make_scraped(
@@ -117,27 +123,3 @@ class TestLabelAudit:
         assert row.target_type == "event"
         assert row.target_id == event.id
         assert f"label_id={label.id}" in row.detail
-
-    def test_tui_label_delete_logs(self, app, make_user, make_label):
-        label = make_label(make_user(email="promo@example.com", is_promoter=True))
-        label_id = label.id
-        admin_labels.delete_label(label_id)
-        row = ActionLog.query.filter_by(action="label.delete").one()
-        assert row.actor == "tui"
-        assert row.target_id == label_id
-
-
-class TestAuditReader:
-    def test_list_actions_filters_and_orders(self, app, make_user, make_label):
-        promoter = make_user(email="promo@example.com", is_promoter=True)
-        make_label(promoter, name="First")
-        admin_labels.create_label("Second", promoter.email)
-        admin_labels.create_label("Third", promoter.email)
-        rows = audit.list_actions()
-        assert [r.action for r in rows[:2]] == ["label.create", "label.create"]
-        assert rows[0].id > rows[1].id  # newest first
-        assert audit.list_actions(action="label.create")
-        assert audit.list_actions(action="label.") == audit.list_actions(
-            action="label.create"
-        )
-        assert audit.list_actions(action="queue.approve") == []

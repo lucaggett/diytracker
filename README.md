@@ -71,8 +71,8 @@ The app is built by a factory: `create_app()` in `diytracker/app.py` wires
 config, extensions and blueprints and has no import-time side effects (no
 `.env` loading, no DB access, no threads). Entrypoints own those decisions:
 the root-level `app.py` (gunicorn target `app:app` and the dev server, and
-the only place that starts the scrape scheduler), `db_admin_cli.py` (CLI), and
-`tests/conftest.py` (builds a test app from `TestConfig`). To embed the app
+the only place that starts the scrape scheduler) and `tests/conftest.py`
+(builds a test app from `TestConfig`). To embed the app
 elsewhere, pass your own `Config` instance to `create_app()`.
 
 ### Run
@@ -95,45 +95,29 @@ On the production server the app runs under systemd; see
 [`deploy/README.md`](deploy/README.md) for the unit file, the login MOTD,
 and install steps. Use `systemctl {status,restart} diytracker` there.
 
-`db_admin_cli.py` is the admin tool. Run it with no arguments for the
-interactive TUI (users, events, labels, venues, venue/event/genre dedup,
-stats, traffic, audit log, ops, database maintenance, logs), or with a
-subcommand for scripted usage:
+The admin tool lives in its own repo,
+[diytracker-admin](https://github.com/lucaggett/diytracker-admin): a terminal
+UI for users and invites, labels, venue/event/genre dedup, traffic analysis,
+the audit log, database maintenance and log tailing. It reads this app's
+database and logs directly and does not import `diytracker`, so it is cloned
+next to this checkout rather than installed into it:
 
-```bash
-uv run python db_admin_cli.py                # interactive TUI
-uv run python db_admin_cli.py logs -f        # tail the access log (--error for the error log)
+```
+/srv/
+  diytracker/          this repo
+  diytracker-admin/    the admin tool (DIYTRACKER_ROOT defaults to ../diytracker)
 ```
 
-The logic lives in `diytracker/admin/`; the CLI keeps only the commands
-worth scripting (`logs`, `user`, `db`) — everything else moved into the
-TUI.
-
-Inside the TUI, `/` filters the list on every table screen (users, events,
-labels, venues, audit log) with the same term-ANDing as the site search, and
-`escape` goes back. The **Traffic** screen cycles six views with `v` — per-IP
-classification, scraping offenders, origin hosts (rDNS domain and /24),
-device mix of the human share, event views, and 5xx paths — over a window of
-7, 30 or 90 days (`t`). The **Ops** screen purges the page cache, shows where
-the scrape schedule stands, and can trigger a scrape run.
+Everything the web admin can already do — editing events and venues, the
+flagged-duplicate queue — stays here, at `/admin`, `/edit_event/<id>`,
+`/edit_venue/<id>` and `/queue/duplicates`.
 
 ### Managing users
 
-There is no signup. Use the Users screen in the TUI, or the `user`
-subcommands of `db_admin_cli.py`:
-
-```bash
-uv run python db_admin_cli.py user list
-uv run python db_admin_cli.py user add alice@example.com        # creates + emails an invite (--no-email to print the link)
-uv run python db_admin_cli.py user passwd alice@example.com     # prompts for a password
-uv run python db_admin_cli.py user admin alice@example.com --grant   # or --revoke
-uv run python db_admin_cli.py user invite alice@example.com     # resend the invite email
-uv run python db_admin_cli.py user delete alice@example.com     # --yes to skip confirmation
-```
-
-Invite emails are sent in Schwiizerdütsch by default; pass
-`--lang gsw|en|fr` on `user add`/`user invite` (the TUI asks when
-sending) to pick the language per invite.
+There is no signup, and no user management in the web UI: creating an account
+means the admin tool's Users screen or its `user` subcommands. See that repo's
+README. Invite emails go out through this app's SMTP settings, read from the
+same `.env`.
 
 ## Ingest
 
@@ -315,6 +299,8 @@ diytracker/              The application package.
     cache.py             Flask-Caching wrapper.
     contact.py           SMTP for the contact form.
     events.py / venue.py Shared business logic used by multiple blueprints.
+    queue_review.py      Triage for staged events the ingest dedup flagged;
+                         backs /queue/duplicates.
     uploads.py           Flyer upload handling.
     analytics.py         goaccess-style log report glue.
     calendar_image.py    OG-image generation for calendar pages.

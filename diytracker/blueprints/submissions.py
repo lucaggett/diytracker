@@ -12,8 +12,8 @@ from flask import (
     url_for,
 )
 
-from diytracker.admin import queue_review
-from diytracker.admin.core import AdminError
+from diytracker.services import queue_review
+from diytracker.services.errors import AdminError
 from diytracker.forms import DeleteScrapedEventForm, EventForm, GenreForm
 from diytracker.models import db, Genre, ScrapedEvent
 from diytracker.services.auth import admin_required, current_user, login_required

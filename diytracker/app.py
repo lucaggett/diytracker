@@ -2,8 +2,8 @@
 
 `create_app()` builds a fully wired Flask app and has no import-time side
 effects: no dotenv loading, no DB access, no threads. Entrypoints own those
-decisions — see the root-level app.py (gunicorn / dev server), db_admin_cli.py
-(CLI) and tests/conftest.py (test app).
+decisions — see the root-level app.py (gunicorn / dev server) and
+tests/conftest.py (test app).
 """
 
 import os

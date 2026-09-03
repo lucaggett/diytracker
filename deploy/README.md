@@ -37,8 +37,8 @@ HUP reload respawns the workers, and the scrape scheduler only starts in
 the first worker the master ever forks, so a reload would silently kill
 the scraper. Restart instead.
 
-Server lifecycle is systemctl's job; `db_admin_cli.py` only keeps `logs` and
-`user …`.
+Server lifecycle is systemctl's job. Database and user administration live
+in the separate `diytracker-admin` checkout alongside this one.
 
 ## Remote deploy (`deploy.sh`, `sudoers-diytracker`)
 

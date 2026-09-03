@@ -6,8 +6,6 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
-from diytracker.admin.core import AdminError
-from diytracker.admin.users import delete_user
 from diytracker.models import db, ScrapedEvent, Venue, VenueAccessibility
 
 
@@ -49,9 +47,17 @@ class TestForeignKeyEnforcement:
         assert rec.approved_event_id is None
         assert rec.status == ScrapedEvent.STATUS_PUBLISHED
 
-    def test_delete_user_owning_labels_is_refused(self, app, make_user, make_label):
+    def test_raw_delete_of_a_user_owning_labels_is_rejected(
+        self, app, make_user, make_label
+    ):
+        # The admin tool refuses this with a readable message before it gets
+        # here (diytracker-admin, users.delete_user); what the app owns is the
+        # constraint underneath, which has to hold whoever issues the DELETE.
         promoter = make_user(email="promo@example.com", is_promoter=True)
         make_label(promoter)
-        with pytest.raises(AdminError, match="label"):
-            delete_user("promo@example.com")
+        with pytest.raises(IntegrityError):
+            db.session.execute(
+                text("DELETE FROM submitter WHERE id = :id"), {"id": promoter.id}
+            )
+        db.session.rollback()
         assert db.session.get(type(promoter), promoter.id) is not None
