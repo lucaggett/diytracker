@@ -138,6 +138,28 @@ without URLs) and flyer storage: a pushed image is validated, resized
 and stored exactly like a user-uploaded flyer, shows up as a thumbnail
 in the approval queue, and is carried onto the `Event` when approved.
 
+That URL-level dedup only catches the *same link* arriving twice, so
+`services/ingest_dedup.py` runs a second, fuzzier pass on every source:
+same date plus a normalised match on city, venue or title against both
+the live calendar and the rest of the queue. A **strong** match (same
+title, or same venue *and* city) sets `needs_review`, which pulls the
+row out of `/queue` and onto `/queue/duplicates` for triage; a **weak**
+one (the same night in the same town, nothing more — usually two
+unrelated bands) only records `review_reason`, and the row stays in the
+queue behind an inline notice. `scripts/scan_queue_duplicates.py`
+re-derives both across the existing backlog and is safe to re-run.
+
+Approving is gated by the same two ideas. The venue is resolved with
+`services/venue.resolve_existing_venue`, which reuses an existing venue
+when the normalised name and city match and the PLZs don't contradict
+(scraped rows routinely carry no PLZ, and demanding an exact
+`(name, city, plz)` tuple is what used to mint a second venue for
+every one of them); anything merely *similar* stops the approval and
+asks. Then the duplicate matcher re-runs against the final values, and
+a strong collision has to be confirmed explicitly. Both checks run
+before anything is written, and the override is recorded in the audit
+log.
+
 ### Push API
 
 `POST /api/ingest` authenticates with `Authorization: Bearer
@@ -299,6 +321,8 @@ diytracker/              The application package.
     cache.py             Flask-Caching wrapper.
     contact.py           SMTP for the contact form.
     events.py / venue.py Shared business logic used by multiple blueprints.
+    ingest_dedup.py      Fuzzy same-day duplicate matching for everything
+                         entering the queue (see "Ingest" above).
     queue_review.py      Triage for staged events the ingest dedup flagged;
                          backs /queue/duplicates.
     uploads.py           Flyer upload handling.

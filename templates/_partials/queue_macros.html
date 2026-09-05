@@ -1,0 +1,23 @@
+{# Shared by /queue/duplicates and the approve-confirmation page: both put a
+   staged entry beside what it collides with, so the field rows and the signal
+   chips have to look identical or the two pages read as different tools. #}
+
+{% macro field(label, value) -%}
+  <div class="flex gap-2">
+    <span class="text-xs uppercase tracking-widest text-smudge w-16 shrink-0 pt-0.5">{{ label }}</span>
+    <span class="text-sm">{{ value or '—' }}</span>
+  </div>
+{%- endmacro %}
+
+{# The matcher flags on a single signal, so it also catches two different shows
+   sharing a city on the same night. Naming the signals lets the admin see at a
+   glance which kind of collision this is. #}
+{% macro signal_chips(signals) -%}
+  {% set labels = {'title': _('same title'), 'venue': _('same venue'), 'city': _('same city')} %}
+  <span class="inline-flex flex-wrap gap-1 align-middle">
+    <span class="border border-ink/40 px-1 text-[10px] uppercase tracking-widest text-smudge">{{ _('same date') }}</span>
+    {% for s in signals %}
+      <span class="border border-ink/40 px-1 text-[10px] uppercase tracking-widest text-smudge">{{ labels[s] }}</span>
+    {% endfor %}
+  </span>
+{%- endmacro %}

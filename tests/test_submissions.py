@@ -164,16 +164,125 @@ class TestEventQueue:
         rec_a = self._make_scraped(url="https://metalgigs.ch/konzerte/a", **common)
         rec_b = self._make_scraped(url="https://metalgigs.ch/konzerte/b", **common)
 
-        # Approve the first -> creates the event, marks that record approved.
-        client.post("/queue", data={"scraped_id": str(rec_a.id)})
+        # Both rows collide with each other in the queue, so each approval is
+        # gated; confirm_duplicate is the admin saying they are different shows.
+        # The hash guard is what still catches them when the admin is wrong.
+        client.post(
+            "/queue", data={"scraped_id": str(rec_a.id), "confirm_duplicate": "1"}
+        )
         assert Event.query.count() == 1
 
         # Approving the second hits the duplicate-hash guard.
         resp = client.post(
-            "/queue", data={"scraped_id": str(rec_b.id)}, follow_redirects=True
+            "/queue",
+            data={"scraped_id": str(rec_b.id), "confirm_duplicate": "1"},
+            follow_redirects=True,
         )
         assert b"already exists" in resp.data
         assert Event.query.count() == 1
+
+    # --- the approval gates -------------------------------------------------
+
+    def test_blank_plz_reuses_the_existing_venue(
+        self, client, admin, login, make_venue
+    ):
+        # The incident in one test: petzi and eventbot send no postal code, and
+        # the old exact (name, city, plz) lookup answered that with a new venue.
+        login(admin)
+        existing = make_venue(name="Kiff", city="Aarau", plz="5001", canton="AG")
+        rec = self._make_scraped(venue_name="KiFF", city="Aarau", postal_code="")
+        client.post("/queue", data={"scraped_id": str(rec.id)})
+        assert Venue.query.count() == 1
+        assert Event.query.one().venue_id == existing.id
+
+    def test_ambiguous_venue_blocks_and_writes_nothing(
+        self, client, admin, login, make_venue
+    ):
+        login(admin)
+        make_venue(name="X-tra Musikcafé", city="Zürich", plz="8005")
+        rec = self._make_scraped(venue_name="x-tra", city="Zürich", postal_code="")
+        resp = client.post("/queue", data={"scraped_id": str(rec.id)})
+        assert resp.status_code == 200
+        assert b"Which venue is this?" in resp.data
+        assert Event.query.count() == 0
+        assert Venue.query.count() == 1
+        db.session.refresh(rec)
+        assert rec.status == ScrapedEvent.STATUS_PENDING
+
+    def test_confirming_a_venue_reuses_it(self, client, admin, login, make_venue):
+        login(admin)
+        chosen = make_venue(name="X-tra Musikcafé", city="Zürich", plz="8005")
+        rec = self._make_scraped(venue_name="x-tra", city="Zürich", postal_code="")
+        client.post(
+            "/queue",
+            data={"scraped_id": str(rec.id), "confirm_venue_id": str(chosen.id)},
+        )
+        assert Venue.query.count() == 1
+        assert Event.query.one().venue_id == chosen.id
+
+    def test_confirming_new_creates_the_second_venue(
+        self, client, admin, login, make_venue
+    ):
+        login(admin)
+        make_venue(name="X-tra Musikcafé", city="Zürich", plz="8005")
+        rec = self._make_scraped(venue_name="x-tra", city="Zürich", postal_code="")
+        client.post(
+            "/queue", data={"scraped_id": str(rec.id), "confirm_venue_id": "new"}
+        )
+        assert Venue.query.count() == 2
+        assert Event.query.one().venue.name == "x-tra"
+
+    def test_unknown_confirm_venue_id_is_refused(self, client, admin, login):
+        login(admin)
+        rec = self._make_scraped()
+        resp = client.post(
+            "/queue",
+            data={"scraped_id": str(rec.id), "confirm_venue_id": "4242"},
+            follow_redirects=True,
+        )
+        assert b"no longer exists" in resp.data
+        assert Event.query.count() == 0
+
+    def test_calendar_collision_blocks_the_approval(
+        self, client, admin, login, make_venue, make_event
+    ):
+        login(admin)
+        venue = make_venue(name="Hall", city="Aarau", plz="5000", canton="AG")
+        make_event(name="Scraped Show", venue=venue, days_from_now=20)
+        rec = self._make_scraped()
+        resp = client.post("/queue", data={"scraped_id": str(rec.id)})
+        assert resp.status_code == 200
+        assert b"already listed" in resp.data
+        assert Event.query.count() == 1
+        db.session.refresh(rec)
+        assert rec.status == ScrapedEvent.STATUS_PENDING
+
+    def test_confirmed_duplicate_publishes_and_is_audited(
+        self, client, admin, login, make_venue, make_event
+    ):
+        login(admin)
+        venue = make_venue(name="Hall", city="Aarau", plz="5000", canton="AG")
+        make_event(name="Scraped Show", venue=venue, days_from_now=20)
+        rec = self._make_scraped(performers="A Different Lineup")
+        client.post(
+            "/queue", data={"scraped_id": str(rec.id), "confirm_duplicate": "1"}
+        )
+        assert Event.query.count() == 2
+
+        from diytracker.models import ActionLog
+
+        entry = ActionLog.query.filter_by(action="queue.approve").one()
+        assert "override_duplicate=" in entry.detail
+
+    def test_weakly_flagged_row_stays_in_the_queue(self, client, admin, login):
+        login(admin)
+        self._make_scraped(
+            title="Different Show",
+            review_reason="Calendar: Something Else @ Aarau",
+        )
+        resp = client.get("/queue")
+        assert b"Different Show" in resp.data
+        assert b"Also that night" in resp.data
 
     def test_invalid_scraped_id_flashes_error(self, client, admin, login):
         login(admin)

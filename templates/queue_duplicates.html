@@ -3,25 +3,7 @@
 
 {% block title %}{{ _('Queue duplicates') }} · diytracker.ch{% endblock %}
 
-{% macro field(label, value) -%}
-  <div class="flex gap-2">
-    <span class="text-xs uppercase tracking-widest text-smudge w-16 shrink-0 pt-0.5">{{ label }}</span>
-    <span class="text-sm">{{ value or '—' }}</span>
-  </div>
-{%- endmacro %}
-
-{# The matcher flags on a single signal, so it also catches two different shows
-   sharing a city on the same night. Naming the signals lets the admin see at a
-   glance which kind of collision this is. #}
-{% macro signal_chips(signals) -%}
-  {% set labels = {'title': _('same title'), 'venue': _('same venue'), 'city': _('same city')} %}
-  <span class="inline-flex flex-wrap gap-1 align-middle">
-    <span class="border border-ink/40 px-1 text-[10px] uppercase tracking-widest text-smudge">{{ _('same date') }}</span>
-    {% for s in signals %}
-      <span class="border border-ink/40 px-1 text-[10px] uppercase tracking-widest text-smudge">{{ labels[s] }}</span>
-    {% endfor %}
-  </span>
-{%- endmacro %}
+{% from '_partials/queue_macros.html' import field, signal_chips with context %}
 
 {% block content %}
 <header class="mb-6 flex items-end justify-between">
@@ -165,6 +147,19 @@
   </div>
 </article>
 {% endfor %}
+{% if pagination.pages > 1 %}
+<nav class="mt-4 flex items-center justify-between font-mono text-xs">
+  {% if pagination.has_prev %}
+  <a href="{{ url_for('submissions.queue_duplicates', page=pagination.prev_num) }}"
+     class="text-bleed hover:underline">&larr; {{ _('Previous') }}</a>
+  {% else %}<span></span>{% endif %}
+  <span class="text-smudge">{{ _('Page %(page)s of %(pages)s', page=pagination.page, pages=pagination.pages) }}</span>
+  {% if pagination.has_next %}
+  <a href="{{ url_for('submissions.queue_duplicates', page=pagination.next_num) }}"
+     class="text-bleed hover:underline">{{ _('Next') }} &rarr;</a>
+  {% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
 {% else %}
 <p class="text-sm text-smudge border-2 border-ink/30 px-4 py-6 text-center">
   {{ _('Nothing flagged right now.') }}

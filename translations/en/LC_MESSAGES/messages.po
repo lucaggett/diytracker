@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-31 19:39+0200\n"
+"POT-Creation-Date: 2026-09-05 14:09+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -16,289 +16,292 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: diytracker/forms.py:40
+#: diytracker/forms.py:46
 msgid "Links must start with http:// or https://."
 msgstr "Links must start with http:// or https://."
 
-#: diytracker/forms.py:80 templates/event_queue.html:153
+#: diytracker/forms.py:85 templates/event_queue.html:154
 msgid "Event Name"
 msgstr "Event Name"
 
-#: diytracker/forms.py:82
+#: diytracker/forms.py:87
 msgid "Event Date"
 msgstr "Event Date"
 
-#: diytracker/forms.py:84 templates/_partials/event_form.html:27
+#: diytracker/forms.py:89 templates/_partials/event_form.html:27
 #: templates/_partials/event_form_scripts.html:12
 msgid "End Date"
 msgstr "End Date"
 
-#: diytracker/forms.py:85 templates/event_page.html:58
+#: diytracker/forms.py:90 templates/event_page.html:58
 #: templates/venue_page.html:60
 msgid "Festival"
 msgstr "Festival"
 
-#: diytracker/forms.py:87
+#: diytracker/forms.py:92
 msgid "Doors Open Time"
 msgstr "Doors Open Time"
 
-#: diytracker/forms.py:90 diytracker/forms.py:364
+#: diytracker/forms.py:95 diytracker/forms.py:370
 #: templates/_partials/event_cards.html:96 templates/admin.html:86
 #: templates/calendar.html:135 templates/event_page.html:94
-#: templates/event_queue.html:165 templates/genre.html:17
+#: templates/event_queue.html:166 templates/genre.html:17
 msgid "Genre"
 msgstr "Genre"
 
-#: diytracker/forms.py:92 templates/_partials/event_cards.html:96
-#: templates/event_queue.html:169
+#: diytracker/forms.py:97 templates/_partials/event_cards.html:96
+#: templates/event_queue.html:170
 msgid "Acts"
 msgstr "Acts"
 
-#: diytracker/forms.py:93 templates/_partials/event_form.html:89
-#: templates/event_queue.html:103 templates/queue_duplicates.html:75
+#: diytracker/forms.py:98 templates/_partials/event_form.html:89
+#: templates/event_queue.html:104 templates/queue_approve_confirm.html:35
+#: templates/queue_duplicates.html:57
 msgid "Flyer"
 msgstr "Flyer"
 
-#: diytracker/forms.py:97
+#: diytracker/forms.py:102
 msgid "Status"
 msgstr "Status"
 
-#: diytracker/forms.py:99
+#: diytracker/forms.py:104
 msgid "Scheduled"
 msgstr "Scheduled"
 
-#: diytracker/forms.py:100
+#: diytracker/forms.py:105
 msgid "Cancelled"
 msgstr "Cancelled"
 
-#: diytracker/forms.py:101
+#: diytracker/forms.py:106
 msgid "Postponed"
 msgstr "Postponed"
 
-#: diytracker/forms.py:108 diytracker/forms.py:184 templates/label_page.html:15
+#: diytracker/forms.py:113 diytracker/forms.py:189 templates/label_page.html:15
 #: templates/promoter_dashboard.html:124
 msgid "Label"
 msgstr "Label"
 
-#: diytracker/forms.py:111 templates/event_queue.html:189
+#: diytracker/forms.py:116 templates/event_queue.html:190
 msgid "Ticket Price"
 msgstr "Ticket Price"
 
-#: diytracker/forms.py:116
+#: diytracker/forms.py:121
 msgid "Ticket Link"
 msgstr "Ticket Link"
 
-#: diytracker/forms.py:120 templates/admin.html:149
+#: diytracker/forms.py:125 templates/admin.html:149
 #: templates/admin_statistics.html:38 templates/edit_venue.html:9
 #: templates/event_page.html:79 templates/event_queue.html:78
-#: templates/queue_duplicates.html:82 templates/queue_duplicates.html:123
-#: templates/venue_page.html:24
+#: templates/queue_approve_confirm.html:42
+#: templates/queue_approve_confirm.html:110 templates/queue_duplicates.html:64
+#: templates/queue_duplicates.html:105 templates/venue_page.html:24
 msgid "Venue"
 msgstr "Venue"
 
-#: diytracker/forms.py:124 diytracker/forms.py:195
-#: templates/event_queue.html:173
+#: diytracker/forms.py:129 diytracker/forms.py:200
+#: templates/event_queue.html:174
 msgid "Venue Name"
 msgstr "Venue Name"
 
-#: diytracker/forms.py:125 diytracker/forms.py:196
+#: diytracker/forms.py:130 diytracker/forms.py:201
 msgid "Venue Address"
 msgstr "Venue Address"
 
-#: diytracker/forms.py:126 diytracker/forms.py:197
-#: templates/event_queue.html:177 templates/queue_duplicates.html:83
-#: templates/queue_duplicates.html:124 templates/venues.html:40
+#: diytracker/forms.py:131 diytracker/forms.py:202
+#: templates/event_queue.html:178 templates/queue_approve_confirm.html:43
+#: templates/queue_approve_confirm.html:111 templates/queue_duplicates.html:65
+#: templates/queue_duplicates.html:106 templates/venues.html:40
 msgid "City"
 msgstr "City"
 
-#: diytracker/forms.py:127 diytracker/forms.py:198 templates/calendar.html:134
+#: diytracker/forms.py:132 diytracker/forms.py:203 templates/calendar.html:134
 #: templates/canton.html:14 templates/venues.html:41
 msgid "Canton"
 msgstr "Canton"
 
-#: diytracker/forms.py:128 diytracker/forms.py:199 templates/venues.html:42
+#: diytracker/forms.py:133 diytracker/forms.py:204 templates/venues.html:42
 msgid "ZIP Code"
 msgstr "ZIP Code"
 
-#: diytracker/forms.py:129 diytracker/forms.py:200
+#: diytracker/forms.py:134 diytracker/forms.py:205
 msgid "Coordinates"
 msgstr "Coordinates"
 
-#: diytracker/forms.py:136 diytracker/forms.py:354
+#: diytracker/forms.py:141 diytracker/forms.py:360
 msgid "Email"
 msgstr "Email"
 
-#: diytracker/forms.py:137 diytracker/forms.py:188
+#: diytracker/forms.py:142 diytracker/forms.py:193
 msgid "Password"
 msgstr "Password"
 
-#: diytracker/forms.py:149
+#: diytracker/forms.py:154
 msgid "Label Name"
 msgstr "Label Name"
 
-#: diytracker/forms.py:151 templates/event_page.html:128
-#: templates/event_queue.html:201
+#: diytracker/forms.py:156 templates/event_page.html:128
+#: templates/event_queue.html:202
 msgid "Description"
 msgstr "Description"
 
-#: diytracker/forms.py:154
+#: diytracker/forms.py:159
 msgid "Website"
 msgstr "Website"
 
-#: diytracker/forms.py:157
+#: diytracker/forms.py:162
 msgid "Social link"
 msgstr "Social link"
 
-#: diytracker/forms.py:160
+#: diytracker/forms.py:165
 msgid "Second social link"
 msgstr "Second social link"
 
-#: diytracker/forms.py:163
+#: diytracker/forms.py:168
 msgid "Contact email"
 msgstr "Contact email"
 
-#: diytracker/forms.py:165
+#: diytracker/forms.py:170
 msgid "Logo"
 msgstr "Logo"
 
-#: diytracker/forms.py:166
+#: diytracker/forms.py:171
 msgid "Remove the current logo"
 msgstr "Remove the current logo"
 
-#: diytracker/forms.py:190
+#: diytracker/forms.py:195
 msgid "Confirm Password"
 msgstr "Confirm Password"
 
-#: diytracker/forms.py:211
+#: diytracker/forms.py:217
 msgid "German"
 msgstr "German"
 
-#: diytracker/forms.py:212
+#: diytracker/forms.py:218
 msgid "French"
 msgstr "French"
 
-#: diytracker/forms.py:213
+#: diytracker/forms.py:219
 msgid "Italian"
 msgstr "Italian"
 
-#: diytracker/forms.py:214
+#: diytracker/forms.py:220
 msgid "English"
 msgstr "English"
 
-#: diytracker/forms.py:255 templates/venue_accessibility.html:71
+#: diytracker/forms.py:261 templates/venue_accessibility.html:71
 msgid "Step-free entrance"
 msgstr "Step-free entrance"
 
-#: diytracker/forms.py:258
+#: diytracker/forms.py:264
 msgid "Entrance notes"
 msgstr "Entrance notes"
 
-#: diytracker/forms.py:261 templates/venue_accessibility.html:72
+#: diytracker/forms.py:267 templates/venue_accessibility.html:72
 msgid "Step-free throughout interior"
 msgstr "Step-free throughout interior"
 
-#: diytracker/forms.py:264 templates/venue_accessibility.html:73
+#: diytracker/forms.py:270 templates/venue_accessibility.html:73
 msgid "Accessible toilet"
 msgstr "Accessible toilet"
 
-#: diytracker/forms.py:267
+#: diytracker/forms.py:273
 msgid "Toilet notes"
 msgstr "Toilet notes"
 
-#: diytracker/forms.py:270 templates/venue_accessibility.html:76
+#: diytracker/forms.py:276 templates/venue_accessibility.html:76
 msgid "Dedicated wheelchair spaces"
 msgstr "Dedicated wheelchair spaces"
 
-#: diytracker/forms.py:273
+#: diytracker/forms.py:279
 msgid "Number of wheelchair spaces"
 msgstr "Number of wheelchair spaces"
 
-#: diytracker/forms.py:276 templates/venue_accessibility.html:83
+#: diytracker/forms.py:282 templates/venue_accessibility.html:83
 msgid "Floor surface"
 msgstr "Floor surface"
 
-#: diytracker/forms.py:281 templates/venue_accessibility.html:93
+#: diytracker/forms.py:287 templates/venue_accessibility.html:93
 msgid "Strobe / flashing lights"
 msgstr "Strobe / flashing lights"
 
-#: diytracker/forms.py:284
+#: diytracker/forms.py:290
 msgid "Warning given before strobes"
 msgstr "Warning given before strobes"
 
-#: diytracker/forms.py:287 templates/venue_accessibility.html:95
+#: diytracker/forms.py:293 templates/venue_accessibility.html:95
 msgid "Smoke / haze machines"
 msgstr "Smoke / haze machines"
 
-#: diytracker/forms.py:290 templates/venue_accessibility.html:96
+#: diytracker/forms.py:296 templates/venue_accessibility.html:96
 msgid "Typical sound level"
 msgstr "Typical sound level"
 
-#: diytracker/forms.py:293
+#: diytracker/forms.py:299
 msgid "Quiet / low-stimulation room available"
 msgstr "Quiet / low-stimulation room available"
 
-#: diytracker/forms.py:298
+#: diytracker/forms.py:304
 msgid "Free earplugs provided"
 msgstr "Free earplugs provided"
 
-#: diytracker/forms.py:301
+#: diytracker/forms.py:307
 msgid "Sensory-friendly events / nights"
 msgstr "Sensory-friendly events / nights"
 
-#: diytracker/forms.py:306
+#: diytracker/forms.py:312
 msgid "Hearing loop (induction loop)"
 msgstr "Hearing loop (induction loop)"
 
-#: diytracker/forms.py:309
+#: diytracker/forms.py:315
 msgid "Sign language interpretation at events"
 msgstr "Sign language interpretation at events"
 
-#: diytracker/forms.py:316 templates/venue_accessibility.html:112
+#: diytracker/forms.py:322 templates/venue_accessibility.html:112
 msgid "Refrigerator for medication"
 msgstr "Refrigerator for medication"
 
-#: diytracker/forms.py:319
+#: diytracker/forms.py:325
 msgid "First aid kit on site"
 msgstr "First aid kit on site"
 
-#: diytracker/forms.py:322
+#: diytracker/forms.py:328
 msgid "AED (defibrillator) on site"
 msgstr "AED (defibrillator) on site"
 
-#: diytracker/forms.py:327 templates/venue_accessibility.html:125
+#: diytracker/forms.py:333 templates/venue_accessibility.html:125
 msgid "Accessible parking"
 msgstr "Accessible parking"
 
-#: diytracker/forms.py:330
+#: diytracker/forms.py:336
 msgid "Public transport access"
 msgstr "Public transport access"
 
-#: diytracker/forms.py:333 templates/venue_accessibility.html:132
+#: diytracker/forms.py:339 templates/venue_accessibility.html:132
 msgid "Gender-neutral toilets"
 msgstr "Gender-neutral toilets"
 
-#: diytracker/forms.py:336
+#: diytracker/forms.py:342
 msgid "Rest / seating areas inside"
 msgstr "Rest / seating areas inside"
 
-#: diytracker/forms.py:339
+#: diytracker/forms.py:345
 msgid "Guide dogs & assistance animals welcome"
 msgstr "Guide dogs & assistance animals welcome"
 
-#: diytracker/forms.py:344
+#: diytracker/forms.py:350
 msgid "Quiet / alternative entrance option"
 msgstr "Quiet / alternative entrance option"
 
-#: diytracker/forms.py:347
+#: diytracker/forms.py:353
 msgid "Additional accessibility notes"
 msgstr "Additional accessibility notes"
 
-#: diytracker/forms.py:352 templates/admin.html:118 templates/admin.html:147
+#: diytracker/forms.py:358 templates/admin.html:118 templates/admin.html:147
 #: templates/venues.html:39
 msgid "Name"
 msgstr "Name"
 
-#: diytracker/forms.py:357
+#: diytracker/forms.py:363
 msgid "Message"
 msgstr "Message"
 
@@ -406,7 +409,7 @@ msgstr "Zug"
 msgid "Zürich"
 msgstr "Zürich"
 
-#: diytracker/blueprints/admin.py:150
+#: diytracker/blueprints/admin.py:151
 msgid ""
 "This event's venue no longer exists. Please select or create a venue "
 "below."
@@ -414,7 +417,7 @@ msgstr ""
 "This event's venue no longer exists. Please select or create a venue "
 "below."
 
-#: diytracker/blueprints/admin.py:189 diytracker/blueprints/submissions.py:389
+#: diytracker/blueprints/admin.py:189 diytracker/blueprints/submissions.py:503
 msgid "Selected venue does not exist."
 msgstr "Selected venue does not exist."
 
@@ -456,12 +459,12 @@ msgstr "Venue deleted."
 msgid "No report has been generated yet. Use the form to create one."
 msgstr "No report has been generated yet. Use the form to create one."
 
-#: diytracker/blueprints/admin.py:544
+#: diytracker/blueprints/admin.py:545
 #, python-format
 msgid "Cleared %(n)d suspect(s)."
 msgstr "Cleared %(n)d suspect(s)."
 
-#: diytracker/blueprints/admin.py:626
+#: diytracker/blueprints/admin.py:627
 msgid "Page text saved."
 msgstr "Page text saved."
 
@@ -473,44 +476,44 @@ msgstr "Invalid email or password."
 msgid "This invite link is invalid or has expired."
 msgstr "This invite link is invalid or has expired."
 
-#: diytracker/blueprints/promoter.py:87
+#: diytracker/blueprints/promoter.py:86
 msgid "Email notifications enabled."
 msgstr "Email notifications enabled."
 
-#: diytracker/blueprints/promoter.py:89
+#: diytracker/blueprints/promoter.py:88
 msgid "Email notifications disabled."
 msgstr "Email notifications disabled."
 
-#: diytracker/blueprints/promoter.py:159
+#: diytracker/blueprints/promoter.py:158
 msgid "This event already belongs to a label."
 msgstr "This event already belongs to a label."
 
-#: diytracker/blueprints/promoter.py:171
+#: diytracker/blueprints/promoter.py:170
 #, python-format
 msgid "Event claimed for %(label)s!"
 msgstr "Event claimed for %(label)s!"
 
-#: diytracker/blueprints/promoter.py:198
+#: diytracker/blueprints/promoter.py:197
 msgid "Event released from the label."
 msgstr "Event released from the label."
 
-#: diytracker/blueprints/promoter.py:224 diytracker/blueprints/promoter.py:261
+#: diytracker/blueprints/promoter.py:223 diytracker/blueprints/promoter.py:260
 msgid "A label with this name already exists."
 msgstr "A label with this name already exists."
 
-#: diytracker/blueprints/promoter.py:248
+#: diytracker/blueprints/promoter.py:247
 msgid "Label created!"
 msgstr "Label created!"
 
-#: diytracker/blueprints/promoter.py:286
+#: diytracker/blueprints/promoter.py:285
 msgid "Label updated!"
 msgstr "Label updated!"
 
-#: diytracker/blueprints/promoter.py:310
+#: diytracker/blueprints/promoter.py:309
 msgid "Label deleted."
 msgstr "Label deleted."
 
-#: diytracker/blueprints/public.py:247
+#: diytracker/blueprints/public.py:248
 msgid ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
@@ -518,20 +521,20 @@ msgstr ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
 
-#: diytracker/blueprints/public.py:257
+#: diytracker/blueprints/public.py:258
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Thanks! We will get back to you as soon as possible."
 
-#: diytracker/blueprints/public.py:294
+#: diytracker/blueprints/public.py:295
 msgid "Accessibility info saved — thank you!"
 msgstr "Accessibility info saved — thank you!"
 
-#: diytracker/blueprints/public.py:440
+#: diytracker/blueprints/public.py:441
 #, python-format
 msgid "DIY & punk concerts %(in_canton)s"
 msgstr "DIY & punk concerts %(in_canton)s"
 
-#: diytracker/blueprints/public.py:443
+#: diytracker/blueprints/public.py:444
 #, python-format
 msgid ""
 "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, "
@@ -540,12 +543,12 @@ msgstr ""
 "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, "
 "venues, prices and accessibility info."
 
-#: diytracker/blueprints/public.py:494
+#: diytracker/blueprints/public.py:495
 #, python-format
 msgid "%(genre)s concerts in Switzerland"
 msgstr "%(genre)s concerts in Switzerland"
 
-#: diytracker/blueprints/public.py:496
+#: diytracker/blueprints/public.py:497
 #, python-format
 msgid ""
 "%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices "
@@ -554,7 +557,7 @@ msgstr ""
 "%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices "
 "and accessibility info."
 
-#: diytracker/blueprints/public.py:535
+#: diytracker/blueprints/public.py:536
 #, python-format
 msgid ""
 "Upcoming shows by %(label)s — dates, venues, prices and accessibility "
@@ -563,74 +566,78 @@ msgstr ""
 "Upcoming shows by %(label)s — dates, venues, prices and accessibility "
 "info."
 
-#: diytracker/blueprints/public.py:624
+#: diytracker/blueprints/public.py:625
 msgid "DIY, punk and underground concerts in Switzerland."
 msgstr "DIY, punk and underground concerts in Switzerland."
 
-#: diytracker/blueprints/submissions.py:151
+#: diytracker/blueprints/submissions.py:192
 msgid "Invalid event selection."
 msgstr "Invalid event selection."
 
-#: diytracker/blueprints/submissions.py:225
+#: diytracker/blueprints/submissions.py:255
+msgid "That venue no longer exists."
+msgstr "That venue no longer exists."
+
+#: diytracker/blueprints/submissions.py:329
 msgid "This event already exists."
 msgstr "This event already exists."
 
-#: diytracker/blueprints/submissions.py:247
+#: diytracker/blueprints/submissions.py:357
 msgid "Event approved and added to calendar!"
 msgstr "Event approved and added to calendar!"
 
-#: diytracker/blueprints/submissions.py:294
+#: diytracker/blueprints/submissions.py:404
 msgid "Event removed from queue."
 msgstr "Event removed from queue."
 
-#: diytracker/blueprints/submissions.py:314
+#: diytracker/blueprints/submissions.py:424
 #, python-format
 msgid "%(num)d events removed from queue."
 msgstr "%(num)d events removed from queue."
 
-#: diytracker/blueprints/submissions.py:344
+#: diytracker/blueprints/submissions.py:458
 #, python-format
 msgid "%(num)d entries discarded."
 msgstr "%(num)d entries discarded."
 
-#: diytracker/blueprints/submissions.py:347
+#: diytracker/blueprints/submissions.py:461
 #, python-format
 msgid "%(num)d entries unflagged — they are back in the queue."
 msgstr "%(num)d entries unflagged — they are back in the queue."
 
-#: diytracker/blueprints/submissions.py:361
+#: diytracker/blueprints/submissions.py:475
 #, python-format
 msgid "Discarded “%(title)s”."
 msgstr "Discarded “%(title)s”."
 
-#: diytracker/blueprints/submissions.py:364
+#: diytracker/blueprints/submissions.py:478
 #, python-format
 msgid "Unflagged “%(title)s” — it's back in the queue."
 msgstr "Unflagged “%(title)s” — it's back in the queue."
 
-#: diytracker/blueprints/submissions.py:386
+#: diytracker/blueprints/submissions.py:500
 msgid "Please provide all required venue details for a new venue."
 msgstr "Please provide all required venue details for a new venue."
 
-#: diytracker/blueprints/submissions.py:392
+#: diytracker/blueprints/submissions.py:506
 msgid "Venue already exists. Using existing venue."
 msgstr "Venue already exists. Using existing venue."
 
-#: diytracker/blueprints/submissions.py:412
+#: diytracker/blueprints/submissions.py:526
 msgid "Event submitted successfully!"
 msgstr "Event submitted successfully!"
 
-#: diytracker/blueprints/submissions.py:430
+#: diytracker/blueprints/submissions.py:545
 #, python-format
 msgid "'%(name)s' is already in the list."
 msgstr "'%(name)s' is already in the list."
 
-#: diytracker/blueprints/submissions.py:435
+#: diytracker/blueprints/submissions.py:550
 #, python-format
 msgid "Genre '%(name)s' added."
 msgstr "Genre '%(name)s' added."
 
-#: diytracker/blueprints/submissions.py:463
+#: diytracker/blueprints/submissions.py:578
 #, python-format
 msgid "Genre '%(name)s' removed."
 msgstr "Genre '%(name)s' removed."
@@ -801,7 +808,7 @@ msgid "MANAGE EVENTS"
 msgstr "MANAGE EVENTS"
 
 #: templates/admin.html:11 templates/archive_index.html:25
-#: templates/event_queue.html:45
+#: templates/event_queue.html:45 templates/queue_approve_confirm.html:65
 msgid "events"
 msgstr "events"
 
@@ -908,8 +915,10 @@ msgstr "ID"
 #: templates/_partials/event_cards.html:85 templates/admin.html:119
 #: templates/admin.html:148 templates/admin_statistics.html:37
 #: templates/event_page.html:73 templates/event_queue.html:76
-#: templates/promoter_dashboard.html:123 templates/queue_duplicates.html:81
-#: templates/queue_duplicates.html:122
+#: templates/promoter_dashboard.html:123
+#: templates/queue_approve_confirm.html:41
+#: templates/queue_approve_confirm.html:109 templates/queue_duplicates.html:63
+#: templates/queue_duplicates.html:104
 msgid "Date"
 msgstr "Date"
 
@@ -922,8 +931,9 @@ msgstr "Actions"
 msgid "Fix"
 msgstr "Fix"
 
-#: templates/admin.html:162 templates/event_queue.html:133
-#: templates/promoter_dashboard.html:76 templates/queue_duplicates.html:107
+#: templates/admin.html:162 templates/event_queue.html:134
+#: templates/promoter_dashboard.html:76
+#: templates/queue_approve_confirm.html:100 templates/queue_duplicates.html:89
 #: templates/venues.html:68
 msgid "Edit"
 msgstr "Edit"
@@ -932,7 +942,7 @@ msgstr "Edit"
 msgid "Delete this event?"
 msgstr "Delete this event?"
 
-#: templates/admin.html:167 templates/event_queue.html:141
+#: templates/admin.html:167 templates/event_queue.html:142
 #: templates/genre_manage.html:56 templates/promoter_dashboard.html:81
 #: templates/venues.html:79 templates/venues.html:85
 msgid "Delete"
@@ -1361,7 +1371,7 @@ msgstr "Reset"
 msgid "%(num)d possible duplicates waiting for review"
 msgstr "%(num)d possible duplicates waiting for review"
 
-#: templates/event_queue.html:62 templates/queue_duplicates.html:49
+#: templates/event_queue.html:62 templates/queue_duplicates.html:31
 msgid "With selected:"
 msgstr "With selected:"
 
@@ -1383,68 +1393,72 @@ msgstr "Reject selected"
 msgid "Genres"
 msgstr "Genres"
 
-#: templates/event_queue.html:94 templates/queue_duplicates.html:29
-msgid "Possible duplicate"
-msgstr "Possible duplicate"
+#: templates/event_queue.html:97
+msgid "Also that night"
+msgstr "Also that night"
 
-#: templates/event_queue.html:113
+#: templates/event_queue.html:114
 msgid "via"
 msgstr "via"
 
-#: templates/event_queue.html:129
+#: templates/event_queue.html:130 templates/queue_approve_confirm.html:127
 msgid "Approve"
 msgstr "Approve"
 
-#: templates/event_queue.html:157
+#: templates/event_queue.html:158
 msgid "Date (YYYY-MM-DD)"
 msgstr "Date (YYYY-MM-DD)"
 
-#: templates/event_queue.html:161
+#: templates/event_queue.html:162
 msgid "Doors Open (HH:MM)"
 msgstr "Doors Open (HH:MM)"
 
-#: templates/event_queue.html:181
+#: templates/event_queue.html:182
 msgid "Postal Code"
 msgstr "Postal Code"
 
-#: templates/event_queue.html:185
+#: templates/event_queue.html:186
 msgid "Street Address"
 msgstr "Street Address"
 
-#: templates/event_queue.html:193
+#: templates/event_queue.html:194
 msgid "Ticket URL"
 msgstr "Ticket URL"
 
-#: templates/event_queue.html:197
+#: templates/event_queue.html:198
 msgid "Source URL"
 msgstr "Source URL"
 
-#: templates/event_queue.html:208
+#: templates/event_queue.html:209
 msgid "Approve with Changes"
 msgstr "Approve with Changes"
 
-#: templates/_partials/forms.html:51 templates/event_queue.html:212
+#: templates/_partials/forms.html:51 templates/event_queue.html:213
+#: templates/queue_approve_confirm.html:130
 msgid "Cancel"
 msgstr "Cancel"
 
-#: templates/event_queue.html:226 templates/promoter_claim.html:94
+#: templates/event_queue.html:227 templates/promoter_claim.html:94
+#: templates/queue_duplicates.html:154
 msgid "Previous"
 msgstr "Previous"
 
-#: templates/event_queue.html:228 templates/promoter_claim.html:96
+#: templates/event_queue.html:229 templates/promoter_claim.html:96
+#: templates/queue_duplicates.html:156
 #, python-format
 msgid "Page %(page)s of %(pages)s"
 msgstr "Page %(page)s of %(pages)s"
 
-#: templates/event_queue.html:231 templates/promoter_claim.html:99
+#: templates/event_queue.html:232 templates/promoter_claim.html:99
+#: templates/queue_duplicates.html:159
 msgid "Next"
 msgstr "Next"
 
-#: templates/event_queue.html:237
+#: templates/event_queue.html:238
 msgid "No events awaiting approval."
 msgstr "No events awaiting approval."
 
-#: templates/event_queue.html:249
+#: templates/event_queue.html:250
 msgid "Remove this event from the queue? Reason (optional):"
 msgstr "Remove this event from the queue? Reason (optional):"
 
@@ -1870,39 +1884,84 @@ msgstr "Email notifications: off — turn on"
 msgid "(sent when an admin edits an event with your label)"
 msgstr "(sent when an admin edits an event with your label)"
 
+#: templates/queue_approve_confirm.html:4
+msgid "Confirm approval"
+msgstr "Confirm approval"
+
+#: templates/queue_approve_confirm.html:10
+msgid "Nothing has been published yet"
+msgstr "Nothing has been published yet"
+
+#: templates/queue_approve_confirm.html:11
+msgid "CONFIRM APPROVAL"
+msgstr "CONFIRM APPROVAL"
+
+#: templates/queue_approve_confirm.html:30
+msgid "About to publish"
+msgstr "About to publish"
+
+#: templates/queue_approve_confirm.html:54
+msgid "Which venue is this?"
+msgstr "Which venue is this?"
+
+#: templates/queue_approve_confirm.html:56
+#, python-format
+msgid ""
+"“%(name)s” is close to venues that already exist. Picking the wrong one "
+"adds a second copy of the same place, so this needs an answer."
+msgstr ""
+"“%(name)s” is close to venues that already exist. Picking the wrong one "
+"adds a second copy of the same place, so this needs an answer."
+
+#: templates/queue_approve_confirm.html:75
+msgid "None of these — create a new venue"
+msgstr "None of these — create a new venue"
+
+#: templates/queue_approve_confirm.html:87
+msgid "This looks like a show that is already listed"
+msgstr "This looks like a show that is already listed"
+
+#: templates/queue_approve_confirm.html:89
+msgid ""
+"Approving anyway publishes it a second time. Reject this queue entry "
+"instead if it is the same show."
+msgstr ""
+"Approving anyway publishes it a second time. Reject this queue entry "
+"instead if it is the same show."
+
+#: templates/queue_approve_confirm.html:101 templates/queue_duplicates.html:98
+msgid "On the calendar"
+msgstr "On the calendar"
+
+#: templates/queue_approve_confirm.html:105 templates/queue_duplicates.html:93
+msgid "In the queue"
+msgstr "In the queue"
+
+#: templates/queue_approve_confirm.html:119
+msgid "I have checked — this is a different show. Publish it."
+msgstr "I have checked — this is a different show. Publish it."
+
 #: templates/queue_duplicates.html:4
 msgid "Queue duplicates"
 msgstr "Queue duplicates"
 
-#: templates/queue_duplicates.html:17
-msgid "same title"
-msgstr "same title"
+#: templates/queue_duplicates.html:11
+msgid "Possible duplicate"
+msgstr "Possible duplicate"
 
-#: templates/queue_duplicates.html:17
-msgid "same venue"
-msgstr "same venue"
-
-#: templates/queue_duplicates.html:17
-msgid "same city"
-msgstr "same city"
-
-#: templates/queue_duplicates.html:19
-msgid "same date"
-msgstr "same date"
-
-#: templates/queue_duplicates.html:30
+#: templates/queue_duplicates.html:12
 msgid "QUEUE DUPLICATES"
 msgstr "QUEUE DUPLICATES"
 
-#: templates/queue_duplicates.html:33
+#: templates/queue_duplicates.html:15
 msgid "flagged entries"
 msgstr "flagged entries"
 
-#: templates/queue_duplicates.html:33
+#: templates/queue_duplicates.html:15
 msgid "flagged entry"
 msgstr "flagged entry"
 
-#: templates/queue_duplicates.html:38
+#: templates/queue_duplicates.html:20
 msgid ""
 "Staged events that collided with something already on the calendar or in "
 "the queue. Discard the real duplicates; unflag false positives to send "
@@ -1912,39 +1971,31 @@ msgstr ""
 "the queue. Discard the real duplicates; unflag false positives to send "
 "them back to the normal queue."
 
-#: templates/queue_duplicates.html:53
+#: templates/queue_duplicates.html:35
 msgid "Discard all selected entries? They will not be published."
 msgstr "Discard all selected entries? They will not be published."
 
-#: templates/queue_duplicates.html:54
+#: templates/queue_duplicates.html:36
 msgid "Discard selected"
 msgstr "Discard selected"
 
-#: templates/queue_duplicates.html:59
+#: templates/queue_duplicates.html:41
 msgid "Unflag selected"
 msgstr "Unflag selected"
 
-#: templates/queue_duplicates.html:70
+#: templates/queue_duplicates.html:52
 msgid "Staged"
 msgstr "Staged"
 
-#: templates/queue_duplicates.html:95
+#: templates/queue_duplicates.html:77
 msgid "Collides with"
 msgstr "Collides with"
 
-#: templates/queue_duplicates.html:111
-msgid "In the queue"
-msgstr "In the queue"
-
-#: templates/queue_duplicates.html:116
-msgid "On the calendar"
-msgstr "On the calendar"
-
-#: templates/queue_duplicates.html:118
+#: templates/queue_duplicates.html:100
 msgid "probably a different show"
 msgstr "probably a different show"
 
-#: templates/queue_duplicates.html:134
+#: templates/queue_duplicates.html:116
 msgid ""
 "No longer collides — the calendar entry may have been edited or deleted. "
 "Unflag it to send it back to the normal queue."
@@ -1952,31 +2003,31 @@ msgstr ""
 "No longer collides — the calendar entry may have been edited or deleted. "
 "Unflag it to send it back to the normal queue."
 
-#: templates/queue_duplicates.html:137
+#: templates/queue_duplicates.html:119
 msgid "Flagged at the time as:"
 msgstr "Flagged at the time as:"
 
-#: templates/queue_duplicates.html:147
+#: templates/queue_duplicates.html:129
 msgid "Select"
 msgstr "Select"
 
-#: templates/queue_duplicates.html:155
+#: templates/queue_duplicates.html:137
 msgid "Discard this entry? It will not be published."
 msgstr "Discard this entry? It will not be published."
 
-#: templates/queue_duplicates.html:155
+#: templates/queue_duplicates.html:137
 msgid "Discard"
 msgstr "Discard"
 
-#: templates/queue_duplicates.html:162
+#: templates/queue_duplicates.html:144
 msgid "Unflag"
 msgstr "Unflag"
 
-#: templates/queue_duplicates.html:170
+#: templates/queue_duplicates.html:165
 msgid "Nothing flagged right now."
 msgstr "Nothing flagged right now."
 
-#: templates/queue_duplicates.html:176
+#: templates/queue_duplicates.html:171
 msgid "Back to the queue"
 msgstr "Back to the queue"
 
@@ -2465,6 +2516,22 @@ msgstr "Suspects"
 #: templates/_partials/nav_backstage.html:51
 msgid "Menu"
 msgstr "Menu"
+
+#: templates/_partials/queue_macros.html:16
+msgid "same title"
+msgstr "same title"
+
+#: templates/_partials/queue_macros.html:16
+msgid "same venue"
+msgstr "same venue"
+
+#: templates/_partials/queue_macros.html:16
+msgid "same city"
+msgstr "same city"
+
+#: templates/_partials/queue_macros.html:18
+msgid "same date"
+msgstr "same date"
 
 #: templates/_partials/subscribe_calendar.html:16
 msgid "Subscribe to these shows"

@@ -1,0 +1,133 @@
+{% extends 'base_backstage.html' %}
+{% set nav_active = 'submissions.event_queue' %}
+
+{% block title %}{{ _('Confirm approval') }} · diytracker.ch{% endblock %}
+
+{% from '_partials/queue_macros.html' import field, signal_chips with context %}
+
+{% block content %}
+<header class="mb-6">
+  <p class="text-xs uppercase tracking-widest text-smudge">{{ _('Nothing has been published yet') }}</p>
+  <h1 class="font-richEatin text-4xl mis-reg leading-none">{{ _('CONFIRM APPROVAL') }}</h1>
+</header>
+
+<form method="post" action="{{ url_for('submissions.event_queue', **queue_args) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="scraped_id" value="{{ scraped_id }}">
+  {# Every value the queue form submitted, carried through unchanged: the
+     answer to this page is that same POST plus a decision. #}
+  {% for key, value in overrides.items() %}
+    <input type="hidden" name="{{ key }}" value="{{ value }}">
+  {% endfor %}
+  {# A venue already chosen on a previous step, when this round is only
+     asking about the duplicate — otherwise the answer would be forgotten. #}
+  {% if forced_venue and not venue_candidates %}
+    <input type="hidden" name="confirm_venue_id" value="{{ forced_venue }}">
+  {% endif %}
+
+  <article class="border-2 border-ink bg-paper p-4 mb-4">
+    <p class="text-xs uppercase tracking-widest text-smudge mb-2">
+      {{ _('About to publish') }} · {{ rec.source }} · #{{ scraped_id }}
+    </p>
+    <div class="flex gap-3">
+      {% if rec.flyer %}
+        <a href="/{{ rec.flyer }}" target="_blank" rel="noopener" class="shrink-0">
+          <img src="/{{ rec.flyer }}" loading="lazy" alt="{{ _('Flyer') }}"
+               class="w-16 h-20 object-cover border-2 border-ink">
+        </a>
+      {% endif %}
+      <div class="space-y-1 min-w-0">
+        <div class="font-semibold">{{ overrides.override_name }}</div>
+        {{ field(_('Date'), overrides.override_date ~ (' · ' ~ overrides.override_doors if overrides.override_doors else '')) }}
+        {{ field(_('Venue'), overrides.override_venue_name) }}
+        {{ field(_('City'), (overrides.override_postal_code ~ ' ' ~ overrides.override_city)|trim) }}
+        {% if rec.url %}
+          <a href="{{ rec.url }}" target="_blank" rel="noopener"
+             class="text-xs text-bleed hover:underline uppercase tracking-widest">source ↗</a>
+        {% endif %}
+      </div>
+    </div>
+  </article>
+
+  {% if venue_candidates %}
+  <article class="border-2 border-ink bg-paper p-4 mb-4">
+    <h2 class="text-sm uppercase tracking-widest mb-1">{{ _('Which venue is this?') }}</h2>
+    <p class="text-xs text-smudge mb-3">
+      {{ _('“%(name)s” is close to venues that already exist. Picking the wrong one adds a second copy of the same place, so this needs an answer.', name=overrides.override_venue_name) }}
+    </p>
+    <div class="space-y-2">
+      {% for v in venue_candidates %}
+      <label class="flex items-start gap-2 border border-ink/30 px-3 py-2 cursor-pointer hover:border-ink">
+        <input type="radio" name="confirm_venue_id" value="{{ v.id }}" class="mt-1"
+               {% if loop.first %}checked{% endif %}>
+        <span class="min-w-0">
+          <span class="font-semibold">{{ v.name }}</span>
+          <span class="text-xs text-smudge"> · #{{ v.id }} · {{ v.events }} {{ _('events') }}</span>
+          <span class="block text-sm text-smudge">
+            {{ [v.plz, v.city]|select|join(' ') }}{% if v.address %} · {{ v.address }}{% endif %}
+          </span>
+        </span>
+      </label>
+      {% endfor %}
+      <label class="flex items-start gap-2 border border-ink/30 px-3 py-2 cursor-pointer hover:border-ink">
+        <input type="radio" name="confirm_venue_id" value="new" class="mt-1">
+        <span>
+          <span class="font-semibold">{{ _('None of these — create a new venue') }}</span>
+          <span class="block text-sm text-smudge">
+            {{ overrides.override_venue_name }}{% if overrides.override_city %} · {{ [overrides.override_postal_code, overrides.override_city]|select|join(' ') }}{% endif %}
+          </span>
+        </span>
+      </label>
+    </div>
+  </article>
+  {% endif %}
+
+  {% if duplicates %}
+  <article class="border-2 border-ink bg-paper p-4 mb-4">
+    <h2 class="text-sm uppercase tracking-widest mb-1">{{ _('This looks like a show that is already listed') }}</h2>
+    <p class="text-xs text-smudge mb-3">
+      {{ _('Approving anyway publishes it a second time. Reject this queue entry instead if it is the same show.') }}
+    </p>
+    <div class="space-y-3">
+      {% for m in duplicates %}
+      <div class="border border-ink/30 px-3 py-2">
+        <div class="flex flex-wrap items-baseline gap-2">
+          {% if m.kind == 'calendar' %}
+            <a href="{{ url_for('public.event_page', event_id=m.id) }}"
+               target="_blank" rel="noopener"
+               class="font-semibold text-bleed hover:underline">{{ m.title }} ↗</a>
+            <a href="{{ url_for('admin.edit_event', event_id=m.id) }}"
+               class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('Edit') }}</a>
+            <span class="text-xs uppercase tracking-widest text-smudge">{{ _('On the calendar') }}</span>
+          {% else %}
+            <span class="font-semibold">{{ m.title }}</span>
+            <a href="{{ url_for('submissions.event_queue', date_from=m.date, date_to=m.date) }}"
+               class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('In the queue') }} #{{ m.id }}</a>
+          {% endif %}
+        </div>
+        <div class="mt-1 space-y-1">
+          {{ field(_('Date'), m.date ~ (' · ' ~ m.time if m.time else '')) }}
+          {{ field(_('Venue'), m.venue) }}
+          {{ field(_('City'), m.city) }}
+        </div>
+        <div class="mt-1">{{ signal_chips(m.signals) }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <label class="flex items-center gap-2 mt-3 text-sm cursor-pointer">
+      <input type="checkbox" name="confirm_duplicate" value="1" required>
+      {{ _('I have checked — this is a different show. Publish it.') }}
+    </label>
+  </article>
+  {% endif %}
+
+  <div class="flex items-center gap-4">
+    <button type="submit"
+            class="border-2 border-ink px-4 py-2 uppercase text-xs tracking-widest hover:bg-ink hover:text-paper">
+      {{ _('Approve') }}
+    </button>
+    <a href="{{ url_for('submissions.event_queue', **queue_args) }}"
+       class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('Cancel') }}</a>
+  </div>
+</form>
+{% endblock %}

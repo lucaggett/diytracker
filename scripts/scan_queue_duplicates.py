@@ -1,20 +1,21 @@
 """Scan the existing approval queue for possible duplicates and flag them.
 
-The ingest dedup only runs at ingest time on strict sources (konzibot), so any
-duplicates that were staged before that check existed — or that came in through
-another source — sit unflagged in the web queue. This one-shot re-runs the same
-same-day collision check (services.ingest_dedup) across the current-and-future
-staged queue, regardless of source, and sets needs_review/review_reason on the
-offenders so they drop out of the web queue and into the admin TUI's "Queue
-duplicates" review screen. Past events are never scanned.
+The dedup check runs when a row is ingested, so anything staged before that
+check covered its source sits unflagged, and any row's collisions go stale as
+the queue around it is approved or rejected. This re-runs the same same-day
+check (services.ingest_dedup) across the current-and-future staged queue and
+rewrites the verdict: a strong match (same title, or same venue and city) sets
+needs_review and moves the row to /queue/duplicates, a weak one leaves it in the
+queue with an inline notice, and a row that no longer collides is cleared.
+Past events are never scanned.
 
     uv run python scripts/scan_queue_duplicates.py --dry-run   # preview, no writes
     uv run python scripts/scan_queue_duplicates.py             # today..+2 months
     uv run python scripts/scan_queue_duplicates.py --no-date-cap  # all future rows
     uv run python scripts/scan_queue_duplicates.py --source konzibot
 
-Idempotent: already-flagged rows are left alone, so re-running only picks up
-rows that became duplicates since the last run. Safe to run on the server after
+Idempotent: the verdict is recomputed from the current queue every time, so
+re-running converges rather than accumulating. Safe to run on the server after
 a deploy to backfill the existing queue.
 """
 
@@ -32,16 +33,17 @@ from diytracker.app import create_app
 from diytracker.models import ScrapedEvent, db
 from diytracker.services.ingest_dedup import (
     describe_duplicates,
-    find_konzibot_duplicates,
-    is_strong_match,
+    find_duplicate_matches,
+    has_strong_match,
 )
 
 
 @dataclass
 class ScanResult:
     scanned: int = 0
-    newly_flagged: int = 0
-    already_flagged: int = 0
+    strong: int = 0  # pulled out of the queue for triage
+    weak: int = 0  # stays in the queue behind an inline notice
+    cleared: int = 0  # collided once, doesn't any more
     flagged: list = field(default_factory=list)  # [(id, title, reason)]
 
 
@@ -62,27 +64,39 @@ def scan_queue(source=None, date_from=None, date_to=None, dry_run=False):
 
     result = ScanResult(scanned=len(rows))
     for rec in rows:
-        if rec.needs_review:
-            result.already_flagged += 1
-            continue
-        matches = [
-            m
-            for m in find_konzibot_duplicates(
-                rec.start_date,
-                rec.city,
-                rec.venue_name,
-                rec.title,
-                exclude_scraped_id=rec.id,
-            )
-            if is_strong_match(m)
-        ]
-        if not matches:
-            continue
+        matches = find_duplicate_matches(
+            rec.start_date,
+            rec.city,
+            rec.venue_name,
+            rec.title,
+            exclude_scraped_id=rec.id,
+        )
         reason = describe_duplicates(matches)
-        result.newly_flagged += 1
-        result.flagged.append((rec.id, rec.title or "(untitled)", reason))
+        strong = has_strong_match(matches)
+        # Every row is re-evaluated, not just the unflagged ones: what a row
+        # collides with changes as the queue around it is approved and rejected,
+        # and a reason that has gone stale is worse than none.
+        if reason is None:
+            if rec.needs_review or rec.review_reason:
+                result.cleared += 1
+                if not dry_run:
+                    rec.needs_review = False
+                    rec.review_reason = None
+            continue
+        if strong:
+            result.strong += 1
+        else:
+            result.weak += 1
+        result.flagged.append(
+            (
+                rec.id,
+                rec.title or "(untitled)",
+                ("strong" if strong else "weak"),
+                reason,
+            )
+        )
         if not dry_run:
-            rec.needs_review = True
+            rec.needs_review = strong
             rec.review_reason = reason
     if not dry_run:
         db.session.commit()
@@ -121,12 +135,12 @@ def main():
             dry_run=args.dry_run,
         )
 
-    for scraped_id, title, reason in result.flagged:
-        print(f"  #{scraped_id} {title} -> {reason}")
+    for scraped_id, title, level, reason in result.flagged:
+        print(f"  [{level}] #{scraped_id} {title} -> {reason}")
     verb = "would flag" if args.dry_run else "flagged"
     print(
-        f"{result.scanned} scanned; {verb} {result.newly_flagged}; "
-        f"{result.already_flagged} already flagged."
+        f"{result.scanned} scanned; {verb} {result.strong} for triage, "
+        f"{result.weak} warned in place, {result.cleared} no longer colliding."
     )
 
 

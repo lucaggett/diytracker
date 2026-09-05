@@ -4,6 +4,12 @@ from difflib import SequenceMatcher
 from diytracker.models import Event, Venue, VenueAccessibility, db, utcnow
 from diytracker.utils import split_leading_plz
 
+# What the queue falls back to when a scraped row names no venue. It is a
+# placeholder, not a name, so resolve_existing_venue never treats two of them as
+# the same place — otherwise every nameless row would silently pile into one
+# bucket venue, which is worse than a duplicate because it is invisible.
+PLACEHOLDER_VENUE_NAME = "Unknown venue"
+
 
 def get_or_create_venue(name, address, city, canton, plz, coords=""):
     """Find venue by (name, city, plz) or create it. Returns (venue, created).
@@ -45,6 +51,77 @@ def canonical_venue_name(name, city):
         if not target_city or not venue_city or venue_city == target_city:
             return venue.name
     return name
+
+
+def resolve_existing_venue(name, city, plz="", address=""):
+    """Find the venue this really is, or the near-misses a human must judge.
+
+    Returns ``(venue, candidates)``:
+
+    * ``(Venue, [])`` — exactly one existing venue is certainly the same place;
+      safe to reuse without asking.
+    * ``(None, [Venue, ...])`` — plausible matches that must not be picked
+      automatically, ranked most-complete first so the caller can preselect the
+      row a merge would keep.
+    * ``(None, [])`` — genuinely new.
+
+    "Certainly the same place" is: normalized names equal (so casing, diacritics
+    and stray whitespace don't matter), normalized cities equal or one of them
+    blank, and PLZs equal or one of them blank. That last clause is the whole
+    point — scraped rows routinely carry no postal code, and matching on the
+    exact ``(name, city, plz)`` tuple is what minted a second venue every time
+    one arrived.
+
+    The ambiguous rules are the same signals ``find_dedup_candidates`` uses to
+    propose a merge, so the two agree on what counts as "close".
+    ``PLACEHOLDER_VENUE_NAME`` is never confident against itself.
+    """
+    target_name = normalize_name(name)
+    if not target_name:
+        return None, []
+    target_city = normalize_city(city or "")
+    target_plz = (plz or "").strip()
+    target_address = normalize_address(address)
+    is_placeholder = target_name == normalize_name(PLACEHOLDER_VENUE_NAME)
+
+    confident, ambiguous = [], []
+    for venue in Venue.query.all():
+        venue_name = normalize_name(venue.name)
+        venue_city = normalize_city(venue.city or "")
+
+        if venue_name == target_name:
+            if is_placeholder:
+                ambiguous.append(venue)  # not a name; never auto-reuse
+            elif target_city and venue_city and venue_city != target_city:
+                ambiguous.append(venue)  # same name, genuinely different town?
+            elif target_plz and venue.plz and target_plz != (venue.plz or "").strip():
+                ambiguous.append(venue)  # one of the two PLZs is wrong
+            else:
+                confident.append(venue)
+            continue
+
+        # Everything below needs a shared city to mean anything.
+        if not target_city or venue_city != target_city:
+            continue
+        shorter, longer = sorted((venue_name, target_name), key=len)
+        close_name = (
+            len(shorter) >= MIN_CONTAINMENT_LENGTH and shorter in longer
+        ) or SequenceMatcher(None, venue_name, target_name).ratio() >= (
+            FUZZY_RATIO_THRESHOLD
+        )
+        same_address = target_address and target_address == normalize_address(
+            venue.address
+        )
+        if close_name or same_address:
+            ambiguous.append(venue)
+
+    if len(confident) == 1:
+        return confident[0], []
+    # Several venues each look certain: the database already holds a duplicate
+    # pair, and picking one at random would pile a third row onto it.
+    candidates = confident + ambiguous
+    candidates.sort(key=lambda v: (-completeness_score(v), v.id))
+    return None, candidates
 
 
 # ── deduplication ─────────────────────────────────────────────────────────────
@@ -104,9 +181,14 @@ def normalize_name(name):
 
 def normalize_city(city):
     """Like normalize_name, but also strips a leading 4-digit PLZ ("8005 Zürich")
-    and a trailing canton abbreviation ("Bremgarten AG").
+    and a trailing canton abbreviation ("Bremgarten AG"), and flattens the
+    punctuation the sources disagree about — the same town arrives as
+    "St. Gallen", "St-Gallen" and "St.gallen", and three spellings of one city
+    means three copies of every venue in it.
     """
-    normalized = normalize_name(split_leading_plz(city)[1])
+    normalized = normalize_name(
+        split_leading_plz(city)[1].replace(".", " ").replace("-", " ").replace("/", " ")
+    )
     tokens = normalized.split()
     if len(tokens) > 1 and tokens[-1] in _CANTON_CODES:
         normalized = " ".join(tokens[:-1])

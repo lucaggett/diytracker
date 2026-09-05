@@ -8,7 +8,7 @@ from datetime import datetime
 from sqlalchemy import or_
 
 from diytracker.models import Event, ScrapedEvent, Venue, db
-from diytracker.services.venue import get_or_create_venue
+from diytracker.services.venue import get_or_create_venue, resolve_existing_venue
 from diytracker.utils import clean_genre_tokens
 
 
@@ -81,6 +81,18 @@ def resolve_venue_from_form(form, require_new_venue_details=False):
         form.venue_name.data and form.venue_city.data and form.venue_plz.data
     ):
         return None, False, "missing_details"
+    # Reuse the venue this obviously is before falling back to the exact
+    # (name, city, plz) lookup, which treats a blank PLZ or a different casing
+    # as a different place. Only a certain match short-circuits here; the
+    # queue is the one path that stops and asks about the doubtful ones.
+    existing, _candidates = resolve_existing_venue(
+        form.venue_name.data,
+        form.venue_city.data,
+        form.venue_plz.data,
+        form.venue_address.data,
+    )
+    if existing:
+        return existing, False, None
     venue, created = get_or_create_venue(
         name=form.venue_name.data,
         address=form.venue_address.data,

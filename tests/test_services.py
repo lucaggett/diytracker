@@ -13,11 +13,13 @@ from diytracker.models import (
 )
 from diytracker.services.events import compute_event_hash
 from diytracker.services.venue import (
+    PLACEHOLDER_VENUE_NAME,
     find_dedup_candidates,
     get_or_create_venue,
     merge_group,
     normalize_city,
     normalize_name,
+    resolve_existing_venue,
     select_survivor,
 )
 
@@ -58,6 +60,74 @@ class TestGetOrCreateVenue:
         _, created = get_or_create_venue("Hall", "Addr", "Basel", "BS", "4000")
         assert created is True
         assert Venue.query.count() == 2
+
+
+class TestResolveExistingVenue:
+    """The gate in front of get_or_create_venue: exact-tuple matching is what
+    minted a second venue for every scraped row that carried no postal code."""
+
+    def test_blank_plz_still_finds_the_venue(self, app, make_venue):
+        existing = make_venue(name="Kiff", city="Aarau", plz="5001", canton="AG")
+        venue, candidates = resolve_existing_venue("KiFF", "Aarau", "")
+        assert venue is existing
+        assert candidates == []
+
+    def test_casing_diacritics_and_trailing_space(self, app, make_venue):
+        existing = make_venue(name="Sedel ", city="Emmenbrücke", plz="6020")
+        venue, _ = resolve_existing_venue("sedel", "Emmenbrucke", "6020")
+        assert venue is existing
+
+    def test_city_punctuation_does_not_split_a_venue(self, app, make_venue):
+        existing = make_venue(name="Grabenhalle", city="St-Gallen", plz="9000")
+        venue, _ = resolve_existing_venue("Grabenhalle", "St. Gallen", "9000")
+        assert venue is existing
+
+    def test_conflicting_plz_is_ambiguous(self, app, make_venue):
+        # metalgigs sends Gaswerk as 8401 where the venue is 8406. One of the
+        # two is wrong and only a human knows which.
+        make_venue(name="Gaswerk", city="Winterthur", plz="8406")
+        venue, candidates = resolve_existing_venue("Gaswerk", "Winterthur", "8401")
+        assert venue is None
+        assert [v.name for v in candidates] == ["Gaswerk"]
+
+    def test_two_confident_matches_are_ambiguous(self, app, make_venue):
+        # The database already holds a duplicate pair: picking one at random
+        # would pile a third row onto it.
+        full = make_venue(name="Kiff", city="Aarau", plz="5001", address="Telli 118")
+        thin = make_venue(name="KiFF", city="Aarau", plz="")
+        venue, candidates = resolve_existing_venue("Kiff", "Aarau", "")
+        assert venue is None
+        # Most complete first, so the answer a merge would keep is preselected.
+        assert [v.id for v in candidates] == [full.id, thin.id]
+
+    def test_same_name_different_city_is_ambiguous(self, app, make_venue):
+        make_venue(name="Sedel", city="Luzern", plz="6000")
+        venue, candidates = resolve_existing_venue("Sedel", "Emmenbrücke", "")
+        assert venue is None
+        assert len(candidates) == 1
+
+    def test_similar_name_in_the_same_city_is_ambiguous(self, app, make_venue):
+        make_venue(name="X-tra Musikcafé", city="Zürich", plz="8005")
+        venue, candidates = resolve_existing_venue("x-tra", "Zürich", "")
+        assert venue is None
+        assert len(candidates) == 1
+
+    def test_same_address_in_the_same_city_is_ambiguous(self, app, make_venue):
+        # Provitreff, Boschbar and Planet5 all sit at Sihlquai 240.
+        make_venue(name="Provitreff", city="Zürich", plz="8005", address="Sihlquai 240")
+        venue, candidates = resolve_existing_venue(
+            "Planet5", "Zürich", "8005", "Sihlquai 240, 8005 Zürich"
+        )
+        assert venue is None
+        assert len(candidates) == 1
+
+    def test_genuinely_new_venue(self, app, make_venue):
+        make_venue(name="Kiff", city="Aarau", plz="5001")
+        assert resolve_existing_venue("Hirscheneck", "Basel", "4058") == (None, [])
+
+    def test_blank_name_is_never_a_match(self, app, make_venue):
+        make_venue(name="Kiff", city="Aarau", plz="5001")
+        assert resolve_existing_venue("", "Aarau", "5001") == (None, [])
 
 
 class TestScrapeImport:
@@ -552,3 +622,149 @@ class TestUpcomingFilter:
 
         make_event(name="Old Gig", days_from_now=-5)
         assert search_events("old gig") == []
+
+
+class TestMergeDuplicateVenues:
+    """scripts/merge_duplicate_venues repairs the rows the exact-tuple lookup
+    left behind. The survivor is always the oldest, never the most complete."""
+
+    def _pair(self, make_venue):
+        # The shape the incident produced 22 times: an older complete row and a
+        # newer one carrying nothing but the name and city.
+        old = make_venue(name="Kiff", city="Aarau", plz="5001", address="Telli 118")
+        new = make_venue(name="KiFF", city="Aarau", plz="")
+        return old, new
+
+    def test_dry_run_writes_nothing(self, app, make_venue, make_event):
+        from scripts.merge_duplicate_venues import merge_duplicate_venues
+
+        _old, new = self._pair(make_venue)
+        make_event(venue=new, days_from_now=5)
+        result = merge_duplicate_venues(dry_run=True)
+        assert (result.groups, result.venues_deleted, result.events_repointed) == (
+            1,
+            1,
+            1,
+        )
+        assert Venue.query.count() == 2
+        assert db.session.get(Venue, new.id) is not None
+
+    def test_keeps_the_older_row_and_repoints_its_events(
+        self, app, make_venue, make_event
+    ):
+        from scripts.merge_duplicate_venues import merge_duplicate_venues
+
+        old, new = self._pair(make_venue)
+        old_id, new_id = old.id, new.id
+        event = make_event(venue=new, days_from_now=5)
+        merge_duplicate_venues(dry_run=False)
+        assert Venue.query.count() == 1
+        assert db.session.get(Venue, new_id) is None
+        db.session.refresh(event)
+        assert event.venue_id == old_id
+
+    def test_is_idempotent(self, app, make_venue):
+        from scripts.merge_duplicate_venues import merge_duplicate_venues
+
+        self._pair(make_venue)
+        merge_duplicate_venues(dry_run=False)
+        again = merge_duplicate_venues(dry_run=False)
+        assert again.groups == 0
+
+    def test_backfills_what_the_survivor_is_missing(self, app, make_venue):
+        from scripts.merge_duplicate_venues import merge_duplicate_venues
+
+        # The one case where oldest and most-complete disagree: keep the older
+        # row anyway, but take the fields it lacks off the one being deleted.
+        old = make_venue(name="Erismannhof", city="", plz="", canton="")
+        make_venue(name="Erismannhof", city="Zürich", plz="8004", canton="ZH")
+        merge_duplicate_venues(dry_run=False)
+        survivor = Venue.query.one()
+        assert survivor.id == old.id
+        assert (survivor.city, survivor.plz, survivor.canton) == (
+            "Zürich",
+            "8004",
+            "ZH",
+        )
+
+    def test_suspects_are_reported_not_merged(self, app, make_venue):
+        from scripts.merge_duplicate_venues import merge_duplicate_venues
+
+        # Three different venues sharing one building — the case that makes
+        # auto-merging on address wrong.
+        make_venue(name="Provitreff", city="Zürich", plz="8005", address="Sihlquai 240")
+        make_venue(name="Planet5", city="Zürich", plz="8005", address="Sihlquai 240")
+        result = merge_duplicate_venues(dry_run=False)
+        assert result.groups == 0
+        assert Venue.query.count() == 2
+        assert any("same address" in reason for _a, _b, reason in result.suspects)
+
+    def test_interactive_merges_a_confirmed_suspect(self, app, make_venue, make_event):
+        from scripts.merge_duplicate_venues import merge_duplicate_venues
+
+        old = make_venue(name="Metbar", city="Lenzburg", plz="5600")
+        new = make_venue(name="Met-Bar", city="Lenzburg", plz="5600")
+        old_id, new_id = old.id, new.id
+        event = make_event(venue=new, days_from_now=5)
+        result = merge_duplicate_venues(dry_run=False, confirm=lambda *_: True)
+        assert result.groups == 1
+        assert Venue.query.count() == 1
+        assert db.session.get(Venue, new_id) is None
+        db.session.refresh(event)
+        assert event.venue_id == old_id
+
+    def test_interactive_declining_keeps_both(self, app, make_venue):
+        from scripts.merge_duplicate_venues import merge_duplicate_venues
+
+        make_venue(name="Metbar", city="Lenzburg", plz="5600")
+        make_venue(name="Met-Bar", city="Lenzburg", plz="5600")
+        result = merge_duplicate_venues(dry_run=False, confirm=lambda *_: False)
+        assert result.groups == 0
+        assert Venue.query.count() == 2
+        assert len(result.declined) == 1
+        assert result.suspects == []
+
+    def test_interactive_quitting_keeps_the_rest(self, app, make_venue):
+        from scripts.merge_duplicate_venues import merge_duplicate_venues
+
+        make_venue(name="Metbar", city="Lenzburg", plz="5600")
+        make_venue(name="Met-Bar", city="Lenzburg", plz="5600")
+        make_venue(name="Schützi", city="Olten", plz="4600")
+        make_venue(name="Schützi Olten", city="Olten", plz="4600")
+        result = merge_duplicate_venues(dry_run=False, confirm=lambda *_: None)
+        assert result.stopped_early is True
+        assert result.groups == 0
+        assert Venue.query.count() == 4
+        assert len(result.suspects) == 2
+
+    def test_interactive_always_keeps_the_older_row(self, app, make_venue):
+        from scripts.merge_duplicate_venues import merge_duplicate_venues
+
+        # The newer row is the more complete one; the older still survives.
+        old = make_venue(name="AKUT", city="Thun", plz="")
+        make_venue(name="AKuT Thun", city="Thun", plz="3600", address="Kurve 1")
+        merge_duplicate_venues(dry_run=False, confirm=lambda *_: True)
+        survivor = Venue.query.one()
+        assert survivor.id == old.id
+        assert (survivor.plz, survivor.address) == ("3600", "Kurve 1")
+
+    def test_confirm_is_ignored_on_a_dry_run(self, app, make_venue):
+        from scripts.merge_duplicate_venues import merge_duplicate_venues
+
+        make_venue(name="Metbar", city="Lenzburg", plz="5600")
+        make_venue(name="Met-Bar", city="Lenzburg", plz="5600")
+        result = merge_duplicate_venues(dry_run=True, confirm=lambda *_: True)
+        assert result.groups == 0
+        assert Venue.query.count() == 2
+        assert len(result.suspects) == 1
+
+
+class TestPlaceholderVenue:
+    def test_placeholder_is_never_auto_reused(self, app, make_venue):
+        # The queue falls back to this name when a scraped row has no venue.
+        # Two nameless rows are not the same place, and silently merging them
+        # would hide unrelated shows behind one bucket venue.
+        make_venue(name=PLACEHOLDER_VENUE_NAME, city="", plz="")
+        venue, candidates = resolve_existing_venue(PLACEHOLDER_VENUE_NAME, "Bern", "")
+        assert venue is None
+        assert len(candidates) == 1

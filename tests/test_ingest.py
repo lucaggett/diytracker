@@ -136,10 +136,12 @@ def _konzi(**overrides):
     return _payload(source="konzibot", **overrides)
 
 
-class TestKonzibotStrictDedup:
-    """Konzibot pushes shows already on the calendar/queue under fresh ids and
-    ignores the canton/genre/venue spellings — services.ingest_dedup flags the
-    collisions and ingest canonicalizes the names, for source=konzibot only."""
+class TestIngestDedup:
+    """Every source re-pushes shows already on the calendar or in the queue and
+    spells venues its own way — services.ingest_dedup records the collisions and
+    ingest canonicalizes the venue name, whatever the source. A strong match
+    (same title, or same venue and city) sets needs_review; a weak one only
+    writes review_reason. Genre canonicalization stays konzibot-only."""
 
     def test_flags_same_day_city_as_calendar_event(self, app, make_event, make_venue):
         venue = make_venue(name="Kasheme", city="Zürich")
@@ -197,12 +199,32 @@ class TestKonzibotStrictDedup:
         )
         assert res.record.needs_review is True
 
-    def test_non_konzibot_same_day_city_not_flagged(self, app, make_event, make_venue):
+    def test_any_source_is_flagged_not_just_konzibot(self, app, make_event, make_venue):
         venue = make_venue(name="Kasheme", city="Zürich")
-        make_event(venue=venue, days_from_now=10)
-        # default source is eventbot -> strict dedup does not apply
-        res = ingest_event(_payload(city="Zürich", start_date=_day_in(10)))
+        make_event(name="Nightly Racket", venue=venue, days_from_now=10)
+        # Default source is eventbot: it used to be exempt, and that exemption
+        # is what let petzi/metalgigs/eventbot duplicates through unnoticed.
+        res = ingest_event(
+            _payload(city="Zürich", venue_name="Kasheme", start_date=_day_in(10))
+        )
+        assert res.record.needs_review is True
+        assert "Calendar" in res.record.review_reason
+
+    def test_weak_match_warns_but_stays_in_the_queue(self, app, make_event, make_venue):
+        # Same city, same night, nothing else: two unrelated bands in Zürich.
+        # Worth a note next to the row, not worth hiding it from the queue.
+        venue = make_venue(name="Kasheme", city="Zürich")
+        make_event(name="Nightly Racket", venue=venue, days_from_now=10)
+        res = ingest_event(
+            _payload(
+                title="Something Else Entirely",
+                venue_name="Hirscheneck",
+                city="Zürich",
+                start_date=_day_in(10),
+            )
+        )
         assert res.record.needs_review is False
+        assert "Calendar" in res.record.review_reason
 
     def test_no_collision_leaves_flag_clear(self, app):
         res = ingest_event(
@@ -212,7 +234,7 @@ class TestKonzibotStrictDedup:
         assert res.record.review_reason is None
 
     def test_exclude_scraped_id_prevents_self_match(self, app):
-        from diytracker.services.ingest_dedup import find_konzibot_duplicates
+        from diytracker.services.ingest_dedup import find_duplicate_matches
 
         day = _day_in(25)
         a = ingest_event(
@@ -223,13 +245,13 @@ class TestKonzibotStrictDedup:
         ).record
 
         # Excluding the row's own id drops its self-match but still finds its sibling.
-        matches = find_konzibot_duplicates(
+        matches = find_duplicate_matches(
             a.start_date, a.city, a.venue_name, a.title, exclude_scraped_id=a.id
         )
         queue_labels = [m["label"] for m in matches if m["kind"] == "queue"]
         assert any("Twin Show" in label for label in queue_labels)
         # Without excluding, the row would also match itself -> one extra queue hit.
-        all_matches = find_konzibot_duplicates(
+        all_matches = find_duplicate_matches(
             a.start_date, a.city, a.venue_name, a.title
         )
         n_queue_excl = sum(1 for m in matches if m["kind"] == "queue")
@@ -255,6 +277,19 @@ class TestKonzibotStrictDedup:
         )
         assert res.record.venue_name == "Rote Fabrik"
 
+    def test_canonicalizes_venue_name_for_any_source(self, app, make_venue):
+        make_venue(name="Kiff", city="Aarau", plz="5001", canton="AG")
+        res = ingest_event(
+            _payload(
+                source="petzi",
+                source_id="petzi-kiff",
+                venue_name="KiFF",
+                city="Aarau",
+                start_date=_day_in(42),
+            )
+        )
+        assert res.record.venue_name == "Kiff"
+
     def test_full_canton_name_resolved_to_code(self, app):
         res = ingest_event(
             _konzi(source_id="c", region="Zürich", city="", start_date=_day_in(41))
@@ -263,12 +298,13 @@ class TestKonzibotStrictDedup:
 
 
 class TestScanQueueDuplicates:
-    """scripts/scan_queue_duplicates backfills the needs_review flag across the
-    whole staged queue, regardless of source."""
+    """scripts/scan_queue_duplicates re-derives the flag across the whole staged
+    queue: what a row collides with changes as the queue around it moves."""
 
     def _seed_pair(self):
-        # Two eventbot rows for the same show — strict dedup never ran on them,
-        # so both land unflagged.
+        # Two eventbot rows for the same show. The second is flagged as it
+        # arrives; the first had nothing to collide with yet, and closing that
+        # gap retroactively is the whole job of the backfill.
         common = {
             "city": "Basel",
             "venue_name": "Sommercasino",
@@ -284,33 +320,77 @@ class TestScanQueueDuplicates:
                 source="eventbot", source_id="p-b", start_date=_day_in(18), **common
             )
         ).record
-        assert a.needs_review is False and b.needs_review is False
+        assert a.needs_review is False
+        assert b.needs_review is True
         return a, b
 
-    def test_dry_run_flags_nothing(self, app):
+    def test_dry_run_writes_nothing(self, app):
         from scripts.scan_queue_duplicates import scan_queue
 
         a, b = self._seed_pair()
         result = scan_queue(dry_run=True)
-        assert result.newly_flagged == 2
+        assert result.strong == 2
         db.session.refresh(a)
         db.session.refresh(b)
-        assert a.needs_review is False and b.needs_review is False
+        assert a.needs_review is False
 
-    def test_flags_both_members_and_is_idempotent(self, app):
+    def test_flags_the_earlier_row_and_converges(self, app):
         from scripts.scan_queue_duplicates import scan_queue
 
         a, b = self._seed_pair()
         result = scan_queue()
-        assert result.newly_flagged == 2
+        assert result.strong == 2
         db.session.refresh(a)
         db.session.refresh(b)
         assert a.needs_review is True and b.needs_review is True
         assert a.review_reason and b.review_reason
-        # Re-running leaves them alone.
+        # Re-running recomputes the same verdict rather than accumulating.
         again = scan_queue()
-        assert again.newly_flagged == 0
-        assert again.already_flagged == 2
+        assert (again.strong, again.weak, again.cleared) == (2, 0, 0)
+
+    def test_clears_a_row_that_no_longer_collides(self, app):
+        from scripts.scan_queue_duplicates import scan_queue
+
+        a, b = self._seed_pair()
+        # `b` was flagged against `a`. Reject `a` and nothing collides with `b`
+        # any more — a stale flag would hide it from the queue forever.
+        a.status = ScrapedEvent.STATUS_REJECTED
+        db.session.commit()
+        result = scan_queue()
+        assert result.cleared == 1
+        db.session.refresh(b)
+        assert b.needs_review is False
+        assert b.review_reason is None
+
+    def test_weak_collision_leaves_the_row_in_the_queue(self, app):
+        from scripts.scan_queue_duplicates import scan_queue
+
+        day = _day_in(19)
+        ingest_event(
+            _payload(
+                source="petzi",
+                source_id="w-a",
+                title="One",
+                city="Chur",
+                venue_name="Beerbox",
+                start_date=day,
+            )
+        )
+        rec = ingest_event(
+            _payload(
+                source="petzi",
+                source_id="w-b",
+                title="Two",
+                city="Chur",
+                venue_name="Werkstatt",
+                start_date=day,
+            )
+        ).record
+        result = scan_queue()
+        assert result.weak == 2 and result.strong == 0
+        db.session.refresh(rec)
+        assert rec.needs_review is False
+        assert rec.review_reason
 
 
 @pytest.fixture

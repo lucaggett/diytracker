@@ -25,7 +25,7 @@ from datetime import datetime
 from diytracker.models import ScrapedEvent, db
 from diytracker.services.audit import record
 from diytracker.services.errors import AdminError
-from diytracker.services.ingest_dedup import find_konzibot_duplicates, is_strong_match
+from diytracker.services.ingest_dedup import find_duplicate_matches, is_strong_match
 
 
 @dataclass
@@ -107,27 +107,27 @@ def _get_flagged(scraped_id):
     return rec
 
 
-def list_flagged():
-    """Flagged, still-unapproved queue rows, soonest first, each with the
-    records it currently collides with (strong matches first).
+def list_flagged(page=1, per_page=50):
+    """One page of flagged, still-unapproved queue rows, soonest first, each
+    with the records it currently collides with (strong matches first).
 
-    Re-matching costs two queries per row. Flagged sets run to tens, not
-    thousands — the whole point is that an admin reads every one — so this
-    stays a plain loop rather than a batched join.
+    Returns ``(rows, pagination)``, the same shape the main queue uses.
+    Re-matching costs two queries per row, and every source is flagged now, so
+    the page bound is what keeps that loop from running over the whole backlog.
     """
-    rows = (
+    pagination = (
         ScrapedEvent.query.filter(
             ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
             ScrapedEvent.needs_review.is_(True),
         )
         .order_by(ScrapedEvent.start_date.asc())
-        .all()
+        .paginate(page=page, per_page=per_page, error_out=False)
     )
     out = []
-    for rec in rows:
+    for rec in pagination.items:
         matches = [
             _match_row(m)
-            for m in find_konzibot_duplicates(
+            for m in find_duplicate_matches(
                 rec.start_date,
                 rec.city,
                 rec.venue_name,
@@ -137,7 +137,7 @@ def list_flagged():
         ]
         matches.sort(key=lambda m: not m.strong)
         out.append(_row(rec, matches))
-    return out
+    return out, pagination
 
 
 def _discard(rec, actor):

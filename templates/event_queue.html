@@ -82,19 +82,20 @@
     </thead>
     <tbody>
       {% for event in events %}
-      <tr class="border-t border-ink/30 align-top{% if event.needs_review %} bg-bleed/5{% endif %}">
+      <tr class="border-t border-ink/30 align-top">
         <td class="px-3 py-2">
           <input type="checkbox" name="scraped_ids" value="{{ event._scraped_id }}"
                  form="bulk-reject-form" class="w-4 h-4 cursor-pointer accent-bleed">
         </td>
         <td class="px-3 py-2 whitespace-nowrap">{{ event.start_date }}</td>
         <td class="px-3 py-2">
-          {% if event.needs_review %}
-            <div class="border-2 border-bleed bg-bleed/10 px-2 py-1 mb-2">
-              <div class="text-xs uppercase tracking-widest text-bleed font-semibold">⚠ {{ _('Possible duplicate') }}</div>
-              {% if event.review_reason %}
-                <div class="text-xs text-smudge mt-1">{{ event.review_reason }}</div>
-              {% endif %}
+          {# Strongly-flagged rows never reach this page (they are filtered out
+             and triaged on /queue/duplicates), so a reason here means a weak
+             match: something else the same night, usually a different show. #}
+          {% if event.review_reason %}
+            <div class="border border-ink/40 px-2 py-1 mb-2">
+              <div class="text-xs uppercase tracking-widest text-smudge font-semibold">{{ _('Also that night') }}</div>
+              <div class="text-xs text-smudge mt-1">{{ event.review_reason }}</div>
             </div>
           {% endif %}
           <div class="flex gap-3">

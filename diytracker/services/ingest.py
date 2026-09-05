@@ -39,7 +39,8 @@ from diytracker.models import Event, ScrapedEvent, db
 from diytracker.services.genre_catalog import canonicalize_genre_string
 from diytracker.services.ingest_dedup import (
     describe_duplicates,
-    find_konzibot_duplicates,
+    find_duplicate_matches,
+    has_strong_match,
 )
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
 from diytracker.services.venue import canonical_venue_name
@@ -52,10 +53,11 @@ class IngestResult(NamedTuple):
     record: object
 
 
-# Sources that don't respect the API contract (canton/genre/venue spellings)
-# and re-push shows already known: their payloads get genre/venue canonicalized
-# and run through the aggressive same-day duplicate check in services.ingest_dedup,
-# which flags collisions for a second manual look instead of dropping them.
+# Sources that don't respect the genre catalog and send whatever their users
+# typed. Their styles get snapped onto the catalog's canonical casing before
+# staging. Venue canonicalization and the same-day duplicate check used to be
+# gated on this set too; both now run for every source, because every source
+# turned out to re-push shows and to spell venues its own way.
 STRICT_DEDUP_SOURCES = {"konzibot"}
 
 # Column length caps (SQLite doesn't enforce VARCHAR sizes; trim on the way
@@ -173,10 +175,11 @@ def ingest_event(payload, flyer=None, upload_folder=None, commit=True):
         ]
         or None
     )
+    # Snap the venue onto the spelling already in the database, whatever the
+    # source: approval matches on the name, so "KiFF" arriving next to a stored
+    # "Kiff" is how a second venue gets minted.
+    venue_name = canonical_venue_name(venue_name, city) if venue_name else None
     if strict:
-        # konzibot ignores the catalog/venue spellings, so snap them onto the
-        # names already in the DB before staging.
-        venue_name = canonical_venue_name(venue_name, city) if venue_name else None
         canon = canonicalize_genre_string(_clean(payload, "styles") or "")
         styles = canon[: _MAX_LEN["styles"]] or None
 
@@ -205,13 +208,14 @@ def ingest_event(payload, flyer=None, upload_folder=None, commit=True):
         submitter=_clean(payload, "submitter"),
         flyer=flyer_path,
     )
-    if strict:
-        # Same-day collision with the calendar or the queue -> keep it, but
-        # flag it for a second manual look instead of silently duplicating.
-        matches = find_konzibot_duplicates(start_date, city, venue_name, title)
-        if matches:
-            record.needs_review = True
-            record.review_reason = describe_duplicates(matches)
+    # Same-day collision with the calendar or the queue -> keep the row, but
+    # record what it ran into. A strong match (same title, or same venue and
+    # city) also sets needs_review, which pulls it out of the web queue and onto
+    # /queue/duplicates; a weak one stays in the queue behind a warning.
+    matches = find_duplicate_matches(start_date, city, venue_name, title)
+    if matches:
+        record.review_reason = describe_duplicates(matches)
+        record.needs_review = has_strong_match(matches)
     db.session.add(record)
     if commit:
         db.session.commit()

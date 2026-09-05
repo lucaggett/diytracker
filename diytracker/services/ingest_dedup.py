@@ -1,22 +1,29 @@
-"""Aggressive duplicate detection for messy push sources (konzibot).
+"""Aggressive duplicate detection for everything entering the queue.
 
 The unified ingest core dedupes by canonical URL or (source, source_id). That
-misses the case konzibot keeps hitting: the *same show* pushed with a fresh
-id, so it lands as a new queue entry alongside the copy already on the calendar
-or in the queue. This module flags those collisions on the way in.
+misses the case every source keeps hitting: the *same show* arriving with a
+fresh id or a second URL, so it lands as a new queue entry alongside the copy
+already on the calendar or in the queue. This module flags those collisions on
+the way in.
 
-Matching is deliberately loose: konzibot mangles cantons, venue spellings and
+Matching is deliberately loose: sources mangle cantons, venue spellings and
 titles, so we normalize hard (fold diacritics, strip PLZ/canton, collapse
 whitespace — reusing services.venue) and fuzzy-compare. Same date is the
-anchor; a single further signal (city, venue or title) is enough to flag. The
-row is still ingested — it just carries needs_review/review_reason so an admin
-looks twice before approving.
+anchor; a single further signal (city, venue or title) is enough to notice.
+
+Noticing and hiding are two different things, and the flag carries both:
+
+- **strong** (``is_strong_match``: same title, or same venue *and* city) — a
+  real duplicate. ``needs_review`` is set, the row drops out of the web queue
+  and is triaged on /queue/duplicates.
+- **weak** (the same night in the same town, nothing more) — usually two
+  unrelated bands. Only ``review_reason`` is written; the row stays in the
+  normal queue behind an inline warning, because burying every same-night pair
+  would move most of the queue onto the duplicates page.
 
 Each match carries the matched record's id and its date/venue/city/title, so
 the queue-duplicates page can link straight to the colliding show and put the
-two side by side. Those fields are free — the ORM objects are already loaded
-here — and additive: ``describe_duplicates`` reads only ``kind``/``label`` and
-``scan_queue`` only ``signals``.
+two side by side.
 """
 
 from datetime import datetime, timedelta
@@ -63,18 +70,27 @@ def _match_signals(city, venue, title, cand_city, cand_venue, cand_title):
 def is_strong_match(match):
     """A real duplicate — not just two different shows on the same night.
 
-    The ingest heuristic flags on a *single* signal (same date + city OR venue
-    OR title), which is right for konzibot re-pushes but far too loose applied
-    queue-wide: two unrelated concerts in the same city on the same night share
-    date+city and would each flag the other. A genuine duplicate has the same
-    title (fuzzy — konzibot mangles them, so containment/ratio still lines up)
-    or, when the title was rewritten entirely, the same venue *and* city.
+    ``find_duplicate_matches`` reports on a *single* signal (same date + city OR
+    venue OR title), which is what you want for noticing a re-push, but far too
+    loose to act on: two unrelated concerts in the same city on the same night
+    share date+city and would each flag the other. A genuine duplicate has the
+    same title (fuzzy — sources mangle them, so containment/ratio still lines
+    up) or, when the title was rewritten entirely, the same venue *and* city.
 
-    Used by scripts/scan_queue_duplicates.py to decide what to flag, and by the
-    queue-duplicates page to separate real collisions from same-night context.
+    This is the line between the two levels: strong matches set needs_review at
+    ingest and block an approval, weak ones only warn. Also used by
+    scripts/scan_queue_duplicates.py and by the queue-duplicates page to
+    separate real collisions from same-night context.
     """
     signals = set(match["signals"])
     return "title" in signals or {"venue", "city"} <= signals
+
+
+def has_strong_match(matches):
+    """True when any of these collisions is a real duplicate, not just a
+    same-night neighbour. Decides needs_review at ingest time.
+    """
+    return any(is_strong_match(m) for m in matches)
 
 
 def _match(kind, record_id, title, venue, city, date, time, signals):
@@ -91,7 +107,7 @@ def _match(kind, record_id, title, venue, city, date, time, signals):
     }
 
 
-def find_konzibot_duplicates(
+def find_duplicate_matches(
     start_date, city, venue_name, title, exclude_scraped_id=None
 ):
     """Return match dicts for calendar/queue events colliding with this one.
