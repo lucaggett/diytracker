@@ -274,6 +274,65 @@ class TestEventQueue:
         entry = ActionLog.query.filter_by(action="queue.approve").one()
         assert "override_duplicate=" in entry.detail
 
+    def test_same_night_show_blocks_the_approval(
+        self, client, admin, login, make_venue, make_event
+    ):
+        # Nothing about this event matches the staged row — different title,
+        # venue and city — so the duplicate matcher stays silent. The night's
+        # lineup is shown anyway, because that is the copy it cannot catch.
+        login(admin)
+        other = make_venue(name="Rote Fabrik", city="Zürich", plz="8038", canton="ZH")
+        make_event(name="Unrelated Gig", venue=other, days_from_now=20)
+        rec = self._make_scraped()
+        resp = client.post("/queue", data={"scraped_id": str(rec.id)})
+        assert resp.status_code == 200
+        assert b"Already on the calendar that night" in resp.data
+        assert b"Unrelated Gig" in resp.data
+        assert Event.query.count() == 1
+        db.session.refresh(rec)
+        assert rec.status == ScrapedEvent.STATUS_PENDING
+
+    def test_confirming_the_night_publishes_and_is_audited(
+        self, client, admin, login, make_venue, make_event
+    ):
+        login(admin)
+        other = make_venue(name="Rote Fabrik", city="Zürich", plz="8038", canton="ZH")
+        make_event(name="Unrelated Gig", venue=other, days_from_now=20)
+        rec = self._make_scraped()
+        client.post(
+            "/queue", data={"scraped_id": str(rec.id), "confirm_same_date": "1"}
+        )
+        assert Event.query.count() == 2
+
+        from diytracker.models import ActionLog
+
+        entry = ActionLog.query.filter_by(action="queue.approve").one()
+        assert "same_date_checked=1" in entry.detail
+
+    def test_empty_night_asks_nothing(self, client, admin, login):
+        # An empty list is nothing to double-check, so the step is skipped
+        # rather than shown as a click-through.
+        login(admin)
+        rec = self._make_scraped()
+        resp = client.post("/queue", data={"scraped_id": str(rec.id)})
+        assert resp.status_code == 302
+        assert Event.query.count() == 1
+
+    def test_duplicate_section_is_not_repeated_in_the_night_list(
+        self, client, admin, login, make_venue, make_event
+    ):
+        # The one calendar event that night is the flagged duplicate itself:
+        # it belongs in the duplicate section, and confirming that is enough.
+        login(admin)
+        venue = make_venue(name="Hall", city="Aarau", plz="5000", canton="AG")
+        make_event(name="Scraped Show", venue=venue, days_from_now=20)
+        rec = self._make_scraped(performers="A Different Lineup")
+        resp = client.post(
+            "/queue", data={"scraped_id": str(rec.id), "confirm_duplicate": "1"}
+        )
+        assert resp.status_code == 302
+        assert Event.query.count() == 2
+
     def test_weakly_flagged_row_stays_in_the_queue(self, client, admin, login):
         login(admin)
         self._make_scraped(

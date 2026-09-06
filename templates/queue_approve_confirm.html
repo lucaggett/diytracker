@@ -121,6 +121,36 @@
   </article>
   {% endif %}
 
+  {% if same_date_events %}
+  <article class="border-2 border-ink bg-paper p-4 mb-4">
+    <h2 class="text-sm uppercase tracking-widest mb-1">{{ _('Already on the calendar that night') }}</h2>
+    <p class="text-xs text-smudge mb-3">
+      {{ _('These shows are listed for %(date)s. Read them before publishing — a copy that was added under a different title, venue spelling or city matches nothing automatically.', date=overrides.override_date) }}
+    </p>
+    <ul class="space-y-2">
+      {% for e in same_date_events %}
+      <li class="border border-ink/30 px-3 py-2">
+        <div class="flex flex-wrap items-baseline gap-2">
+          {% if e.time %}<span class="text-xs uppercase tracking-widest text-smudge">{{ e.time }}</span>{% endif %}
+          <a href="{{ url_for('public.event_page', event_id=e.id) }}"
+             target="_blank" rel="noopener"
+             class="font-semibold text-bleed hover:underline">{{ e.title }} ↗</a>
+          <a href="{{ url_for('admin.edit_event', event_id=e.id) }}"
+             class="text-xs uppercase tracking-widest text-smudge hover:text-bleed">{{ _('Edit') }}</a>
+        </div>
+        <div class="text-sm text-smudge">
+          {{ [e.venue, e.city]|select|join(' · ') or '—' }}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    <label class="flex items-center gap-2 mt-3 text-sm cursor-pointer">
+      <input type="checkbox" name="confirm_same_date" value="1" required>
+      {{ _('I have read the list — this show is not among them.') }}
+    </label>
+  </article>
+  {% endif %}
+
   <div class="flex items-center gap-4">
     <button type="submit"
             class="border-2 border-ink px-4 py-2 uppercase text-xs tracking-widest hover:bg-ink hover:text-paper">

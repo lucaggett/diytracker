@@ -24,6 +24,11 @@ Noticing and hiding are two different things, and the flag carries both:
 Each match carries the matched record's id and its date/venue/city/title, so
 the queue-duplicates page can link straight to the colliding show and put the
 two side by side.
+
+None of that helps against a copy whose title, venue *and* city were all
+rewritten by the source — it matches on no signal at all. ``find_same_date_events``
+is the fallback for that: not a matcher, just the day's full calendar lineup,
+which the approval page makes the admin read before publishing.
 """
 
 from datetime import datetime, timedelta
@@ -198,3 +203,41 @@ def describe_duplicates(matches):
         label = "Calendar" if m["kind"] == "calendar" else "Queue"
         parts.append(f"{label}: {m['label']}")
     return "; ".join(parts)[:_REASON_CAP]
+
+
+def find_same_date_events(start_date, exclude_event_ids=()):
+    """Every calendar event on ``start_date``, earliest first.
+
+    ``find_duplicate_matches`` only reports collisions it recognises — same
+    city, venue or title. A show that is already listed under a rewritten
+    title, at a venue spelled differently, with the city left blank matches on
+    none of the three and sails through the approval gate. So the last thing
+    the approval page shows is the whole night, unfiltered, for the admin to
+    read: the machine cannot rule the copy out, a human looking at five shows
+    can. ``exclude_event_ids`` drops the ones the duplicate section above it is
+    already showing.
+
+    Each row is {"id", "title", "venue", "city", "time"} — the date is the
+    heading, so it isn't repeated per row.
+    """
+    if start_date is None:
+        return []
+    excluded = set(exclude_event_ids)
+    day_start = datetime.combine(start_date, time_type.min)
+    day_end = day_start + timedelta(days=1)
+    rows = (
+        Event.query.filter(Event.date >= day_start, Event.date < day_end)
+        .order_by(Event.date.asc(), Event.doors.asc())
+        .all()
+    )
+    return [
+        {
+            "id": e.id,
+            "title": e.name,
+            "venue": e.venue.name if e.venue else "",
+            "city": (e.venue.city if e.venue else "") or "",
+            "time": f"{e.doors:%H:%M}" if e.doors else "",
+        }
+        for e in rows
+        if e.id not in excluded
+    ]

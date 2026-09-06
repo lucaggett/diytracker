@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-05 14:09+0200\n"
+"POT-Creation-Date: 2026-09-06 22:08+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -416,7 +416,7 @@ msgid ""
 "below."
 msgstr ""
 
-#: diytracker/blueprints/admin.py:189 diytracker/blueprints/submissions.py:503
+#: diytracker/blueprints/admin.py:189 diytracker/blueprints/submissions.py:536
 msgid "Selected venue does not exist."
 msgstr ""
 
@@ -559,74 +559,74 @@ msgstr ""
 msgid "DIY, punk and underground concerts in Switzerland."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:192
+#: diytracker/blueprints/submissions.py:207
 msgid "Invalid event selection."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:255
+#: diytracker/blueprints/submissions.py:270
 msgid "That venue no longer exists."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:329
+#: diytracker/blueprints/submissions.py:361
 msgid "This event already exists."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:357
+#: diytracker/blueprints/submissions.py:390
 msgid "Event approved and added to calendar!"
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:404
+#: diytracker/blueprints/submissions.py:437
 msgid "Event removed from queue."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:424
+#: diytracker/blueprints/submissions.py:457
 #, python-format
 msgid "%(num)d events removed from queue."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:458
+#: diytracker/blueprints/submissions.py:491
 #, python-format
 msgid "%(num)d entries discarded."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:461
+#: diytracker/blueprints/submissions.py:494
 #, python-format
 msgid "%(num)d entries unflagged — they are back in the queue."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:475
+#: diytracker/blueprints/submissions.py:508
 #, python-format
 msgid "Discarded “%(title)s”."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:478
+#: diytracker/blueprints/submissions.py:511
 #, python-format
 msgid "Unflagged “%(title)s” — it's back in the queue."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:500
+#: diytracker/blueprints/submissions.py:533
 msgid "Please provide all required venue details for a new venue."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:506
+#: diytracker/blueprints/submissions.py:539
 msgid "Venue already exists. Using existing venue."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:526
+#: diytracker/blueprints/submissions.py:559
 msgid "Event submitted successfully!"
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:545
+#: diytracker/blueprints/submissions.py:578
 #, python-format
 msgid "'%(name)s' is already in the list."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:550
+#: diytracker/blueprints/submissions.py:583
 #, python-format
 msgid "Genre '%(name)s' added."
 msgstr ""
 
-#: diytracker/blueprints/submissions.py:578
+#: diytracker/blueprints/submissions.py:611
 #, python-format
 msgid "Genre '%(name)s' removed."
 msgstr ""
@@ -912,7 +912,8 @@ msgstr ""
 
 #: templates/admin.html:162 templates/event_queue.html:134
 #: templates/promoter_dashboard.html:76
-#: templates/queue_approve_confirm.html:100 templates/queue_duplicates.html:89
+#: templates/queue_approve_confirm.html:100
+#: templates/queue_approve_confirm.html:139 templates/queue_duplicates.html:89
 #: templates/venues.html:68
 msgid "Edit"
 msgstr ""
@@ -1366,7 +1367,7 @@ msgstr ""
 msgid "via"
 msgstr ""
 
-#: templates/event_queue.html:130 templates/queue_approve_confirm.html:127
+#: templates/event_queue.html:130 templates/queue_approve_confirm.html:157
 msgid "Approve"
 msgstr ""
 
@@ -1399,7 +1400,7 @@ msgid "Approve with Changes"
 msgstr ""
 
 #: templates/_partials/forms.html:51 templates/event_queue.html:213
-#: templates/queue_approve_confirm.html:130
+#: templates/queue_approve_confirm.html:160
 msgid "Cancel"
 msgstr ""
 
@@ -1865,6 +1866,22 @@ msgstr ""
 
 #: templates/queue_approve_confirm.html:119
 msgid "I have checked — this is a different show. Publish it."
+msgstr ""
+
+#: templates/queue_approve_confirm.html:126
+msgid "Already on the calendar that night"
+msgstr ""
+
+#: templates/queue_approve_confirm.html:128
+#, python-format
+msgid ""
+"These shows are listed for %(date)s. Read them before publishing — a copy"
+" that was added under a different title, venue spelling or city matches "
+"nothing automatically."
+msgstr ""
+
+#: templates/queue_approve_confirm.html:149
+msgid "I have read the list — this show is not among them."
 msgstr ""
 
 #: templates/queue_duplicates.html:4

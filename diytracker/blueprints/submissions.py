@@ -29,7 +29,11 @@ from diytracker.services.events import (
 from diytracker.services.genre_catalog import find_genre
 from diytracker.services.i18n import gettext as _
 from diytracker.services.ingest import parse_time
-from diytracker.services.ingest_dedup import find_duplicate_matches, is_strong_match
+from diytracker.services.ingest_dedup import (
+    find_duplicate_matches,
+    find_same_date_events,
+    is_strong_match,
+)
 from diytracker.services.labels import owned_label_choices
 from diytracker.services.search import like_patterns, normalise_query
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
@@ -123,15 +127,21 @@ def parse_scraped_events(date_from=None, date_to=None, source=None, q=None, page
 
 
 def _approval_confirmation(
-    rec, data, overrides, venue_candidates=(), duplicates=(), forced_venue=None
+    rec,
+    data,
+    overrides,
+    venue_candidates=(),
+    duplicates=(),
+    same_date_events=(),
+    forced_venue=None,
 ):
     """Stop an approval and ask, instead of writing a near-duplicate.
 
     Renders the staged entry beside whatever it ran into, with every override
     re-emitted as a hidden field so the answer is the same POST plus a decision:
-    ``confirm_venue_id`` (an existing id, or "new") and/or ``confirm_duplicate``.
-    Nothing has been written when this returns — both callers run before the
-    first ``db.session.add``.
+    ``confirm_venue_id`` (an existing id, or "new"), ``confirm_duplicate``
+    and/or ``confirm_same_date``. Nothing has been written when this returns —
+    every caller runs before the first ``db.session.add``.
     """
     counts = dict(
         db.session.query(Event.venue_id, db.func.count(Event.id))
@@ -155,6 +165,7 @@ def _approval_confirmation(
             for v in venue_candidates
         ],
         duplicates=list(duplicates),
+        same_date_events=list(same_date_events),
         forced_venue=forced_venue,
         queue_args=_queue_redirect_args(),
     )
@@ -289,6 +300,7 @@ def event_queue():
         # review_reason written at ingest, which is a snapshot and says nothing
         # about what has been published since.
         confirmed_duplicate = request.form.get("confirm_duplicate") == "1"
+        confirmed_same_date = request.form.get("confirm_same_date") == "1"
         strong = [
             m
             for m in find_duplicate_matches(
@@ -300,9 +312,25 @@ def event_queue():
             )
             if is_strong_match(m)
         ]
-        if strong and not confirmed_duplicate:
+        # And then the whole night, which is the check the matcher can't do:
+        # a re-listed show with the title, venue and city all rewritten shares
+        # no signal with its own copy. Skip the calendar entries the duplicate
+        # section is already showing, and skip the step entirely on a date with
+        # nothing on it — an empty list is nothing to double-check.
+        same_date = find_same_date_events(
+            event_date.date() if event_date else None,
+            exclude_event_ids=[m["id"] for m in strong if m["kind"] == "calendar"],
+        )
+        if (strong and not confirmed_duplicate) or (
+            same_date and not confirmed_same_date
+        ):
             return _approval_confirmation(
-                rec, data, overrides, duplicates=strong, forced_venue=forced_venue
+                rec,
+                data,
+                overrides,
+                duplicates=strong,
+                same_date_events=same_date,
+                forced_venue=forced_venue,
             )
 
         if venue is None:
@@ -354,6 +382,7 @@ def event_queue():
                     if strong
                     else ""
                 )
+                + (f" same_date_checked={len(same_date)}" if same_date else "")
             ),
         )
         db.session.commit()
