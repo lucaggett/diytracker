@@ -15,10 +15,38 @@ def _panel_entry(day, hits, visitors):
     }
 
 
-class _FakeCompleted:
-    def __init__(self, returncode=0, stderr=""):
-        self.returncode = returncode
-        self.stderr = stderr
+def _fake_popen(captured, returncode=0, stderr_text="", on_wait=None):
+    """Stand-in for subprocess.Popen as analytics._run_goaccess drives it.
+
+    The helper streams into stdin rather than handing subprocess one big
+    string (an "all time" report over a production log dir is hundreds of MB),
+    so the fake accumulates the written chunks into captured["input"]. stderr
+    is the temp file the helper opened, which is where its error path reads
+    goaccess's complaint back from.
+    """
+
+    class _Stdin:
+        def write(self, chunk):
+            captured.setdefault("input", []).append(chunk)
+
+        def close(self):
+            captured["stdin_closed"] = True
+
+    class _FakePopen:
+        def __init__(self, argv, stdin=None, stdout=None, stderr=None, **kwargs):
+            captured["cmd"] = argv
+            self.stdin = _Stdin()
+            self._stderr = stderr
+            self.returncode = returncode
+
+        def wait(self, timeout=None):
+            if stderr_text:
+                self._stderr.write(stderr_text)
+            if on_wait is not None:
+                on_wait(captured["cmd"])
+            return self.returncode
+
+    return _FakePopen
 
 
 class TestFindLogFiles:
@@ -165,19 +193,19 @@ class TestGenerateReport:
 
         captured = {}
 
-        def fake_run(cmd, input, capture_output, text, env, check):  # noqa: A002 - mirrors subprocess.run's keyword names
-            captured["cmd"] = cmd
-            captured["input"] = input
+        def write_report(_cmd):
             report_path.parent.mkdir(parents=True, exist_ok=True)
             report_path.write_text("<html>report</html>")
-            return _FakeCompleted(returncode=0)
 
-        monkeypatch.setattr(analytics.subprocess, "run", fake_run)
+        monkeypatch.setattr(
+            analytics.subprocess, "Popen", _fake_popen(captured, on_wait=write_report)
+        )
         success, message = analytics.generate_report("all")
         assert success is True
         assert "Report generated" in message
         assert report_path.exists()
-        assert "GET / HTTP/1.1" in captured["input"]
+        assert "GET / HTTP/1.1" in "".join(captured["input"])
+        assert captured["stdin_closed"] is True
 
     def test_reports_goaccess_error(self, tmp_path, monkeypatch):
         report_path = tmp_path / "nginx_report.html"
@@ -188,8 +216,8 @@ class TestGenerateReport:
         monkeypatch.setattr(analytics, "find_log_files", lambda: [log])
         monkeypatch.setattr(
             analytics.subprocess,
-            "run",
-            lambda *a, **kw: _FakeCompleted(returncode=1, stderr="boom"),
+            "Popen",
+            _fake_popen({}, returncode=1, stderr_text="boom"),
         )
         success, message = analytics.generate_report("all")
         assert success is False
@@ -299,13 +327,14 @@ class TestGenerateStats:
         )
         monkeypatch.setattr(analytics, "find_log_files", lambda: [log])
 
-        def fake_run(cmd, input, capture_output, text, env, check):  # noqa: A002 - mirrors subprocess.run's keyword names
+        def write_json(cmd):
             out = next(a for a in cmd if a.startswith("--output=")).split("=", 1)[1]
             fixture = {"visitors": {"data": [_panel_entry(today, 7, 3)]}}
             pathlib.Path(out).write_text(json.dumps(fixture))
-            return _FakeCompleted(returncode=0)
 
-        monkeypatch.setattr(analytics.subprocess, "run", fake_run)
+        monkeypatch.setattr(
+            analytics.subprocess, "Popen", _fake_popen({}, on_wait=write_json)
+        )
         success, message = analytics.generate_stats()
         assert success is True
         assert "Stats generated" in message
@@ -326,8 +355,8 @@ class TestGenerateStats:
         monkeypatch.setattr(analytics, "find_log_files", lambda: [log])
         monkeypatch.setattr(
             analytics.subprocess,
-            "run",
-            lambda *a, **kw: _FakeCompleted(returncode=1, stderr="boom"),
+            "Popen",
+            _fake_popen({}, returncode=1, stderr_text="boom"),
         )
         success, message = analytics.generate_stats()
         assert success is False

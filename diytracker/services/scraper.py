@@ -11,6 +11,14 @@ LAST_SCRAPE_FILE = INSTANCE_DIR / "last_scrape.txt"
 # than this just re-downloads unchanged sitemaps and pages.
 SCRAPE_INTERVAL_HOURS = 6
 
+# Rows per commit during the import. SQLite holds the write lock for the whole
+# of a write transaction, so staging a full run in one go could park it for
+# longer than the 15s busy_timeout in models._sqlite_pragmas — and a visitor
+# submitting an event in that window got "database is locked" and lost the
+# submission. Chunking also makes progress durable: a failure partway through
+# keeps what came before instead of discarding the run.
+IMPORT_CHUNK_SIZE = 50
+
 _scrape_lock = threading.Lock()
 _scrape_running = False
 _scrape_progress = {"total": 0, "processed": 0, "started_at": None, "phase": ""}
@@ -136,8 +144,16 @@ def _scrape_and_import(app):
         _scrape_progress["phase"] = "Scraping events"
 
         events = []
-        for _source, url, parser in all_urls:
-            parsed = parser(url)
+        for source_key, url, parser in all_urls:
+            # Per-URL, like the listing sources below: an unguarded parser
+            # unwound to the outer handler and took the entire run with it —
+            # including every listing source that had not run yet — because
+            # one event page had markup its parser didn't expect.
+            try:
+                parsed = parser(url)
+            except Exception:
+                app.logger.exception(f"Scrape: {source_key} failed to parse {url}")
+                parsed = None
             if parsed:
                 events.append(parsed)
             _scrape_progress["processed"] += 1
@@ -173,6 +189,7 @@ def _scrape_and_import(app):
         _scrape_progress["phase"] = "Importing to database"
         with app.app_context():
             counts = {"created": 0, "duplicate": 0, "invalid": 0, "skipped": 0}
+            staged = 0
             for row in events:
                 raw_styles = row.get("styles") or ""
                 # petzi sitemap mixes concerts with theatre/workshop/club-night
@@ -184,7 +201,19 @@ def _scrape_and_import(app):
                     continue
                 # commit=False: batch commit below; in-batch url dupes are
                 # still caught because ingest's dedup queries autoflush.
-                result = ingest_event(row, commit=False)
+                # Guarded per row for the same reason the parsers above are:
+                # one unexpected payload must not cost every row staged
+                # before it, which is what an escape to the outer handler
+                # (skipping the commit) used to do.
+                try:
+                    result = ingest_event(row, commit=False)
+                except Exception:
+                    app.logger.exception(
+                        f"Scrape: ingest failed for {row.get('source')} "
+                        f"{row.get('url') or row.get('title')!r}"
+                    )
+                    counts["invalid"] += 1
+                    continue
                 counts[result.status] += 1
                 if result.status == "invalid":
                     _record_skipped(
@@ -193,6 +222,9 @@ def _scrape_and_import(app):
                     app.logger.warning(
                         f"Scrape: dropped invalid row {row.get('url')}: {result.reason}"
                     )
+                staged += 1
+                if staged % IMPORT_CHUNK_SIZE == 0:
+                    db.session.commit()
             db.session.commit()
             app.logger.info(
                 f"Scrape complete: {counts['created']} new, "

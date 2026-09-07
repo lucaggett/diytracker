@@ -19,7 +19,7 @@ from diytracker.forms import (
     NotifyToggleForm,
     UnclaimEventForm,
 )
-from diytracker.models import Event, Label, Venue, db
+from diytracker.models import Event, Label, Venue, db, utcnow
 from diytracker.services.audit import record
 from diytracker.services.auth import current_user, promoter_required
 from diytracker.services.cache import bust_cache
@@ -295,7 +295,12 @@ def delete_label(label_id):
         abort(400)
     label = _owned_label_or_403(label_id)
     # Detach events first — FK enforcement would otherwise reject the delete.
-    detached = Event.query.filter_by(label_id=label.id).update({"label_id": None})
+    # Bulk UPDATE bypasses the ORM onupdate, so bump updated_at by hand, the
+    # same way services.venue.merge_group does: the label vanishes from these
+    # event pages, and the sitemap <lastmod> has to say so.
+    detached = Event.query.filter_by(label_id=label.id).update(
+        {"label_id": None, "updated_at": utcnow()}
+    )
     record(
         "label.delete",
         "label",

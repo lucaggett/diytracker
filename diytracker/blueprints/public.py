@@ -569,11 +569,15 @@ def _ics_response(body, filename=None):
 
 
 def _ics_feed_cache_key():
-    # Feeds carry no page chrome, so unlike the HTML pages the key must not
-    # include the locale — only the filters, normalized to their resolved form.
+    # Locale AND filters. A feed looks locale-free but isn't: the calendar
+    # description goes through _(), and the per-event URLs are built with
+    # url_for(), which _inject_lang_prefix() prefixes from g.locale. Keying on
+    # the filters alone meant the first requester's language was frozen into
+    # the cache — one French fetch and every later subscriber, in any
+    # language, got "Concerts DIY..." and /fr/events/<id>/ links.
     args = request.args
     parts = [args.get(name, "") for name in ("canton", "genre", "label")]
-    return "calendar_ics:" + ":".join(parts)
+    return f"calendar_ics:{getattr(g, 'locale', DEFAULT_LOCALE)}:" + ":".join(parts)
 
 
 @bp.route("/calendar.ics")

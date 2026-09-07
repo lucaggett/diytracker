@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload
 
 from diytracker.models import Event, EventDailyViews, Label, ScrapedEvent, db
 from diytracker.services.ingest_dedup import name_similarity
-from diytracker.services.seo import slugify
+from diytracker.services.seo import parse_acts, slugify
 
 
 def unique_slug(name, exclude_id=None):
@@ -58,8 +58,13 @@ def owned_label_choices(user):
 def _first_matching_label(labels, name, acts_raw):
     """The first label in *labels* whose name fuzzily matches the event name
     or one of its acts, else None.
+
+    Splits the line-up with seo.parse_acts, the same way the event page, the
+    JSON-LD and the ICS export do. Splitting on commas alone silently missed
+    every newline- or pipe-separated line-up: the whole block compared as one
+    long string, so a label whose name matched one act in it never scored.
     """
-    acts = [act.strip() for act in (acts_raw or "").split(",") if act.strip()]
+    acts = parse_acts(acts_raw)
     for label in labels:
         if name_similarity(label.name, name) or any(
             name_similarity(label.name, act) for act in acts

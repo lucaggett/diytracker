@@ -160,6 +160,80 @@ class TestScrapeImport:
 
         scraper._scrape_and_import(app)
 
+    def test_one_raising_parser_does_not_lose_the_other_rows(self, app, monkeypatch):
+        """An unguarded parser unwound to the outer handler and took the
+        whole run with it — including every listing source that had not run
+        yet — because one event page had markup it didn't expect.
+        """
+        good = {
+            "source": "metalgigs",
+            "url": "https://metalgigs.ch/konzerte/good",
+            "title": "Survivor",
+            "city": "Basel",
+            "start_date": "2026-08-01",
+        }
+        bad = {
+            "source": "metalgigs",
+            "url": "https://metalgigs.ch/konzerte/bad",
+            "title": "Explodes",
+            "city": "Basel",
+            "start_date": "2026-08-02",
+        }
+
+        from diytracker.services import scrape_events, scraper, venue_sources
+
+        monkeypatch.setattr(venue_sources, "get_sources", lambda: ())
+        monkeypatch.setattr(
+            scrape_events,
+            "get_sitemap_event_urls",
+            lambda url, frag, **kw: [r["url"] for r in (bad, good) if frag in r["url"]],
+        )
+        monkeypatch.setattr(scrape_events, "get_petzi_event_urls", list)
+
+        def exploding_parser(url):
+            if url == bad["url"]:
+                raise ValueError("unexpected markup")
+            return good
+
+        monkeypatch.setattr(scrape_events, "parse_metalgigs_event", exploding_parser)
+        monkeypatch.setattr(scrape_events, "parse_petzi_event", lambda url: None)
+        monkeypatch.setattr(scraper, "set_last_scrape_time", lambda dt: None)
+
+        counts = scraper._scrape_and_import(app)
+
+        assert counts is not None  # the run completed
+        assert ScrapedEvent.query.one().title == "Survivor"
+
+    def test_one_raising_ingest_does_not_lose_the_batch(self, app, monkeypatch):
+        """ingest_event() escaping skipped the batch commit, so every row
+        staged before the bad one was discarded along with it.
+        """
+        rows = [
+            {
+                "source": "metalgigs",
+                "url": f"https://metalgigs.ch/konzerte/{n}",
+                "title": f"Gig {n}",
+                "city": "Basel",
+                "start_date": "2026-08-01",
+            }
+            for n in range(3)
+        ]
+
+        from diytracker.services import ingest, scraper
+
+        real_ingest = ingest.ingest_event
+
+        def flaky(row, **kw):
+            if row["title"] == "Gig 1":
+                raise RuntimeError("boom")
+            return real_ingest(row, **kw)
+
+        monkeypatch.setattr(scraper, "ingest_event", flaky)
+        self._run_import(app, monkeypatch, rows)
+
+        titles = sorted(r.title for r in ScrapedEvent.query.all())
+        assert titles == ["Gig 0", "Gig 2"]
+
     def test_imports_and_cleans_scraped_rows(self, app, monkeypatch):
         rows = [
             {
@@ -768,3 +842,34 @@ class TestPlaceholderVenue:
         venue, candidates = resolve_existing_venue(PLACEHOLDER_VENUE_NAME, "Bern", "")
         assert venue is None
         assert len(candidates) == 1
+
+
+class TestNormaliseEventStatus:
+    def test_maps_schema_org_urls(self):
+        from diytracker.services.events import normalise_event_status
+
+        assert (
+            normalise_event_status("https://schema.org/EventCancelled") == "cancelled"
+        )
+        assert (
+            normalise_event_status("https://schema.org/EventPostponed") == "postponed"
+        )
+        assert (
+            normalise_event_status("https://schema.org/EventScheduled") == "scheduled"
+        )
+
+    def test_maps_bare_tokens_and_spellings(self):
+        from diytracker.services.events import normalise_event_status
+
+        assert normalise_event_status("EventCancelled") == "cancelled"
+        assert normalise_event_status("cancelled") == "cancelled"
+        assert normalise_event_status("Canceled") == "cancelled"
+
+    def test_unknown_and_empty_default_to_scheduled(self):
+        from diytracker.services.events import normalise_event_status
+
+        assert normalise_event_status("") == "scheduled"
+        assert normalise_event_status(None) == "scheduled"
+        assert (
+            normalise_event_status("https://schema.org/EventRescheduled") == "scheduled"
+        )

@@ -44,12 +44,16 @@ def canonical_venue_name(name, city):
         return name
     target_name = normalize_name(name)
     target_city = normalize_city(city or "")
-    for venue in Venue.query.all():
-        if normalize_name(venue.name) != target_name:
+    # Only the two columns the comparison reads. Normalization can't be
+    # expressed in SQL, so the scan itself stays — but ingest calls this once
+    # per staged row, and hydrating every Venue (plus its relationships) to
+    # look at two strings made a scrape run's cost grow with the venue table.
+    for venue_name, venue_city_raw in db.session.query(Venue.name, Venue.city).all():
+        if normalize_name(venue_name) != target_name:
             continue
-        venue_city = normalize_city(venue.city or "")
+        venue_city = normalize_city(venue_city_raw or "")
         if not target_city or not venue_city or venue_city == target_city:
-            return venue.name
+            return venue_name
     return name
 
 
@@ -371,6 +375,11 @@ def merge_group(survivor, losers):
 
     # Bulk UPDATE bypasses the ORM onupdate, so bump updated_at by hand —
     # the sitemap <lastmod> must reflect the venue change on these events.
+    # event_hash is deliberately NOT recomputed even though it includes
+    # venue_id: two events that were duplicates across the two venues would
+    # then hash identically and the UNIQUE index would abort the merge
+    # mid-way. scripts/merge_duplicate_venues.py reports those collisions
+    # instead (_find_event_collisions) so they can be resolved by hand.
     stats["events_repointed"] = Event.query.filter(
         Event.venue_id.in_(loser_ids)
     ).update(

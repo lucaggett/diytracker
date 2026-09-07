@@ -75,3 +75,42 @@ class TestSaveFlyer:
         assert path is not None
         assert str(tmp_path) in path
         assert ".." not in path.split(str(tmp_path), 1)[1]
+
+
+def _truncated(magic, ext):
+    """A file that passes the magic-byte check and then isn't an image.
+
+    validate_image_content() only inspects the first 8 bytes, so everything
+    past the magic number reaches Pillow unverified. These used to raise
+    UnidentifiedImageError / "image file is truncated" straight out of the
+    view — a 500 on /submit and on POST /api/ingest, whose documented contract
+    is 422 and whose pusher aborts its whole run on an unexpected status.
+    """
+    return _filestorage(io.BytesIO(magic + b"\x00garbage" * 20), f"evil.{ext}")
+
+
+class TestRejectsUndecodableFiles:
+    def test_truncated_png_is_rejected(self, tmp_path):
+        assert (
+            save_flyer_file(_truncated(b"\x89PNG\r\n\x1a\n", "png"), str(tmp_path))
+            is None
+        )
+
+    def test_truncated_jpeg_is_rejected(self, tmp_path):
+        assert (
+            save_flyer_file(_truncated(b"\xff\xd8\xff", "jpg"), str(tmp_path)) is None
+        )
+
+    def test_truncated_gif_is_rejected(self, tmp_path):
+        # GIFs are never resized, so before the explicit load() they were
+        # never decoded at all and any GIF-prefixed bytes were accepted.
+        assert save_flyer_file(_truncated(b"GIF89a", "gif"), str(tmp_path)) is None
+
+    def test_rejected_upload_leaves_nothing_on_disk(self, tmp_path):
+        save_flyer_file(_truncated(b"\x89PNG\r\n\x1a\n", "png"), str(tmp_path))
+        assert list(tmp_path.iterdir()) == []
+
+    def test_a_real_image_still_round_trips(self, tmp_path):
+        path = save_flyer_file(_filestorage(_png(), "ok.png"), str(tmp_path))
+        assert path is not None
+        assert (tmp_path / path.rsplit("/", 1)[-1]).exists()

@@ -39,6 +39,8 @@ RESERVED_SLUGS = frozenset(
         "datenschutz",
         "events",
         "genre",
+        "genres",
+        "help",
         "impressum",
         "kyuubi",
         "label",

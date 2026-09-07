@@ -107,6 +107,12 @@ def deliver(url, token, payload, flyer_bytes, flyer_name, timeout=30):
         except Exception:  # noqa: BLE001 - error body is best-effort detail
             detail = {}
         return e.code, detail
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        # DNS failure, refused connection, read timeout. Reported like any
+        # other non-2xx so main() takes its abort path and *writes the state
+        # file* — raising out of here skipped that write, which is exactly
+        # the failure the abort path exists for.
+        return 0, {"error": f"network error: {e}"}
 
 
 def main():

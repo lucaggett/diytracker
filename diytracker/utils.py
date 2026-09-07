@@ -267,7 +267,7 @@ _CANTON_NAME_TO_CODE = {
     "ginevra": "GE",
     "glarona": "GL",
     "grigioni": "GR",
-    "gura": "JU",
+    "giura": "JU",
     "lucerna": "LU",
     "nidvaldo": "NW",
     "obvaldo": "OW",

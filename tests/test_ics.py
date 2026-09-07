@@ -175,3 +175,41 @@ class TestRoutes:
         html = client.get("/").data.decode()
         assert "/calendar.ics" in html
         assert 'type="text/calendar"' in html
+
+
+class TestFeedCacheIsPerLocale:
+    """The feed looks locale-free but isn't: the calendar description goes
+    through _(), and the per-event URLs are built with url_for(), which the
+    public blueprint prefixes from g.locale. Keying the cache on the filters
+    alone froze the first requester's language into it — one French fetch and
+    every later subscriber, in any language, got the French feed.
+    """
+
+    def _get(self, app, lang):
+        c = app.test_client()
+        c.environ_base["HTTP_ACCEPT_LANGUAGE"] = lang
+        return c.get("/calendar.ics").get_data(as_text=True)
+
+    def test_german_feed_is_not_served_the_french_one(self, app, make_event):
+        make_event(name="Locale Probe")
+
+        french = self._get(app, "fr")
+        german = self._get(app, "de")
+
+        assert "/fr/events/" in french
+        assert "/fr/events/" not in german
+        assert french != german
+
+    def test_each_locale_keeps_its_own_description(self, app, make_event):
+        make_event(name="Locale Probe")
+
+        # Warm the cache in French first — the order is the whole point.
+        self._get(app, "fr")
+        italian = self._get(app, "it")
+
+        assert "/it/events/" in italian
+        assert "/fr/events/" not in italian
+
+    def test_repeat_request_in_one_locale_is_still_cached(self, app, make_event):
+        make_event(name="Locale Probe")
+        assert self._get(app, "fr") == self._get(app, "fr")

@@ -51,6 +51,31 @@ def compute_event_hash(
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+# Event.status values, matching EventForm's choices.
+EVENT_STATUSES = ("scheduled", "cancelled", "postponed")
+
+
+def normalise_event_status(raw):
+    """Map a scraped schema.org eventStatus onto Event.status.
+
+    Sources write whatever their JSON-LD said — "https://schema.org/
+    EventCancelled", "EventCancelled" or a bare "cancelled". Event.status
+    drives the visible badge and the schema.org output, and the queue
+    approval used to drop the staged value entirely, so a show a venue had
+    already called off was published as if it were still happening.
+
+    Only the two unambiguous states are mapped. EventRescheduled and the rest
+    fall through to "scheduled": the staged row already carries the new date,
+    and a wrong badge is worse than none.
+    """
+    state = (raw or "").strip().rsplit("/", 1)[-1].lower().removeprefix("event")
+    if state in ("cancelled", "canceled"):
+        return "cancelled"
+    if state == "postponed":
+        return "postponed"
+    return "scheduled"
+
+
 def clean_genre_string(raw):
     """Normalise genres to the comma-joined string stored on Event.genre.
 
@@ -121,6 +146,7 @@ def create_event(
     flyer=None,
     submitter_id=None,
     label_id=None,
+    status="scheduled",
     reject_duplicate=False,
 ):
     """Build an Event with its dedup hash and add it to the session.
@@ -151,6 +177,7 @@ def create_event(
         event_hash=event_hash,
         submitter_id=submitter_id,
         label_id=label_id,
+        status=status,
     )
     db.session.add(event)
     return event

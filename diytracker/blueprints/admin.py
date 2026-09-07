@@ -42,6 +42,7 @@ from diytracker.services.calendar_image import generate_weekly_calendar_image
 from diytracker.services.event_views import event_popularity
 from diytracker.services.events import (
     clean_genre_string,
+    compute_event_hash,
     detach_scrape_approvals,
     resolve_venue_from_form,
 )
@@ -171,6 +172,44 @@ def edit_event(event_id):
         form.end_date.data = event.end_date
         form.is_festival.data = event.is_festival
     if request.method == "POST" and form.validate_on_submit():
+        # Resolve the venue BEFORE touching the event: this runs queries, so
+        # it autoflushes, and bailing out afterwards would push half-applied
+        # edits into the transaction on the way to the redirect.
+        venue, _created, error = resolve_venue_from_form(form)
+        if error:
+            flash(_("Selected venue does not exist."))
+            return redirect(url_for("admin.edit_event", event_id=event_id))
+
+        genre = clean_genre_string(form.genre.data or [])
+        # event_hash is the dedup key the queue approval checks against, so it
+        # has to follow the edit. Leaving it at its pre-edit value made it
+        # describe an event that no longer exists, and a re-scrape of the
+        # edited show would then be approved as a fresh one.
+        new_hash = compute_event_hash(
+            form.name.data,
+            form.date.data,
+            form.doors.data,
+            genre,
+            form.acts.data,
+            form.ticket_link.data,
+            form.ticket_price.data,
+            venue.id,
+        )
+        clash = Event.query.filter(
+            Event.event_hash == new_hash, Event.id != event.id
+        ).first()
+        if clash is not None:
+            # The UNIQUE index would raise IntegrityError on the commit. Say
+            # what happened instead of 500ing, and change nothing.
+            flash(
+                _(
+                    "These values match event #%(id)s, which is already on the "
+                    "calendar. Change something or delete the other event first.",
+                    id=clash.id,
+                )
+            )
+            return redirect(url_for("admin.edit_event", event_id=event_id))
+
         old_label_id = event.label_id
         event.name = form.name.data
         event.date = form.date.data
@@ -181,14 +220,10 @@ def edit_event(event_id):
         event.ticket_price = form.ticket_price.data
         event.ticket_link = form.ticket_link.data
         event.status = form.status.data
-        event.genre = clean_genre_string(form.genre.data or [])
+        event.genre = genre
         event.label_id = int(form.label_id.data) if form.label_id.data else None
-
-        venue, _created, error = resolve_venue_from_form(form)
-        if error:
-            flash(_("Selected venue does not exist."))
-            return redirect(url_for("admin.edit_event", event_id=event_id))
         event.venue_id = venue.id
+        event.event_hash = new_hash
 
         saved = save_flyer_file(
             form.flyer.data, current_app.config.get("UPLOAD_FOLDER", UPLOAD_FOLDER)

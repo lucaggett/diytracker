@@ -485,3 +485,30 @@ class TestLabelProfile:
         )
         html = client.get(f"/label/{label.slug}/").data.decode()
         assert 'href="javascript:' not in html
+
+
+class TestLabelSuggestionActSplitting:
+    def test_matches_a_newline_separated_lineup(
+        self, client, make_user, login, make_label, make_event
+    ):
+        """Suggestions split the line-up on commas only, so a newline- or
+        pipe-separated one compared as a single long string and a label whose
+        name matched one act in it never scored. seo.parse_acts is what the
+        event page, the JSON-LD and the ICS export all use.
+        """
+        from diytracker.services.labels import suggest_label_events
+
+        user = make_user(is_promoter=True)
+        login(user)
+        label = make_label(user, name="Rat Poison Records")
+        make_event(name="Basement Show", acts="Some Band\nRat Poison Records\nAnother")
+
+        from diytracker.models import Event
+        from diytracker.services.events import upcoming_filter
+
+        base = Event.query.filter(Event.label_id.is_(None), upcoming_filter())
+        suggestions = suggest_label_events([label], base)
+
+        assert [(e.name, lb.name) for e, lb in suggestions] == [
+            ("Basement Show", "Rat Poison Records")
+        ]

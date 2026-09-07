@@ -733,3 +733,138 @@ class TestQueueDuplicatesWeb:
     def test_bulk_requires_admin(self, client, make_user, login):
         login(make_user())
         assert client.post("/queue/duplicates/bulk/discard").status_code == 403
+
+
+class TestSubmitDuplicateIsRejectedNotFatal:
+    """Event.event_hash is UNIQUE, so a resubmit of identical values used to
+    reach the commit and raise IntegrityError — a 500 on what is really
+    "you already posted this".
+    """
+
+    def _payload(self, venue):
+        return {
+            "name": "Double Submit Show",
+            "date": _future(30),
+            "doors": "20:00",
+            "genre": ["Punk"],
+            "acts": "Band X",
+            "ticket_price": "15",
+            "ticket_link": "",
+            "venue_id": str(venue.id),
+            "label_id": "",
+        }
+
+    def test_second_identical_submit_is_refused_cleanly(
+        self, client, make_user, login, make_venue
+    ):
+        login(make_user())
+        venue = make_venue()
+        data = self._payload(venue)
+
+        assert client.post("/submit", data=data).status_code == 302
+        resp = client.post("/submit", data=data, follow_redirects=True)
+
+        assert resp.status_code == 200
+        assert b"already exists" in resp.data
+        assert Event.query.filter_by(name="Double Submit Show").count() == 1
+
+
+class TestQueueApprovalKeepsFestivalSpan:
+    """The staged row's end_date was dropped on approval, so every scraped
+    festival became a one-night event — which then defeated the end_date
+    handling in upcoming_filter(), the calendar grouping and the ICS export.
+    """
+
+    def _stage(self, start, end):
+        rec = ScrapedEvent(
+            source="petzi",
+            url=f"https://example.test/{start}",
+            title="Three Day Festival",
+            start_date=start,
+            end_date=end,
+            venue_name="Fest Ground",
+            city="Bern",
+            postal_code="3000",
+            status=ScrapedEvent.STATUS_PENDING,
+        )
+        db.session.add(rec)
+        db.session.commit()
+        return rec
+
+    def _approve(self, client, rec):
+        return client.post(
+            "/queue",
+            data={"scraped_id": str(rec.id), "confirm_same_date": "1"},
+            follow_redirects=True,
+        )
+
+    def test_multi_day_span_survives_approval(self, client, admin, login):
+        login(admin)
+        start = date.today() + timedelta(days=20)
+        rec = self._stage(start, start + timedelta(days=2))
+
+        self._approve(client, rec)
+
+        ev = Event.query.filter_by(name="Three Day Festival").one()
+        assert ev.end_date == start + timedelta(days=2)
+        assert ev.is_festival is True
+
+    def test_single_day_row_is_not_marked_a_festival(self, client, admin, login):
+        login(admin)
+        start = date.today() + timedelta(days=21)
+        # A source echoing start_date back as end_date must not produce a
+        # "festival" that ends the day it starts.
+        rec = self._stage(start, start)
+
+        self._approve(client, rec)
+
+        ev = Event.query.filter_by(name="Three Day Festival").one()
+        assert ev.end_date is None
+        assert ev.is_festival is False
+
+    def test_end_date_override_wins(self, client, admin, login):
+        login(admin)
+        start = date.today() + timedelta(days=22)
+        rec = self._stage(start, None)
+
+        client.post(
+            "/queue",
+            data={
+                "scraped_id": str(rec.id),
+                "confirm_same_date": "1",
+                "override_end_date": (start + timedelta(days=4)).isoformat(),
+            },
+            follow_redirects=True,
+        )
+
+        ev = Event.query.filter_by(name="Three Day Festival").one()
+        assert ev.end_date == start + timedelta(days=4)
+        assert ev.is_festival is True
+
+
+class TestRejectingAnAlreadyResolvedRow:
+    def test_published_row_cannot_be_flipped_to_rejected(
+        self, client, admin, login, make_event
+    ):
+        """A stale queue tab or a double-submit could mark a published row
+        'rejected' while approved_event_id still pointed at the live Event.
+        """
+        login(admin)
+        event = make_event(name="Already Live")
+        rec = ScrapedEvent(
+            source="petzi",
+            url="https://example.test/published",
+            title="Already Live",
+            start_date=date.today() + timedelta(days=5),
+            status=ScrapedEvent.STATUS_PUBLISHED,
+            approved_event_id=event.id,
+        )
+        db.session.add(rec)
+        db.session.commit()
+
+        resp = client.post(f"/queue/{rec.id}/delete", data={}, follow_redirects=True)
+
+        assert resp.status_code == 200
+        assert b"already been resolved" in resp.data
+        assert rec.status == ScrapedEvent.STATUS_PUBLISHED
+        assert rec.approved_event_id == event.id

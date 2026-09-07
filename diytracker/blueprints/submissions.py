@@ -24,11 +24,12 @@ from diytracker.services.errors import AdminError
 from diytracker.services.events import (
     clean_genre_string,
     create_event,
+    normalise_event_status,
     resolve_venue_from_form,
 )
 from diytracker.services.genre_catalog import find_genre
 from diytracker.services.i18n import gettext as _
-from diytracker.services.ingest import parse_time
+from diytracker.services.ingest import parse_date, parse_time
 from diytracker.services.ingest_dedup import (
     find_duplicate_matches,
     find_same_date_events,
@@ -249,11 +250,28 @@ def event_queue():
             with contextlib.suppress(ValueError):
                 event_date = datetime.strptime(override_date, "%Y-%m-%d")
 
+        # Festival span. A plain date (not a datetime) — Event.end_date is a
+        # Date column — and only kept when it really is after the start, so a
+        # source echoing start_date into end_date can't mark a one-night show
+        # as a festival.
+        end_date = parse_date(_ov("override_end_date", data.get("end_date")))
+        if end_date and event_date and end_date <= event_date.date():
+            end_date = None
+
         override_doors = request.form.get("override_doors", "").strip()
         if override_doors:
             doors_time = parse_time(override_doors) or time_type(19, 0)
         else:
-            doors_time = parse_time(data.get("doors_open")) or time_type(19, 0)
+            # start_time is the fallback before the 19:00 default, the same
+            # order queue_review._row displays these in. petzi publishes
+            # "Doors open at" and "Event starts at" separately, so a page
+            # carrying only the latter used to be published at an invented
+            # 19:00 while the real time sat unused on the staged row.
+            doors_time = (
+                parse_time(data.get("doors_open"))
+                or parse_time(data.get("start_time"))
+                or time_type(19, 0)
+            )
 
         # Two gates before anything is written. Approving used to look the
         # venue up by the exact (name, city, plz) tuple and trust event_hash to
@@ -288,6 +306,7 @@ def event_queue():
             "override_description": description,
             "override_source_url": source_url,
             "override_date": event_date.strftime("%Y-%m-%d") if event_date else "",
+            "override_end_date": end_date.strftime("%Y-%m-%d") if end_date else "",
             "override_doors": doors_time.strftime("%H:%M"),
         }
 
@@ -345,6 +364,13 @@ def event_queue():
         new_event = create_event(
             name=name,
             date=event_date,
+            # The staged row's span, or the override typed into the queue.
+            # Dropping it turned every scraped festival into a one-night
+            # event, which then defeated the end_date handling in
+            # upcoming_filter(), the calendar grouping, the past-event banner
+            # and the ICS export.
+            end_date=end_date,
+            is_festival=end_date is not None,
             doors=doors_time,
             genre=genre,
             acts=acts,
@@ -355,6 +381,10 @@ def event_queue():
             ticket_price=ticket_price,
             venue_id=venue.id,
             submitter_id=submitter.id,
+            # A source that already said "cancelled" must not be published as
+            # if the show were still on. Admins can still correct it in
+            # /admin/edit_event, which has the full status picker.
+            status=normalise_event_status(data.get("event_status")),
             reject_duplicate=True,
         )
         if new_event is None:
@@ -431,6 +461,13 @@ def delete_scraped_event(scraped_id):
     if not form.validate_on_submit():
         abort(400)
     scraped = ScrapedEvent.query.get_or_404(scraped_id)
+    # Only pending rows may be rejected — same guard bulk_reject_scraped_events
+    # applies. Without it a stale queue tab or a double-submit could flip an
+    # already-published row to 'rejected' while approved_event_id still points
+    # at the live Event it created.
+    if scraped.status != ScrapedEvent.STATUS_PENDING:
+        flash(_("That queue entry has already been resolved."))
+        return redirect(url_for("submissions.event_queue", **_queue_redirect_args()))
     reason = request.form.get("reject_reason", "").strip()[:300]
     _reject(scraped, current_user(), reason)
     db.session.commit()
@@ -538,7 +575,11 @@ def submit_event_link():
         if not created and form.venue_id.data in (None, "", "new"):
             flash(_("Venue already exists. Using existing venue."))
 
-        create_event(
+        # reject_duplicate: Event.event_hash is UNIQUE, so a resubmit of the
+        # same values (double-click, back-and-submit-again) would otherwise
+        # reach the commit and raise IntegrityError — a 500 on what is really
+        # "you already posted this".
+        new_event = create_event(
             name=form.name.data,
             date=form.date.data,
             end_date=form.end_date.data,
@@ -552,7 +593,11 @@ def submit_event_link():
             venue_id=venue.id,
             submitter_id=submitter.id,
             label_id=int(form.label_id.data) if form.label_id.data else None,
+            reject_duplicate=True,
         )
+        if new_event is None:
+            flash(_("This event already exists."))
+            return redirect(url_for("public.calendar_view"))
         db.session.commit()
         bust_cache()
 

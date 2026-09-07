@@ -1,5 +1,7 @@
 """Admin dashboard, event/venue management, and exports."""
 
+from datetime import datetime, timedelta
+
 from diytracker.models import Event, Venue, db
 
 
@@ -345,3 +347,99 @@ class TestEditEventLabel:
         client.post(f"/admin/edit_event/{ev.id}", data={**base, "label_id": ""})
         db.session.refresh(ev)
         assert ev.label_id is None
+
+
+class TestEditEventKeepsHashInSync:
+    """event_hash is the dedup key the queue approval checks against. The
+    edit form never recomputed it, so after any edit the hash described an
+    event that no longer existed and a re-scrape of the edited show was
+    approved as a fresh one.
+    """
+
+    def _edit(self, client, event, **overrides):
+        data = {
+            "name": event.name,
+            "date": event.date.strftime("%Y-%m-%d"),
+            "doors": "19:00",
+            "genre": ["Punk"],
+            "acts": event.acts or "",
+            "ticket_price": event.ticket_price,
+            "ticket_link": "",
+            "status": "scheduled",
+            "label_id": "",
+            "venue_id": str(event.venue_id),
+        }
+        data.update(overrides)
+        return client.post(
+            f"/admin/edit_event/{event.id}", data=data, follow_redirects=True
+        )
+
+    def test_rename_updates_the_hash(self, client, admin, login, make_event):
+        login(admin)
+        event = make_event(name="Original Name", genre="Punk")
+        old_hash = event.event_hash
+
+        self._edit(client, event, name="Renamed Show")
+
+        assert event.name == "Renamed Show"
+        assert event.event_hash != old_hash
+
+    def test_hash_matches_a_fresh_computation(self, client, admin, login, make_event):
+        from diytracker.services.events import compute_event_hash
+
+        login(admin)
+        event = make_event(name="Original Name", genre="Punk")
+
+        self._edit(client, event, name="Renamed Show", ticket_price="42")
+
+        assert event.event_hash == compute_event_hash(
+            "Renamed Show",
+            event.date,
+            event.doors,
+            "Punk",
+            event.acts,
+            "",
+            "42",
+            event.venue_id,
+        )
+
+    def test_editing_into_an_existing_event_is_refused_not_fatal(
+        self, client, admin, login, make_event, make_venue
+    ):
+        """Recomputing the hash means an edit can now collide with the UNIQUE
+        index. That must be a flash, not an IntegrityError 500.
+        """
+        login(admin)
+        venue = make_venue()
+        first = make_event(name="Show One", venue=venue, genre="Punk", acts="A")
+        second = make_event(name="Show Two", venue=venue, genre="Punk", acts="A")
+        shared = {
+            "date": (datetime.now() + timedelta(days=10)).strftime("%Y-%m-%d"),
+            "acts": "A",
+            "ticket_price": "20",
+        }
+        # Normalise the first event's hash through the same form, so the two
+        # are genuinely one keystroke apart.
+        self._edit(client, first, **shared)
+
+        resp = self._edit(client, second, name="Show One", **shared)
+
+        assert resp.status_code == 200
+        assert b"already on the calendar" in resp.data
+        # Nothing was written: the losing event keeps its own identity.
+        assert second.name == "Show Two"
+        assert Event.query.count() == 2
+
+    def test_failed_venue_resolution_writes_nothing(
+        self, client, admin, login, make_event
+    ):
+        """The view used to mutate the event before resolving the venue, so
+        the bail-out path left half-applied edits in the flushed transaction.
+        """
+        login(admin)
+        event = make_event(name="Untouched")
+
+        self._edit(client, event, name="Should Not Stick", venue_id="99999")
+
+        db.session.expire_all()
+        assert db.session.get(Event, event.id).name == "Untouched"

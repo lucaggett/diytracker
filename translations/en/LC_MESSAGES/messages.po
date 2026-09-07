@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-06 22:08+0200\n"
+"POT-Creation-Date: 2026-09-07 13:09+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -42,7 +42,7 @@ msgstr "Festival"
 msgid "Doors Open Time"
 msgstr "Doors Open Time"
 
-#: diytracker/forms.py:95 diytracker/forms.py:370
+#: diytracker/forms.py:95 diytracker/forms.py:374
 #: templates/_partials/event_cards.html:96 templates/admin.html:86
 #: templates/calendar.html:135 templates/event_page.html:94
 #: templates/event_queue.html:166 templates/genre.html:17
@@ -409,7 +409,7 @@ msgstr "Zug"
 msgid "Zürich"
 msgstr "Zürich"
 
-#: diytracker/blueprints/admin.py:151
+#: diytracker/blueprints/admin.py:152
 msgid ""
 "This event's venue no longer exists. Please select or create a venue "
 "below."
@@ -417,32 +417,41 @@ msgstr ""
 "This event's venue no longer exists. Please select or create a venue "
 "below."
 
-#: diytracker/blueprints/admin.py:189 diytracker/blueprints/submissions.py:536
+#: diytracker/blueprints/admin.py:180 diytracker/blueprints/submissions.py:559
 msgid "Selected venue does not exist."
 msgstr "Selected venue does not exist."
 
-#: diytracker/blueprints/admin.py:218
+#: diytracker/blueprints/admin.py:206
+#, python-format
+msgid ""
+"These values match event #%(id)s, which is already on the calendar. "
+"Change something or delete the other event first."
+msgstr ""
+"These values match event #%(id)s, which is already on the calendar. "
+"Change something or delete the other event first."
+
+#: diytracker/blueprints/admin.py:253
 msgid "Event updated successfully!"
 msgstr "Event updated successfully!"
 
-#: diytracker/blueprints/admin.py:245
+#: diytracker/blueprints/admin.py:280
 msgid "Event deleted successfully!"
 msgstr "Event deleted successfully!"
 
-#: diytracker/blueprints/admin.py:267
+#: diytracker/blueprints/admin.py:302
 msgid "— none —"
 msgstr "— none —"
 
-#: diytracker/blueprints/admin.py:279
+#: diytracker/blueprints/admin.py:314
 msgid "Venue updated successfully!"
 msgstr "Venue updated successfully!"
 
-#: diytracker/blueprints/admin.py:300
+#: diytracker/blueprints/admin.py:335
 #, python-format
 msgid " and %(k)d more"
 msgstr " and %(k)d more"
 
-#: diytracker/blueprints/admin.py:303
+#: diytracker/blueprints/admin.py:338
 #, python-format
 msgid ""
 "Cannot delete venue \"%(venue)s\": it still has %(n)d event(s) "
@@ -451,20 +460,20 @@ msgstr ""
 "Cannot delete venue \"%(venue)s\": it still has %(n)d event(s) "
 "(%(names)s%(more)s). Reassign or delete those events first."
 
-#: diytracker/blueprints/admin.py:319
+#: diytracker/blueprints/admin.py:354
 msgid "Venue deleted."
 msgstr "Venue deleted."
 
-#: diytracker/blueprints/admin.py:483
+#: diytracker/blueprints/admin.py:518
 msgid "No report has been generated yet. Use the form to create one."
 msgstr "No report has been generated yet. Use the form to create one."
 
-#: diytracker/blueprints/admin.py:545
+#: diytracker/blueprints/admin.py:580
 #, python-format
 msgid "Cleared %(n)d suspect(s)."
 msgstr "Cleared %(n)d suspect(s)."
 
-#: diytracker/blueprints/admin.py:627
+#: diytracker/blueprints/admin.py:662
 msgid "Page text saved."
 msgstr "Page text saved."
 
@@ -566,7 +575,7 @@ msgstr ""
 "Upcoming shows by %(label)s — dates, venues, prices and accessibility "
 "info."
 
-#: diytracker/blueprints/public.py:625
+#: diytracker/blueprints/public.py:629
 msgid "DIY, punk and underground concerts in Switzerland."
 msgstr "DIY, punk and underground concerts in Switzerland."
 
@@ -574,70 +583,75 @@ msgstr "DIY, punk and underground concerts in Switzerland."
 msgid "Invalid event selection."
 msgstr "Invalid event selection."
 
-#: diytracker/blueprints/submissions.py:270
+#: diytracker/blueprints/submissions.py:278
 msgid "That venue no longer exists."
 msgstr "That venue no longer exists."
 
-#: diytracker/blueprints/submissions.py:361
+#: diytracker/blueprints/submissions.py:377
+#: diytracker/blueprints/submissions.py:585
 msgid "This event already exists."
 msgstr "This event already exists."
 
-#: diytracker/blueprints/submissions.py:390
+#: diytracker/blueprints/submissions.py:406
 msgid "Event approved and added to calendar!"
 msgstr "Event approved and added to calendar!"
 
-#: diytracker/blueprints/submissions.py:437
+#: diytracker/blueprints/submissions.py:455
+msgid "That queue entry has already been resolved."
+msgstr "That queue entry has already been resolved."
+
+#: diytracker/blueprints/submissions.py:460
 msgid "Event removed from queue."
 msgstr "Event removed from queue."
 
-#: diytracker/blueprints/submissions.py:457
+#: diytracker/blueprints/submissions.py:480
 #, python-format
 msgid "%(num)d events removed from queue."
 msgstr "%(num)d events removed from queue."
 
-#: diytracker/blueprints/submissions.py:491
+#: diytracker/blueprints/submissions.py:514
 #, python-format
 msgid "%(num)d entries discarded."
 msgstr "%(num)d entries discarded."
 
-#: diytracker/blueprints/submissions.py:494
+#: diytracker/blueprints/submissions.py:517
 #, python-format
 msgid "%(num)d entries unflagged — they are back in the queue."
 msgstr "%(num)d entries unflagged — they are back in the queue."
 
-#: diytracker/blueprints/submissions.py:508
+#: diytracker/blueprints/submissions.py:531
 #, python-format
 msgid "Discarded “%(title)s”."
 msgstr "Discarded “%(title)s”."
 
-#: diytracker/blueprints/submissions.py:511
+#: diytracker/blueprints/submissions.py:534
 #, python-format
 msgid "Unflagged “%(title)s” — it's back in the queue."
 msgstr "Unflagged “%(title)s” — it's back in the queue."
 
-#: diytracker/blueprints/submissions.py:533
+#: diytracker/blueprints/submissions.py:556
 msgid "Please provide all required venue details for a new venue."
 msgstr "Please provide all required venue details for a new venue."
 
-#: diytracker/blueprints/submissions.py:539
+#: diytracker/blueprints/submissions.py:562
 msgid "Venue already exists. Using existing venue."
 msgstr "Venue already exists. Using existing venue."
 
-#: diytracker/blueprints/submissions.py:559
+#: diytracker/blueprints/submissions.py:590
 msgid "Event submitted successfully!"
 msgstr "Event submitted successfully!"
 
-#: diytracker/blueprints/submissions.py:578
+#: diytracker/blueprints/submissions.py:609
 #, python-format
 msgid "'%(name)s' is already in the list."
 msgstr "'%(name)s' is already in the list."
 
-#: diytracker/blueprints/submissions.py:583
+#: diytracker/blueprints/submissions.py:614
 #, python-format
 msgid "Genre '%(name)s' added."
 msgstr "Genre '%(name)s' added."
 
-#: diytracker/blueprints/submissions.py:611
+#: diytracker/blueprints/submissions.py:642
 #, python-format
 msgid "Genre '%(name)s' removed."
 msgstr "Genre '%(name)s' removed."

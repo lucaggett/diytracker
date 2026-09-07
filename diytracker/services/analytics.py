@@ -1,10 +1,12 @@
 """GoAccess report generation from nginx access logs."""
 
+import contextlib
 import gzip
 import json
 import os
 import shutil
 import subprocess
+import tempfile
 import threading
 import time as time_module
 from datetime import datetime, timedelta
@@ -110,6 +112,75 @@ def _iter_filtered_lines(files: list[Path], valid_dates: set[str] | None):
             continue
 
 
+# goaccess over a full production log directory is minutes, not seconds, and
+# generate_report() is reachable from a request on a sync worker. Bound it so
+# a pathological run releases the worker instead of hanging until nginx's
+# proxy_read_timeout gives up on it.
+GOACCESS_TIMEOUT_SECONDS = 300
+
+
+def _goaccess_argv(output_path) -> list[str]:
+    return [
+        "goaccess",
+        "-",
+        "--log-format=COMBINED",
+        "--date-format=%d/%b/%Y",
+        "--time-format=%H:%M:%S",
+        f"--output={output_path}",
+        "--ignore-crawlers",
+        "--no-progress",
+    ]
+
+
+def _run_goaccess(lines, output_path, empty_message: str) -> tuple[bool, str]:
+    """Stream *lines* into goaccess, writing its report to *output_path*.
+
+    Streams rather than materialising the filtered log set first: "all time"
+    over a production log directory is hundreds of megabytes, and
+    `"".join(...)` held all of it in memory twice — the str and the encoded
+    copy subprocess makes of it — inside a request-serving worker.
+
+    stderr goes to a temp file, not a pipe: writing stdin while goaccess wrote
+    to a full stderr pipe would deadlock both sides.
+    """
+    stream = iter(lines)
+    try:
+        first = next(stream)
+    except StopIteration:
+        return False, empty_message
+
+    env = {**os.environ, "LANG": "C", "LC_ALL": "C"}
+    with tempfile.TemporaryFile(mode="w+", errors="replace") as errfile:
+        proc = subprocess.Popen(  # noqa: S603 - fixed argv, goaccess resolved from PATH
+            _goaccess_argv(output_path),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=errfile,
+            text=True,
+            env=env,
+        )
+        try:
+            proc.stdin.write(first)
+            for line in stream:
+                proc.stdin.write(line)
+        except BrokenPipeError:
+            # goaccess exited early; its returncode below is the real answer.
+            pass
+        finally:
+            with contextlib.suppress(BrokenPipeError, OSError):
+                proc.stdin.close()
+        try:
+            proc.wait(timeout=GOACCESS_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            return False, f"goaccess timed out after {GOACCESS_TIMEOUT_SECONDS}s"
+        if proc.returncode != 0:
+            errfile.seek(0)
+            return False, f"goaccess error: {errfile.read().strip()}"
+    return True, ""
+
+
 def generate_report(timeframe: str = "7d") -> tuple[bool, str]:
     """Run goaccess and write an HTML report. Returns (success, message)."""
     if not shutil.which("goaccess"):
@@ -122,33 +193,14 @@ def generate_report(timeframe: str = "7d") -> tuple[bool, str]:
     start, end = _date_range(timeframe)
     valid_dates = _build_valid_dates(start, end)
 
-    content = "".join(_iter_filtered_lines(log_files, valid_dates))
-    if not content.strip():
-        return False, f'No log entries found for timeframe "{timeframe}"'
-
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-
-    env = {**os.environ, "LANG": "C", "LC_ALL": "C"}
-    result = subprocess.run(  # noqa: S603 - fixed argv, goaccess resolved from PATH
-        [  # noqa: S607 - goaccess is resolved from PATH on the server
-            "goaccess",
-            "-",
-            "--log-format=COMBINED",
-            "--date-format=%d/%b/%Y",
-            "--time-format=%H:%M:%S",
-            f"--output={REPORT_PATH}",
-            "--ignore-crawlers",
-            "--no-progress",
-        ],
-        input=content,
-        capture_output=True,
-        text=True,
-        env=env,
-        check=False,
+    ok, message = _run_goaccess(
+        _iter_filtered_lines(log_files, valid_dates),
+        REPORT_PATH,
+        f'No log entries found for timeframe "{timeframe}"',
     )
-
-    if result.returncode != 0:
-        return False, f"goaccess error: {result.stderr.strip()}"
+    if not ok:
+        return False, message
 
     label = dict(TIMEFRAMES).get(timeframe, timeframe)
     return True, f"Report generated ({label}) from {len(log_files)} log file(s)"
@@ -240,36 +292,18 @@ def generate_stats() -> tuple[bool, str]:
         today - timedelta(days=2 * STATS_WINDOW_DAYS - 1), today
     )
 
-    content = "".join(_iter_filtered_lines(log_files, valid_dates))
-    if not content.strip():
-        # Leave any previous cache intact so the dashboard keeps showing it.
-        return False, "No log entries found in stats window"
-
     STATS_PATH.parent.mkdir(parents=True, exist_ok=True)
     # goaccess picks the output format from the file extension.
     raw_path = STATS_PATH.with_name("analytics_stats_raw.json")
 
-    env = {**os.environ, "LANG": "C", "LC_ALL": "C"}
-    result = subprocess.run(  # noqa: S603 - fixed argv, goaccess resolved from PATH
-        [  # noqa: S607 - goaccess is resolved from PATH on the server
-            "goaccess",
-            "-",
-            "--log-format=COMBINED",
-            "--date-format=%d/%b/%Y",
-            "--time-format=%H:%M:%S",
-            f"--output={raw_path}",
-            "--ignore-crawlers",
-            "--no-progress",
-        ],
-        input=content,
-        capture_output=True,
-        text=True,
-        env=env,
-        check=False,
+    ok, message = _run_goaccess(
+        _iter_filtered_lines(log_files, valid_dates),
+        raw_path,
+        # Leave any previous cache intact so the dashboard keeps showing it.
+        "No log entries found in stats window",
     )
-
-    if result.returncode != 0:
-        return False, f"goaccess error: {result.stderr.strip()}"
+    if not ok:
+        return False, message
 
     try:
         raw = json.loads(raw_path.read_text())

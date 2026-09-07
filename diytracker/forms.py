@@ -362,8 +362,12 @@ class CollaboratorRequestForm(FlaskForm):
     message = TextAreaField(
         _l("Message"), validators=[DataRequired(), Length(min=10, max=2000)]
     )
-    # Honeypot — hidden via CSS, real users never fill it.
-    website = StringField("Website", validators=[Optional(), Length(max=0)])
+    # Honeypot — hidden via CSS, real users never fill it. Deliberately NOT
+    # validated: a Length(max=0) here failed the whole form, so the view's
+    # honeypot branch never ran (no telemetry) and the bot was handed a
+    # visible error naming the one field it had to leave blank. The view
+    # accepts the submission and silently drops it instead.
+    website = StringField("Website", validators=[Optional(), Length(max=200)])
 
 
 class GenreForm(FlaskForm):

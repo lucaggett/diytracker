@@ -119,7 +119,7 @@ class TestContactForm:
             "diytracker.blueprints.public.send_contact_email",
             lambda *a: called.__setitem__("sent", True),
         )
-        client.post(
+        resp = client.post(
             "/about",
             data={
                 "name": "Bot",
@@ -130,6 +130,37 @@ class TestContactForm:
             follow_redirects=True,
         )
         assert called["sent"] is False
+        # And the bot is told nothing. A Length(max=0) on the honeypot field
+        # used to fail form validation instead, which both skipped the view's
+        # honeypot branch (so nothing was logged) and re-rendered the form
+        # with an error naming the one field a bot had to leave blank.
+        assert b"get back to you" in resp.data
+
+    def test_honeypot_hit_is_logged(self, client, monkeypatch):
+        logged = []
+        monkeypatch.setattr(
+            "diytracker.blueprints.public.send_contact_email", lambda *a: None
+        )
+
+        class _Logger:
+            def info(self, msg, *args):
+                logged.append(msg % args if args else msg)
+
+        logger = _Logger()
+        monkeypatch.setattr(
+            "diytracker.blueprints.public._get_contact_logger", lambda: logger
+        )
+        client.post(
+            "/about",
+            data={
+                "name": "Bot",
+                "email": "bot@example.com",
+                "message": "spam spam spam spam",
+                "website": "http://spam.example",
+            },
+            follow_redirects=True,
+        )
+        assert any(line.startswith("honeypot ") for line in logged)
 
     def test_send_failure_is_handled_gracefully(self, client, monkeypatch):
         def boom(*a):

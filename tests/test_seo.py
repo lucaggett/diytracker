@@ -413,3 +413,27 @@ class TestLlmsTxt:
         resp = client.get("/llms.txt")
         assert resp.status_code == 200
         assert resp.mimetype == "text/plain"
+
+
+class TestReservedSlugs:
+    def test_covers_every_static_first_path_segment(self, app):
+        """RESERVED_SLUGS exists so /<canton-slug>/ can never shadow a real
+        page. It was maintained by hand and had already drifted (genres, help
+        were missing), so derive the expectation from the routing table
+        instead of restating the list.
+        """
+        import re
+
+        from diytracker.services.seo import RESERVED_SLUGS
+
+        segments = set()
+        for rule in app.url_map.iter_rules():
+            first = rule.rule.strip("/").split("/")[0]
+            if "<" in first or not re.fullmatch(r"[a-z0-9-]+", first):
+                continue
+            segments.add(first)
+
+        assert segments <= RESERVED_SLUGS, (
+            f"first path segments missing from RESERVED_SLUGS: "
+            f"{sorted(segments - RESERVED_SLUGS)}"
+        )

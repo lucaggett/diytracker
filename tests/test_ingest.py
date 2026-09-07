@@ -469,6 +469,26 @@ class TestIngestApi:
         )
         assert resp.status_code == 400
 
+    def test_undecodable_flyer_is_422_not_500(self, client, ingest_token):
+        """The magic-byte check only reads the first 8 bytes, so a file that
+        starts like a PNG and continues as garbage used to raise straight out
+        of Pillow. That broke the endpoint's documented contract (422 for bad
+        input) and wedged the forwarder, which aborts its whole run — and
+        every record behind it — on an unexpected status.
+        """
+        resp = client.post(
+            "/api/ingest",
+            headers=_auth(),
+            data={
+                "event": json.dumps(_payload()),
+                "flyer": (io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"junk" * 20), "x.png"),
+            },
+            content_type="multipart/form-data",
+        )
+        assert resp.status_code == 422
+        assert "flyer rejected" in resp.get_json()["error"]
+        assert ScrapedEvent.query.count() == 0
+
 
 class TestFlyerApproval:
     def test_approving_carries_flyer_onto_event(self, client, app, admin, login):
