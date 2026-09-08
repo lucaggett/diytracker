@@ -7,7 +7,7 @@ line the inbox filters on.
 
 from diytracker.services.mail import build_logger, send_mail
 
-CONTACT_RECIPIENT = "luc@aggett.com"
+CONTACT_RECIPIENT = "info@diytracker.ch"
 
 
 def build_contact_logger():
@@ -23,7 +23,7 @@ def send_contact_email(name, sender_email, message):
     """
     send_mail(
         CONTACT_RECIPIENT,
-        f"[diytracker] Mitwirkenden-Anfrage von {name}",
+        f"Kontaktformular: {name}",
         f"Name:    {name}\nE-Mail:  {sender_email}\n\nNachricht:\n{message}\n",
         reply_to=sender_email,
     )
