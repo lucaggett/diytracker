@@ -323,6 +323,30 @@ class TestStatisticsPage:
         assert b"Bygone Show" in resp.data
         assert b'aria-checked="true"' in resp.data
 
+    def test_most_visited_pages(self, client, admin, login, tmp_path, monkeypatch):
+        import json
+
+        from diytracker.services import page_views
+
+        path = tmp_path / "page_views.json"
+        monkeypatch.setattr(page_views, "PAGE_VIEWS_PATH", path)
+        login(admin)
+
+        resp = client.get("/admin/statistics")
+        assert b"Most visited pages" in resp.data
+
+        path.write_text(
+            json.dumps(
+                {
+                    "window_days": 30,
+                    "pages": [{"path": "/events/7/", "hits": 42, "visitors": 17}],
+                }
+            )
+        )
+        resp = client.get("/admin/statistics")
+        assert b'href="/events/7/"' in resp.data
+        assert b">42<" in resp.data
+
 
 class TestEditEventLabel:
     def test_edit_event_assigns_and_clears_label(

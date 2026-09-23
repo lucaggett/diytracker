@@ -69,6 +69,45 @@
   {% endif %}
 </section>
 
+{# Most visited pages — language variants merged onto the German URL by
+   services/page_views.py, recounted over the analytics window each run. #}
+<section class="border-2 border-ink bg-paper p-4 mb-6">
+  <p class="text-xs uppercase tracking-widest text-smudge mb-1">{{ _('Most visited pages') }}</p>
+  {% if page_views %}
+  <p class="text-xs text-smudge mb-3">{{ _('Last %(days)d days, all languages combined.', days=page_views.window_days) }}</p>
+  {% endif %}
+  {% if page_views and page_views.pages %}
+  {% set maxv = [page_views.pages[0].hits, 1] | max %}
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead class="bg-ink text-paper uppercase tracking-widest text-xs">
+        <tr>
+          <th class="px-3 py-2 text-left">#</th>
+          <th class="px-3 py-2 text-left">{{ _('Page') }}</th>
+          <th class="px-3 py-2 text-right">{{ _('Hits') }}</th>
+          <th class="px-3 py-2 text-right">{{ _('Visitors') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in page_views.pages %}
+        <tr class="border-t border-ink/30 hover:bg-ink/5">
+          <td class="px-3 py-2 text-smudge">{{ loop.index }}</td>
+          <td class="px-3 py-2 font-mono">
+            <a href="{{ row.path }}" class="text-bleed hover:underline break-all">{{ row.path }}</a>
+            <div class="h-1 bg-ink/10 mt-1"><div class="h-1 bg-ink" style="width: {{ '%.0f' % (row.hits / maxv * 100) }}%"></div></div>
+          </td>
+          <td class="px-3 py-2 text-right font-bold">{{ row.hits }}</td>
+          <td class="px-3 py-2 text-right">{{ row.visitors }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-sm text-smudge">{{ _('Collecting view data…') }}</p>
+  {% endif %}
+</section>
+
 {# Events over time — whole database, past included. #}
 <section class="border-2 border-ink bg-paper p-4 mb-6">
   <p class="text-xs uppercase tracking-widest text-smudge mb-3">{{ _('Events over time') }}</p>

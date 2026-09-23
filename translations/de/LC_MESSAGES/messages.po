@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-07 13:09+0200\n"
+"POT-Creation-Date: 2026-09-24 00:07+0200\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: de\n"
@@ -409,7 +409,7 @@ msgstr "Zug"
 msgid "Zürich"
 msgstr "Zürich"
 
-#: diytracker/blueprints/admin.py:152
+#: diytracker/blueprints/admin.py:153
 msgid ""
 "This event's venue no longer exists. Please select or create a venue "
 "below."
@@ -417,11 +417,11 @@ msgstr ""
 "Das Venue dieses Events existiert nicht mehr. Bitte unten ein Venue "
 "auswählen oder neu anlegen."
 
-#: diytracker/blueprints/admin.py:180 diytracker/blueprints/submissions.py:559
+#: diytracker/blueprints/admin.py:181 diytracker/blueprints/submissions.py:573
 msgid "Selected venue does not exist."
 msgstr "Ausgewähltes Venue existiert nicht."
 
-#: diytracker/blueprints/admin.py:206
+#: diytracker/blueprints/admin.py:207
 #, python-format
 msgid ""
 "These values match event #%(id)s, which is already on the calendar. "
@@ -430,28 +430,28 @@ msgstr ""
 "Diese Angaben entsprechen Event #%(id)s, der bereits im Kalender steht. "
 "Ändere etwas oder lösche zuerst den anderen Event."
 
-#: diytracker/blueprints/admin.py:253
+#: diytracker/blueprints/admin.py:254
 msgid "Event updated successfully!"
 msgstr "Event erfolgreich aktualisiert!"
 
-#: diytracker/blueprints/admin.py:280
+#: diytracker/blueprints/admin.py:281
 msgid "Event deleted successfully!"
 msgstr "Event erfolgreich gelöscht!"
 
-#: diytracker/blueprints/admin.py:302
+#: diytracker/blueprints/admin.py:303
 msgid "— none —"
 msgstr "— keiner —"
 
-#: diytracker/blueprints/admin.py:314
+#: diytracker/blueprints/admin.py:315
 msgid "Venue updated successfully!"
 msgstr "Venue erfolgreich aktualisiert!"
 
-#: diytracker/blueprints/admin.py:335
+#: diytracker/blueprints/admin.py:336
 #, python-format
 msgid " and %(k)d more"
 msgstr " und %(k)d weitere"
 
-#: diytracker/blueprints/admin.py:338
+#: diytracker/blueprints/admin.py:339
 #, python-format
 msgid ""
 "Cannot delete venue \"%(venue)s\": it still has %(n)d event(s) "
@@ -461,20 +461,20 @@ msgstr ""
 "Event(s) (%(names)s%(more)s). Diese Events zuerst neu zuweisen oder "
 "löschen."
 
-#: diytracker/blueprints/admin.py:354
+#: diytracker/blueprints/admin.py:355
 msgid "Venue deleted."
 msgstr "Venue gelöscht."
 
-#: diytracker/blueprints/admin.py:518
+#: diytracker/blueprints/admin.py:519
 msgid "No report has been generated yet. Use the form to create one."
 msgstr "Es wurde noch kein Report erstellt. Erstelle einen über das Formular."
 
-#: diytracker/blueprints/admin.py:580
+#: diytracker/blueprints/admin.py:582
 #, python-format
 msgid "Cleared %(n)d suspect(s)."
 msgstr "%(n)d Verdächtige gelöscht."
 
-#: diytracker/blueprints/admin.py:662
+#: diytracker/blueprints/admin.py:664
 msgid "Page text saved."
 msgstr "Seitentext gespeichert."
 
@@ -519,7 +519,7 @@ msgstr "Label erstellt!"
 msgid "Label updated!"
 msgstr "Label aktualisiert!"
 
-#: diytracker/blueprints/promoter.py:309
+#: diytracker/blueprints/promoter.py:314
 msgid "Label deleted."
 msgstr "Label gelöscht."
 
@@ -580,81 +580,81 @@ msgstr ""
 msgid "DIY, punk and underground concerts in Switzerland."
 msgstr "DIY-, Punk- und Underground-Konzerte in der Schweiz."
 
-#: diytracker/blueprints/submissions.py:207
+#: diytracker/blueprints/submissions.py:208
 msgid "Invalid event selection."
 msgstr "Ungültige Eventauswahl."
 
-#: diytracker/blueprints/submissions.py:278
+#: diytracker/blueprints/submissions.py:288
 msgid "That venue no longer exists."
 msgstr "Diesen Ort gibt es nicht mehr."
 
-#: diytracker/blueprints/submissions.py:377
-#: diytracker/blueprints/submissions.py:585
+#: diytracker/blueprints/submissions.py:391
+#: diytracker/blueprints/submissions.py:599
 msgid "This event already exists."
 msgstr "Dieser Event existiert bereits."
 
-#: diytracker/blueprints/submissions.py:406
+#: diytracker/blueprints/submissions.py:420
 msgid "Event approved and added to calendar!"
 msgstr "Event freigegeben und zum Kalender hinzugefügt!"
 
-#: diytracker/blueprints/submissions.py:455
+#: diytracker/blueprints/submissions.py:469
 msgid "That queue entry has already been resolved."
 msgstr "Dieser Queue-Eintrag wurde bereits bearbeitet."
 
-#: diytracker/blueprints/submissions.py:460
+#: diytracker/blueprints/submissions.py:474
 msgid "Event removed from queue."
 msgstr "Event aus der Queue entfernt."
 
-#: diytracker/blueprints/submissions.py:480
+#: diytracker/blueprints/submissions.py:494
 #, python-format
 msgid "%(num)d events removed from queue."
 msgstr "%(num)d Events aus der Warteschlange entfernt."
 
-#: diytracker/blueprints/submissions.py:514
+#: diytracker/blueprints/submissions.py:528
 #, python-format
 msgid "%(num)d entries discarded."
 msgstr "%(num)d Einträge verworfen."
 
-#: diytracker/blueprints/submissions.py:517
+#: diytracker/blueprints/submissions.py:531
 #, python-format
 msgid "%(num)d entries unflagged — they are back in the queue."
 msgstr "%(num)d Einträge entmarkiert — sie sind zurück in der Warteschlange."
 
-#: diytracker/blueprints/submissions.py:531
+#: diytracker/blueprints/submissions.py:545
 #, python-format
 msgid "Discarded “%(title)s”."
 msgstr "„%(title)s“ verworfen."
 
-#: diytracker/blueprints/submissions.py:534
+#: diytracker/blueprints/submissions.py:548
 #, python-format
 msgid "Unflagged “%(title)s” — it's back in the queue."
 msgstr ""
 "Markierung von „%(title)s“ aufgehoben — es ist zurück in der "
 "Warteschlange."
 
-#: diytracker/blueprints/submissions.py:556
+#: diytracker/blueprints/submissions.py:570
 msgid "Please provide all required venue details for a new venue."
 msgstr "Bitte alle erforderlichen Angaben zum neuen Venue ausfüllen."
 
-#: diytracker/blueprints/submissions.py:562
+#: diytracker/blueprints/submissions.py:576
 msgid "Venue already exists. Using existing venue."
 msgstr "Venue existiert bereits. Bestehender Eintrag wird verwendet."
 
-#: diytracker/blueprints/submissions.py:590
+#: diytracker/blueprints/submissions.py:604
 msgid "Event submitted successfully!"
 msgstr "Event erfolgreich eingereicht!"
 
-#: diytracker/blueprints/submissions.py:609
+#: diytracker/blueprints/submissions.py:623
 #, python-format
 msgid "'%(name)s' is already in the list."
 msgstr "'%(name)s' ist bereits in der Liste."
 
-#: diytracker/blueprints/submissions.py:614
+#: diytracker/blueprints/submissions.py:628
 #, python-format
 msgid "Genre '%(name)s' added."
 msgstr "Genre '%(name)s' hinzugefügt."
 
-#: diytracker/blueprints/submissions.py:642
+#: diytracker/blueprints/submissions.py:656
 #, python-format
 msgid "Genre '%(name)s' removed."
 msgstr "Genre '%(name)s' entfernt."
@@ -1039,11 +1039,12 @@ msgstr "Vergangene Events anzeigen"
 msgid "Event"
 msgstr "Event"
 
-#: templates/admin_statistics.html:39
+#: templates/admin_statistics.html:39 templates/admin_statistics.html:87
 msgid "Hits"
 msgstr "Hits"
 
-#: templates/admin_statistics.html:40 templates/promoter_dashboard.html:126
+#: templates/admin_statistics.html:40 templates/admin_statistics.html:88
+#: templates/promoter_dashboard.html:126
 msgid "Visitors"
 msgstr "Besucher"
 
@@ -1055,7 +1056,7 @@ msgstr "vorbei"
 msgid "Deleted event"
 msgstr "Gelöschter Event"
 
-#: templates/admin_statistics.html:66
+#: templates/admin_statistics.html:66 templates/admin_statistics.html:107
 msgid "Collecting view data…"
 msgstr "Sammle Aufrufdaten…"
 
@@ -1063,55 +1064,68 @@ msgstr "Sammle Aufrufdaten…"
 msgid "No upcoming events with view data yet."
 msgstr "Noch keine kommenden Events mit Aufrufdaten."
 
-#: templates/admin_statistics.html:74
+#: templates/admin_statistics.html:75
+msgid "Most visited pages"
+msgstr "Meistbesuchte Seiten"
+
+#: templates/admin_statistics.html:77
+#, python-format
+msgid "Last %(days)d days, all languages combined."
+msgstr "Letzte %(days)d Tage, alle Sprachen zusammengefasst."
+
+#: templates/admin_statistics.html:86
+msgid "Page"
+msgstr "Seite"
+
+#: templates/admin_statistics.html:113
 msgid "Events over time"
 msgstr "Events über die Zeit"
 
-#: templates/admin_statistics.html:77 templates/admin_statistics.html:78
+#: templates/admin_statistics.html:116 templates/admin_statistics.html:117
 msgid "Events / month, last 24 months"
 msgstr "Events / Monat, letzte 24 Monate"
 
-#: templates/admin_statistics.html:88
+#: templates/admin_statistics.html:127
 msgid "Events / year"
 msgstr "Events / Jahr"
 
-#: templates/admin_statistics.html:106
+#: templates/admin_statistics.html:145
 msgid "By genre"
 msgstr "Nach Genre"
 
-#: templates/admin_statistics.html:107
+#: templates/admin_statistics.html:146
 msgid "By canton"
 msgstr "Nach Kanton"
 
-#: templates/admin_statistics.html:108
+#: templates/admin_statistics.html:147
 msgid "Top venues"
 msgstr "Top-Venues"
 
-#: templates/admin_statistics.html:131 templates/venue_accessibility.html:11
+#: templates/admin_statistics.html:170 templates/venue_accessibility.html:11
 msgid "Unknown"
 msgstr "Unbekannt"
 
-#: templates/admin_statistics.html:145
+#: templates/admin_statistics.html:184
 msgid "Ticket prices"
 msgstr "Ticketpreise"
 
-#: templates/admin_statistics.html:148
+#: templates/admin_statistics.html:187
 msgid "Median (CHF)"
 msgstr "Median (CHF)"
 
-#: templates/admin_statistics.html:150
+#: templates/admin_statistics.html:189
 msgid "mean:"
 msgstr "Schnitt:"
 
-#: templates/admin_statistics.html:153
+#: templates/admin_statistics.html:192
 msgid "Paid events"
 msgstr "Bezahlte Events"
 
-#: templates/admin_statistics.html:158
+#: templates/admin_statistics.html:197
 msgid "Free / donation"
 msgstr "Gratis / Kollekte"
 
-#: templates/admin_statistics.html:163
+#: templates/admin_statistics.html:202
 msgid "Unparseable"
 msgstr "Nicht lesbar"
 

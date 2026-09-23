@@ -7,6 +7,12 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.65.0] - 2026-09-24
+
+- **The statistics page now shows which pages people actually visit.** Until now it ranked only event pages, so the questions that matter most for the rest of the site — is anyone opening the map, the canton pages, the archive, the submit form — had no answer outside the full goaccess report, and that report lists `/events/12/`, `/fr/events/12/` and `/en/events/12/` as three unrelated URLs. The new "Most visited pages" table ranks the top 25 pages over the last 30 days with every language variant merged onto its German URL (the legal pages onto `/de/…`), so a page's rank reflects the page and not how its audience is split across languages. Visitors are distinct IPs over the whole window and all variants, so someone who reads a page in German and then switches to French counts once.
+- Paths are resolved against the app's own routing table rather than filtered by a list of prefixes, so only public pages a visitor reads are counted: stylesheets, the `.ics` feeds, the sitemap, `set-language` redirects, the backstage routes, the scrape honeypot and scanner noise all fall out, and so does the `/accessibility/<token>` form, whose URL is a credential and is not listed anywhere. Bots are filtered with the same user-agent denylist as the event ranking. The counts are recomputed on the existing 15-minute analytics schedule into `instance/page_views.json` and keep no history — unlike the event ranking, this is a rolling window, not an accumulating record.
+- **Server-side:** no schema change and no new configuration; a normal git pull, `uv sync` and restart. The table fills on the scheduler's first pass after the restart.
+
 ## [0.64.0] - 2026-09-07
 
 - **A repeated `/submit` was a 500.** `Event.event_hash` is UNIQUE and the submit route was the one write path that never passed `reject_duplicate`, so a double-click, a back-and-resubmit, or two people posting the same show reached the commit and raised `IntegrityError`. It now says "This event already exists." like the queue does.

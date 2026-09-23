@@ -49,6 +49,7 @@ from diytracker.services.events import (
 from diytracker.services.i18n import gettext as _
 from diytracker.services.labels import all_label_choices
 from diytracker.services.notifications import notify_label_event_edited
+from diytracker.services.page_views import read_page_views
 from diytracker.services.scraper import (
     SCRAPE_INTERVAL_HOURS,
     get_last_scrape_time,
@@ -545,6 +546,7 @@ def statistics():
         "admin_statistics.html",
         popularity=event_popularity(include_past=show_past),
         show_past=show_past,
+        page_views=read_page_views(),
         monthly=db_stats.monthly_series(),
         yearly=db_stats.events_per_year(),
         by_genre=db_stats.events_by_parent_genre(),

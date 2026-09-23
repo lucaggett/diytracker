@@ -365,6 +365,17 @@ def _generate_stats_guarded(app):
             app.logger.warning("Event view stats generation failed: %s", message)
     except Exception:
         app.logger.exception("Event view stats generation failed")
+    try:
+        from diytracker.services.page_views import generate_page_view_stats
+
+        with app.app_context():
+            success, message = generate_page_view_stats()
+        if success:
+            app.logger.info(message)
+        else:
+            app.logger.warning("Page view stats generation failed: %s", message)
+    except Exception:
+        app.logger.exception("Page view stats generation failed")
     finally:
         with _stats_lock:
             _stats_generating = False
