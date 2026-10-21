@@ -420,6 +420,7 @@ def event_queue():
         flash(_("Event approved and added to calendar!"))
         return redirect(url_for("submissions.event_queue", **_queue_redirect_args()))
     now = datetime.now().date()
+    queue_review.purge_past()
     dup_count = ScrapedEvent.query.filter(
         ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
         ScrapedEvent.needs_review.is_(True),
@@ -498,6 +499,7 @@ def bulk_reject_scraped_events():
 @bp.route("/queue/duplicates")
 @admin_required
 def queue_duplicates():
+    queue_review.purge_past()
     rows, pagination = queue_review.list_flagged(
         page=request.args.get("page", 1, type=int), per_page=QUEUE_PAGE_SIZE
     )

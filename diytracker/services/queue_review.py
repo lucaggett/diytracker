@@ -15,6 +15,9 @@ as the colliding event is edited or deleted, and it carries no ids to link to.
 rows alongside it; the stored string stays as the fallback for when nothing
 collides any more (which is itself the answer: unflag it).
 
+Flagged rows whose show is already over are never worth adjudicating, so
+``purge_past`` rejects them; the routes run it before reading the queue.
+
 Plain functions returning dataclasses (never ORM objects) and raising
 AdminError, so the route above decides how the failure surfaces.
 """
@@ -105,6 +108,39 @@ def _get_flagged(scraped_id):
     if rec.status != ScrapedEvent.STATUS_PENDING:
         raise AdminError(f"Queued event #{scraped_id} is already resolved.")
     return rec
+
+
+def purge_past(today=None, actor="system"):
+    """Reject every flagged pending row whose show has already happened.
+
+    A row is past once its last day is before *today* (``end_date`` when it
+    has one, so a festival stays until it ends). ``start_date`` is local Swiss
+    wall-clock like ``Event.date``, hence ``datetime.now()`` rather than UTC.
+    Rows are rejected, not deleted: the row is what keeps the URL and
+    ``(source, source_id)`` dedup from re-staging the same show on the next
+    scrape. Returns how many were purged.
+    """
+    today = today or datetime.now().date()
+    rows = ScrapedEvent.query.filter(
+        ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
+        ScrapedEvent.needs_review.is_(True),
+        db.func.coalesce(ScrapedEvent.end_date, ScrapedEvent.start_date) < today,
+    ).all()
+    now = datetime.now()
+    for rec in rows:
+        rec.status = ScrapedEvent.STATUS_REJECTED
+        rec.approved_at = now
+        rec.reject_reason = "past"
+        record(
+            "queue.reject",
+            "scraped_event",
+            rec.id,
+            actor=actor,
+            detail=f"past duplicate purged: title={rec.title!r} date={_fmt_date(rec.start_date)}",
+        )
+    if rows:
+        db.session.commit()
+    return len(rows)
 
 
 def list_flagged(page=1, per_page=50):

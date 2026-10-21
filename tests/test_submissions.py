@@ -734,6 +734,54 @@ class TestQueueDuplicatesWeb:
         login(make_user())
         assert client.post("/queue/duplicates/bulk/discard").status_code == 403
 
+    def test_past_rows_are_purged_on_view(self, client, admin, login):
+        login(admin)
+        past = self._flagged(
+            title="Last Week Show",
+            url="https://x.ch/past",
+            start_date=date.today() - timedelta(days=7),
+        )
+        upcoming = self._flagged(title="Next Week Show", url="https://x.ch/next")
+        resp = client.get("/queue/duplicates")
+        assert b"Last Week Show" not in resp.data
+        assert b"Next Week Show" in resp.data
+        db.session.refresh(past)
+        db.session.refresh(upcoming)
+        assert past.status == "rejected"
+        assert past.reject_reason == "past"
+        assert upcoming.status == "pending"
+
+    def test_purge_keeps_tonight_and_running_festivals(self, app):
+        from diytracker.services import queue_review
+
+        tonight = self._flagged(url="https://x.ch/tonight", start_date=date.today())
+        festival = self._flagged(
+            url="https://x.ch/fest",
+            start_date=date.today() - timedelta(days=2),
+            end_date=date.today() + timedelta(days=1),
+        )
+        assert queue_review.purge_past() == 0
+        assert tonight.status == festival.status == "pending"
+
+    def test_purge_leaves_unflagged_past_rows_alone(self, app):
+        """Only the duplicate queue is purged; the main queue is untouched."""
+        from diytracker.services import queue_review
+
+        rec = self._flagged(
+            url="https://x.ch/old",
+            needs_review=False,
+            start_date=date.today() - timedelta(days=3),
+        )
+        assert queue_review.purge_past() == 0
+        assert rec.status == "pending"
+
+    def test_queue_badge_does_not_count_past_rows(self, client, admin, login):
+        login(admin)
+        self._flagged(
+            url="https://x.ch/stale", start_date=date.today() - timedelta(days=1)
+        )
+        assert b"/queue/duplicates" not in client.get("/queue").data
+
 
 class TestSubmitDuplicateIsRejectedNotFatal:
     """Event.event_hash is UNIQUE, so a resubmit of identical values used to

@@ -7,6 +7,11 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.66.0] - 2026-10-21
+
+- **The duplicate review queue now clears out shows that have already happened.** `/queue/duplicates` listed every flagged entry that was still pending, oldest first. A flagged show nobody got to before its date stayed there for good, at the top of the page, and still counted towards the "possible duplicates waiting for review" notice on `/queue`. Deciding whether a show that's already over is a duplicate is pointless, so these entries are now rejected automatically with the reason `past` whenever either queue page loads, and each one gets its own audit-log entry with actor `system`. An entry counts as past once its last day is before today: for a multi-day festival that means its `end_date`, so it stays in the queue until it ends. The entries are rejected rather than deleted, because the staged row is what stops the scraper from staging the same URL or `(source, source_id)` again. Pending entries in the main queue that were never flagged aren't touched.
+- **Server-side:** no schema change and no new configuration; a normal git pull and restart. The backlog of past flagged entries is cleared the first time an admin opens `/queue` or `/queue/duplicates` after the deploy.
+
 ## [0.65.0] - 2026-09-24
 
 - **The statistics page now shows which pages people actually visit.** Until now it ranked only event pages, so the questions that matter most for the rest of the site — is anyone opening the map, the canton pages, the archive, the submit form — had no answer outside the full goaccess report, and that report lists `/events/12/`, `/fr/events/12/` and `/en/events/12/` as three unrelated URLs. The new "Most visited pages" table ranks the top 25 pages over the last 30 days with every language variant merged onto its German URL (the legal pages onto `/de/…`), so a page's rank reflects the page and not how its audience is split across languages. Visitors are distinct IPs over the whole window and all variants, so someone who reads a page in German and then switches to French counts once.
