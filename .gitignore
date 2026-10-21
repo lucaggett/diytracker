@@ -17,3 +17,5 @@ CLAUDE.md
 .claude
 scripts/venue_cleanup/
 social/
+.agents
+AGENTS.md
