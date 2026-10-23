@@ -4,6 +4,9 @@ import pytest
 
 from diytracker.models import VenueAccessibility, db, utcnow
 
+# /set-language/ only switches for clicks from the site (tests/test_abuse.py).
+SAME_ORIGIN = {"Sec-Fetch-Site": "same-origin"}
+
 
 class TestCalendar:
     def test_calendar_renders_upcoming_events(self, client, make_event):
@@ -214,7 +217,7 @@ class TestAccessibilityForm:
 class TestI18n:
     @pytest.mark.parametrize("lang", ["de", "fr", "it", "en"])
     def test_set_language_persists_supported_locale(self, client, lang):
-        resp = client.get(f"/set-language/{lang}")
+        resp = client.get(f"/set-language/{lang}", headers=SAME_ORIGIN)
         assert resp.status_code == 302
         with client.session_transaction() as sess:
             assert sess["lang"] == lang
@@ -223,7 +226,9 @@ class TestI18n:
         assert client.get("/set-language/xx").status_code == 404
 
     def test_set_language_blocks_protocol_relative_redirect(self, client):
-        resp = client.get("/set-language/de?next=//evil.example.com")
+        resp = client.get(
+            "/set-language/de?next=//evil.example.com", headers=SAME_ORIGIN
+        )
         assert "evil.example.com" not in resp.headers["Location"]
 
     @pytest.mark.parametrize("page", ["impressum", "agb", "datenschutz"])
@@ -500,7 +505,7 @@ class TestArchive:
 
 class TestHelpPage:
     def test_help_page_renders_german_for_the_default_locale(self, client):
-        client.get("/set-language/de")
+        client.get("/set-language/de", headers=SAME_ORIGIN)
         resp = client.get("/help")
         assert resp.status_code == 200
         assert "Labels anlegen und verwalten" in resp.data.decode()

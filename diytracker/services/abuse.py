@@ -15,6 +15,8 @@ footer cantons and genres), and it would need translating into four languages
 for a reader that is not a person.
 """
 
+from urllib.parse import urlsplit
+
 from flask import Response, current_app, request
 
 # Matched case-insensitively as substrings of the User-Agent.
@@ -38,6 +40,44 @@ def _blocked_response():
         status=429,
         mimetype="text/plain",
         headers={"Retry-After": str(RETRY_AFTER_SECONDS)},
+    )
+
+
+def is_same_origin_navigation():
+    """True when the request came from a link on one of the site's own pages.
+
+    Sec-Fetch-Site is set by the browser itself and can't be changed from page
+    script; every current browser sends it. The Referer check covers older
+    ones, and it holds under the site's strict-origin-when-cross-origin policy,
+    which sends the full URL on same-origin navigations.
+    """
+    if request.headers.get("Sec-Fetch-Site") == "same-origin":
+        return True
+    referer = request.headers.get("Referer", "")
+    return bool(referer) and urlsplit(referer).netloc == request.host
+
+
+def cross_origin_switch_response():
+    """Refusal for a /set-language/ request that didn't come from the site.
+
+    From July 2026 a scraper on a rotating residential proxy pool fetched
+    pages through harvested switcher URLs: one IP per page, two requests
+    each, no Referer, a randomised macOS Chrome UA. That pattern gets past
+    the per-IP rate limit, the UA list and scrape_detection's per-IP scoring,
+    and it swamped the admin TUI's device stats with "macOS humans". A real
+    switch is always a click on a page here, so refusing everything else
+    costs visitors nothing and stops the scraper getting the page.
+    """
+    current_app.logger.info(
+        "refused set-language without same-origin navigation: ip=%s ua=%r",
+        request.remote_addr,
+        (request.headers.get("User-Agent") or "")[:200],
+    )
+    return Response(
+        "Language switching only works from a link on this site.\n",
+        status=403,
+        mimetype="text/plain",
+        headers={"X-Robots-Tag": "noindex, nofollow"},
     )
 
 

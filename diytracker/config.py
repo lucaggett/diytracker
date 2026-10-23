@@ -70,6 +70,10 @@ class Config:
     # a code change and deploy.
     BLOCKED_USER_AGENTS: tuple[str, ...] = ()
     BLOCKED_IPS: tuple[str, ...] = ()
+    # services/suspect_report.py: where the regular suspicious-traffic report
+    # goes and how many days apart. 0 days = no report.
+    SUSPECT_REPORT_TO = "info@diytracker.ch"
+    SUSPECT_REPORT_INTERVAL_DAYS = 7
 
     @classmethod
     def from_env(cls):
@@ -87,6 +91,14 @@ class Config:
         cfg.CANONICAL_HOST = os.environ.get("CANONICAL_HOST", "")
         cfg.BLOCKED_USER_AGENTS = _csv_env("BLOCKED_USER_AGENTS")
         cfg.BLOCKED_IPS = _csv_env("BLOCKED_IPS")
+        cfg.SUSPECT_REPORT_TO = os.environ.get(
+            "SUSPECT_REPORT_TO", cls.SUSPECT_REPORT_TO
+        )
+        cfg.SUSPECT_REPORT_INTERVAL_DAYS = int(
+            os.environ.get(
+                "SUSPECT_REPORT_INTERVAL_DAYS", cls.SUSPECT_REPORT_INTERVAL_DAYS
+            )
+        )
         return cfg
 
 

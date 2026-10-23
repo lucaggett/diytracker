@@ -13,6 +13,7 @@ BROWSER_UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 )
+SAME_ORIGIN = {"Sec-Fetch-Site": "same-origin"}
 
 
 # --------------------------------------------------------------------------
@@ -71,7 +72,7 @@ def test_language_switcher_links_are_nofollow(client):
 
 
 def test_set_language_response_is_noindex_nofollow(client):
-    resp = client.get("/set-language/fr?next=/about")
+    resp = client.get("/set-language/fr?next=/about", headers=SAME_ORIGIN)
     assert resp.status_code == 302
     assert resp.headers["X-Robots-Tag"] == "noindex, nofollow"
 
@@ -79,7 +80,62 @@ def test_set_language_response_is_noindex_nofollow(client):
 def test_set_language_is_rate_limited(client):
     limiter.enabled = True
     try:
-        codes = [client.get("/set-language/fr").status_code for _ in range(40)]
+        codes = [
+            client.get("/set-language/fr", headers=SAME_ORIGIN).status_code
+            for _ in range(40)
+        ]
     finally:
         limiter.enabled = False
     assert 429 in codes, f"/set-language/ never rate-limited: {set(codes)}"
+
+
+# --------------------------------------------------------------------------
+# /set-language/ only switches for clicks from the site
+#
+# From July 2026 a scraper on a residential proxy pool fetched pages through
+# harvested switcher URLs: one IP per page, no Referer, a macOS Chrome UA.
+# --------------------------------------------------------------------------
+
+
+def test_set_language_refuses_cold_request(client):
+    resp = client.get(
+        "/set-language/it?next=/it/events/901/", headers={"User-Agent": BROWSER_UA}
+    )
+    assert resp.status_code == 403
+    assert resp.mimetype == "text/plain"
+    assert "Location" not in resp.headers
+    assert resp.headers["X-Robots-Tag"] == "noindex, nofollow"
+    with client.session_transaction() as sess:
+        assert "lang" not in sess
+
+
+def test_set_language_accepts_same_origin_fetch_metadata(client):
+    resp = client.get("/set-language/fr?next=/fr/about", headers=SAME_ORIGIN)
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/fr/about")
+
+
+def test_set_language_accepts_own_referer(client):
+    # Browsers without Fetch Metadata still send the Referer on same-origin
+    # clicks under the site's strict-origin-when-cross-origin policy.
+    resp = client.get("/set-language/fr", headers={"Referer": "http://localhost/about"})
+    assert resp.status_code == 302
+
+
+def test_set_language_refuses_cross_site_fetch(client):
+    headers = {"Sec-Fetch-Site": "cross-site", "Referer": "https://elsewhere.example/"}
+    assert client.get("/set-language/fr", headers=headers).status_code == 403
+
+
+def test_set_language_refuses_lookalike_referer(client):
+    # Host must match exactly, not just appear somewhere in the Referer.
+    for referer in (
+        "https://localhost.evil.example/",
+        "https://evil.example/?ref=localhost",
+    ):
+        resp = client.get("/set-language/fr", headers={"Referer": referer})
+        assert resp.status_code == 403, referer
+
+
+def test_set_language_still_404s_unknown_locale_cold(client):
+    assert client.get("/set-language/xx").status_code == 404

@@ -21,6 +21,10 @@ from sqlalchemy.orm import joinedload
 
 from diytracker.forms import AccessibilityForm, CollaboratorRequestForm
 from diytracker.models import Event, Label, Venue, VenueAccessibility, db, utcnow
+from diytracker.services.abuse import (
+    cross_origin_switch_response,
+    is_same_origin_navigation,
+)
 from diytracker.services.archive import (
     adjacent_months,
     archive_directory,
@@ -867,6 +871,10 @@ def events_archive():
 def set_language(lang):
     if lang not in SUPPORTED_LOCALES:
         abort(404)
+    # Real switches are clicks on the site; harvested URLs fetched cold are a
+    # proxy-pool scraper (see services/abuse.py).
+    if not is_same_origin_navigation():
+        return cross_origin_switch_response()
     session["lang"] = lang
     next_url = safe_redirect_target(request.args.get("next", ""))
     resp = redirect(next_url or url_for("public.calendar_view"))
