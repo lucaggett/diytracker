@@ -28,6 +28,10 @@ def get_genres():
     return jsonify({"genres": combined})
 
 
+@bp.route("/status")
+def status():
+    return 200
+
 @bp.route("/get_venues")
 @cache.cached()
 def get_venues():
