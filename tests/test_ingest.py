@@ -226,6 +226,78 @@ class TestIngestDedup:
         assert res.record.needs_review is False
         assert "Calendar" in res.record.review_reason
 
+    def test_strong_match_also_flags_the_row_already_queued(self, app):
+        """Flagging only the newcomer left the older copy in /queue for good."""
+        first = ingest_event(
+            _konzi(
+                title="Grind Night",
+                source_id="sib-a",
+                venue_name="Ebrietas",
+            )
+        ).record
+        assert first.needs_review is False
+        second = ingest_event(
+            _konzi(
+                title="Grind Night!",
+                source_id="sib-b",
+                venue_name="Ebrietas",
+            )
+        ).record
+        db.session.refresh(first)
+        assert second.needs_review is True
+        assert first.needs_review is True
+        assert first.review_reason == "Queue: Grind Night! @ Zürich"
+
+    def test_weak_match_leaves_the_queued_row_unflagged(self, app):
+        """Two different bands in one town stay in the queue, both of them."""
+        first = ingest_event(
+            _konzi(title="Alpha Band", source_id="w-a", venue_name="Ebrietas")
+        ).record
+        second = ingest_event(
+            _konzi(title="Other Group", source_id="w-b", venue_name="Dynamo")
+        ).record
+        db.session.refresh(first)
+        assert second.needs_review is False
+        assert first.needs_review is False
+        assert first.review_reason is None
+
+    def test_sibling_reason_is_appended_and_capped(self, app):
+        first = ingest_event(
+            _konzi(
+                title="Grind Night",
+                source_id="sib-a",
+                venue_name="Ebrietas",
+            )
+        ).record
+        for i in range(2, 30):
+            ingest_event(
+                _konzi(
+                    title="Grind Night",
+                    source_id=f"sib-{i}",
+                    venue_name="Ebrietas",
+                )
+            )
+        db.session.refresh(first)
+        assert first.review_reason.startswith("Queue: Grind Night @ Zürich")
+        assert len(first.review_reason) <= 300
+
+    def test_sibling_flag_rides_on_the_batch_commit(self, app):
+        """The scraper ingests with commit=False; a rollback must undo the flag."""
+        first = ingest_event(
+            _konzi(
+                title="Grind Night",
+                source_id="sib-a",
+                venue_name="Ebrietas",
+            )
+        ).record
+        ingest_event(
+            _konzi(title="Grind Night", source_id="sib-b", venue_name="Ebrietas"),
+            commit=False,
+        )
+        db.session.rollback()
+        db.session.refresh(first)
+        assert first.needs_review is False
+
     def test_no_collision_leaves_flag_clear(self, app):
         res = ingest_event(
             _konzi(source_id="lonely", city="Chur", start_date=_day_in(30))
@@ -302,9 +374,10 @@ class TestScanQueueDuplicates:
     queue: what a row collides with changes as the queue around it moves."""
 
     def _seed_pair(self):
-        # Two eventbot rows for the same show. The second is flagged as it
-        # arrives; the first had nothing to collide with yet, and closing that
-        # gap retroactively is the whole job of the backfill.
+        # Two eventbot rows for the same show, as ingest used to leave them: the
+        # second flagged, the first not. Ingest flags both now, but rows staged
+        # before that still look like this, and closing that gap retroactively
+        # is the whole job of the backfill.
         common = {
             "city": "Basel",
             "venue_name": "Sommercasino",
@@ -320,7 +393,9 @@ class TestScanQueueDuplicates:
                 source="eventbot", source_id="p-b", start_date=_day_in(18), **common
             )
         ).record
-        assert a.needs_review is False
+        a.needs_review = False
+        a.review_reason = None
+        db.session.commit()
         assert b.needs_review is True
         return a, b
 

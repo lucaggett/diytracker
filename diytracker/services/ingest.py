@@ -40,6 +40,7 @@ from diytracker.services.genre_catalog import canonicalize_genre_string
 from diytracker.services.ingest_dedup import (
     describe_duplicates,
     find_duplicate_matches,
+    flag_colliding_queue_rows,
     has_strong_match,
 )
 from diytracker.services.uploads import UPLOAD_FOLDER, save_flyer_file
@@ -211,11 +212,13 @@ def ingest_event(payload, flyer=None, upload_folder=None, commit=True):
     # Same-day collision with the calendar or the queue -> keep the row, but
     # record what it ran into. A strong match (same title, or same venue and
     # city) also sets needs_review, which pulls it out of the web queue and onto
-    # /queue/duplicates; a weak one stays in the queue behind a warning.
+    # /queue/duplicates, along with the staged copy it collided with; a weak one
+    # stays in the queue behind a warning.
     matches = find_duplicate_matches(start_date, city, venue_name, title)
     if matches:
         record.review_reason = describe_duplicates(matches)
         record.needs_review = has_strong_match(matches)
+        flag_colliding_queue_rows(matches, title, city)
     db.session.add(record)
     if commit:
         db.session.commit()

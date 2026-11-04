@@ -14,8 +14,9 @@ anchor; a single further signal (city, venue or title) is enough to notice.
 Noticing and hiding are two different things, and the flag carries both:
 
 - **strong** (``is_strong_match``: same title, or same venue *and* city) — a
-  real duplicate. ``needs_review`` is set, the row drops out of the web queue
-  and is triaged on /queue/duplicates.
+  real duplicate. ``needs_review`` is set on the newcomer and on any staged row
+  it collides with, so both copies drop out of the web queue and are triaged
+  together on /queue/duplicates.
 - **weak** (the same night in the same town, nothing more) — usually two
   unrelated bands. Only ``review_reason`` is written; the row stays in the
   normal queue behind an inline warning, because burying every same-night pair
@@ -203,6 +204,26 @@ def describe_duplicates(matches):
         label = "Calendar" if m["kind"] == "calendar" else "Queue"
         parts.append(f"{label}: {m['label']}")
     return "; ".join(parts)[:_REASON_CAP]
+
+
+def flag_colliding_queue_rows(matches, title, city):
+    """Flag the staged rows a newcomer strongly collides with.
+
+    The check runs when a row arrives, so the newcomer is the only row it would
+    otherwise touch: the copy already in the queue stayed there unflagged, and
+    once the newcomer was discarded nothing pointed at the pair any more. The
+    reason is appended, since the row may already collide with something else.
+    The caller's commit is the transaction boundary.
+    """
+    ids = [m["id"] for m in matches if m["kind"] == "queue" and is_strong_match(m)]
+    if not ids:
+        return
+    note = f"Queue: {title} @ {city or '?'}"
+    for row in ScrapedEvent.query.filter(ScrapedEvent.id.in_(ids)).all():
+        row.needs_review = True
+        reason = row.review_reason or ""
+        if note not in reason:
+            row.review_reason = (f"{reason}; {note}" if reason else note)[:_REASON_CAP]
 
 
 def find_same_date_events(start_date, exclude_event_ids=()):

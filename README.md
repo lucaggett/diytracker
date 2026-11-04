@@ -142,12 +142,18 @@ That URL-level dedup only catches the *same link* arriving twice, so
 `services/ingest_dedup.py` runs a second, fuzzier pass on every source:
 same date plus a normalised match on city, venue or title against both
 the live calendar and the rest of the queue. A **strong** match (same
-title, or same venue *and* city) sets `needs_review`, which pulls the
-row out of `/queue` and onto `/queue/duplicates` for triage; a **weak**
+title, or same venue *and* city) sets `needs_review` on the new row and
+on any staged row it collides with, which pulls both out of `/queue` and
+onto `/queue/duplicates` for triage; a **weak**
 one (the same night in the same town, nothing more — usually two
 unrelated bands) only records `review_reason`, and the row stays in the
 queue behind an inline notice. `scripts/scan_queue_duplicates.py`
 re-derives both across the existing backlog and is safe to re-run.
+
+Pending rows whose show is over, flagged or not, are rejected with the
+reason `past` when `/queue` or `/queue/duplicates` loads
+(`queue_review.purge_past`). Queue rows are never deleted: the row is what
+stops the same URL or `(source, source_id)` being staged again.
 
 Approving is gated by the same two ideas. The venue is resolved with
 `services/venue.resolve_existing_venue`, which reuses an existing venue

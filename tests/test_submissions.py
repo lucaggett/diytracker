@@ -763,8 +763,8 @@ class TestQueueDuplicatesWeb:
         assert queue_review.purge_past() == 0
         assert tonight.status == festival.status == "pending"
 
-    def test_purge_leaves_unflagged_past_rows_alone(self, app):
-        """Only the duplicate queue is purged; the main queue is untouched."""
+    def test_purge_rejects_unflagged_past_rows_but_keeps_them(self, app):
+        """The main queue is purged too, and the row stays in the database."""
         from diytracker.services import queue_review
 
         rec = self._flagged(
@@ -772,8 +772,82 @@ class TestQueueDuplicatesWeb:
             needs_review=False,
             start_date=date.today() - timedelta(days=3),
         )
+        assert queue_review.purge_past() == 1
+        assert db.session.get(ScrapedEvent, rec.id) is rec
+        assert rec.status == "rejected"
+        assert rec.reject_reason == "past"
+
+    def test_purge_leaves_upcoming_and_undated_rows_alone(self, app):
+        from diytracker.services import queue_review
+
+        upcoming = self._flagged(url="https://x.ch/soon", needs_review=False)
+        undated = self._flagged(
+            url="https://x.ch/undated", needs_review=False, start_date=None
+        )
         assert queue_review.purge_past() == 0
+        assert upcoming.status == undated.status == "pending"
+
+    def test_purge_does_not_touch_resolved_rows(self, app):
+        from diytracker.services import queue_review
+
+        rec = self._flagged(
+            url="https://x.ch/done",
+            needs_review=False,
+            start_date=date.today() - timedelta(days=3),
+            status="rejected",
+            reject_reason="Genre",
+        )
+        assert queue_review.purge_past() == 0
+        assert rec.reject_reason == "Genre"
+
+    def test_backdated_filter_does_not_list_rows_it_just_purged(
+        self, client, admin, login
+    ):
+        login(admin)
+        past = date.today() - timedelta(days=3)
+        rec = self._flagged(
+            title="Over Already",
+            url="https://x.ch/over",
+            needs_review=False,
+            start_date=past,
+        )
+        resp = client.get(f"/queue?date_from={past.isoformat()}")
+        assert b"Over Already" not in resp.data
+        db.session.refresh(rec)
+        assert rec.status == "rejected"
+
+    def test_post_does_not_purge(self, client, admin, login):
+        """A stale tab approving a row must get to the approve path, not lose it."""
+        login(admin)
+        rec = self._flagged(
+            url="https://x.ch/stale-tab",
+            needs_review=False,
+            start_date=date.today() - timedelta(days=1),
+        )
+        client.post("/queue", data={"scraped_id": "99999"})
+        db.session.refresh(rec)
         assert rec.status == "pending"
+
+    def test_rejected_past_row_still_blocks_rescrape(self, app):
+        """Why purged rows are kept: the row is what stops the URL coming back."""
+        from diytracker.services import queue_review
+        from diytracker.services.ingest import ingest_event
+
+        self._flagged(
+            url="https://x.ch/again",
+            needs_review=False,
+            start_date=date.today() - timedelta(days=3),
+        )
+        assert queue_review.purge_past() == 1
+        res = ingest_event(
+            {
+                "source": "petzi",
+                "title": "Again",
+                "url": "https://x.ch/again",
+                "start_date": (date.today() + timedelta(days=9)).isoformat(),
+            }
+        )
+        assert res.status == "duplicate"
 
     def test_queue_badge_does_not_count_past_rows(self, client, admin, login):
         login(admin)

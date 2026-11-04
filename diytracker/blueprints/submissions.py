@@ -191,6 +191,11 @@ def event_queue():
     filter_source = request.args.get("source", "").strip() or None
     filter_q = request.args.get("q", "").strip() or None
     page = request.args.get("page", 1, type=int)
+    # Before the query, or a date filter reaching back would list rows this
+    # very request is about to reject. Not on POST: a row being approved from a
+    # page opened before midnight shouldn't vanish from under the admin.
+    if request.method != "POST":
+        queue_review.purge_past()
     events, pagination = parse_scraped_events(
         date_from=filter_date_from,
         date_to=filter_date_to,
@@ -420,7 +425,6 @@ def event_queue():
         flash(_("Event approved and added to calendar!"))
         return redirect(url_for("submissions.event_queue", **_queue_redirect_args()))
     now = datetime.now().date()
-    queue_review.purge_past()
     dup_count = ScrapedEvent.query.filter(
         ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
         ScrapedEvent.needs_review.is_(True),

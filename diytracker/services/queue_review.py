@@ -15,7 +15,7 @@ as the colliding event is edited or deleted, and it carries no ids to link to.
 rows alongside it; the stored string stays as the fallback for when nothing
 collides any more (which is itself the answer: unflag it).
 
-Flagged rows whose show is already over are never worth adjudicating, so
+Rows whose show is already over are never worth reviewing, flagged or not, so
 ``purge_past`` rejects them; the routes run it before reading the queue.
 
 Plain functions returning dataclasses (never ORM objects) and raising
@@ -111,19 +111,19 @@ def _get_flagged(scraped_id):
 
 
 def purge_past(today=None, actor="system"):
-    """Reject every flagged pending row whose show has already happened.
+    """Reject every pending row whose show has already happened.
 
     A row is past once its last day is before *today* (``end_date`` when it
     has one, so a festival stays until it ends). ``start_date`` is local Swiss
     wall-clock like ``Event.date``, hence ``datetime.now()`` rather than UTC.
     Rows are rejected, not deleted: the row is what keeps the URL and
     ``(source, source_id)`` dedup from re-staging the same show on the next
-    scrape. Returns how many were purged.
+    scrape. Rows with no date at all are left alone: nothing says they are
+    over. Returns how many were purged.
     """
     today = today or datetime.now().date()
     rows = ScrapedEvent.query.filter(
         ScrapedEvent.status == ScrapedEvent.STATUS_PENDING,
-        ScrapedEvent.needs_review.is_(True),
         db.func.coalesce(ScrapedEvent.end_date, ScrapedEvent.start_date) < today,
     ).all()
     now = datetime.now()
@@ -136,7 +136,7 @@ def purge_past(today=None, actor="system"):
             "scraped_event",
             rec.id,
             actor=actor,
-            detail=f"past duplicate purged: title={rec.title!r} date={_fmt_date(rec.start_date)}",
+            detail=f"past show purged: title={rec.title!r} date={_fmt_date(rec.start_date)}",
         )
     if rows:
         db.session.commit()
