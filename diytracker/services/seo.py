@@ -30,6 +30,7 @@ _SWISS_TRANSLIT = str.maketrans(
 RESERVED_SLUGS = frozenset(
     {
         "about",
+        "status",
         "accessibility",
         "admin",
         "agb",
