@@ -32,6 +32,7 @@ def get_genres():
 def status():
     return jsonify({"status": 200})
 
+
 @bp.route("/get_venues")
 @cache.cached()
 def get_venues():
