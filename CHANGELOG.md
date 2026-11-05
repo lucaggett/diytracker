@@ -7,6 +7,11 @@ retroactively. Versioning follows [Semantic Versioning](https://semver.org/):
 `MAJOR.MINOR.PATCH`, with the project still in its `0.x` initial-development
 phase (breaking changes can happen in a minor bump).
 
+## [0.70.1] - 2026-11-05
+
+- **The admin pages carry less text.** The long note under the Traffic panel explaining how people are told apart from bots is gone, along with the "refreshes every 15 min" suffix next to "Last updated", the panel's "Traffic" heading and the "Drop us a line" remark in the scrape footer. The small label above each page title, which only repeated what the title and navigation already said ("Admin console", "Scraped event approval", "Possible duplicate", "Help us grow"), is gone too, as is the paragraph at the top of `/admin/scrape-suspects`. Nothing about how the numbers are counted has changed: the panel still leaves out bots, hits still means page views, and someone who opens a single page with no referrer still isn't counted. The explanation of those rules is now only in the 0.70.0 entry below.
+- **Server-side:** no schema change and no new configuration; a normal git pull and restart.
+
 ## [0.70.0] - 2026-11-05
 
 - **The Traffic panel on `/admin` now counts people instead of mostly bots.** Its numbers came from GoAccess's `--ignore-crawlers`, which only removes clients that admit to being crawlers. Since July most automated traffic has presented an ordinary browser user agent from a rotating proxy pool, so every request it made counted as a hit, and each new IP as a visitor. Visitors and hits are now counted in Python from the same nginx logs, and a client (one IP and browser per Swiss calendar day) must show evidence of being a person: a recent browser version, HTTP/2, a real public page, and either a referrer from another site or actual browsing across two or more pages. Clients that look like crawlers or scanners, and anyone who has used the admin or queue pages, are left out.

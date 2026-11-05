@@ -127,7 +127,6 @@ def admin():
         current_monday=current_monday,
         parent_genres_order=PARENT_GENRES_ORDER,
         analytics_stats=read_stats(),
-        stats_interval_minutes=STATS_INTERVAL_MINUTES,
     )
 
 
