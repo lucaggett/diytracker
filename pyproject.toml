@@ -7,12 +7,12 @@ dependencies = [
     "flask-sqlalchemy>=3.1",
     "flask-wtf>=1.2",
     "flask-babel>=4.0",
-    "flask-compress>=1.15",
+    "flask-compress>=1.26",
     "flask-caching>=2.4.1",
-    "gunicorn>=26.1.0",
-    "python-dateutil>=2.9",
-    "brotli>=1.1",
-    "python-dotenv>=1.2.3",
+    "gunicorn>=26.2.0",
+    "python-dateutil>=3.0.0",
+    "brotli>=1.2.1",
+    "python-dotenv>=1.2.4",
     "email-validator>=2.1",
     "openpyxl>=3.1",
     "pillow>=12.3.0",
@@ -36,9 +36,9 @@ filterwarnings = [
 
 [dependency-groups]
 dev = [
-    "pytest>=9.1.1",
+    "pytest>=9.2.0",
     "pytest-cov>=7.0.0",
-    "ruff>=0.16.4",
+    "ruff>=0.17.3",
 ]
 
 [tool.coverage.run]
