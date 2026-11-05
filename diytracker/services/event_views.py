@@ -1,20 +1,17 @@
 """Per-event page view counts distilled from nginx access logs.
 
-Runs right after the goaccess stats pass (services/analytics.py) on the same
-15-minute schedule, but parses the logs directly in Python: the goaccess JSON
-requests panel only reports per-URL totals over the whole parsed window, and
-those totals shrink as old days rotate out of the logs, so they can't be
-accumulated safely. Instead every run recomputes per-(event, day) counts for
+Runs right after the Traffic panel's pass (services/human_traffic.py) on the
+same 15-minute schedule. Every run recomputes per-(event, day) counts for
 all days still inside the log window and upserts them with MAX — reruns are
 idempotent, today's partial counts only grow, and rows for days that have
 rotated out of the logs are simply never touched again. That untouched tail
 is the durable history.
 
-Bot filtering approximates goaccess --ignore-crawlers with a UA denylist, so
-per-event numbers will differ slightly from the Traffic panel's totals; both
-are trend indicators, not a census. Reading the logs a second time per run
-(separately from the goaccess pass) is deliberate: sharing one pass would
-entangle analytics.py, and the filtered window is small.
+Bot filtering here is only a UA denylist, so per-event numbers include bots
+with browser-like UAs that the Traffic panel's stricter checks remove, and run
+higher than its totals would suggest. Treat them as trend indicators, not a
+census. Reading the logs a second time per run is deliberate: sharing one pass
+would entangle the two, and the filtered window is small.
 """
 
 import re
@@ -113,7 +110,7 @@ def persist_event_day_counts(counts, chunk_size=500):
 
 def generate_event_view_stats() -> tuple[bool, str]:
     """Recompute and persist event view counts for the analytics window.
-    Mirrors analytics.generate_stats()'s (success, message) contract.
+    Mirrors human_traffic.generate_traffic_stats()'s (success, message) contract.
     """
     log_files = find_log_files()
     if not log_files:

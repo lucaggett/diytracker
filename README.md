@@ -333,6 +333,8 @@ diytracker/              The application package.
                          backs /queue/duplicates.
     uploads.py           Flyer upload handling.
     analytics.py         goaccess-style log report glue.
+    human_traffic.py     Admin Traffic panel: human visitors and page views
+                         counted from the nginx logs, bots removed.
     calendar_image.py    OG-image generation for calendar pages.
     scrape_events.py     Source-specific scraping (see "Scrapers" above).
 

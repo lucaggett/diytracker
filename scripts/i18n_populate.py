@@ -422,6 +422,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "refreshes every": "aktualisiert alle",
         "min": "Min.",
         "Collecting stats…": "Sammle Statistiken…",
+        "People only: bots are filtered out, and hits are page views. Someone who opens a single page with no referrer can't be told from a bot and isn't counted, so the real numbers are somewhat higher.": "Nur Menschen: Bots sind herausgefiltert, und Hits sind Seitenaufrufe. Wer eine einzelne Seite ohne Referrer öffnet, lässt sich nicht von einem Bot unterscheiden und wird nicht gezählt. Die echten Zahlen liegen also etwas höher.",
         "just now": "gerade eben",
         "%(t)s ago": "vor %(t)s",
         # Admin statistics page
@@ -1060,6 +1061,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "refreshes every": "actualisé toutes les",
         "min": "min",
         "Collecting stats…": "Collecte des statistiques…",
+        "People only: bots are filtered out, and hits are page views. Someone who opens a single page with no referrer can't be told from a bot and isn't counted, so the real numbers are somewhat higher.": "Humains uniquement : les bots sont filtrés et les hits sont des pages vues. Une personne qui ouvre une seule page sans référent ne peut pas être distinguée d'un bot et n'est pas comptée. Les chiffres réels sont donc un peu plus élevés.",
         "just now": "à l'instant",
         "%(t)s ago": "il y a %(t)s",
         # Admin statistics page
@@ -1698,6 +1700,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "refreshes every": "si aggiorna ogni",
         "min": "min",
         "Collecting stats…": "Raccolta statistiche…",
+        "People only: bots are filtered out, and hits are page views. Someone who opens a single page with no referrer can't be told from a bot and isn't counted, so the real numbers are somewhat higher.": "Solo persone: i bot sono esclusi e gli hit sono pagine viste. Chi apre una sola pagina senza referrer non si distingue da un bot e non viene contato. I numeri reali sono quindi un po' più alti.",
         "just now": "proprio ora",
         "%(t)s ago": "%(t)s fa",
         # Admin statistics page

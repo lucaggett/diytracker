@@ -528,7 +528,7 @@ def analytics_stats():
     age = stats_age_seconds()
     # Regenerate in the background when the cache is missing or the scheduler
     # looks dead (dev mode, or the first gunicorn worker died). Never generate
-    # inline: goaccess over 60 days of logs must not block a request.
+    # inline: parsing 60 days of logs must not block a request.
     if stats is None or age is None or age > 3 * STATS_INTERVAL_MINUTES * 60:
         # _get_current_object() is the documented LocalProxy escape hatch.
         kick_stats_generation(current_app._get_current_object())  # noqa: SLF001

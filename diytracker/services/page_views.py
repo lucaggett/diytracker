@@ -112,7 +112,7 @@ def collect_page_counts(files, valid_dates, adapter):
 
 def generate_page_view_stats() -> tuple[bool, str]:
     """Recount the top pages for the analytics window and cache them as JSON.
-    Mirrors analytics.generate_stats()'s (success, message) contract; needs an
+    Mirrors human_traffic.generate_traffic_stats()'s (success, message) contract; needs an
     app context for the URL map.
     """
     log_files = find_log_files()

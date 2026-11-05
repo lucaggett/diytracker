@@ -1,4 +1,7 @@
-"""GoAccess report generation from nginx access logs."""
+"""Nginx access log helpers: the GoAccess report and the Traffic panel's cache.
+
+The numbers themselves are counted in services/human_traffic.py.
+"""
 
 import contextlib
 import gzip
@@ -94,7 +97,8 @@ def _is_admin_request(line: str) -> bool:
     return path == "/admin" or path.startswith("/admin/")
 
 
-def _iter_filtered_lines(files: list[Path], valid_dates: set[str] | None):
+def _iter_log_lines(files: list[Path], valid_dates: set[str] | None):
+    """Log lines inside the date window, admin requests included."""
     for path in files:
         try:
             opener = (
@@ -104,12 +108,16 @@ def _iter_filtered_lines(files: list[Path], valid_dates: set[str] | None):
             )
             with opener as f:
                 for line in f:
-                    if _is_admin_request(line):
-                        continue
                     if valid_dates is None or _extract_log_date(line) in valid_dates:
                         yield line
-        except OSError:
+        except OSError:  # noqa: PERF203 - one unreadable log mustn't stop the rest
             continue
+
+
+def _iter_filtered_lines(files: list[Path], valid_dates: set[str] | None):
+    for line in _iter_log_lines(files, valid_dates):
+        if not _is_admin_request(line):
+            yield line
 
 
 # goaccess over a full production log directory is minutes, not seconds, and
@@ -206,30 +214,12 @@ def generate_report(timeframe: str = "7d") -> tuple[bool, str]:
     return True, f"Report generated ({label}) from {len(log_files)} log file(s)"
 
 
-def _parse_panel_date(value: str):
-    # The date spec of goaccess JSON output differs between versions.
-    for fmt in ("%Y-%m-%d", "%Y%m%d", "%d/%b/%Y"):
-        try:
-            return datetime.strptime(str(value), fmt).date()
-        except ValueError:  # noqa: PERF203 - probing three date formats, not a hot loop
-            continue
-    return None
+def summarize_daily(day_map: dict, today) -> dict:
+    """Build the Traffic panel's stats from {date: (hits, visitors)}.
 
-
-def _parse_goaccess_json(data: dict, today) -> dict:
-    # The "general" totals span the whole input, so all window totals come
-    # from the per-date visitors panel instead. Multi-day "visitors" numbers
-    # are sums of daily uniques (a visitor active on 3 days counts 3x), same
-    # as goaccess's own visitors panel — good enough for trends.
-    day_map = {}
-    for item in data.get("visitors", {}).get("data", []):
-        d = _parse_panel_date(item.get("data", ""))
-        if d is None:
-            continue
-        day_map[d] = (
-            item.get("hits", {}).get("count", 0),
-            item.get("visitors", {}).get("count", 0),
-        )
+    Multi-day "visitors" numbers are sums of daily uniques: a visitor active on
+    3 days counts 3x. Good enough for trends.
+    """
 
     def window_totals(start, end):
         hits = visitors = 0
@@ -276,48 +266,11 @@ def _parse_goaccess_json(data: dict, today) -> dict:
     }
 
 
-def generate_stats() -> tuple[bool, str]:
-    """Run goaccess over the last 60 days and cache compact visitor/hit
-    stats as JSON. Returns (success, message).
-    """
-    if not shutil.which("goaccess"):
-        return False, "goaccess not found in PATH"
-
-    log_files = find_log_files()
-    if not log_files:
-        return False, "No nginx access log files found"
-
-    today = datetime.now().date()
-    valid_dates = _build_valid_dates(
-        today - timedelta(days=2 * STATS_WINDOW_DAYS - 1), today
-    )
-
+def write_stats(day_map: dict, today) -> None:
     STATS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    # goaccess picks the output format from the file extension.
-    raw_path = STATS_PATH.with_name("analytics_stats_raw.json")
-
-    ok, message = _run_goaccess(
-        _iter_filtered_lines(log_files, valid_dates),
-        raw_path,
-        # Leave any previous cache intact so the dashboard keeps showing it.
-        "No log entries found in stats window",
-    )
-    if not ok:
-        return False, message
-
-    try:
-        raw = json.loads(raw_path.read_text())
-    except (OSError, json.JSONDecodeError) as exc:
-        return False, f"could not read goaccess JSON output: {exc}"
-    finally:
-        raw_path.unlink(missing_ok=True)
-
-    stats = _parse_goaccess_json(raw, today)
     tmp_path = STATS_PATH.with_suffix(".json.tmp")
-    tmp_path.write_text(json.dumps(stats))
+    tmp_path.write_text(json.dumps(summarize_daily(day_map, today)))
     tmp_path.replace(STATS_PATH)
-
-    return True, f"Stats generated from {len(log_files)} log file(s)"
 
 
 def read_stats() -> dict | None:
@@ -345,7 +298,12 @@ def _generate_stats_guarded(app):
             return
         _stats_generating = True
     try:
-        success, message = generate_stats()
+        # Lazy import: human_traffic reaches the models through page_views,
+        # which this module must not do at import time.
+        from diytracker.services.human_traffic import generate_traffic_stats
+
+        with app.app_context():
+            success, message = generate_traffic_stats()
         if success:
             app.logger.info(message)
         else:
@@ -353,8 +311,7 @@ def _generate_stats_guarded(app):
     except Exception:
         app.logger.exception("Analytics stats generation failed")
     try:
-        # Lazy import: event_views pulls in the models, which this module
-        # must not do at import time (scripts import it without an app).
+        # Also lazy: scripts import this module without an app.
         from diytracker.services.event_views import generate_event_view_stats
 
         with app.app_context():

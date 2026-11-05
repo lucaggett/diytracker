@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: diytracker 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-24 00:07+0200\n"
+"POT-Creation-Date: 2026-11-05 10:41+0100\n"
 "PO-Revision-Date: 2026-04-21 00:00+0000\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -43,7 +43,7 @@ msgid "Doors Open Time"
 msgstr "Heure d'ouverture des portes"
 
 #: diytracker/forms.py:95 diytracker/forms.py:374
-#: templates/_partials/event_cards.html:96 templates/admin.html:86
+#: templates/_partials/event_cards.html:96 templates/admin.html:88
 #: templates/calendar.html:135 templates/event_page.html:94
 #: templates/event_queue.html:166 templates/genre.html:17
 msgid "Genre"
@@ -89,7 +89,7 @@ msgstr "Prix du billet"
 msgid "Ticket Link"
 msgstr "Lien billetterie"
 
-#: diytracker/forms.py:125 templates/admin.html:149
+#: diytracker/forms.py:125 templates/admin.html:151
 #: templates/admin_statistics.html:38 templates/edit_venue.html:9
 #: templates/event_page.html:79 templates/event_queue.html:78
 #: templates/queue_approve_confirm.html:42
@@ -296,7 +296,7 @@ msgstr "Entrée calme / alternative disponible"
 msgid "Additional accessibility notes"
 msgstr "Informations d'accessibilité supplémentaires"
 
-#: diytracker/forms.py:358 templates/admin.html:118 templates/admin.html:147
+#: diytracker/forms.py:358 templates/admin.html:120 templates/admin.html:149
 #: templates/venues.html:39
 msgid "Name"
 msgstr "Nom"
@@ -417,7 +417,7 @@ msgstr ""
 "Le lieu de cet événement n'existe plus. Sélectionne ou crée un lieu ci-"
 "dessous."
 
-#: diytracker/blueprints/admin.py:181 diytracker/blueprints/submissions.py:573
+#: diytracker/blueprints/admin.py:181 diytracker/blueprints/submissions.py:579
 msgid "Selected venue does not exist."
 msgstr "Le lieu sélectionné n'existe pas."
 
@@ -525,7 +525,7 @@ msgstr "Label mis à jour !"
 msgid "Label deleted."
 msgstr "Label supprimé."
 
-#: diytracker/blueprints/public.py:248
+#: diytracker/blueprints/public.py:252
 msgid ""
 "Your message could not be sent — please write to us directly at "
 "kontakt@diytracker.ch."
@@ -533,20 +533,20 @@ msgstr ""
 "Le message n'a pas pu être envoyé — écris-nous directement à "
 "kontakt@diytracker.ch."
 
-#: diytracker/blueprints/public.py:258
+#: diytracker/blueprints/public.py:262
 msgid "Thanks! We will get back to you as soon as possible."
 msgstr "Merci ! Nous te répondrons dès que possible."
 
-#: diytracker/blueprints/public.py:295
+#: diytracker/blueprints/public.py:299
 msgid "Accessibility info saved — thank you!"
 msgstr "Informations d'accessibilité enregistrées — merci !"
 
-#: diytracker/blueprints/public.py:441
+#: diytracker/blueprints/public.py:445
 #, python-format
 msgid "DIY & punk concerts %(in_canton)s"
 msgstr "Concerts DIY & punk %(in_canton)s"
 
-#: diytracker/blueprints/public.py:444
+#: diytracker/blueprints/public.py:448
 #, python-format
 msgid ""
 "%(num)d upcoming DIY, punk and underground shows %(in_canton)s — dates, "
@@ -555,12 +555,12 @@ msgstr ""
 "%(num)d concerts DIY, punk et underground à venir %(in_canton)s — dates, "
 "lieux, prix et infos accessibilité."
 
-#: diytracker/blueprints/public.py:495
+#: diytracker/blueprints/public.py:499
 #, python-format
 msgid "%(genre)s concerts in Switzerland"
 msgstr "Concerts %(genre)s en Suisse"
 
-#: diytracker/blueprints/public.py:497
+#: diytracker/blueprints/public.py:501
 #, python-format
 msgid ""
 "%(num)d upcoming %(genre)s shows in Switzerland — dates, venues, prices "
@@ -569,7 +569,7 @@ msgstr ""
 "%(num)d concerts %(genre)s à venir en Suisse — dates, lieux, prix et "
 "infos accessibilité."
 
-#: diytracker/blueprints/public.py:536
+#: diytracker/blueprints/public.py:540
 #, python-format
 msgid ""
 "Upcoming shows by %(label)s — dates, venues, prices and accessibility "
@@ -578,83 +578,83 @@ msgstr ""
 "Prochains concerts de %(label)s — dates, lieux, prix et infos "
 "d'accessibilité."
 
-#: diytracker/blueprints/public.py:629
+#: diytracker/blueprints/public.py:633
 msgid "DIY, punk and underground concerts in Switzerland."
 msgstr "Concerts DIY, punk et underground en Suisse."
 
-#: diytracker/blueprints/submissions.py:208
+#: diytracker/blueprints/submissions.py:213
 msgid "Invalid event selection."
 msgstr "Sélection d'événement invalide."
 
-#: diytracker/blueprints/submissions.py:288
+#: diytracker/blueprints/submissions.py:293
 msgid "That venue no longer exists."
 msgstr "Ce lieu n'existe plus."
 
-#: diytracker/blueprints/submissions.py:391
-#: diytracker/blueprints/submissions.py:599
+#: diytracker/blueprints/submissions.py:396
+#: diytracker/blueprints/submissions.py:605
 msgid "This event already exists."
 msgstr "Cet événement existe déjà."
 
-#: diytracker/blueprints/submissions.py:420
+#: diytracker/blueprints/submissions.py:425
 msgid "Event approved and added to calendar!"
 msgstr "Événement approuvé et ajouté au calendrier !"
 
-#: diytracker/blueprints/submissions.py:469
+#: diytracker/blueprints/submissions.py:474
 msgid "That queue entry has already been resolved."
 msgstr "Cette entrée de la file a déjà été traitée."
 
-#: diytracker/blueprints/submissions.py:474
+#: diytracker/blueprints/submissions.py:479
 msgid "Event removed from queue."
 msgstr "Événement retiré de la file."
 
-#: diytracker/blueprints/submissions.py:494
+#: diytracker/blueprints/submissions.py:499
 #, python-format
 msgid "%(num)d events removed from queue."
 msgstr "%(num)d événements retirés de la file."
 
-#: diytracker/blueprints/submissions.py:528
+#: diytracker/blueprints/submissions.py:534
 #, python-format
 msgid "%(num)d entries discarded."
 msgstr "%(num)d entrées écartées."
 
-#: diytracker/blueprints/submissions.py:531
+#: diytracker/blueprints/submissions.py:537
 #, python-format
 msgid "%(num)d entries unflagged — they are back in the queue."
 msgstr "%(num)d entrées désignalées — elles sont de retour dans la file."
 
-#: diytracker/blueprints/submissions.py:545
+#: diytracker/blueprints/submissions.py:551
 #, python-format
 msgid "Discarded “%(title)s”."
 msgstr "« %(title)s » écarté."
 
-#: diytracker/blueprints/submissions.py:548
+#: diytracker/blueprints/submissions.py:554
 #, python-format
 msgid "Unflagged “%(title)s” — it's back in the queue."
 msgstr "Signalement de « %(title)s » retiré — il est de retour dans la file."
 
-#: diytracker/blueprints/submissions.py:570
+#: diytracker/blueprints/submissions.py:576
 msgid "Please provide all required venue details for a new venue."
 msgstr "Merci de renseigner toutes les informations requises pour un nouveau lieu."
 
-#: diytracker/blueprints/submissions.py:576
+#: diytracker/blueprints/submissions.py:582
 msgid "Venue already exists. Using existing venue."
 msgstr "Le lieu existe déjà. Utilisation du lieu existant."
 
-#: diytracker/blueprints/submissions.py:604
+#: diytracker/blueprints/submissions.py:610
 msgid "Event submitted successfully!"
 msgstr "Événement soumis avec succès !"
 
-#: diytracker/blueprints/submissions.py:623
+#: diytracker/blueprints/submissions.py:629
 #, python-format
 msgid "'%(name)s' is already in the list."
 msgstr "'%(name)s' est déjà dans la liste."
 
-#: diytracker/blueprints/submissions.py:628
+#: diytracker/blueprints/submissions.py:634
 #, python-format
 msgid "Genre '%(name)s' added."
 msgstr "Genre '%(name)s' ajouté."
 
-#: diytracker/blueprints/submissions.py:656
+#: diytracker/blueprints/submissions.py:662
 #, python-format
 msgid "Genre '%(name)s' removed."
 msgstr "Genre '%(name)s' supprimé."
@@ -858,8 +858,8 @@ msgstr "Trafic"
 msgid "Visitors today"
 msgstr "Visiteurs aujourd'hui"
 
-#: templates/admin.html:24 templates/admin.html:34 templates/admin.html:255
-#: templates/admin.html:259
+#: templates/admin.html:24 templates/admin.html:34 templates/admin.html:257
+#: templates/admin.html:261
 msgid "yesterday:"
 msgstr "hier :"
 
@@ -867,7 +867,7 @@ msgstr "hier :"
 msgid "Visitors 30d"
 msgstr "Visiteurs 30 j"
 
-#: templates/admin.html:29 templates/admin.html:39 templates/admin.html:218
+#: templates/admin.html:29 templates/admin.html:39 templates/admin.html:220
 msgid "vs previous 30 days"
 msgstr "vs 30 jours précédents"
 
@@ -887,49 +887,60 @@ msgstr "Visiteurs / jour, 30 derniers jours"
 msgid "Hits / day, last 30 days"
 msgstr "Hits / jour, 30 derniers jours"
 
-#: templates/admin.html:61 templates/admin.html:265
+#: templates/admin.html:60
+msgid ""
+"People only: bots are filtered out, and hits are page views. Someone who "
+"opens a single page with no referrer can't be told from a bot and isn't "
+"counted, so the real numbers are somewhat higher."
+msgstr ""
+"Humains uniquement : les bots sont filtrés et les hits sont des pages "
+"vues. Une personne qui ouvre une seule page sans référent ne peut pas "
+"être distinguée d'un bot et n'est pas comptée. Les chiffres réels sont "
+"donc un peu plus élevés."
+
+#: templates/admin.html:63 templates/admin.html:267
 msgid "Last updated:"
 msgstr "Dernière mise à jour :"
 
-#: templates/admin.html:61 templates/admin.html:210
+#: templates/admin.html:63 templates/admin.html:212
 msgid "refreshes every"
 msgstr "actualisé toutes les"
 
-#: templates/admin.html:61 templates/admin.html:210
+#: templates/admin.html:63 templates/admin.html:212
 msgid "min"
 msgstr "min"
 
-#: templates/admin.html:61 templates/admin.html:275
+#: templates/admin.html:63 templates/admin.html:277
 msgid "Collecting stats…"
 msgstr "Collecte des statistiques…"
 
-#: templates/_partials/nav_backstage.html:16 templates/admin.html:71
+#: templates/_partials/nav_backstage.html:16 templates/admin.html:73
 #: templates/canton.html:37 templates/genre.html:40 templates/search.html:38
 #: templates/venues.html:3
 msgid "Venues"
 msgstr "Lieux"
 
-#: templates/admin.html:76
+#: templates/admin.html:78
 msgid "Export Excel"
 msgstr "Export Excel"
 
-#: templates/admin.html:81
+#: templates/admin.html:83
 msgid "Week of"
 msgstr "Semaine du"
 
-#: templates/admin.html:89 templates/event_queue.html:26
+#: templates/admin.html:91 templates/event_queue.html:26
 msgid "All"
 msgstr "Tous"
 
-#: templates/admin.html:97
+#: templates/admin.html:99
 msgid "Weekly Image"
 msgstr "Image de la semaine"
 
-#: templates/admin.html:108
+#: templates/admin.html:110
 msgid "Events with missing venue"
 msgstr "Événements sans lieu"
 
-#: templates/admin.html:111
+#: templates/admin.html:113
 msgid ""
 "These events point at a venue that no longer exists. Edit each one to "
 "pick or create a venue."
@@ -937,12 +948,12 @@ msgstr ""
 "Ces événements pointent vers un lieu qui n'existe plus. Modifie chacun "
 "pour sélectionner ou créer un lieu."
 
-#: templates/admin.html:117 templates/admin.html:146 templates/venues.html:38
+#: templates/admin.html:119 templates/admin.html:148 templates/venues.html:38
 msgid "ID"
 msgstr "ID"
 
-#: templates/_partials/event_cards.html:85 templates/admin.html:119
-#: templates/admin.html:148 templates/admin_statistics.html:37
+#: templates/_partials/event_cards.html:85 templates/admin.html:121
+#: templates/admin.html:150 templates/admin_statistics.html:37
 #: templates/event_page.html:73 templates/event_queue.html:76
 #: templates/promoter_dashboard.html:123
 #: templates/queue_approve_confirm.html:41
@@ -951,16 +962,16 @@ msgstr "ID"
 msgid "Date"
 msgstr "Date"
 
-#: templates/admin.html:120 templates/admin.html:150
+#: templates/admin.html:122 templates/admin.html:152
 #: templates/event_queue.html:80 templates/venues.html:45
 msgid "Actions"
 msgstr "Actions"
 
-#: templates/admin.html:131
+#: templates/admin.html:133
 msgid "Fix"
 msgstr "Corriger"
 
-#: templates/admin.html:162 templates/event_queue.html:134
+#: templates/admin.html:164 templates/event_queue.html:134
 #: templates/promoter_dashboard.html:76
 #: templates/queue_approve_confirm.html:100
 #: templates/queue_approve_confirm.html:139 templates/queue_duplicates.html:89
@@ -968,58 +979,58 @@ msgstr "Corriger"
 msgid "Edit"
 msgstr "Modifier"
 
-#: templates/admin.html:167
+#: templates/admin.html:169
 msgid "Delete this event?"
 msgstr "Supprimer cet événement ?"
 
-#: templates/admin.html:167 templates/event_queue.html:142
+#: templates/admin.html:169 templates/event_queue.html:142
 #: templates/genre_manage.html:56 templates/promoter_dashboard.html:81
 #: templates/venues.html:79 templates/venues.html:85
 msgid "Delete"
 msgstr "Supprimer"
 
-#: templates/admin.html:180
+#: templates/admin.html:182
 msgid "Scraping in progress…"
 msgstr "Collecte en cours…"
 
-#: templates/admin.html:185
+#: templates/admin.html:187
 msgid "Auto-scrape once per hour."
 msgstr "Collecte automatique toutes les heures."
 
-#: templates/admin.html:188
+#: templates/admin.html:190
 msgid "Last:"
 msgstr "Dernier :"
 
-#: templates/admin.html:193
+#: templates/admin.html:195
 msgid "Next:"
 msgstr "Prochain :"
 
-#: templates/admin.html:199
+#: templates/admin.html:201
 msgid "No scrape recorded yet."
 msgstr "Aucune collecte enregistrée."
 
-#: templates/admin.html:202
+#: templates/admin.html:204
 msgid "Drop us a line if an immediate scrape is needed."
 msgstr "Préviens-nous si une collecte immédiate est nécessaire."
 
-#: templates/admin.html:222
+#: templates/admin.html:224
 msgid "just now"
 msgstr "à l'instant"
 
-#: templates/admin.html:227
+#: templates/admin.html:229
 #, python-format
 msgid "%(t)s ago"
 msgstr "il y a %(t)s"
 
-#: templates/admin.html:299
+#: templates/admin.html:301
 msgid "Scrape complete — reloading…"
 msgstr "Collecte terminée — rechargement…"
 
-#: templates/admin.html:303
+#: templates/admin.html:305
 msgid "Scraping…"
 msgstr "Collecte…"
 
-#: templates/admin.html:309
+#: templates/admin.html:311
 msgid "left"
 msgstr "restant"
 

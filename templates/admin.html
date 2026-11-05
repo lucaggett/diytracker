@@ -11,8 +11,8 @@
   <p class="text-xs text-smudge">{{ events|length }} {% if events|length != 1 %}{{ _('events') }}{% else %}{{ _('event') }}{% endif %} {{ _('live') }}</p>
 </header>
 
-{# Traffic — visitor/hit numbers from nginx logs, refreshed by a background
-   goaccess run and polled by the script below. #}
+{# Traffic — human visitors and page views from nginx logs, refreshed by a
+   background pass (services/human_traffic.py) and polled by the script below. #}
 <section class="border-2 border-ink bg-paper p-4 mb-6">
   <p class="text-xs uppercase tracking-widest text-smudge mb-3">{{ _('Traffic') }}</p>
 
@@ -57,7 +57,9 @@
     {% endfor %}
   </div>
 
-  <p class="text-xs text-smudge mt-3" id="traffic-updated">
+  <p class="text-xs text-smudge mt-3">{{ _("People only: bots are filtered out, and hits are page views. Someone who opens a single page with no referrer can't be told from a bot and isn't counted, so the real numbers are somewhat higher.") }}</p>
+
+  <p class="text-xs text-smudge mt-1" id="traffic-updated">
     {% if stats %}{{ _('Last updated:') }} {{ stats.generated_at.replace('T', ' ') }} · {{ _('refreshes every') }} {{ stats_interval_minutes }} {{ _('min') }}{% else %}{{ _('Collecting stats…') }}{% endif %}
   </p>
 </section>
